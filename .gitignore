@@ -1,0 +1,68 @@
+# Claude Code
+.claude/
+
+# BMad workflow
+_bmad/
+_bmad-output/
+
+# Data files (too large for version control)
+data/
+
+# External resources (copyrighted material)
+docs/paper/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# PyTorch
+*.pth
+*.pt
+
+# MLflow
+mlruns/
+
+# Experiments
+experiments/
+*.pkl
+*.joblib
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
