@@ -1,0 +1,3 @@
+[submodule "docs/common-rules"]
+	path = docs/common-rules
+	url = https://github.com/ntquy9901/ml-ds-common-rules.git
