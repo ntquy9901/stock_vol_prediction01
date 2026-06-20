@@ -1,0 +1,35 @@
+{
+  "model": "LSTM-HAR with Validation",
+  "timestamp": "2026-06-19_084534",
+  "features": "HAR (daily, weekly, monthly)",
+  "split_method": "Temporal (70/15/15)",
+  "configuration": {
+    "hidden_size": 64,
+    "learning_rate": 0.0001,
+    "batch_size": 32,
+    "seq_length": 22,
+    "weight_decay": 1e-05,
+    "dropout": 0.2,
+    "num_layers": 2
+  },
+  "best_epoch": 25,
+  "best_val_loss": 0.5258165731247251,
+  "validation_metrics": {
+    "rmse": 0.0004641793751259502,
+    "mae": 0.0002633752883411944,
+    "r2": 0.1040070652961731,
+    "directional_accuracy": 48.95854958134385
+  },
+  "test_metrics": {
+    "rmse": 0.0005536052453667926,
+    "mae": 0.00025762623408809304,
+    "r2": 0.11046773195266724,
+    "directional_accuracy": 48.09022972598948
+  },
+  "val_test_diff": {
+    "rmse_diff": 8.94258702408424e-05,
+    "mae_diff": -5.749054253101349e-06,
+    "r2_diff": 0.006460666656494141,
+    "dir_acc_diff": -0.8683198553543718
+  }
+}

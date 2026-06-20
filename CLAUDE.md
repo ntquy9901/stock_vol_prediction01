@@ -98,16 +98,69 @@ train, test = torch.utils.data.random_split(dataset, [0.8, 0.2])
 from src.common.evaluation import evaluate_predictions
 
 metrics = evaluate_predictions(y_true, y_pred)
-# Returns: rmse, mae, r2, qlike, directional_accuracy
+# Returns: mse, rmse, mae, r2, qlike, directional_accuracy
 ```
 
 **6 Mandatory Metrics:**
-1. **MSE** - Mean Squared Error (lower is better)
+1. **MSE** - Mean Squared Error (lower is better) ⭐ NEW
 2. **RMSE** - Root Mean Squared Error (lower is better)
 3. **MAE** - Mean Absolute Error (lower is better)
 4. **R²** - Variance Explained (higher is better)
 5. **QLIKE** - Academic standard cho volatility (lower is better)
 6. **Dir Acc** - Directional Accuracy (higher is better)
+
+**Output Requirements (MANDATORY):**
+
+**1. Console Output Format:**
+```python
+# Validation Results
+print(f"Val MSE: {val_metrics['mse']:.6f}")
+print(f"Val RMSE: {val_metrics['rmse']:.6f}")
+print(f"Val MAE: {val_metrics['mae']:.6f}")
+print(f"Val R²: {val_metrics['r2']:.6f}")
+print(f"Val QLIKE: {val_metrics['qlike']:.6f}")
+print(f"Val Dir Acc: {val_metrics['directional_accuracy']:.2f}%")
+
+# Test Results (same format)
+print(f"Test MSE: {test_metrics['mse']:.6f}")
+print(f"Test RMSE: {test_metrics['rmse']:.6f}")
+# ... etc
+```
+
+**2. JSON Output Format:**
+```python
+results = {
+    'validation_metrics': {
+        'mse': float(val_metrics['mse']),
+        'rmse': float(val_metrics['rmse']),
+        'mae': float(val_metrics['mae']),
+        'r2': float(val_metrics['r2']),
+        'qlike': float(val_metrics['qlike']),
+        'directional_accuracy': float(val_metrics['directional_accuracy'])
+    },
+    'test_metrics': { ... },
+    'val_test_diff': {
+        'mse_diff': float(mse_diff),
+        'rmse_diff': float(rmse_diff),
+        'mae_diff': float(mae_diff),
+        'r2_diff': float(r2_diff),
+        'qlike_diff': float(qlike_diff),
+        'dir_acc_diff': float(dir_acc_diff)
+    }
+}
+```
+
+**3. Comparison Table (for validation):**
+```
+Metric          Validation       Test            Difference
+------------------------------------------------------------
+MSE             0.xxxxxx        0.xxxxxx       +0.xxxxxx
+RMSE            0.xxxxxx        0.xxxxxx       +0.xxxxxx
+MAE             0.xxxxxx        0.xxxxxx       +0.xxxxxx
+R²              0.xxxxxx        0.xxxxxx       +0.xxxxxx
+QLIKE           0.xxxxxx        0.xxxxxx       +0.xxxxxx
+Dir Acc         xx.xx%          xx.xx%         +x.xx%
+```
 
 **Documentation:** `docs/project/` - See Model Evaluation Rules section
 
@@ -205,9 +258,127 @@ model_file = f"models/baseline_{timestamp}/"
 - **Purpose:** Best performer (67.90% Dir Acc)
 - **File:** `src/lstm_har_enhanced/train_enhanced.py`
 
+### **Advanced Architecture: LSTM-GAT Hybrid** 🚀
+
+#### **5. Temporal Graph Attention Network (TemporalGAT)** - NEXT GENERATION
+- **Features:** 22 features (HAR + technical) for all 30 stocks simultaneously
+- **Architecture:** LSTM (temporal) + Graph Attention Network (spatial)
+- **Innovation:** Dynamic graph construction + multi-head attention
+- **Target:** RMSE < 0.15, Dir Acc > 75% (vs current: 0.18, 67.90%)
+- **Status:** Architecture design complete, ready for implementation
+- **File:** `docs/project/LSTM_GAT_ARCHITECTURE.md`
+
+**Key Components:**
+1. **Per-Stock LSTM Encoder:** Temporal feature learning for each stock
+2. **Dynamic Graph Builder:** Correlation + volatility spillover based edges
+3. **Graph Attention Layers:** Multi-head attention for spatial relationships
+4. **Temporal-Spatial Fusion:** Combines both branches for final prediction
+
+**Performance Targets:**
+- RMSE: 0.18 → **< 0.15** (17% improvement)
+- Dir Acc: 67.90% → **> 75%** (7% improvement)
+- QLIKE: ~0.12 → **< 0.10** (17% improvement)
+- R²: ~0.65 → **> 0.75** (15% improvement)
+
+**Advantages over LSTM-only:**
+- ✅ Captures cross-stock correlations and spillover effects
+- ✅ Dynamic graph adapts to changing market conditions
+- ✅ Attention mechanism learns influential stocks
+- ✅ Multi-scale: temporal (LSTM) + spatial (GAT)
+
+**Implementation Roadmap:**
+- Week 1: Data preparation (technical indicators, graph utilities)
+- Week 2: Model development (LSTM encoder, GAT layers, fusion)
+- Week 3: Training & evaluation (hyperparameter tuning, comparison)
+- Week 4: Analysis & deployment (attention visualization, ablation)
+
+#### **6. TimesFM 2.5 LoRA Fine-Tuning** - FOUNDATION MODEL APPROACH
+- **Features:** Parkinson volatility (univariate time series)
+- **Architecture:** TimesFM 2.5 (232M params) + LoRA adapters (~1.4M trainable params, 0.6%)
+- **Method:** Decoder-only transformer with LoRA fine-tuning
+- **Purpose:** State-of-the-art foundation model for time series
+- **File:** `src/timesfm_baseline/timesfm_lora_finetuning.py`
+- **Status:** Implementation complete, tested, reviewed
+- **Documentation:** See `docs/timesfm/` for architecture and implementation details
+
+**Key Innovations:**
+- ✅ Foundation model approach (pre-trained on massive time series data)
+- ✅ Parameter-efficient fine-tuning (LoRA adapters)
+- ✅ Random window sampling (data-efficient training)
+- ✅ No external normalization (TimesFM handles RevIN internally)
+- ✅ Comprehensive testing (34 tests, 100% pass rate)
+
+**Performance Targets:**
+- RMSE: < 0.18 (baseline) → **< 0.15** (target)
+- Dir Acc: > 55% (baseline) → **> 60%** (target)
+- Training time: ~2 hours on GPU (vs ~30 min for LSTM)
+- Trainable params: 1.4M (vs 65K for LSTM-HAR)
+
+**Lessons Learned:**
+- ⚠️ **3 adversarial reviews conducted** - Found 40 bugs total
+- 📚 **Comprehensive lessons learned documented** - See `docs/LESSONS_LEARNED_TIMESFM_ADVERSARIAL_REVIEWS.md`
+- ✅ **Quick reference checklist created** - See `docs/QUICK_REFERENCE_CHECKLIST.md`
+- 🔍 **All bugs fixed and tested** - 34/34 tests passing
+
 ---
 
-## 5. Evaluation Methodology
+## 5. Adversarial Review Process & Lessons Learned
+
+This project uses adversarial code reviews to ensure production-ready code quality.
+
+### **Adversarial Review Process**
+1. **Cynical review** - Assume code has problems, look for hidden bugs
+2. **Find 10+ issues** - Minimum threshold for review depth
+3. **Fix all issues** - No exceptions, all HIGH/MEDIUM must be fixed
+4. **Add unit tests** - Every fix must be tested
+5. **Document lessons** - Add to knowledge base
+
+### **TimesFM LoRA Review Results**
+- **Review 1:** 15 bugs found (3 HIGH, 9 MEDIUM, 3 LOW)
+- **Review 2:** 12 bugs found (3 HIGH, 6 MEDIUM, 3 LOW)
+- **Review 3:** 13 bugs found (4 HIGH, 6 MEDIUM, 3 LOW)
+- **Total:** 40 bugs fixed across 3 reviews
+
+### **Key Lessons Learned Documents**
+- 📘 **[Full Lessons Learned](docs/LESSONS_LEARNED_TIMESFM_ADVERSARIAL_REVIEWS.md)** - Comprehensive guide with anti-patterns and mandatory practices
+- 📋 **[Quick Reference Checklist](docs/QUICK_REFERENCE_CHECKLIST.md)** - Fast checklist for code reviews (87 items)
+- 📊 **[Bug Statistics](docs/LESSONS_LEARNED_TIMESFM_ADVERSARIAL_REVIEWS.md#-summary-quick-reference)** - Breakdown by category and severity
+
+### **Top 5 Bug Categories**
+1. **Memory Management** (7 bugs) - Memory leaks, unbounded growth, improper cleanup
+2. **Input Validation** (6 bugs) - Missing checks, late validation, poor error messages
+3. **Data Pipeline** (8 bugs) - Silent data loss, inefficient tensor creation
+4. **MLflow Integration** (4 bugs) - Metrics loss on crashes, poor error handling
+5. **Resource Cleanup** (4 bugs) - File handles, model references, GPU memory
+
+### **Mandatory Practices for Future Development**
+- ✅ Validate all parameters at function entry (not deep in code)
+- ✅ Create tensors on-the-fly (never pre-create in `__init__`)
+- ✅ Use `pin_memory=True` + `non_blocking=True` for GPU training
+- ✅ Save checkpoints BEFORE batch work (not after)
+- ✅ Wrap MLflow calls in try/except per epoch
+- ✅ Delete large objects ASAP (del + empty_cache)
+- ✅ Test edge cases (empty, single, invalid inputs)
+- ✅ Provide helpful error messages (what + why + how)
+
+### **Quick Reference for Code Review**
+Before approving any ML/DS code, verify:
+- [ ] Data pipeline uses on-the-fly tensor creation
+- [ ] GPU training uses `pin_memory=True` and `non_blocking=True`
+- [ ] No silent data loss (warn if using `drop_last=True`)
+- [ ] Checkpoints saved before work (not after)
+- [ ] All parameters validated at entry point
+- [ ] Error messages include what/why/how
+- [ ] MLflow calls wrapped in try/except per epoch
+- [ ] Large objects deleted explicitly (del + empty_cache)
+- [ ] Tests for edge cases (empty, single, invalid)
+- [ ] No memory leaks (profile long runs)
+
+**See `docs/QUICK_REFERENCE_CHECKLIST.md` for full 87-item checklist.**
+
+---
+
+## 6. Evaluation Methodology
 
 ### **Current Status (CRITICAL BUG FOUND)**
 
@@ -244,6 +415,35 @@ model_file = f"models/baseline_{timestamp}/"
 ### **Loss Functions**
 - **Training:** MSE (convex, stable)
 - **Evaluation:** QLIKE (academic standard) + RMSE, MAE, R², Dir Acc
+
+### **Standard Hyperparameters (ALL Models)** ⭐
+
+**CRITICAL:** All models MUST use these standardized hyperparameters for fair comparison.
+
+**Training Configuration:**
+```python
+# ALL models (LSTM variants)
+num_epochs = 70          # Maximum training epochs
+patience = 15            # Early stopping patience
+```
+
+**Applied to All Files:**
+- ✅ `src/lstm_har_enhanced/train_with_validation.py`
+- ✅ `src/lstm_har_enhanced/train_enhanced.py`
+- ✅ `src/lstm_har_baseline/train_with_validation.py`
+- ✅ `src/lstm_har_baseline/train.py`
+- ✅ `src/lstm_baseline/train_with_validation.py`
+- ✅ `src/lstm_baseline/train.py`
+
+**Why 70 epochs?**
+- Sufficient for convergence without overfitting
+- Allows early stopping to prevent overtraining
+- Balances training time with model performance
+
+**Why patience=15?**
+- Gives model enough room to plateau before stopping
+- Prevents premature stopping during temporary loss increases
+- Standard practice for time series forecasting
 
 ---
 
@@ -335,13 +535,20 @@ Source:      src/
 
 ---
 
-**Last Updated:** 2026-06-19  
-**Version:** 3.0 (Streamlined - references external ml-ds-common-rules)  
+**Last Updated:** 2026-06-19
+**Version:** 3.1 (Standardized Hyperparameters & Metrics)
 **Status:** Active Development
 
 ---
 
-**Changes in v3.0 (Streamlined Version):**
+**Changes in v3.1 (Current Version):**
+- ✅ **Standardized hyperparameters:** 70 epochs, 15 patience for ALL models
+- ✅ **Added MSE to 6 mandatory metrics** (was 5, now 6)
+- ✅ **Mandatory output format:** Console + JSON must include all 6 metrics
+- ✅ **Updated all training files** to use standardized hyperparameters
+- ✅ **Enhanced metrics reporting:** Added MSE to console, JSON, and comparison tables
+
+**Changes in v3.0 (Previous Version):**
 - ✅ Removed duplicated ML/DS common rules (now reference external package)
 - ✅ Reduced from 1,798 lines to ~400 lines (58KB → ~12KB)
 - ✅ Added 3-way temporal split evaluation section

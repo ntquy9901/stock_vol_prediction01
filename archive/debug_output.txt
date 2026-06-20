@@ -1,0 +1,42 @@
+
+================================================================================
+LSTM TRAINING FAILURE - ROOT CAUSE ANALYSIS
+================================================================================
+
+================================================================================
+CHECK 1: DATA QUALITY
+================================================================================
+Created 96961 total sequences
+Loaded 96961 sequences from 30 stocks
+
+[1.1] Sampling data...
+
+[1.2] Input Statistics (Scaled):
+   Mean: 0.694982
+   Std: 2.321653
+   Min: -0.580963
+   Max: 29.532957
+
+[1.3] Target Statistics (Scaled):
+   Mean: 0.742844
+   Std: 2.340052
+   Min: -0.586122
+   Max: 22.013073
+
+[1.4] Target Statistics (Original Scale):
+   Mean: 0.000857
+   Std: 0.001504
+   Min: 0.000003
+   Max: 0.014524
+
+[1.5] Data Quality Checks:
+Traceback (most recent call last):
+  File "D:\bmad-projects\stock_vol_prediction01\src\lstm_baseline\debug_training_failure.py", line 452, in <module>
+    main()
+  File "D:\bmad-projects\stock_vol_prediction01\src\lstm_baseline\debug_training_failure.py", line 398, in main
+    dataset, data_issues = check_data_quality(data_dir)
+  File "D:\bmad-projects\stock_vol_prediction01\src\lstm_baseline\debug_training_failure.py", line 91, in check_data_quality
+    print(f"   \u2705 Targets have variance: {np.std(targets_original):.6f}")
+  File "C:\Users\QUY\AppData\Local\Programs\Python\Python310\lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2705' in position 3: character maps to <undefined>

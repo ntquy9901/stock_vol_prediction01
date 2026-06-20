@@ -1,9 +1,9 @@
 # Project Context - Stock Volatility Prediction VN30
 
-**Project:** Multi-horizon volatility forecasting for VN30 stocks  
-**Focus:** 5-day ahead forecasts (Phase 1)  
-**Methodology:** HAR-R with Parkinson volatility, enhanced with LSTM, GNN, TimesFM  
-**Last Updated:** 2026-06-15
+**Project:** Multi-horizon volatility forecasting for VN30 stocks
+**Focus:** 5-day ahead forecasts (Phase 1)
+**Methodology:** HAR-R with Parkinson volatility, enhanced with LSTM, GNN, TimesFM
+**Last Updated:** 2026-06-19 (Updated: Standardized hyperparameters & metrics)
 
 ---
 
@@ -36,13 +36,50 @@ HAR_MONTHLY_FEATURE = 22  # trading days
 MONTHLY_FORECAST_HORIZON = 22  # days ahead
 ```
 
+### ✅ Standard Hyperparameters (ALL Models) - UPDATED 2026-06-19
+```python
+# Applied to ALL LSTM model training (6 files)
+STANDARD_HYPERPARAMETERS = {
+    'num_epochs': 70,      # Maximum training epochs (all models)
+    'patience': 15,        # Early stopping patience (all models)
+    'loss_function': 'MSE',  # Training loss (convex, stable)
+    'optimizer': 'Adam',    # Default optimizer
+}
+
+# Applied to these files:
+# - src/lstm_har_enhanced/train_with_validation.py
+# - src/lstm_har_enhanced/train_enhanced.py
+# - src/lstm_har_baseline/train_with_validation.py
+# - src/lstm_har_baseline/train.py
+# - src/lstm_baseline/train_with_validation.py
+# - src/lstm_baseline/train.py
+```
+
 ### Loss Function Priority
 ```python
 LOSS_FUNCTION_PRIORITY = {
     'primary': 'QLIKE',  # "Stylized favorite of volatility literature"
-    'secondary': 'MSE',  # Comparison standard
+    'secondary': 'MSE',  # Comparison standard (training + evaluation)
     'tertiary': 'MAE'     # Robustness check
 }
+```
+
+### ✅ Mandatory Metrics (6 Total) - UPDATED 2026-06-19
+```python
+# ALL models must report these 6 metrics in BOTH console and JSON
+MANDATORY_METRICS = {
+    1: 'MSE',           # Mean Squared Error (lower is better) ⭐ ADDED
+    2: 'RMSE',          # Root Mean Squared Error (lower is better)
+    3: 'MAE',           # Mean Absolute Error (lower is better)
+    4: 'R²',            # Variance Explained (higher is better)
+    5: 'QLIKE',         # Academic standard cho volatility (lower is better)
+    6: 'Dir Acc'        # Directional Accuracy (higher is better)
+}
+
+# Output requirements:
+# 1. Console: Print all 6 metrics for validation + test
+# 2. JSON: Save all 6 metrics in validation_metrics, test_metrics, val_test_diff
+# 3. Comparison table: Show all 6 metrics with differences
 ```
 
 ### Current Focus: 5-Day Horizon
@@ -75,6 +112,32 @@ MODELS_TO_COMPARE = [
 ]
 ```
 
+### LSTM-GAT Hybrid Architecture (Advanced) 🚀
+```python
+LSTM_GAT_HYBRID = {
+    'temporal_branch': 'LSTM encoder (per-stock temporal learning)',
+    'spatial_branch': 'Graph Attention Network (cross-stock relationships)',
+    'graph_construction': 'Dynamic correlation + volatility spillover',
+    'attention_mechanism': 'Multi-head attention (4-8 heads)',
+    'fusion_strategy': 'Concatenate + MLP for final prediction',
+    'expected_improvement': 'RMSE 17% ↓, Dir Acc 7% ↑',
+    'architecture_doc': 'docs/project/LSTM_GAT_ARCHITECTURE.md',
+    'based_on': [
+        'TemporalGAT (arXiv 2410.16858v1, 2024)',
+        'FSTGAT (MDPI Symmetry, 2024)',
+        'STGAT (MDPI Applied Sciences, 2025)'
+    ]
+}
+
+# Input: (batch, seq_len, 30_stocks, 22_features)
+# Output: (batch, 30_stocks, 1_prediction)
+```
+
+**Key Innovation:**
+- Processes all 30 VN30 stocks simultaneously
+- Dynamic graph captures market-wide dependencies
+- Attention weights reveal influential stocks
+
 ### Single Model Architecture
 - **One model for all 30 stocks** (not individual stock models)
 - **Stock identifier as feature** or **panel data approach**
@@ -86,6 +149,7 @@ MODELS_TO_COMPARE = [
 
 ### Documentation
 - **Main documentation:** `CLAUDE.md` - Project overview, common rules, technical architecture
+- **LSTM-GAT Architecture:** `docs/project/LSTM_GAT_ARCHITECTURE.md` - Advanced hybrid model design 🚀 NEW
 - **Requirements:** `docs/requirements.md` - Functional and non-functional requirements
 - **Technical config:** `docs/technical_config.md` - HAR configuration, feature engineering
 - **Data schema:** `docs/data_schema.md` - 51+ features specification
@@ -217,6 +281,27 @@ PHASE_2_CONDITION = {
 }
 ```
 
+### Phase 3: Advanced LSTM-GAT Hybrid (Week 9-12) 🚀
+```python
+PHASE_3_GOALS = {
+    'Week 9': 'Data preparation (technical indicators, graph utilities)',
+    'Week 10': 'Model development (LSTM encoder, GAT layers, fusion)',
+    'Week 11': 'Training & evaluation (hyperparameter tuning, comparison)',
+    'Week 12': 'Analysis & deployment (attention visualization, ablation)',
+    'Target': 'RMSE < 0.15, Dir Acc > 75% (vs 0.18, 67.90% current)',
+    'Architecture': 'LSTM (temporal) + Graph Attention Network (spatial)',
+    'Documentation': 'docs/project/LSTM_GAT_ARCHITECTURE.md'
+}
+
+# Key improvements expected
+IMPROVEMENT_TARGETS = {
+    'RMSE': '0.18 → < 0.15 (17% ↓)',
+    'Dir_Acc': '67.90% → > 75% (7% ↑)',
+    'QLIKE': '~0.12 → < 0.10 (17% ↓)',
+    'R²': '~0.65 → > 0.75 (15% ↑)'
+}
+```
+
 ### Quality Gates
 - **Pre-commit:** Tests pass, coverage sufficient
 - **Pre-merge:** Code review approval, no critical issues
@@ -269,6 +354,35 @@ PHASE_2_CONDITION = {
 
 ---
 
-**Project Status:** ✅ Documentation complete, ready for Sprint 1 implementation  
-**Current Focus:** 5-day HAR-R baseline with QLIKE loss function  
+**Project Status:** ✅ Documentation complete, ready for Sprint 1 implementation
+**Current Focus:** 5-day HAR-R baseline with QLIKE loss function
 **Quality Standard:** 85%+ test coverage, ML/DS common rules compliance
+
+---
+
+## 📝 UPDATE HISTORY
+
+### 2026-06-19 - Standardization Update
+**Changes:**
+- ✅ **Standardized hyperparameters:** 70 epochs, 15 patience for ALL 6 LSTM models
+- ✅ **Added MSE as 6th mandatory metric** (was 5 metrics: RMSE, MAE, R², QLIKE, Dir Acc)
+- ✅ **Mandatory output format:** All 6 metrics must appear in console + JSON
+- ✅ **Updated all training files:** lstm_har_enhanced, lstm_har_baseline, lstm_baseline
+- ✅ **Enhanced comparison tables:** Added MSE to all val/test comparisons
+
+**Impact:**
+- All models now use consistent hyperparameters for fair comparison
+- Complete metrics reporting (all 6: MSE, RMSE, MAE, R², QLIKE, Dir Acc)
+- Better reproducibility and model comparison
+
+**Files Updated:**
+- `CLAUDE.md` - Added standard hyperparameters section, updated metrics section
+- `src/common/evaluation.py` - Added MSE to evaluate_predictions()
+- All 6 training files - Updated epochs, patience, and MSE output
+
+### 2026-06-15 - Initial Documentation
+**Created:**
+- Project context document
+- Technical architecture
+- Implementation strategy
+- Quality standards

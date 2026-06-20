@@ -1,0 +1,8 @@
+{
+  "hidden_size": 64,
+  "dropout": 0.20526990795364705,
+  "learning_rate": 0.0020914981329035616,
+  "batch_size": 64,
+  "weight_decay": 0,
+  "seq_length": 44
+}

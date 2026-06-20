@@ -1,0 +1,208 @@
+# Training Configuration for Stock Volatility Prediction
+# Support multiple data scenarios: VN30, VN100, HNX, Combined
+
+# =============================================================================
+# DATA SCENARIOS
+# =============================================================================
+data_scenarios:
+  # Scenario 1: VN30 only (current baseline)
+  vn30_only:
+    name: "VN30 Only"
+    description: "Train on 30 VN30 stocks only"
+    data_path: "data/raw/vn30"
+    stock_list: "data/raw/vn30/stock_summary.csv"
+    num_stocks: 30
+
+  # Scenario 2: VN100 only
+  vn100_only:
+    name: "VN100 Only"
+    description: "Train on 100 VN100 stocks"
+    data_path: "data/raw/vn100"
+    stock_list: "data/raw/vn100/stock_summary.csv"
+    num_stocks: 100
+
+  # Scenario 3: HNX only
+  hnx_only:
+    name: "HNX Only"
+    description: "Train on HNX stocks"
+    data_path: "data/raw/hnx"
+    stock_list: "data/raw/hnx/stock_summary.csv"
+    num_stocks: ~
+
+  # Scenario 4: VN30 + VN100 combined
+  vn30_vn100_combined:
+    name: "VN30 + VN100 Combined"
+    description: "Train on VN30 and VN100 stocks combined"
+    data_path: "data/raw/combined"
+    stock_list: "data/raw/combined/stock_summary.csv"
+    num_stocks: ~
+    combine_from:
+      - "data/raw/vn30"
+      - "data/raw/vn100"
+
+  # Scenario 5: All stocks combined (VN30 + VN100 + HNX)
+  all_combined:
+    name: "All Stocks Combined"
+    description: "Train on all available stocks (VN30 + VN100 + HNX)"
+    data_path: "data/raw/all"
+    stock_list: "data/raw/all/stock_summary.csv"
+    num_stocks: ~
+    combine_from:
+      - "data/raw/vn30"
+      - "data/raw/vn100"
+      - "data/raw/hnx"
+
+# =============================================================================
+# TRAINING PARAMETERS
+# =============================================================================
+training:
+  # Model architecture
+  model_type: "enhanced_lstm_har"  # Options: har_linear, simple_lstm, lstm_har, enhanced_lstm_har, lstm_gat
+
+  # Temporal split (MANDATORY - prevents data leakage)
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+  # Standard hyperparameters (ALL models)
+  num_epochs: 70
+  patience: 15  # Early stopping patience
+
+  # Batch size
+  batch_size: 32
+
+  # Learning rate
+  learning_rate: 0.001
+
+  # LSTM parameters
+  lstm:
+    hidden_size: 64
+    num_layers: 2
+    dropout: 0.2
+
+  # Loss function
+  loss_function: "MSE"  # Options: MSE, MAE, QLIKE
+
+  # Optimizer
+  optimizer: "Adam"
+
+  # Device
+  device: "cuda"  # Options: cuda, cpu
+
+# =============================================================================
+# FEATURE CONFIGURATION
+# =============================================================================
+features:
+  # HAR features
+  use_har: true
+  har_periods:
+    daily: 1
+    weekly: 5
+    monthly: 22
+
+  # Raw volatility
+  use_raw_volatility: true
+
+  # Technical indicators (for LSTM-GAT model)
+  use_technical_indicators: false
+  indicators:
+    - RSI
+    - MACD
+    - Bollinger Bands
+    - ATR
+
+  # Target horizons
+  target_horizons:
+    - 1   # 1-day ahead
+    - 5   # 5-day ahead (PRIMARY)
+    - 10  # 10-day ahead
+    - 22  # 22-day ahead
+
+# =============================================================================
+# EVALUATION CONFIGURATION
+# =============================================================================
+evaluation:
+  # Mandatory metrics (ALL 6 must be computed)
+  metrics:
+    - MSE
+    - RMSE
+    - MAE
+    - R2
+    - QLIKE
+    - Directional_Accuracy
+
+  # Output format
+  output_format:
+    - console
+    - json
+    - csv
+
+  # Plotting
+  plot_learning_curves: true
+  plot_predictions: true
+  plot_feature_importance: false
+
+  # Save results
+  save_model: true
+  save_predictions: true
+  save_metrics: true
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
+output:
+  base_dir: "results"
+  model_dir: "models"
+
+  # Naming convention
+  name_template: "{model_type}_{scenario}_{timestamp}"
+
+  # Create timestamped directories
+  use_timestamp: true
+
+# =============================================================================
+# EXPERIMENT CONFIGURATION
+# =============================================================================
+experiments:
+  # Compare different models on same data
+  model_comparison:
+    enabled: true
+    scenarios:
+      - vn30_only
+    models:
+      - har_linear
+      - simple_lstm
+      - lstm_har
+      - enhanced_lstm_har
+
+  # Compare same model on different data
+  data_comparison:
+    enabled: true
+    model: enhanced_lstm_har
+    scenarios:
+      - vn30_only
+      - vn100_only
+      - vn30_vn100_combined
+      - all_combined
+
+  # Hyperparameter tuning
+  hyperparameter_tuning:
+    enabled: false
+    param_grid:
+      learning_rate: [0.0001, 0.001, 0.01]
+      hidden_size: [32, 64, 128]
+      dropout: [0.1, 0.2, 0.3]
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Log to file
+  log_to_file: true
+  log_file: "logs/training.log"
+
+  # Log to console
+  log_to_console: true

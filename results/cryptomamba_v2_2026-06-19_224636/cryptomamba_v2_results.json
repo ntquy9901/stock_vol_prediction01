@@ -1,0 +1,42 @@
+{
+  "model": "CryptoMamba V2 (Full Architecture, Original Hyperparameters)",
+  "timestamp": "2026-06-19_230002",
+  "phase": "Phase 1 Proof-of-Concept",
+  "features": "HAR (3 features)",
+  "split_method": "Temporal (70/15/15)",
+  "configuration": {
+    "hidden_dim": 14,
+    "num_layers": 1,
+    "dropout": 0.0,
+    "learning_rate": 0.01,
+    "weight_decay": 0.0005,
+    "max_epochs": 1000,
+    "lr_step_size": 100,
+    "lr_gamma": 0.5,
+    "seq_length": 22,
+    "use_volume": false
+  },
+  "best_epoch": 12,
+  "best_val_loss": 0.39354986211253423,
+  "total_epochs": 101,
+  "validation_metrics": {
+    "mse": 1.9070159851253266e-07,
+    "rmse": 0.0004366939414653387,
+    "mae": 0.00025505933444947004,
+    "r2": 0.10288608074188232,
+    "qlike": 1.3486878871917725,
+    "directional_accuracy": 51.793647636098406
+  },
+  "test_metrics": {
+    "mse": 4.191241202988749e-07,
+    "rmse": 0.0006473979613026866,
+    "mae": 0.0002704611688386649,
+    "r2": 0.05792909860610962,
+    "qlike": 18.08233642578125,
+    "directional_accuracy": 47.77880917650179
+  },
+  "baseline_comparison": {
+    "lstm_dir_acc": "48.01-48.32%",
+    "harr_dir_acc": "51.53%",
+    "cryptomamba_v2_dir_acc": "47.78%",
+    "beats_lstm": 

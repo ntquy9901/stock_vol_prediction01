@@ -1,0 +1,13 @@
+{
+  "model": "LSTM-HAR",
+  "timestamp": "2026-06-19_001902",
+  "features": "HAR (daily, weekly, monthly)",
+  "best_epoch": 1,
+  "best_val_loss": 1.101622880101204,
+  "test_metrics": {
+    "rmse": 0.0006663170155288578,
+    "mae": 0.0003465549962129444,
+    "r2": -2.5510787963867188e-05,
+    "directional_accuracy": 0.005221659443371103
+  }
+}

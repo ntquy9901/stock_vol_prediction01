@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-06-20T07:07:59.401784",
+  "comparison_table": [
+    {
+      "Model": "Enhanced Lstm Har",
+      "Test RMSE": 0.0007291371854426348,
+      "Test MAE": 0.000433941138908267,
+      "Test R\u00b2": 0.20977550745010376,
+      "Test QLIKE": 0.6767538189888,
+      "Test Dir Acc": 47.65599799290348,
+      "Val RMSE": 0.0011232743639413645,
+      "Val R\u00b2": 0.07215273380279541,
+      "Improvement": "-13.8%"
+    },
+    {
+      "Model": "Lstm Har",
+      "Test RMSE": 0.0007270915732078089,
+      "Test MAE": 0.00042102744919247925,
+      "Test R\u00b2": 0.21418195962905884,
+      "Test QLIKE": 0.6745136976242065,
+      "Test Dir Acc": 47.74832894288837,
+      "Val RMSE": 0.0011215090345536298,
+      "Val R\u00b2": 0.07507556676864624,
+      "Improvement": "-13.9%"
+    },
+    {
+      "Model": "Simple Lstm",
+      "Test RMSE": 0.0007268131629546198,
+      "Test MAE": 0.0004244665033183992,
+      "Test R\u00b2": 0.21107125282287598,
+      "Test QLIKE": 0.672962486743927,
+      "Test Dir Acc": 47.88960461226378,
+      "Val RMSE": 0.0011209131275414857,
+      "Val R\u00b2": 0.07294726371765137,
+      "Improvement": "-13.8%"
+    }
+  ],
+  "best_models": {
+    "lowest_rmse": "Simple Lstm",
+    "highest_r2": "Lstm Har",
+    "highest_dir_acc": "Simple Lstm"
+  }
+}

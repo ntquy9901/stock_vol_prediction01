@@ -1,0 +1,23 @@
+{
+  "model": "Enhanced LSTM-HAR",
+  "timestamp": "2026-06-19_024333",
+  "features": "Raw + HAR (3 features: raw, weekly, monthly)",
+  "enhancement": "Added raw parkinson volatility, removed redundant daily",
+  "configuration": {
+    "hidden_size": 64,
+    "learning_rate": 0.0001,
+    "batch_size": 32,
+    "seq_length": 22,
+    "weight_decay": 1e-05,
+    "dropout": 0.2,
+    "num_layers": 2
+  },
+  "best_epoch": 50,
+  "best_val_loss": 0.8881118661827512,
+  "test_metrics": {
+    "rmse": 0.0006034426517478642,
+    "mae": 0.00030268257251009345,
+    "r2": 0.13639163970947266,
+    "directional_accuracy": 67.89828749351324
+  }
+}

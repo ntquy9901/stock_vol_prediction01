@@ -1,0 +1,19 @@
+{
+  "model_type": "HAR-R Linear Regression",
+  "features": [
+    "har_daily_vol",
+    "har_weekly_vol",
+    "har_monthly_vol"
+  ],
+  "target": "target_5d",
+  "train_size": 79835,
+  "test_size": 19959,
+  "training_time_seconds": 0.0,
+  "coefficients": {
+    "har_daily_vol": 0.03890108768520483,
+    "har_weekly_vol": 0.19517291146583537,
+    "har_monthly_vol": 0.431125279607362
+  },
+  "intercept": 0.00012939134023515263,
+  "data_source": "Parkinson volatility from processed CSV files"
+}

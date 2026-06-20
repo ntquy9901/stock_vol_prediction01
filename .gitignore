@@ -5,8 +5,14 @@
 _bmad/
 _bmad-output/
 
-# Data files (too large for version control)
-data/
+# Data files - allowing training data (will commit small files)
+# Excluding only large data directories
+data/raw/all_available/
+data/raw/vn100/
+data/raw/vn100_enhanced/
+data/raw/hnx/
+data/raw/hnx_enhanced/
+data/processed_all/
 
 # External resources (copyrighted material)
 docs/paper/

@@ -1,0 +1,11 @@
+symbol,start_date,end_date,total_days,file
+ACB,2020-12-09 00:00:00+07:00,2026-06-19 00:00:00+07:00,1443,data\raw\test_combined\ACB_ohlcv.csv
+BID,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1678,data\raw\test_combined\BID_ohlcv.csv
+FPT,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1687,data\raw\test_combined\FPT_ohlcv.csv
+GAS,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1687,data\raw\test_combined\GAS_ohlcv.csv
+HPG,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1687,data\raw\test_combined\HPG_ohlcv.csv
+MSN,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1678,data\raw\test_combined\MSN_ohlcv.csv
+MWG,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1678,data\raw\test_combined\MWG_ohlcv.csv
+VCB,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1678,data\raw\test_combined\VCB_ohlcv.csv
+VIC,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1687,data\raw\test_combined\VIC_ohlcv.csv
+VNM,2020-01-01 00:00:00+07:00,2026-06-19 00:00:00+07:00,1678,data\raw\test_combined\VNM_ohlcv.csv

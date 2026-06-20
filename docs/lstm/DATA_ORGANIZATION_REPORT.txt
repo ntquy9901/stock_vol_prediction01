@@ -1,0 +1,179 @@
+
+================================================================================
+LSTM DATA ORGANIZATION REPORT GENERATOR
+================================================================================
+
+================================================================================
+GENERATING DATA ORGANIZATION REPORT
+================================================================================
+
+================================================================================
+LSTM DATA ORGANIZATION ANALYSIS
+================================================================================
+
+[1] Loading Dataset...
+Created 96961 total sequences
+Loaded 96961 sequences from 30 stocks
+
+[2] Stock Coverage Analysis...
+   Total stocks in dataset: 30
+   Sample stocks: ['FPT', 'MBB', 'VCB', 'BVH', 'MWG']
+
+[3] Sequences per Stock...
+   Min sequences per stock: 1273
+   Max sequences per stock: 4782
+   Avg sequences per stock: 3232.0
+   Total sequences: 96961
+
+[4] Temporal Distribution...
+   Sequences by decade:
+
+================================================================================
+SLIDING WINDOW MECHANISM
+================================================================================
+
+[1] Window Configuration:
+   Sequence Length (lookback): 22 days
+   Forecast Horizon: 5 days
+   Total window size: 27 days
+
+[2] Sliding Window Logic:
+   For each stock with N days of data:
+   - Create sequences for i = 0 to N - seq_length - forecast_horizon
+   - Each sequence uses days [i : i + seq_length] as input
+   - Target is day [i + seq_length + forecast_horizon - 1]
+
+[3] Example: Stock with 100 days
+   Total sequences created: 100 - 22 - 5 + 1 = 74 sequences
+   Sequence 1: Days [0:22] -> Target day 26
+   Sequence 2: Days [1:23] -> Target day 27
+   Sequence 3: Days [2:24] -> Target day 28
+   ...
+   Sequence 74: Days [73:95] -> Target day 99
+
+[4] Actual Examples from Dataset:
+
+   Example 1: ACB, Sequence #0
+   Input shape: torch.Size([22, 1])
+   Input (first 5 days): [29.532957   4.7840743  6.2946963  3.0809245 17.320284 ]
+   Input (last 5 days): [-0.12107515  0.01545245 -0.32214874 -0.45332664 -0.5395551 ]
+   Target (scaled): -0.338218
+
+   Example 2: ACB, Sequence #1
+   Input shape: torch.Size([22, 1])
+   Input (first 5 days): [ 4.7840743  6.2946963  3.0809245 17.320284   2.0484953]
+   Input (last 5 days): [ 0.01545245 -0.32214874 -0.45332664 -0.5395551  -0.1349521 ]
+   Target (scaled): 1.017065
+
+   Example 3: ACB, Sequence #2
+   Input shape: torch.Size([22, 1])
+   Input (first 5 days): [ 6.2946963  3.0809245 17.320284   2.0484953  1.8241779]
+   Input (last 5 days): [-0.32214874 -0.45332664 -0.5395551  -0.1349521   0.24514784]
+   Target (scaled): -0.187692
+
+================================================================================
+TRAIN/VALIDATION SPLIT METHODOLOGY
+================================================================================
+
+[1] Split Configuration:
+   Total sequences: 96,961
+   Train ratio: 80%
+   Train size: 77,568 sequences
+   Validation size: 19,393 sequences
+
+[2] Split Method: Random Split
+   Method: torch.utils.data.random_split
+   Random seed: 42 (reproducible)
+   Shuffle: Applied to dataset
+
+[3] Important Note - Temporal Integrity:
+   WARNING: Random split DOES NOT preserve temporal order!
+   This means:
+   - Training data may contain sequences AFTER validation data
+   - Potential look-ahead bias if not careful
+   - Acceptable for pooled approach across 30 stocks
+
+[4] Recommended Improvement for Production:
+   Option 1: Temporal split (preserve order per stock)
+   - Split each stock's sequences chronologically
+   - Train: first 80% of each stock
+   - Val: last 20% of each stock
+   - Preserves temporal integrity
+
+   Option 2: Leave-one-stock-out cross-validation
+   - Train on 29 stocks, validate on 1 stock
+   - Rotate through all 30 stocks
+   - Tests generalization to unseen stocks
+
+   Option 3: Time-based split (most rigorous)
+   - Use date cutoff (e.g., data before 2020 for train)
+   - Ensures no future data in training
+   - Most realistic for production
+
+[5] Current Split Summary:
+   Train samples: 77,568
+   Validation samples: 19,393
+   Batch size (recommended): 64
+   Train batches per epoch: ~1212
+   Validation batches per epoch: ~303
+
+================================================================================
+DATA STATISTICS
+================================================================================
+
+[1] Collecting samples...
+
+[2] Input Statistics (Scaled):
+   Mean: 0.122985
+   Std: 1.465787
+   Min: -0.580963
+   Max: 35.314434
+
+[3] Target Statistics (Scaled):
+   Mean: 0.127345
+   Std: 1.448962
+   Min: -0.589332
+   Max: 26.308132
+
+[4] Distribution by Stock:
+   Total stocks: 30
+   Top 5 stocks by sequences:
+     ACB: 4,782 sequences
+     VNM: 4,734 sequences
+     STB: 4,712 sequences
+     FPT: 4,682 sequences
+     SSI: 4,655 sequences
+   Bottom 5 stocks by sequences:
+     SSB: 1,273 sequences
+     BCM: 1,961 sequences
+     TCB: 1,975 sequences
+     GVR: 1,997 sequences
+     TPB: 2,004 sequences
+
+================================================================================
+SUMMARY
+================================================================================
+
+[Data Organization]
+   Pooled approach: All 30 stocks combined
+   Sliding windows: 22-day lookback, 5-day forecast
+   Total sequences: 96,961
+   Train/Val split: 80/20 (random)
+
+[Snapshot Creation]
+   For each day i in [0, N - 22 - 5]:
+     Input: days [i : i + 22] (22-day window)
+     Target: day [i + 22 + 5 - 1] (5-day ahead)
+
+[Recommendations]
+   Consider temporal split for production
+   Add date-based validation for temporal integrity
+   Current approach OK for initial development
+
+================================================================================
+
+Report saved to: D:\bmad-projects\stock_vol_prediction01\docs/lstm\DATA_ORGANIZATION_REPORT.txt
+
+================================================================================
+Report generation complete!
+================================================================================
