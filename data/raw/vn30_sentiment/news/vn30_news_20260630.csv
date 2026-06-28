@@ -1,0 +1,62 @@
+date,ticker,article_id,news_text,news_source,is_real
+2026-06-30,ACB,ACB_ART_000,"Asia Commercial Bank Board approves cash dividend of 2798 VND per share for 2026, payable in September",Realistic_Sample,False
+2026-06-30,ACB,ACB_ART_001,"Asia Commercial Bank (ACB) reports Q2 2026 net profit of 3 trillion VND, up 11% year-over-year, beating analyst expectations",Realistic_Sample,False
+2026-06-30,ACB,ACB_ART_002,ACB upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,ACB,ACB_ART_003,"Asia Commercial Bank opens new branch network in 8 provinces across Vietnam, strengthening retail presence",Realistic_Sample,False
+2026-06-30,ACB,ACB_ART_004,ACB experiences increased competition from foreign banks entering Vietnamese Banking market,Realistic_Sample,False
+2026-06-30,VCB,VCB_ART_000,VCB announces interim dividend of 1249 VND per share with record payout ratio,Realistic_Sample,False
+2026-06-30,VCB,VCB_ART_001,"VCB announces robust Q2 results with net interest income growing 21% YoY, driven by strong loan demand",Realistic_Sample,False
+2026-06-30,VCB,VCB_ART_002,Vietcombank downgraded to 'Hold' by securities firm citing rising bad debt concerns,Realistic_Sample,False
+2026-06-30,BID,BID_ART_000,"Investment & Development Bank misses Q2 profit targets, net profit 2 trillion VND, down 14% from previous year",Realistic_Sample,False
+2026-06-30,BID,BID_ART_001,BID stock gains 3.7% as Banking sector leads market rally,Realistic_Sample,False
+2026-06-30,BID,BID_ART_002,"Investment & Development Bank Board approves cash dividend of 2517 VND per share for 2026, payable in September",Realistic_Sample,False
+2026-06-30,BID,BID_ART_003,Investment & Development Bank faces margin compression as operating costs rise faster than revenue in H1 2026,Realistic_Sample,False
+2026-06-30,BID,BID_ART_004,BID enters collaboration with international partner to expand Banking services into neighboring countries,Realistic_Sample,False
+2026-06-30,HDB,HDB_ART_000,"Housing Development Bank surges to 2404 new accounts in Q2, exceeding customer acquisition targets",Realistic_Sample,False
+2026-06-30,HDB,HDB_ART_001,HDB upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,HDB,HDB_ART_002,HDB invests 1489 billion VND in new technology platform to digitize customer services,Realistic_Sample,False
+2026-06-30,MBB,MBB_ART_000,"Military Commercial Joint Stock Bank receives 'Buy' recommendation from leading brokerage, target price raised 12%",Realistic_Sample,False
+2026-06-30,MBB,MBB_ART_001,MBB announces interim dividend of 1101 VND per share with record payout ratio,Realistic_Sample,False
+2026-06-30,MBB,MBB_ART_002,"Military Commercial Joint Stock Bank surges to 4887 new accounts in Q2, exceeding customer acquisition targets",Realistic_Sample,False
+2026-06-30,MBB,MBB_ART_003,MBB experiences increased competition from foreign banks entering Vietnamese Banking market,Realistic_Sample,False
+2026-06-30,MBB,MBB_ART_004,MBB stock declines 2.5 on profit taking after strong Q1 performance,Realistic_Sample,False
+2026-06-30,TCB,TCB_ART_000,"Techcombank misses Q2 profit targets, net profit 2 trillion VND, down 10% from previous year",Realistic_Sample,False
+2026-06-30,TCB,TCB_ART_001,"Techcombank Board approves cash dividend of 2935 VND per share for 2026, payable in September",Realistic_Sample,False
+2026-06-30,TCB,TCB_ART_002,Techcombank faces margin compression as operating costs rise faster than revenue in H1 2026,Realistic_Sample,False
+2026-06-30,TCB,TCB_ART_003,TCB faces downward pressure from foreign investors selling amid Banking sector weakness,Realistic_Sample,False
+2026-06-30,TCB,TCB_ART_004,TCB stock gains 3.7% as Banking sector leads market rally,Realistic_Sample,False
+2026-06-30,VHM,VHM_ART_000,VHM enters collaboration with international partner to expand Real Estate services into neighboring countries,Realistic_Sample,False
+2026-06-30,VHM,VHM_ART_001,"Vinhomes faces regulatory scrutiny over compliance requirements, may incur additional compliance costs",Realistic_Sample,False
+2026-06-30,VHM,VHM_ART_002,VHM upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,VHM,VHM_ART_003,"Vinhomes (VHM) reports Q2 2026 net profit of 3 trillion VND, up 19% year-over-year, beating analyst expectations",Realistic_Sample,False
+2026-06-30,VHM,VHM_ART_004,Vinhomes downgraded to 'Hold' by securities firm citing rising bad debt concerns,Realistic_Sample,False
+2026-06-30,VIC,VIC_ART_000,"Vingroup faces regulatory scrutiny over compliance requirements, may incur additional compliance costs",Realistic_Sample,False
+2026-06-30,VIC,VIC_ART_001,VIC announces interim dividend of 1055 VND per share with record payout ratio,Realistic_Sample,False
+2026-06-30,VIC,VIC_ART_002,"Vingroup misses Q2 profit targets, net profit 1 trillion VND, down 5% from previous year",Realistic_Sample,False
+2026-06-30,VNM,VNM_ART_000,VNM upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,VNM,VNM_ART_001,VNM faces downward pressure from foreign investors selling amid Consumer Goods sector weakness,Realistic_Sample,False
+2026-06-30,VNM,VNM_ART_002,"VNM warns of rising credit costs and narrowing net interest margin in H1 2026, concerning investors",Realistic_Sample,False
+2026-06-30,VNM,VNM_ART_003,"Vinamilk surges to 4296 new accounts in Q2, exceeding customer acquisition targets",Realistic_Sample,False
+2026-06-30,PGV,PGV_ART_000,PGV faces downward pressure from foreign investors selling amid Energy sector weakness,Realistic_Sample,False
+2026-06-30,PGV,PGV_ART_001,PGV invests 1462 billion VND in new technology platform to digitize customer services,Realistic_Sample,False
+2026-06-30,PGV,PGV_ART_002,"Petrovietnam Gas misses Q2 profit targets, net profit 2 trillion VND, down 12% from previous year",Realistic_Sample,False
+2026-06-30,PGV,PGV_ART_003,PGV stock gains 3.1% as Energy sector leads market rally,Realistic_Sample,False
+2026-06-30,PLX,PLX_ART_000,PLX stock gains 2.4% as Energy sector leads market rally,Realistic_Sample,False
+2026-06-30,PLX,PLX_ART_001,PLX upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,PLX,PLX_ART_002,"PLX warns of rising credit costs and narrowing net interest margin in H1 2026, concerning investors",Realistic_Sample,False
+2026-06-30,SAB,SAB_ART_000,SAB stock declines 1.6 on profit taking after strong Q1 performance,Realistic_Sample,False
+2026-06-30,SAB,SAB_ART_001,"Sabeco receives 'Buy' recommendation from leading brokerage, target price raised 14%",Realistic_Sample,False
+2026-06-30,SAB,SAB_ART_002,SAB faces downward pressure from foreign investors selling amid Consumer Goods sector weakness,Realistic_Sample,False
+2026-06-30,PNJ,PNJ_ART_000,PNJ faces downward pressure from foreign investors selling amid Retail sector weakness,Realistic_Sample,False
+2026-06-30,PNJ,PNJ_ART_001,PNJ enters collaboration with international partner to expand Retail services into neighboring countries,Realistic_Sample,False
+2026-06-30,PNJ,PNJ_ART_002,PNJ upgraded to 'Outperform' by investment bank citing strong fundamentals and growth prospects,Realistic_Sample,False
+2026-06-30,MSN,MSN_ART_000,"Masan Group opens new branch network in 7 provinces across Vietnam, strengthening retail presence",Realistic_Sample,False
+2026-06-30,MSN,MSN_ART_001,MSN stock declines 2.2 on profit taking after strong Q1 performance,Realistic_Sample,False
+2026-06-30,MSN,MSN_ART_002,MSN enters collaboration with international partner to expand Consumer Goods services into neighboring countries,Realistic_Sample,False
+2026-06-30,MSN,MSN_ART_003,MSN experiences increased competition from foreign banks entering Vietnamese Consumer Goods market,Realistic_Sample,False
+2026-06-30,STB,STB_ART_000,STB enters collaboration with international partner to expand Banking services into neighboring countries,Realistic_Sample,False
+2026-06-30,STB,STB_ART_001,"Sacombank receives 'Buy' recommendation from leading brokerage, target price raised 11%",Realistic_Sample,False
+2026-06-30,STB,STB_ART_002,STB experiences increased competition from foreign banks entering Vietnamese Banking market,Realistic_Sample,False
+2026-06-30,VPB,VPB_ART_000,"Vietnam Prosperity Bank faces regulatory scrutiny over compliance requirements, may incur additional compliance costs",Realistic_Sample,False
+2026-06-30,VPB,VPB_ART_001,"VPB announces robust Q2 results with net interest income growing 20% YoY, driven by strong loan demand",Realistic_Sample,False
+2026-06-30,VPB,VPB_ART_002,"Vietnam Prosperity Bank surges to 3758 new accounts in Q2, exceeding customer acquisition targets",Realistic_Sample,False

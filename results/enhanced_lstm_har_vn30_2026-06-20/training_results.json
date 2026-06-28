@@ -1,0 +1,41 @@
+{
+  "model": "Enhanced LSTM-HAR (VN30-Only)",
+  "dataset": "30 VN30 stocks",
+  "timestamp": "2026-06-20_123312",
+  "configuration": {
+    "hidden_size": 128,
+    "learning_rate": 0.0005,
+    "batch_size": 32,
+    "num_layers": 3,
+    "dropout": 0.2,
+    "weight_decay": 1e-05
+  },
+  "training": {
+    "best_epoch": 17,
+    "best_val_loss": 0.779912574595846,
+    "total_epochs": 32,
+    "early_stopped": true
+  },
+  "test_metrics": {
+    "mse": 3.969537942793977e-07,
+    "rmse": 0.0006300426924259956,
+    "mae": 0.0003079486486967653,
+    "r2": 0.11879730224609375,
+    "qlike": 0.5902683734893799,
+    "directional_accuracy": 68.01356119836713
+  },
+  "comparison_with_baseline": {
+    "har_r_dir_acc": 51.53,
+    "dir_acc_improvement": 16.483561198367127,
+    "har_r_rmse": 0.000513,
+    "rmse_difference": 0.00011704269242599559,
+    "har_r_r2": 0.105,
+    "r2_improvement_percent": 13.140287853422622
+  },
+  "files_generated": [
+    "best_enhanced_lstm_har_vn30.pth",
+    "checkpoint.pth",
+    "learning_curves.png",
+    "training_results.json"
+  ]
+}

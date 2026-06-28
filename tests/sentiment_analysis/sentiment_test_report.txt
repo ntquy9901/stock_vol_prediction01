@@ -1,0 +1,316 @@
+======================================================================
+SENTIMENT ANALYSIS TEST REPORT
+======================================================================
+
+Test Date: 2026-06-27 12:58:15
+Model: FinBERT (ProsusAI/finbert)
+Test Period: 2026-06-15 to 2026-06-26
+Total Trading Days: 10
+Total Articles: 31
+
+======================================================================
+OVERALL RESULTS
+======================================================================
+
+Total Tests: 31
+Correct Predictions: 4
+Overall Accuracy: 12.90%
+
+======================================================================
+RESULTS BY TRADING DAY
+======================================================================
+
+2026-06-15: 0/4 (0.0% accuracy)
+2026-06-16: 0/3 (0.0% accuracy)
+2026-06-17: 1/3 (33.3% accuracy)
+2026-06-18: 1/3 (33.3% accuracy)
+2026-06-19: 0/3 (0.0% accuracy)
+2026-06-22: 0/3 (0.0% accuracy)
+2026-06-23: 0/3 (0.0% accuracy)
+2026-06-24: 1/3 (33.3% accuracy)
+2026-06-25: 0/3 (0.0% accuracy)
+2026-06-26: 1/3 (33.3% accuracy)
+
+======================================================================
+DETAILED RESULTS PER ARTICLE
+======================================================================
+
+[INCORRECT]
+Date: 2026-06-15
+Ticker: VCB
+News: Vietcombank reports record Q2 2026 profit of 9 trillion VND, up 20% YoY, exceeding analyst expectations
+Expected: Positive (Earnings beat, strong growth)
+Actual: Negative (Score: -0.933)
+Scores - P:0.022 N:0.955 Neu:0.022
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-15
+Ticker: VNM
+News: Vinamilk announces strategic partnership with PepsiCo to distribute dairy products across Vietnam
+Expected: Positive (Strategic partnership, market expansion)
+Actual: Negative (Score: -0.783)
+Scores - P:0.104 N:0.887 Neu:0.009
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-15
+Ticker: HDB
+News: Housing Development Bank misses Q2 profit targets, net profit down 5% YoY due to rising bad debts
+Expected: Negative (Earnings miss, bad debt concerns)
+Actual: Neutral (Score: +0.003)
+Scores - P:0.015 N:0.011 Neu:0.974
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-15
+Ticker: VIC
+News: Vingroup announces restructuring plan to focus on core businesses: real estate, tourism, technology
+Expected: Neutral (Corporate restructuring (neutral))
+Actual: Positive (Score: +0.785)
+Scores - P:0.883 N:0.098 Neu:0.018
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-16
+Ticker: ACB
+News: Asia Commercial Bank surges 3.5% as foreign investors increase holdings in Vietnam banking sector
+Expected: Positive (Stock surge, foreign buying)
+Actual: Negative (Score: -0.917)
+Scores - P:0.026 N:0.943 Neu:0.032
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-16
+Ticker: PNJ
+News: Phu Nhuan Jewelry faces declining sales as gold prices reach record highs, consumer demand weakens
+Expected: Negative (Sales decline, weak demand)
+Actual: Neutral (Score: +0.013)
+Scores - P:0.021 N:0.007 Neu:0.972
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-16
+Ticker: PLX
+News: Petrovietnam Power maintains stable output amid energy market volatility
+Expected: Neutral (Stable performance (neutral))
+Actual: Negative (Score: -0.899)
+Scores - P:0.039 N:0.938 Neu:0.024
+----------------------------------------------------------------------
+
+[CORRECT]
+Date: 2026-06-17
+Ticker: VHM
+News: Vinhomes launches luxury real estate project in Hanoi with average price 90 million VND/m2, targeting high-end buyers
+Expected: Positive (New project launch, luxury segment)
+Actual: Positive (Score: +0.608)
+Scores - P:0.799 N:0.192 Neu:0.009
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-17
+Ticker: MBB
+News: Military Commercial Joint Stock Bank warns of rising credit costs and narrowing net interest margin in H2 2026
+Expected: Negative (Profit warning, margin compression)
+Actual: Neutral (Score: -0.009)
+Scores - P:0.010 N:0.019 Neu:0.970
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-17
+Ticker: SAB
+News: Sabeco completes board of directors restructuring, appoints new CEO
+Expected: Neutral (Management change (neutral))
+Actual: Positive (Score: +0.710)
+Scores - P:0.802 N:0.092 Neu:0.106
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-18
+Ticker: BID
+News: Investment & Development Bank receives 'Buy' recommendation from leading brokerage, target price raised 10%
+Expected: Positive (Analyst upgrade, price target increase)
+Actual: Negative (Score: -0.912)
+Scores - P:0.035 N:0.947 Neu:0.018
+----------------------------------------------------------------------
+
+[CORRECT]
+Date: 2026-06-18
+Ticker: MSN
+News: Masan Group experiences increased competition from foreign consumer goods companies entering Vietnamese market
+Expected: Negative (Competition increase, market share risk)
+Actual: Negative (Score: -0.840)
+Scores - P:0.041 N:0.881 Neu:0.078
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-18
+Ticker: TCB
+News: Techcombank maintains steady loan growth of 15% YoY in Q2 2026
+Expected: Neutral (Steady growth (neutral))
+Actual: Negative (Score: -0.903)
+Scores - P:0.042 N:0.945 Neu:0.013
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-19
+Ticker: VPB
+News: Vietnam Prosperity Bank completes successful bond issuance worth 2 trillion VND to bolster capital adequacy ratio
+Expected: Positive (Successful bond issuance, capital boost)
+Actual: Negative (Score: -0.914)
+Scores - P:0.035 N:0.948 Neu:0.017
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-19
+Ticker: STB
+News: Sacombank downgraded to 'Hold' by securities firm citing rising bad debt concerns and NPL ratio increase
+Expected: Negative (Analyst downgrade, NPL concerns)
+Actual: Neutral (Score: +0.014)
+Scores - P:0.024 N:0.011 Neu:0.965
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-19
+Ticker: PGV
+News: Petrovietnam Gas continues normal operations, supply stable to industrial customers
+Expected: Neutral (Normal operations (neutral))
+Actual: Negative (Score: -0.682)
+Scores - P:0.153 N:0.835 Neu:0.013
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-22
+Ticker: FPT
+News: FPT Corporation signs $50 million technology contract with global client, expanding international presence
+Expected: Positive (Large contract, international expansion)
+Actual: Negative (Score: -0.911)
+Scores - P:0.037 N:0.948 Neu:0.014
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-22
+Ticker: HPG
+News: Hoa Phat Group faces steel price decline amid global market oversupply and weak construction demand
+Expected: Negative (Price decline, weak demand)
+Actual: Neutral (Score: +0.008)
+Scores - P:0.017 N:0.009 Neu:0.974
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-22
+Ticker: GVR
+News: Vietnam Rubber Group maintains stable production levels despite price fluctuations in global rubber market
+Expected: Neutral (Stable production (neutral))
+Actual: Negative (Score: -0.903)
+Scores - P:0.038 N:0.941 Neu:0.021
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-23
+Ticker: MWG
+News: Mobile World Group opens 50 new stores across Vietnam, accelerating retail network expansion
+Expected: Positive (Store expansion, network growth)
+Actual: Negative (Score: -0.905)
+Scores - P:0.039 N:0.945 Neu:0.016
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-23
+Ticker: VRE
+News: Vincom Retail faces margin pressure from rising operational costs and competitive discounting by rivals
+Expected: Negative (Margin pressure, competition)
+Actual: Neutral (Score: +0.011)
+Scores - P:0.022 N:0.010 Neu:0.968
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-23
+Ticker: NLG
+News: Nam Long Investment Corporation maintains balanced portfolio between residential and commercial projects
+Expected: Neutral (Balanced portfolio (neutral))
+Actual: Positive (Score: +0.552)
+Scores - P:0.772 N:0.220 Neu:0.008
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-24
+Ticker: SSI
+News: SSI Securities Corporation achieves record Q2 revenue led by strong brokerage and proprietary trading activities
+Expected: Positive (Record revenue, strong performance)
+Actual: Negative (Score: -0.931)
+Scores - P:0.026 N:0.956 Neu:0.018
+----------------------------------------------------------------------
+
+[CORRECT]
+Date: 2026-06-24
+Ticker: VNM
+News: Vinamilk struggles with imported dairy products as tariffs reduce, pressuring domestic market share
+Expected: Negative (Market share pressure, import competition)
+Actual: Negative (Score: -0.704)
+Scores - P:0.027 N:0.731 Neu:0.243
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-24
+Ticker: KDC
+News: Kido Group continues diversified product strategy across food and consumer segments
+Expected: Neutral (Diversified strategy (neutral))
+Actual: Negative (Score: -0.233)
+Scores - P:0.380 N:0.613 Neu:0.007
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-25
+Ticker: GVR
+News: Vietnam Rubber Group benefits from rising rubber prices in global markets, export revenue increases 25%
+Expected: Positive (Price increase, export growth)
+Actual: Negative (Score: -0.928)
+Scores - P:0.028 N:0.956 Neu:0.015
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-25
+Ticker: HPG
+News: Hoa Phat Group production disrupted by equipment failure at Hai Duong steel complex
+Expected: Negative (Production disruption, operational issue)
+Actual: Neutral (Score: +0.023)
+Scores - P:0.034 N:0.011 Neu:0.955
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-25
+Ticker: TPB
+News: Tien Phong Bank maintains conservative risk management approach with steady loan portfolio quality
+Expected: Neutral (Conservative approach (neutral))
+Actual: Negative (Score: -0.250)
+Scores - P:0.368 N:0.618 Neu:0.014
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-26
+Ticker: VIC
+News: Vingroup leads market recovery with VIC gaining 4.3 points for VN-Index, foreign investors buy strongly
+Expected: Positive (Market leader, strong foreign buying)
+Actual: Negative (Score: -0.916)
+Scores - P:0.030 N:0.946 Neu:0.023
+----------------------------------------------------------------------
+
+[INCORRECT]
+Date: 2026-06-26
+Ticker: LPB
+News: LPBank causes largest market pressure, losing 4.5 points from VN-Index in volatile trading session
+Expected: Negative (Market pressure, index decline)
+Actual: Neutral (Score: +0.006)
+Scores - P:0.017 N:0.010 Neu:0.973
+----------------------------------------------------------------------
+
+[CORRECT]
+Date: 2026-06-26
+Ticker: VHM
+News: Vinhomes prepares to close dividend record date with 60% cash payout (6,000 VND per share)
+Expected: Positive (Dividend announcement, shareholder return)
+Actual: Positive (Score: +0.234)
+Scores - P:0.607 N:0.373 Neu:0.021
+----------------------------------------------------------------------
+

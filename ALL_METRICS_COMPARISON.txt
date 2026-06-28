@@ -1,0 +1,273 @@
+# ALL METRICS COMPARISON - Complete Data
+
+**Date:** 2026-06-21
+**Dataset:** 30 VN30 Stocks (96,352 samples)
+**All 6 Mandatory Metrics Compared for All Models**
+
+---
+
+## 📊 Complete Metrics Table - All Models
+
+### A. Models WITHOUT Data Leakage (Realistic - Production Ready)
+
+| Model | MSE | RMSE | MAE | R² | QLIKE | Dir Acc | Split Method | Training Time | Model Size |
+|-------|-----|------|-----|----|----|---------|--------------|---------------|------------|
+| **HAR-R Linear** | 2.631e-07 | 0.000513 | 0.000257 | 0.105 | 1.298 | 51.53% | Temporal | 0.004s | < 0.1 MB |
+| **Simple LSTM (Val)** | 5.283e-07 | 0.000727 | 0.000424 | 0.211 | 0.673 | 47.89% | Temporal (70/15/15) | ~5 min | ~1.5 MB |
+| **LSTM-HAR (Val)** | 3.065e-07 | 0.000554 | 0.000258 | 0.110 | N/A | 48.09% | Temporal (70/15/15) | ~8 min | ~1.0 MB |
+| **Enhanced LSTM-HAR (Prevention)** | 3.107e-07 | 0.000557 | 0.000259 | 0.098 | 0.641 | 48.56% | Temporal (70/15/15) | ~22 min | ~5.3 MB |
+
+### B. Models WITH Data Leakage (Inflated - NOT for Production)
+
+| Model | MSE | RMSE | MAE | R² | QLIKE | Dir Acc | Split Method | Training Time | Status |
+|-------|-----|------|-----|----|----|---------|--------------|---------------|---------|
+| **Simple LSTM (Leakage)** | 3.447e-07 | 0.000587 | 0.000303 | 0.167 | 1.170 | 67.63% | ❌ Random | ~15 min | 🔴 DATA LEAKAGE |
+| **LSTM-HAR (Leakage)** | 3.120e-07 | 0.000559 | 0.000297 | 0.161 | 0.566 | 67.39% | ❌ Random | ~15 min | 🔴 DATA LEAKAGE |
+
+---
+
+## 🏆 Best Model by Each Metric (Realistic Models Only)
+
+| Metric | Best Model | Value | 2nd Best | Value | % Difference |
+|--------|-----------|-------|----------|-------|-------------|
+| **MSE** | HAR-R Linear | **2.631e-07** | Enhanced LSTM-HAR | 3.107e-07 | +18.1% |
+| **RMSE** | HAR-R Linear | **0.000513** | LSTM-HAR (Val) | 0.000554 | +8.0% |
+| **MAE** | LSTM-HAR (Val) | **0.000258** | HAR-R Linear | 0.000257 | +0.4% |
+| **R²** | Simple LSTM (Val) | **0.211** | LSTM-HAR (Val) | 0.110 | -47.9% |
+| **QLIKE** | Enhanced LSTM-HAR | **0.641** | Simple LSTM (Val) | 0.673 | +5.0% |
+| **Dir Acc** | HAR-R Linear | **51.53%** | Enhanced LSTM-HAR | 48.56% | -5.8% |
+
+---
+
+## 📈 Performance vs Targets
+
+### MSE Target: Lower is Better ✅
+
+| Model | MSE | Status | vs Target |
+|-------|-----|--------|----------|
+| HAR-R Linear | 2.631e-07 | ✅ BEST | Reference |
+| Enhanced LSTM-HAR | 3.107e-07 | ✅ Good | +18.1% worse |
+| LSTM-HAR (Val) | 3.065e-07 | ✅ Good | +16.5% worse |
+| Simple LSTM (Val) | 5.283e-07 | ⚠️ Fair | +100.8% worse |
+
+**Verdict:** All models within reasonable range. HAR-R Linear wins by 18-101%.
+
+---
+
+### RMSE Target: < 0.20 ✅ ALL PASS
+
+| Model | RMSE | Status | % of Target |
+|-------|------|--------|--------------|
+| HAR-R Linear | 0.000513 | ✅ BEST | 0.26% |
+| LSTM-HAR (Val) | 0.000554 | ✅ Good | 0.28% |
+| Enhanced LSTM-HAR | 0.000557 | ✅ Good | 0.28% |
+| Simple LSTM (Val) | 0.000727 | ✅ Good | 0.36% |
+
+**Verdict:** All models pass with 99.7%+ margin. HAR-R Linear best at 0.26% of target.
+
+---
+
+### MAE Target: Lower is Better ✅
+
+| Model | MAE | Status | vs Best |
+|-------|-----|--------|---------|
+| LSTM-HAR (Val) | 0.000258 | ✅ BEST | Reference |
+| HAR-R Linear | 0.000257 | ✅ Excellent | -0.4% better |
+| Enhanced LSTM-HAR | 0.000259 | ✅ Excellent | +0.4% worse |
+| Simple LSTM (Val) | 0.000424 | ⚠️ Fair | +64.3% worse |
+
+**Verdict:** HAR-R Linear and LSTM-HAR essentially tied (0.4% difference). Both excellent.
+
+---
+
+### R² Target: > 0.50 ❌ ALL FAIL
+
+| Model | R² | Status | % to Target |
+|-------|----|--------|-------------|
+| Simple LSTM (Val) | 0.211 | ❌ Best but failing | 42.2% |
+| LSTM-HAR (Val) | 0.110 | ❌ Poor | 22.0% |
+| HAR-R Linear | 0.105 | ❌ Poor | 21.0% |
+| Enhanced LSTM-HAR | 0.098 | ❌ Poor | 19.6% |
+
+**Verdict:** All models fail target. Best model (Simple LSTM) only reaches 42% of target.
+
+---
+
+### QLIKE Target: < 0.50 ❌ ALL FAIL
+
+| Model | QLIKE | Status | % above Target |
+|-------|----|--------|-----------------|
+| Enhanced LSTM-HAR | 0.641 | ❌ Best but failing | +28.2% |
+| Simple LSTM (Val) | 0.673 | ❌ Poor | +34.6% |
+| HAR-R Linear | 1.298 | ❌ Worst | +159.6% |
+| LSTM-HAR (Leakage) | 0.566 | ❌ With leakage | +13.2% |
+
+**Verdict:** All models fail target. Enhanced LSTM-HAR closest (28% above target).
+
+**Note:** LSTM-HAR with data leakage has 0.566 (better than realistic models), but this is due to overfitting.
+
+---
+
+### Dir Acc Target: > 55% ❌ ALL FAIL
+
+| Model | Dir Acc | Status | % to Target | vs Baseline |
+|-------|---------|--------|-------------|-------------|
+| HAR-R Linear | 51.53% | ❌ Best but failing | 93.7% | Reference |
+| Enhanced LSTM-HAR | 48.56% | ❌ Poor | 88.3% | -5.8% |
+| LSTM-HAR (Val) | 48.09% | ❌ Poor | 87.4% | -6.7% |
+| Simple LSTM (Val) | 47.89% | ❌ Poor | 87.1% | -7.0% |
+| Simple LSTM (Leakage) | 67.63% | ❌ Inflated | 123.0% | +31.3% 🔴 |
+| LSTM-HAR (Leakage) | 67.39% | ❌ Inflated | 122.5% | +30.8% 🔴 |
+
+**Verdict:** All realistic models fail target. HAR-R Linear closest at 93.7% of target.
+
+**Data Leakage Impact:** Inflates Dir Acc by 40%+ (67% vs 48%).
+
+---
+
+## 🎯 Overall Success Criteria Summary
+
+| Model | MSE | RMSE | MAE | R² | QLIKE | Dir Acc | Overall Score | Rank |
+|-------|-----|------|-----|----|----|---------|---------------|------|
+| **HAR-R Linear** | ✅ 1st | ✅ 1st | ✅ 2nd | ❌ 3rd | ❌ 4th | ❌ 1st | **3/6 PASS** | 🥇 **1st** |
+| **Enhanced LSTM-HAR** | ✅ 3rd | ✅ 3rd | ✅ 4th | ❌ 4th | ✅ 1st | ❌ 2nd | **3/6 PASS** | 🥈 **2nd** |
+| **LSTM-HAR (Val)** | ✅ 2nd | ✅ 2nd | ✅ 1st | ❌ 2nd | N/A | ❌ 3rd | **3/6 PASS** | 🥉 **3rd** |
+| **Simple LSTM (Val)** | ✅ 4th | ✅ 4th | ✅ 4th | ✅ 1st | ❌ 2nd | ❌ 4th | **3/6 PASS** | **4th** |
+
+**Note:** Rankings based on:
+- MSE: Lower is better (1st = lowest)
+- RMSE: Lower is better (1st = lowest)
+- MAE: Lower is better (1st = lowest)
+- R²: Higher is better (1st = highest)
+- QLIKE: Lower is better (1st = lowest)
+- Dir Acc: Higher is better (1st = highest)
+
+**Legend:**
+- ✅ = Metric is good (passes target or best in category)
+- ❌ = Metric fails target
+- **Rank:** 1st = Best overall performance
+
+---
+
+## 📊 Statistical Comparison
+
+### MSE Distribution (Realistic Models):
+```
+Range: 2.631e-07 to 5.283e-07
+Mean: 3.520e-07
+Median: 3.086e-07
+Std Dev: 1.087e-07
+
+HAR-R Linear: -0.81σ (below mean - excellent)
+Enhanced LSTM-HAR: -0.42σ (below mean - good)
+LSTM-HAR (Val): -0.40σ (below mean - good)
+Simple LSTM (Val): +1.63σ (above mean - outlier)
+```
+
+### RMSE Distribution (Realistic Models):
+```
+Range: 0.000513 to 0.000727
+Mean: 0.000595
+Median: 0.000556
+Std Dev: 0.000089
+
+HAR-R Linear: -0.92σ (below mean - excellent)
+LSTM-HAR (Val): -0.46σ (below mean - good)
+Enhanced LSTM-HAR: -0.43σ (below mean - good)
+Simple LSTM (Val): +1.48σ (above mean - poor)
+```
+
+### Dir Acc Distribution (Realistic Models):
+```
+Range: 47.89% to 51.53%
+Mean: 49.02%
+Median: 48.33%
+Std Dev: 1.51%
+
+HAR-R Linear: +1.66σ (above mean - excellent)
+Enhanced LSTM-HAR: +0.36σ (above mean - fair)
+LSTM-HAR (Val): +0.05σ (near mean - average)
+Simple LSTM (Val): -0.75σ (below mean - poor)
+```
+
+---
+
+## 🔍 Key Insights from All Metrics
+
+### 1. HAR-R Linear is the Best Overall Model
+- Wins 3/6 metrics (MSE, RMSE, Dir Acc)
+- 2nd best on MAE (only 0.4% worse than best)
+- Instant training, tiny model
+- Only model to achieve > 50% Dir Acc
+
+### 2. No Model Meets All Success Criteria
+- All models: 3/6 metrics PASS (50% success rate)
+- All models: 3/6 metrics FAIL (50% failure rate)
+- Primary target (Dir Acc > 55%): ALL MODELS FAIL
+
+### 3. Deep Learning Doesn't Guarantee Improvement
+- LSTM models perform WORSE than linear baseline on Dir Acc
+- More complexity ≠ better performance
+- Need new approaches (foundation models, technical indicators)
+
+### 4. Volatility is Inherently Difficult to Predict
+- Low R² across all models (0.10-0.21)
+- Dir Acc below 55% for all realistic models
+- May need to accept 48-52% as realistic baseline
+
+### 5. Data Leakage Impact is SEVERE
+- Inflates Dir Acc by 40%+ (67% vs 48%)
+- Makes models appear much better than reality
+- MUST use temporal split for time series
+
+---
+
+## 📋 Model Selection Guide
+
+### Choose HAR-R Linear if:
+- ✅ You need the best overall performance
+- ✅ You want instant training (< 0.01 seconds)
+- ✅ You want a tiny model (< 0.1 MB)
+- ✅ You need the best Dir Acc (51.53%, closest to 55% target)
+
+### Choose Enhanced LSTM-HAR if:
+- ✅ You want the best QLIKE (0.641)
+- ✅ You need comprehensive overfitting prevention
+- ✅ You want the most robust deep learning model
+- ⚠️ You can afford longer training time (~22 min)
+
+### Choose LSTM-HAR (Val) if:
+- ✅ You want the best MAE (0.000258)
+- ✅ You want a balanced model (good RMSE, good MAE)
+- ✅ You want moderate training time (~8 min)
+- ⚠️ QLIKE not available
+
+### Choose Simple LSTM (Val) if:
+- ✅ You want the best R² (0.211)
+- ✅ You want fast training (~5 min)
+- ⚠️ Worst RMSE and Dir Acc among realistic models
+
+---
+
+## 🎯 Final Recommendation
+
+**For Production Use:**
+- ⭐⭐⭐ **HAR-R Linear** - Best overall, instant training, tiny model
+
+**For Research/Experimentation:**
+- ⭐⭐ **Enhanced LSTM-HAR** - Comprehensive techniques, best QLIKE
+
+**For Quick Results:**
+- ⭐⭐⭐ **HAR-R Linear** - No training needed, use immediately
+
+**For Improvement:**
+- 🚀 **Try TimesFM 2.5 LoRA** - Foundation model approach
+- 🚀 **Try LSTM-GAT Hybrid** - Spatial relationships
+- ⭐ **Add technical indicators** - RSI, MACD, Bollinger Bands
+
+---
+
+**Created by:** Stock Volatility Prediction Team
+**Date:** 2026-06-21
+**Version:** 1.0
+**Purpose:** Complete 6-metric comparison for all models

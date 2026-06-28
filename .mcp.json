@@ -1,0 +1,25 @@
+{
+  "gemini-review": {
+    "command": "python",
+    "args": [
+      "D:\\bmad-projects\\stock_vol_prediction01\\gemini_mcp_server.py"
+    ],
+    "env": {
+      "GOOGLE_GEMINI_API_KEY": "${GOOGLE_GEMINI_API_KEY}",
+      "GEMINI_MODEL": "gemini-2.5-pro"
+    }
+  },
+  "local-coder-review": {
+    "command": "python",
+    "args": [
+      "D:\\bmad-projects\\stock_vol_prediction01\\local_coder_mcp_server.py"
+    ],
+    "env": {
+      "LLM_RUNTIME": "ollama",
+      "LLM_MODEL": "qwen2.5-coder:32b",
+      "LLM_BASE_URL": "http://localhost:11434",
+      "LLM_TEMPERATURE": "0.3",
+      "LLM_MAX_TOKENS": "8192"
+    }
+  }
+}

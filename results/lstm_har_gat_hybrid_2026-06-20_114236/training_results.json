@@ -1,0 +1,38 @@
+{
+  "config": {
+    "num_stocks": 30,
+    "seq_length": 22,
+    "forecast_horizon": 5,
+    "hidden_dim": 64,
+    "lstm_layers": 2,
+    "gat_heads": 4,
+    "num_epochs": 2,
+    "patience": 15,
+    "batch_size": 32,
+    "lr": 0.001,
+    "device": "cpu"
+  },
+  "graph_info": {
+    "num_nodes": 30,
+    "num_edges": 349,
+    "edge_density": 0.8022988505747126,
+    "avg_degree": 23.266666666666666
+  },
+  "train_losses": [
+    0.8997670139585222,
+    0.8643097460269928
+  ],
+  "val_losses": [
+    0.9074169337749481,
+    0.911745834350586
+  ],
+  "final_val_metrics": {
+    "mse": 0.9117459058761597,
+    "rmse": 0.9548538662414053,
+    "mae": 0.559604823589325,
+    "r2": 0.09039920568466187,
+    "qlike": 8413060.0,
+    "directional_accuracy": 0.0
+  },
+  "save_dir": "results/lstm_har_gat_hybrid_2026-06-20_114236"
+}

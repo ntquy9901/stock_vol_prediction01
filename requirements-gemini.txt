@@ -1,0 +1,15 @@
+# Gemini API Integration Requirements
+# Cài đặt: pip install -r requirements-gemini.txt
+
+# Core dependencies
+google-generativeai>=0.8.0
+
+# Optional: cho better JSON parsing
+pyyaml>=6.0
+
+# Optional: cho CLI enhancements
+click>=8.0
+rich>=13.0
+
+# Optional: cho .env file support
+python-dotenv>=1.0.0

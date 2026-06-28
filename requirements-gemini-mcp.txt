@@ -1,0 +1,14 @@
+# Gemini MCP Server Dependencies
+# Cài đặt: pip install -r requirements-gemini-mcp.txt
+
+# MCP Python SDK
+mcp>=0.9.0
+
+# Google Generative AI SDK
+google-generativeai>=0.8.0
+
+# Async support
+asyncio>=3.4.3
+
+# Optional: cho better error handling
+pydantic>=2.0

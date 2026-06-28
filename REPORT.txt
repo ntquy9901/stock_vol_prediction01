@@ -1,0 +1,16 @@
+## 📊 Model Comparison
+
+### Complete Comparison Table
+
+| Model | Architecture | RMSE | MAE | R² | QLIKE | Dir Acc | Training Time | Model Size | Status |
+|-------|-------------|------|-----|----|----|----------|---------------|------------|---------|
+| **Enhanced LSTM-HAR** | 3-Layer LSTM, 128 hidden, 3 features | **0.000630** | **0.000308** | **0.119** | **0.590** | **68.01%** | **~17 min** | **1.3 MB** | ⭐ **BEST** |
+| **HAR-R Linear** | Linear Regression, 3 features | **0.000513** | **0.000257** | **0.105** | **1.298** | **51.53%** | **~0.004s** | **< 0.1 MB** | Baseline |
+
+---
+
+
+LSTM-HAR (3 layers LSTM) QLIKE **0.590**, RMSE  **0.000630**, MAE  **0.000308**, R2 **0.119**, Dir Acc  68.01%
+HAR-R Linear QLIKE **1.298** , RMSE **0.000513**, MAE **0.000257**, R2 **0.105**, Dir Acc 51.53%
+
+

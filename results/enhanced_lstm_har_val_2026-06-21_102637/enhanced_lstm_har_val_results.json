@@ -1,0 +1,42 @@
+{
+  "model": "Enhanced LSTM-HAR with Validation",
+  "timestamp": "2026-06-21_110631",
+  "features": "Raw + HAR (3 features: raw, weekly, monthly)",
+  "enhancement": "Added raw parkinson volatility, removed redundant daily",
+  "split_method": "Temporal (70/15/15)",
+  "configuration": {
+    "hidden_size": 128,
+    "learning_rate": 0.0005,
+    "batch_size": 32,
+    "seq_length": 22,
+    "weight_decay": 1e-05,
+    "dropout": 0.2,
+    "num_layers": 3
+  },
+  "best_epoch": 18,
+  "best_val_loss": 0.01863805044775101,
+  "validation_metrics": {
+    "mse": 3.2443392683489947e-07,
+    "rmse": 0.0005695910171648596,
+    "mae": 0.00029422741499729455,
+    "r2": 0.08531451225280762,
+    "qlike": 0.58900386095047,
+    "directional_accuracy": 49.17042739580568
+  },
+  "test_metrics": {
+    "mse": 9.886796760838479e-05,
+    "rmse": 0.009943237280100721,
+    "mae": 0.004476782400161028,
+    "r2": -0.047208547592163086,
+    "qlike": 1.7679204940795898,
+    "directional_accuracy": 48.125290331143404
+  },
+  "val_test_diff": {
+    "mse_diff": 9.854353368154989e-05,
+    "rmse_diff": 0.009373646262935862,
+    "mae_diff": 0.004182554985163733,
+    "r2_diff": -0.1325230598449707,
+    "qlike_diff": 1.1789166927337646,
+    "dir_acc_diff": -1.0451370646622777
+  }
+}

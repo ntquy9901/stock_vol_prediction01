@@ -229,6 +229,63 @@ model_file = f"models/baseline_{timestamp}/"
 
 ---
 
+#### **E. Overfitting Prevention (MANDATORY)** ⭐
+
+**CRITICAL:** ALL models MUST apply anti-overfitting techniques to ensure generalization.
+
+**3 Groups of Techniques (in priority order):**
+
+**1. Data-Centric (Priority 1):**
+- Data augmentation (jittering, scaling cho time series)
+- Outlier removal (n_std=3)
+- Label smoothing (optional)
+
+**2. Model-Centric (Priority 2):**
+- Early stopping (patience=15 cho LSTM, patience=10 cho TimesFM)
+- L2 regularization (weight_decay=1e-5 cho LSTM, 1e-4 cho TimesFM)
+- Dropout (0.2 cho LSTM layers, 0.3 cho FC layers)
+- Layer normalization
+- Learning rate scheduling (ReduceLROnPlateau)
+- Gradient clipping (max_norm=1.0)
+
+**3. Architecture-Specific:**
+- **LSTM:** Recurrent dropout (built-in PyTorch), spatial dropout
+- **GNN:** DropEdge (edge_drop=0.3), node dropout (0.2)
+- **TimesFM:** LoRA dropout (0.1), gradient clipping
+
+**Mandatory Checklist:**
+```python
+# Before Training
+[ ] Data augmentation applied (if dataset < 5000)
+[ ] Outliers removed (n_std=3)
+[ ] Temporal split verified (NOT random)
+[ ] Early stopping configured (patience=15)
+[ ] Weight decay set (1e-5)
+[ ] Dropout configured (0.2)
+[ ] LR scheduler configured
+[ ] Gradient clipping enabled
+
+# During Training
+[ ] Learning curves plotted every 10 epochs
+[ ] Val loss monitored for overfitting signs
+[ ] Checkpoints saved at best val loss
+
+# After Training
+[ ] Val-test metrics gap computed (< 0.05)
+[ ] All 6 metrics evaluated
+[ ] Results compared to baseline
+```
+
+**Documentation:** `docs/project/OVERFITTING_PREVENTION.md`
+
+**Quick Implementation:**
+```python
+# Complete training loop with all anti-overfitting techniques
+# See: docs/project/OVERFITTING_PREVENTION.md section 9
+```
+
+---
+
 ## 4. Model Architecture
 
 ### **Baseline Models**
@@ -376,6 +433,77 @@ Before approving any ML/DS code, verify:
 
 **See `docs/QUICK_REFERENCE_CHECKLIST.md` for full 87-item checklist.**
 
+### **LSTM-GNN Normalization Failure (2026-06-21)**
+
+**Issue:** Implemented dataset with `VolatilityNormalizer` but never used it in `__getitem__`, leading to:
+- Trial-and-error with Softplus activation (collapsed predictions to 0)
+- Wasted 3-4 hours debugging non-existent "negative prediction" problem
+- Final solution: Just follow LSTM-HAR Enhanced's proven approach
+
+**Root Cause:** 
+- Didn't study LSTM-HAR Enhanced (67.90% Dir Acc) BEFORE implementing
+- Assumed code worked without validation testing
+- Trial-and-error instead of learning from proven solution
+
+**LSTM-HAR Enhanced's Proven Approach:**
+```python
+# 1. StandardScaler normalization (mean=0, std=1)
+target_scaler = StandardScaler()
+target_scaler.fit(y_train)
+y_train_norm = target_scaler.transform(y_train)
+
+# 2. Linear output (NO activation like Softplus/ReLU)
+output = self.fc(last_hidden_state)  # Can be negative on normalized scale
+
+# 3. Inverse transform for evaluation
+y_pred_original = target_scaler.inverse_transform(y_pred_norm)
+# Now y_pred_original ≥ 0 (volatility is non-negative)
+```
+
+**Why This Works:**
+- Normalized scale (mean=0, std=1) allows negative values during training
+- Model learns patterns on normalized scale
+- Inverse transform brings predictions back to physical scale (≥0)
+- No need for activation functions to enforce non-negativity
+
+**Mandatory Pre-Implementation Checklist (NEW):**
+Before implementing ANY model architecture:
+- [ ] Study existing successful implementation (e.g., LSTM-HAR Enhanced)
+- [ ] Document their approach: normalization, activation, loss
+- [ ] Identify patterns to follow vs patterns to improve
+- [ ] Validate assumptions with simple tests (e.g., check if data is normalized)
+- [ ] Compare architecture choices with proven solutions
+
+**What We Should Have Done:**
+```
+Day 1 (BEFORE implementation):
+  - Study: src/lstm_har_enhanced/model_enhanced.py
+  - Study: src/lstm_har_enhanced/train_with_overfitting_prevention.py
+  - Document: "They use StandardScaler + linear output + inverse_transform"
+  
+Day 2:
+  - Design LSTM-GNN following same pattern
+  - Implement: StandardScaler in __getitem__, not just fit()
+  - Implement: Inverse transform in validate()
+  
+Day 3:
+  - Test and compare
+  - Achieve: 64-65% Dir Acc immediately (no trial-and-error)
+```
+
+**What Actually Happened (Wrong Process):**
+```
+Day 1: Implement without studying reference
+Day 2: Predictions negative → Add Softplus (wrong fix)
+Day 3: Predictions collapse to 0 → Remove Softplus
+Day 4: FINALLY check LSTM-HAR Enhanced → "They use StandardScaler!"
+Day 5: Fix dataset to actually normalize → 64-65% Dir Acc
+```
+
+**Lesson:** Always study proven solutions BEFORE implementing, not after failures.
+
+---
+
 ---
 
 ## 6. Evaluation Methodology
@@ -480,6 +608,7 @@ patience = 15            # Early stopping patience
 **In docs/:**
 - `docs/project/` - Project-specific documentation
   - `TEMPORAL_SPLIT_EVALUATION.md` - Evaluation methodology
+  - `OVERFITTING_PREVENTION.md` - Anti-overfitting techniques (MANDATORY)
   - `REFACTOR_SUMMARY.md` - Refactoring history
 - `docs/lstm/` - LSTM model documentation
 - `docs/common-rules/` - Reference to ml-ds-common-rules
@@ -493,17 +622,24 @@ patience = 15            # Early stopping patience
 ### **Common Commands**
 
 ```bash
-# Process data
-python process_data.py
+# Process data with outlier removal
+python process_data.py --remove_outliers --n_std 3
 
-# Train with validation (NEW - 3-way temporal split)
-python src/lstm_har_enhanced/train_with_validation.py
+# Train with all anti-overfitting techniques
+python src/lstm_har_enhanced/train_with_validation.py \
+    --dropout 0.2 \
+    --weight_decay 1e-5 \
+    --grad_clip 1.0 \
+    --early_stopping_patience 15
 
-# Calculate all metrics
-python src/experiment/calculate_all_metrics.py
+# Train TimesFM with LoRA regularization
+python src/timesfm_baseline/timesfm_lora_finetuning.py \
+    --lora_r 8 \
+    --lora_alpha 16 \
+    --lora_dropout 0.1
 
-# Demonstrate data leakage
-python src/experiment/demonstrate_data_leakage.py
+# Monitor overfitting during training
+python check_overfitting.py --val_test_gap_threshold 0.05
 ```
 
 ### **File Locations**
@@ -518,7 +654,58 @@ Source:      src/
 
 ---
 
-## 10. Contact & Support
+## 10. Volatility Normalization Implementation (Project-Specific)
+
+**For universal normalization best practices, see:**  
+📘 **[Normalization Best Practices](D:\bmad-projects\ml-ds-common-rules\NORMALIZATION_BEST_PRACTICES.md)**
+
+### **Current Implementation Status**
+
+Following universal pattern from `ml-ds-common-rules`:
+
+**File:** `src/lstm_gat_hybrid/dataset_with_graph_method.py`
+- ✅ Uses `VolatilityNormalizer` (StandardScaler wrapper from `src/common/data_normalization.py`)
+- ✅ Per-stock normalization (each stock has its own scaler)
+- ✅ Proper transform in `__getitem__` (Line 280-316)
+- ✅ Inverse transform in validation (Line 357-366 in `train_parallel_enhanced.py`)
+
+**Training Results (Epoch 4/50):**
+- Dir Acc: **64.87% - 65.05%** (Target: >67.90%)
+- Predictions: NOT constant (variance = 0.042)
+- Training: Stable, loss decreasing
+
+### **Project-Specific Lessons Learned**
+
+**LSTM-GNN Normalization Failure (2026-06-21):**
+
+Timeline of what went wrong:
+```
+Day 1: Implemented dataset with VolatilityNormalizer
+       - Initialized scalers (Line 182-186) ✅
+       - But never used them in __getitem__ ❌
+
+Day 2: Model predictions negative
+       - Tried Softplus activation (wrong fix) ❌
+       - Predictions collapsed to 0 ❌
+
+Day 3: FINALLY checked LSTM-HAR Enhanced
+       - Discovered: They use StandardScaler + linear output ✅
+       - Fixed: Actually use scalers in __getitem__ ✅
+```
+
+**Root cause:** Didn't study proven implementation BEFORE coding.
+
+**Resolution:** Fixed dataset to actually normalize (Line 280-316).
+
+### **References**
+
+- **Proven implementation (67.90% Dir Acc):** `src/lstm_har_enhanced/train_with_overfitting_prevention.py`
+- **Normalizer utility:** `src/common/data_normalization.py`
+- **Universal patterns:** `ml-ds-common-rules/NORMALIZATION_BEST_PRACTICES.md`
+
+---
+
+## 11. Contact & Support
 
 ### **Getting Help**
 
@@ -529,19 +716,42 @@ Source:      src/
 
 ### **Project Status**
 
-- **Phase:** Sprint 1 - Baseline implementation
-- **Current:** Implementing 3-way temporal split evaluation
-- **Next:** Multi-horizon expansion (1, 10, 22-day forecasts)
+- **Phase:** LSTM-GNN Hybrid Development
+- **Current:** Training Parallel LSTM-GNN (k-NN graph) - Epoch 4/50
+- **Latest Results:** 64.87% - 65.05% Dir Acc (target: >67.90%)
+- **Next:** Complete training, compare with baselines, analyze results
 
 ---
 
-**Last Updated:** 2026-06-19
-**Version:** 3.1 (Standardized Hyperparameters & Metrics)
+**Last Updated:** 2026-06-21
+**Version:** 3.4 (Extracted Common Best Practices to ml-ds-common-rules)
 **Status:** Active Development
 
 ---
 
-**Changes in v3.1 (Current Version):**
+**Changes in v3.4 (Current Version):**
+- ✅ **Extracted normalization best practices** → `ml-ds-common-rules/NORMALIZATION_BEST_PRACTICES.md`
+- ✅ **Reduced project-specific documentation** - Keep only volatility-specific lessons
+- ✅ **Added universal patterns reference** - Link to common package for detailed guides
+- ✅ **Cleaner separation of concerns** - Universal vs project-specific
+
+**Changes in v3.3 (Previous Version):**
+- ✅ **Added comprehensive normalization best practices** - Section 10
+- ✅ **Documented LSTM-GNN normalization failure** - Lessons learned section
+- ✅ **Added mandatory pre-implementation checklist** - Study proven solutions first
+- ✅ **StandardScaler + linear output pattern** - Following LSTM-HAR Enhanced (67.90%)
+- ✅ **Implementation template provided** - With validation tests
+- ✅ **Common mistakes documented** - Anti-patterns to avoid
+
+**Changes in v3.2 (Previous Version):**
+- ✅ **Added mandatory overfitting prevention rules** cho ALL models
+- ✅ **Created comprehensive anti-overfitting guide** - `docs/project/OVERFITTING_PREVENTION.md`
+- ✅ **3 groups of techniques defined:** Data-centric, Model-centric, Architecture-specific
+- ✅ **Mandatory checklist created** cho before/during/after training
+- ✅ **Complete implementation examples** cho LSTM, GNN, TimesFM
+- ✅ **Architecture-specific guidelines** added (Recurrent Dropout, DropEdge, LoRA)
+
+**Changes in v3.1 (Previous Version):**
 - ✅ **Standardized hyperparameters:** 70 epochs, 15 patience for ALL models
 - ✅ **Added MSE to 6 mandatory metrics** (was 5, now 6)
 - ✅ **Mandatory output format:** Console + JSON must include all 6 metrics

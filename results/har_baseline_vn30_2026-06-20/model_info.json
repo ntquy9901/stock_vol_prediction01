@@ -1,0 +1,30 @@
+{
+  "model": "HAR-R Linear (VN30-Only)",
+  "dataset": "VN30 stocks only (26/28 stocks)",
+  "features": [
+    "har_daily_vol",
+    "har_weekly_vol",
+    "har_monthly_vol"
+  ],
+  "target": "target_5d",
+  "train_size": 79835,
+  "test_size": 19959,
+  "total_samples": 99794,
+  "vn30_stocks": 30,
+  "training_time_seconds": 0.004342079162597656,
+  "coefficients": {
+    "har_daily_vol": 0.03890108768520483,
+    "har_weekly_vol": 0.19517291146583537,
+    "har_monthly_vol": 0.431125279607362
+  },
+  "intercept": 0.00012939134023515263,
+  "data_source": "Parkinson volatility from VN30 processed CSV files",
+  "test_metrics": {
+    "mse": 2.630680236281213e-07,
+    "rmse": 0.0005129015730411843,
+    "mae": 0.00025682410703576123,
+    "r2": 0.10549599582648561,
+    "qlike": 1.2976072261493496,
+    "directional_accuracy": 51.52820923940274
+  }
+}

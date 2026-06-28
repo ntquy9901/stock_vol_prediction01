@@ -1,0 +1,18 @@
+{
+  "model": "TimesNet Checkpoint Evaluation",
+  "checkpoint_path": "results\\timesnet_baseline_2026-06-20_090805\\best_timesnet_model.pth",
+  "evaluated_at": "2026-06-20 09:34:41",
+  "test_metrics": {
+    "mse": 2.71186280542679e-07,
+    "rmse": 0.0005207554901704628,
+    "mae": 0.0004922730731777847,
+    "r2": -2.970294713973999,
+    "qlike": 1.2388434410095215,
+    "directional_accuracy": 47.5206611570248
+  },
+  "comparison_with_baselines": {
+    "lstm_baseline_diff": -0.7993388429752031,
+    "har_r_diff": -4.009338842975204,
+    "lstm_har_enhanced_diff": -20.37933884297521
+  }
+}

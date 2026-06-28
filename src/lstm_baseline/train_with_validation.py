@@ -29,10 +29,10 @@ import json
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.lstm_baseline.model import SimpleVolatilityLSTM
-from src.lstm_baseline.dataset import PooledVolatilityDataset
-from src.common.temporal_split import TemporalSplitter
-from src.common.evaluation import evaluate_predictions
+from lstm_baseline.model import SimpleVolatilityLSTM
+from lstm_baseline.dataset import PooledVolatilityDataset
+from common.temporal_split import TemporalSplitter
+from common.evaluation import evaluate_predictions
 
 
 def train_simple_lstm_with_val(data_dir: str, output_dir: str = None):

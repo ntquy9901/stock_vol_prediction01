@@ -1,0 +1,21 @@
+{
+  "config": {
+    "num_stocks": 30,
+    "seq_length": 22,
+    "forecast_horizon": 5,
+    "hidden_dim": 64,
+    "lstm_layers": 2,
+    "gat_heads": 4,
+    "num_epochs": 2,
+    "patience": 15,
+    "batch_size": 32,
+    "lr": 0.001,
+    "device": "cpu"
+  },
+  "graph_info": {
+    "method": "correlation",
+    "num_nodes": 30,
+    "num_edges": 349,
+    "edge_density": 0.8022988505747126,
+    "avg_degree": 23.266666666666666,
+    "corr_matrix": 

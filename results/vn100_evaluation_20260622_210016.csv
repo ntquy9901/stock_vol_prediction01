@@ -1,0 +1,2 @@
+Timestamp,Source_Dataset,Target_Dataset,Evaluation_Type,Model,Checkpoint,Num_Stocks_Train,Num_Stocks_Test,Test_Sequences,Test_MSE,Test_RMSE,Test_MAE,Test_R2,Test_QLIKE,Test_Dir_Acc
+20260622_210016,VN30,VN100,train_only,LSTM-GNN,results/parallel_lstm_gnn_knn_2026-06-22_193440/best_parallel_model.pth,30,102,93,0.9975419044494629,0.9987701960158116,0.7395322322845459,0.0024579763412475586,18899570.0,51.7355195911414

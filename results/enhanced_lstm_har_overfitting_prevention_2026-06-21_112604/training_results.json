@@ -1,0 +1,70 @@
+{
+  "model": "Enhanced LSTM-HAR with Overfitting Prevention",
+  "version": "2.0",
+  "timestamp": "2026-06-21_113950",
+  "overfitting_prevention": {
+    "data_centric": {
+      "data_augmentation": true,
+      "augment_factor": 2
+    },
+    "model_centric": {
+      "early_stopping_patience": 15,
+      "weight_decay": 1e-05,
+      "lstm_dropout": 0.2,
+      "fc_dropout": 0.3,
+      "gradient_clipping": 1.0,
+      "lr_scheduler": "ReduceLROnPlateau",
+      "layer_normalization": true
+    }
+  },
+  "configuration": {
+    "hidden_size": 128,
+    "num_layers": 3,
+    "dropout": 0.2,
+    "fc_dropout": 0.3,
+    "use_layer_norm": true,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "seq_length": 22,
+    "forecast_horizon": 5,
+    "weight_decay": 1e-05,
+    "gradient_clip": 1.0,
+    "num_epochs": 70,
+    "patience": 15,
+    "min_epochs": 15,
+    "lr_scheduler_factor": 0.5,
+    "lr_scheduler_patience": 5,
+    "apply_augmentation": true,
+    "augment_factor": 2,
+    "plot_interval": 10
+  },
+  "best_epoch": 21,
+  "best_val_loss": 0.5246901786638902,
+  "total_epochs_trained": 36,
+  "early_stopped": true,
+  "validation_metrics": {
+    "mse": 2.1496346391813859e-07,
+    "rmse": 0.00046364152523058005,
+    "mae": 0.00026164815062657,
+    "r2": 0.10634899139404297,
+    "qlike": 0.5693480968475342,
+    "directional_accuracy": 48.439554356099926
+  },
+  "test_metrics": {
+    "mse": 3.10709651785146e-07,
+    "rmse": 0.0005574133580971539,
+    "mae": 0.00025917173479683697,
+    "r2": 0.09812462329864502,
+    "qlike": 0.6405173540115356,
+    "directional_accuracy": 48.55739292880371
+  },
+  "val_test_diff": {
+    "mse_diff": 9.574618786700739e-08,
+    "rmse_diff": 9.377183286657387e-05,
+    "mae_diff": -2.476415829733014e-06,
+    "r2_diff": -0.00822436809539795,
+    "qlike_diff": 0.07116925716400146,
+    "dir_acc_diff": 0.11783857270378206
+  },
+  "overfitting_analysis": {
+    "is_overfitting": 

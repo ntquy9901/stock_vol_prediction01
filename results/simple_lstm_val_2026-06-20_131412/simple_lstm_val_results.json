@@ -1,0 +1,41 @@
+{
+  "model": "Simple LSTM with Validation",
+  "timestamp": "2026-06-20_132453",
+  "features": "Raw Parkinson volatility (1 feature)",
+  "split_method": "Temporal (70/15/15)",
+  "configuration": {
+    "hidden_size": 128,
+    "learning_rate": 0.0005,
+    "batch_size": 32,
+    "seq_length": 22,
+    "weight_decay": 1e-05,
+    "dropout": 0.1,
+    "num_layers": 1
+  },
+  "best_epoch": 5,
+  "best_val_loss": 0.018514930758254902,
+  "validation_metrics": {
+    "mse": 3.220804956072243e-07,
+    "rmse": 0.0005675213613664461,
+    "mae": 0.0002885944559238851,
+    "r2": 0.08922654390335083,
+    "qlike": 0.5818480849266052,
+    "directional_accuracy": 49.561490273656446
+  },
+  "test_metrics": {
+    "mse": 0.00010519896750338376,
+    "rmse": 0.010256654791079973,
+    "mae": 0.004641074221581221,
+    "r2": -0.11595094203948975,
+    "qlike": 2534.63525390625,
+    "directional_accuracy": 48.50003296630843
+  },
+  "val_test_diff": {
+    "mse_diff": 0.00010487688700777653,
+    "rmse_diff": 0.009689133429713526,
+    "mae_diff": 0.0043524797656573355,
+    "r2_diff": -0.20517748594284058,
+    "qlike_diff": 2534.053466796875,
+    "dir_acc_diff": -1.0614573073480145
+  }
+}

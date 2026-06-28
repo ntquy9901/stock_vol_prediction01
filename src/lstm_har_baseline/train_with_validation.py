@@ -29,10 +29,10 @@ import json
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.lstm_har_baseline.model import HARVolatilityLSTM
-from src.lstm_har_baseline.dataset import HARVolatilityDataset
-from src.common.temporal_split import TemporalSplitter
-from src.common.evaluation import evaluate_predictions
+from lstm_har_baseline.model import HARVolatilityLSTM
+from lstm_har_baseline.dataset import HARVolatilityDataset
+from common.temporal_split import TemporalSplitter
+from common.evaluation import evaluate_predictions
 
 
 def train_lstm_har_with_val(data_dir: str, output_dir: str = None):

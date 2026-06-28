@@ -1,0 +1,34 @@
+{
+  "model": "LSTM-HAR (VN30-Only)",
+  "dataset": "30 VN30 stocks",
+  "timestamp": "2026-06-20_152510",
+  "configuration": {
+    "hidden_size": 64,
+    "learning_rate": 0.001,
+    "batch_size": 32,
+    "num_layers": 2,
+    "dropout": 0.2
+  },
+  "training": {
+    "best_epoch": 16,
+    "best_val_loss": 0.844587,
+    "total_epochs": 70,
+    "early_stopped": true
+  },
+  "test_metrics": {
+    "mse": 3.1198086958283966e-07,
+    "rmse": 0.0005585524770179071,
+    "mae": 0.00029749967507086694,
+    "r2": 0.16063803434371948,
+    "qlike": 0.5658005475997925,
+    "directional_accuracy": 67.38859673401605
+  },
+  "comparison_with_baseline": {
+    "har_r_dir_acc": 51.53,
+    "dir_acc_improvement": 15.858596734016053,
+    "har_r_rmse": 0.000513,
+    "rmse_difference": 0.00004555247701790714,
+    "har_r_r2": 0.105,
+    "r2_improvement_percent": 53.03621972302347
+  }
+}

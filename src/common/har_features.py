@@ -83,9 +83,9 @@ def generate_har_features(
     ).mean()
 
     # Forward fill NaN values from rolling windows
-    df['har_daily_vol'] = df['har_daily_vol'].fillna(method='ffill').fillna(0)
-    df['har_weekly_vol'] = df['har_weekly_vol'].fillna(method='ffill').fillna(0)
-    df['har_monthly_vol'] = df['har_monthly_vol'].fillna(method='ffill').fillna(0)
+    df['har_daily_vol'] = df['har_daily_vol'].ffill().fillna(0)
+    df['har_weekly_vol'] = df['har_weekly_vol'].ffill().fillna(0)
+    df['har_monthly_vol'] = df['har_monthly_vol'].ffill().fillna(0)
 
     # Validate HAR features were generated
     required_cols = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']

@@ -1,0 +1,210 @@
+
+═════════════════════════════════════════════════════════════════════
+          SLIDING WINDOW SNAPSHOT MECHANISM
+═════════════════════════════════════════════════════════════════════
+
+CONCEPT: Time Series Forecasting with Sliding Window
+TARGET: 5-day ahead volatility prediction
+SEQUENCE LENGTH: 22 days
+STRIDE: 1 day (shift forward by 1 day each snapshot)
+
+
+┌─────────────────────────────────────────────────────────────┐
+│              RAW TIME SERIES DATA (Single Stock)              │
+└─────────────────────────────────────────────────────────────┘
+
+Date:     [D-25] [D-24] [D-23] ... [D-2] [D-1] [D0] [D+1] ... [D+5] [D+6]
+Vol:        v1    v2    v3   ... v24  v25  v26  v27  ... v32  v33
+              └─────────────────┬───────────────────┘
+                                │
+                    ┌───────────▼────────────┐
+                    │  SLIDING WINDOW    │
+                    │  (seq_length=22)  │
+                    └───────────┬────────────┘
+                                │
+
+
+═════════════════════════════════════════════════════════════════════
+                    SNAPSHOT CREATION PROCESS
+═════════════════════════════════════════════════════════════════════
+
+SNAPSHOT 1: Days [D-25 to D-3] → Predict Day [D+2]
+─────────────────────────────────────────────
+
+Input:  [v1, v2, v3, ..., v22]  (22 days)
+Target: v27                       (Day D+2)
+                                    │
+                        ┌───────────▼─────────────────┐
+                        │   MODEL FORWARD PASS      │
+                        │                          │
+                        │   LSTM Layers             │
+                        │   ├─ Layer 1 (128 units)   │
+                        │   ├─ Layer 2 (128 units)   │
+                        │   └─ Layer 3 (128 units)   │
+                        │                          │
+                        └───────────┬─────────────────┘
+                                    │
+                            ┌───────────▼───────┐
+                            │  Prediction      │
+                            │  ŷ = 0.001234   │
+                            └────────────────────┘
+
+
+SNAPSHOT 2: Days [D-24 to D-2] → Predict Day [D+3]
+─────────────────────────────────────────────
+
+Input:  [v2, v3, v4, ..., v23]  (22 days, shifted +1)
+Target: v28                       (Day D+3)
+                                    │
+                        ┌───────────▼─────────────────┐
+                        │   MODEL FORWARD PASS      │
+                        │   (same weights)        │
+                        │                          │
+                        │   LSTM Layers             │
+                        │   ├─ Layer 1 (128 units)   │
+                        │   ├─ Layer 2 (128 units)   │
+                        │   └─ Layer 3 (128 units)   │
+                        │                          │
+                        └───────────┬─────────────────┘
+                                    │
+                            ┌───────────▼───────┐
+                            │  Prediction      │
+                            │  ŷ = 0.001456   │
+                            └────────────────────┘
+
+
+SNAPSHOT 3: Days [D-23 to D-1] → Predict Day [D+4]
+─────────────────────────────────────────────
+
+Input:  [v3, v4, v5, ..., v24]  (22 days, shifted +1)
+Target: v29                       (Day D+4)
+                                    │
+                        ┌───────────▼─────────────────┐
+                        │   MODEL FORWARD PASS      │
+                        │   (same weights)        │
+                        │                          │
+                        │   LSTM Layers             │
+                        │   ├─ Layer 1 (128 units)   │
+                        │   ├─ Layer 2 (128 units)   │
+                        │   └─ Layer 3 (128 units)   │
+                        │                          │
+                        └───────────┬─────────────────┘
+                                    │
+                            ┌───────────▼───────┐
+                            │  Prediction      │
+                            │  ŷ = 0.001389   │
+                            └────────────────────┘
+
+
+... (continues for all valid snapshots)
+
+
+═════════════════════════════════════════════════════════════════════
+                    BATCHING MULTIPLE SNAPSHOTS
+═════════════════════════════════════════════════════════════════════
+
+TRAINING BATCH (32 snapshots at once):
+──────────────────────────────────────────
+
+Batch 1 (First 32 snapshots):
+  Snapshot 1:  [D-25...D-3]  → D+2
+  Snapshot 2:  [D-24...D-2]  → D+3
+  Snapshot 3:  [D-23...D-1]  → D+4
+  ...
+  Snapshot 32: [D-25...D-26] → D+27
+
+                ┌───────────▼─────────────────┐
+                │   BATCH PROCESSING        │
+                │                          │
+                │  Stack 32 snapshots:    │
+                │  X: [32, 22, 3]         │
+                │  y: [32, 1]            │
+                │                          │
+                │  GPU: Parallel process  │
+                │  Time: ~0.05 seconds   │
+                └───────────┬─────────────────┘
+                            │
+                    ┌───────────▼──────────────┐
+                    │   LOSS CALCULATION       │
+                    │   MSE = mean((y-ŷ)²)  │
+                    └───────────┬──────────────┘
+                                │
+                    ┌───────────▼──────────────┐
+                    │   GRADIENT DESCENT     │
+                    │   Update all weights   │
+                    └─────────────────────────┘
+
+
+NEXT BATCH (Next 32 snapshots):
+  Snapshot 33: [D-24...D-27]  → D+28
+  Snapshot 34: [D-23...D-28]  → D+29
+  ...
+  Snapshot 64: [D-25...D-30]  → D+33
+
+... (continues for all 67,446 training snapshots)
+
+
+═════════════════════════════════════════════════════════════════════
+                    TRAINING SNAPSHOT SUMMARY
+═════════════════════════════════════════════════════════════════════
+
+DATASET: 30 VN30 stocks × 96,352 total samples
+
+TRAIN SET (67,446 snapshots):
+  • 30 stocks × ~2,248 snapshots each
+  • Batch size: 32 snapshots/batch
+  • Total batches: ~2,107 batches
+  • Shuffle: Random each epoch
+  • Purpose: Learn patterns from historical data
+
+VALIDATION SET (14,452 snapshots):
+  • 30 stocks × ~482 snapshots each
+  • Batch size: 32 snapshots/batch
+  • Total batches: ~452 batches
+  • Shuffle: False (maintain order)
+  • Purpose: Monitor overfitting
+
+TEST SET (14,454 snapshots):
+  • 30 stocks × ~482 snapshots each
+  • Batch size: 32 snapshots/batch
+  • Total batches: ~452 batches
+  • Shuffle: False (maintain order)
+  • Purpose: Final evaluation
+
+MEMORY ORGANIZATION:
+  • Single snapshot: ~0.3 KB (22 × 3 × 4 bytes)
+  • Batch of 32: ~9.6 KB
+  • GPU memory per batch: ~5 MB (including activations)
+  • Total training data: ~20 MB (67,446 snapshots)
+
+
+═════════════════════════════════════════════════════════════════════
+                    ACTUAL EXAMPLE (VN30 Stock)
+═════════════════════════════════════════════════════════════════════
+
+Stock: ACB (Asia Commercial Bank)
+
+SNAPSHOT EXAMPLES:
+──────────────────
+
+Date Range       | Input (22 days)    | Target Day | Target Value | Prediction
+-----------------|-------------------|------------|---------------|------------
+Mar 1-22, 2024  | [v1...v22]       | Mar 27      | 0.001234      | 0.001256
+Mar 2-23, 2024  | [v2...v23]       | Mar 28      | 0.001456      | 0.001478
+Mar 3-24, 2024  | [v3...v24]       | Mar 29      | 0.001389      | 0.001401
+...              | ...              | ...        | ...           | ...
+
+TRAINING BATCH EXAMPLE:
+────────────────────────
+
+Batch 1 (First 32 snapshots from ACB):
+  • Snapshot 1:   ACB [Jan 2-23, 2024]  → Jan 28, 2024
+  • Snapshot 2:   ACB [Jan 3-24, 2024]  → Jan 29, 2024
+  • Snapshot 3:   BCM [Jan 5-26, 2024]  → Jan 31, 2024
+  • ...
+  • Snapshot 32:   VCB [Jan 8-29, 2024]  → Feb 2, 2024
+
+  Input Shape:  [32, 22, 3]
+  Target Shape: [32, 1]
+  GPU Time:      ~0.05 seconds
+

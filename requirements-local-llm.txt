@@ -1,0 +1,17 @@
+# Local LLM MCP Server Requirements
+# Cài đặt: pip install -r requirements-local-llm.txt
+
+# MCP Server dependencies
+mcp>=0.9.0
+
+# Ollama client (cho local models)
+ollama>=0.1.0
+
+# OpenAI client (cho vLLM, DeepSeek, etc.)
+openai>=1.0.0
+
+# Async support
+asyncio>=3.4.3
+
+# Optional: cho better JSON parsing
+pydantic>=2.0

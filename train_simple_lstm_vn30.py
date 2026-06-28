@@ -1,0 +1,216 @@
+"""
+Train Simple LSTM on VN30-only data
+"""
+import os
+import sys
+import torch
+import numpy as np
+import pandas as pd
+from datetime import datetime
+from pathlib import Path
+
+# Add project root to path
+project_root = Path.cwd()
+sys.path.insert(0, str(project_root))
+
+from src.lstm_baseline.dataset import PooledVolatilityDataset
+from src.lstm_baseline.model import SimpleVolatilityLSTM
+from src.common.evaluation import evaluate_predictions
+
+# Parameters
+data_dir = 'data/processed/vn30_only'
+seq_length = 22
+forecast_horizon = 5
+batch_size = 32
+hidden_size = 128
+dropout = 0.1
+learning_rate = 0.001
+num_epochs = 70
+patience = 15
+
+print('='*80)
+print('SIMPLE LSTM - VN30-ONLY TRAINING')
+print('='*80)
+
+# Create result directory
+output_dir = Path('results/simple_lstm_vn30_2026-06-20')
+output_dir.mkdir(exist_ok=True, parents=True)
+print(f'Results will be saved to: {output_dir}')
+
+# Create dataset
+print('\n1. Creating VN30 dataset...')
+dataset = PooledVolatilityDataset(data_dir, seq_length=seq_length, forecast_horizon=forecast_horizon)
+print(f'  Dataset size: {len(dataset)}')
+
+# Temporal split (70/15/15)
+train_size = int(0.7 * len(dataset))
+val_size = int(0.15 * len(dataset))
+test_size = len(dataset) - train_size - val_size
+
+train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
+    dataset, [train_size, val_size, test_size],
+    generator=torch.Generator().manual_seed(42)
+)
+
+print(f'  Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}')
+
+# Create dataloaders
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0)
+
+# Create model
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(f'\n2. Creating model (device: {device})...')
+
+model = SimpleVolatilityLSTM(hidden_size=hidden_size)
+model = model.to(device)
+
+criterion = torch.nn.MSELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=1e-6)
+
+# Training
+print(f'\n3. Training (max {num_epochs} epochs, patience {patience})...')
+
+best_val_loss = float('inf')
+best_epoch = 0
+epochs_no_improve = 0
+
+train_losses = []
+val_losses = []
+
+for epoch in range(num_epochs):
+    # Train
+    model.train()
+    train_loss = 0
+    for X_batch, y_batch in train_loader:
+        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+
+        optimizer.zero_grad()
+        predictions = model(X_batch)
+        loss = criterion(predictions, y_batch)
+        loss.backward()
+        optimizer.step()
+
+        train_loss += loss.item()
+
+    train_loss /= len(train_loader)
+    train_losses.append(train_loss)
+
+    # Validate
+    model.eval()
+    val_loss = 0
+    with torch.no_grad():
+        for X_batch, y_batch in val_loader:
+            X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+            predictions = model(X_batch)
+            loss = criterion(predictions, y_batch)
+            val_loss += loss.item()
+
+    val_loss /= len(val_loader)
+    val_losses.append(val_loss)
+
+    # Early stopping
+    if val_loss < best_val_loss:
+        best_val_loss = val_loss
+        best_epoch = epoch
+        epochs_no_improve = 0
+        # Save best model
+        torch.save(model.state_dict(), output_dir / 'best_simple_lstm_vn30.pth')
+    else:
+        epochs_no_improve += 1
+        if epochs_no_improve >= patience:
+            print(f'  Early stopping at epoch {epoch+1}')
+            break
+
+    if (epoch + 1) % 10 == 0:
+        print(f'  Epoch {epoch+1}: Train Loss={train_loss:.6f}, Val Loss={val_loss:.6f}')
+
+print(f'\n  Best epoch: {best_epoch+1}, Best val loss: {best_val_loss:.6f}')
+
+# Load best model and evaluate
+print('\n4. Evaluating on test set...')
+model.load_state_dict(torch.load(output_dir / 'best_simple_lstm_vn30.pth'))
+model.eval()
+
+all_predictions = []
+all_targets = []
+
+with torch.no_grad():
+    for X_batch, y_batch in test_loader:
+        X_batch = X_batch.to(device)
+        predictions = model(X_batch)
+
+        predictions_np = dataset.target_scaler.inverse_transform(predictions.cpu().numpy())
+        targets_np = dataset.target_scaler.inverse_transform(y_batch.numpy().reshape(-1, 1))
+
+        all_predictions.extend(predictions_np.flatten())
+        all_targets.extend(targets_np.flatten())
+
+y_pred = np.array(all_predictions)
+y_true = np.array(all_targets)
+
+# Calculate metrics
+metrics = evaluate_predictions(y_true, y_pred)
+
+print('\n' + '='*80)
+print('SIMPLE LSTM (VN30-ONLY) RESULTS')
+print('='*80)
+
+print(f'\nTest Metrics:')
+print(f'  MSE:  {metrics["mse"]:.6f}')
+print(f'  RMSE: {metrics["rmse"]:.6f}')
+print(f'  MAE:  {metrics["mae"]:.6f}')
+print(f'  R²:   {metrics["r2"]:.6f}')
+print(f'  QLIKE: {metrics["qlike"]:.6f}')
+print(f'  Dir Acc: {metrics["directional_accuracy"]:.2f}%')
+
+print('\n' + '='*80)
+print('SUCCESS CRITERIA CHECK')
+print('='*80)
+print(f'  RMSE Target (<0.20): {"PASS" if metrics["rmse"] < 0.20 else "FAIL"} - Actual: {metrics["rmse"]:.6f}')
+print(f'  Dir Acc Target (>55%): {"PASS" if metrics["directional_accuracy"] > 55 else "FAIL"} - Actual: {metrics["directional_accuracy"]:.2f}%')
+
+print('\n' + '='*80)
+print('COMPARISON vs HAR-R BASELINE')
+print('='*80)
+print(f'  HAR-R Dir Acc: 51.53%')
+print(f'  Simple LSTM Dir Acc: {metrics["directional_accuracy"]:.2f}%')
+print(f'  Improvement: {metrics["directional_accuracy"] - 51.53:.2f}%')
+
+# Save results
+import json
+results = {
+    'model': 'Simple LSTM (VN30-Only)',
+    'dataset': '30 VN30 stocks',
+    'timestamp': datetime.now().strftime('%Y-%m-%d_%H%M%S'),
+    'configuration': {
+        'hidden_size': hidden_size,
+        'num_layers': 1,
+        'learning_rate': learning_rate,
+        'batch_size': batch_size
+    },
+    'best_epoch': best_epoch + 1,
+    'best_val_loss': float(best_val_loss),
+    'test_metrics': {
+        'mse': float(metrics['mse']),
+        'rmse': float(metrics['rmse']),
+        'mae': float(metrics['mae']),
+        'r2': float(metrics['r2']),
+        'qlike': float(metrics['qlike']),
+        'directional_accuracy': float(metrics['directional_accuracy'])
+    },
+    'comparison_with_baseline': {
+        'har_r_dir_acc': 51.53,
+        'dir_acc_improvement': float(metrics['directional_accuracy'] - 51.53),
+        'har_r_rmse': 0.000513,
+        'rmse_difference': float(metrics['rmse'] - 0.000513),
+        'har_r_r2': 0.105,
+        'r2_improvement_percent': float((metrics['r2'] - 0.105) / 0.105 * 100)
+    }
+}
+
+with open(output_dir / 'training_results.json', 'w') as f:
+    json.dump(results, f, indent=2)
+
+print(f'\n✅ Training complete! Results saved to: {output_dir}')
