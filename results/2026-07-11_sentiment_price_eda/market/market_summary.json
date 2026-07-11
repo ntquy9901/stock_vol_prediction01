@@ -1,0 +1,190 @@
+{
+  "units": "returns decimal; *_bp = basis points. Correlations are Spearman rho.",
+  "n_trading_days": 4889,
+  "n_news_days": 1197,
+  "pct_news_days": 24.5,
+  "corr_measures_to_return": [
+    {
+      "measure": "mkt_news_count",
+      "mkt_ret_1d+0": 0.002436140117725503,
+      "mkt_ret_2d+0": 0.002920305182999949,
+      "mkt_ret_3d+0": 0.00794639740675666,
+      "mkt_ret_5d+0": 0.012860542976904981
+    },
+    {
+      "measure": "mkt_sent_mean",
+      "mkt_ret_1d+0": 0.028465614549295488,
+      "mkt_ret_2d+0": 0.01843181129698814,
+      "mkt_ret_3d+0": 0.013852074135940402,
+      "mkt_ret_5d+0": 0.009399318585826882
+    },
+    {
+      "measure": "mkt_neg_ratio",
+      "mkt_ret_1d+0": 0.0004221127232853063,
+      "mkt_ret_2d+0": 0.05658364678840785,
+      "mkt_ret_3d+0": 0.049164600273581834,
+      "mkt_ret_5d+0": 0.043693094324220486
+    },
+    {
+      "measure": "mkt_sent_std",
+      "mkt_ret_1d+0": 0.0024533948834860237,
+      "mkt_ret_2d+0": 0.02274946018128217,
+      "mkt_ret_3d+0": 0.04628238437530828,
+      "mkt_ret_5d+0": 0.018456803077354252
+    }
+  ],
+  "corr_measures_to_volatility": [
+    {
+      "measure": "mkt_news_count",
+      "mkt_fwd_vol_22d+0": -0.0931413315166609,
+      "mkt_fwd_vol_22d+1": -0.0947960235190223,
+      "mkt_fwd_vol_22d+3": -0.09442616169577006,
+      "mkt_fwd_vol_22d+5": -0.09120352335443997,
+      "mkt_vol_avg+0": 0.0015203613622812966,
+      "mkt_vol_avg+1": -0.004482826488249511,
+      "mkt_vol_avg+3": -0.011518058012953854,
+      "mkt_vol_avg+5": -0.023880658773827793
+    },
+    {
+      "measure": "mkt_sent_mean",
+      "mkt_fwd_vol_22d+0": 0.0030022158213670385,
+      "mkt_fwd_vol_22d+1": 0.011076114523491581,
+      "mkt_fwd_vol_22d+3": 0.0051550948838489045,
+      "mkt_fwd_vol_22d+5": 0.0006508544756448173,
+      "mkt_vol_avg+0": -0.023465009284911832,
+      "mkt_vol_avg+1": 0.0056136856137178935,
+      "mkt_vol_avg+3": -0.022293496947389593,
+      "mkt_vol_avg+5": -0.014253133637143296
+    },
+    {
+      "measure": "mkt_neg_ratio",
+      "mkt_fwd_vol_22d+0": -0.03558538195288625,
+      "mkt_fwd_vol_22d+1": -0.03899944576470798,
+      "mkt_fwd_vol_22d+3": -0.035747177288836196,
+      "mkt_fwd_vol_22d+5": -0.03865649468226827,
+      "mkt_vol_avg+0": 0.0005211120265221191,
+      "mkt_vol_avg+1": -0.018998402719158553,
+      "mkt_vol_avg+3": -0.06565186920363995,
+      "mkt_vol_avg+5": -0.016862885827447435
+    },
+    {
+      "measure": "mkt_sent_std",
+      "mkt_fwd_vol_22d+0": -0.041069483272095274,
+      "mkt_fwd_vol_22d+1": -0.04140066917255942,
+      "mkt_fwd_vol_22d+3": -0.06645137541481295,
+      "mkt_fwd_vol_22d+5": -0.07941247824251788,
+      "mkt_vol_avg+0": -0.05511851980285111,
+      "mkt_vol_avg+1": -0.011496357629574168,
+      "mkt_vol_avg+3": -0.03281247755223185,
+      "mkt_vol_avg+5": -0.024477755563267208
+    }
+  ],
+  "corr_measures_to_abs_return": [
+    {
+      "measure": "mkt_news_count",
+      "mkt_abs_ret_1d+0": -0.05215622108685192,
+      "mkt_abs_ret_1d+1": -0.07727373851749204,
+      "mkt_abs_ret_1d+3": -0.07072610278657562,
+      "mkt_abs_ret_1d+5": -0.06674154313250809
+    },
+    {
+      "measure": "mkt_sent_mean",
+      "mkt_abs_ret_1d+0": 0.017735776034113047,
+      "mkt_abs_ret_1d+1": 0.026452976761646155,
+      "mkt_abs_ret_1d+3": -0.029783852155527427,
+      "mkt_abs_ret_1d+5": -0.019535604937645425
+    },
+    {
+      "measure": "mkt_neg_ratio",
+      "mkt_abs_ret_1d+0": -0.029587584615103493,
+      "mkt_abs_ret_1d+1": 0.018303511131339753,
+      "mkt_abs_ret_1d+3": -0.028970981438793623,
+      "mkt_abs_ret_1d+5": -0.019297641765992364
+    },
+    {
+      "measure": "mkt_sent_std",
+      "mkt_abs_ret_1d+0": -0.04489609333636779,
+      "mkt_abs_ret_1d+1": 0.018947690423746028,
+      "mkt_abs_ret_1d+3": -0.020312344565084066,
+      "mkt_abs_ret_1d+5": 0.005606594658414835
+    }
+  ],
+  "news_vs_no_news_next_day": {
+    "fwd_vol_22d": {
+      "n_news_days": 1178,
+      "n_no_news_days": 3689,
+      "mean_news": 0.011253293483758904,
+      "mean_no_news": 0.013003210757776938,
+      "ratio_news_over_none": 0.8654242166326923,
+      "p_value": 1.051391008284652e-11
+    },
+    "fwd_abs_ret_1d": {
+      "n_news_days": 1197,
+      "n_no_news_days": 3692,
+      "mean_news": 0.009132284081911485,
+      "mean_no_news": 0.010567495108364954,
+      "ratio_news_over_none": 0.8641862606288416,
+      "p_value": 0.000144611402899422
+    },
+    "contemporaneous_parkinson": {
+      "n_news_days": 1197,
+      "n_no_news_days": 3664,
+      "mean_news": 0.0003952852418083365,
+      "mean_no_news": 0.0004155494558938406,
+      "ratio_news_over_none": 0.9512351326705119,
+      "p_value": 0.9163701476468286
+    }
+  },
+  "sentiment_direction_return_bp": [
+    {
+      "horizon": 1,
+      "n_pos": 762,
+      "n_neg": 14,
+      "mean_pos_bp": 6.605440110643933,
+      "mean_neg_bp": 0.796091573681592,
+      "spread_bp": 5.809348536962341,
+      "p_value": 0.6749849096221399
+    },
+    {
+      "horizon": 2,
+      "n_pos": 762,
+      "n_neg": 14,
+      "mean_pos_bp": 12.592070596193993,
+      "mean_neg_bp": 43.31632866117629,
+      "spread_bp": -30.724258064982298,
+      "p_value": 0.47889276405607584
+    },
+    {
+      "horizon": 3,
+      "n_pos": 762,
+      "n_neg": 14,
+      "mean_pos_bp": 21.048037760228013,
+      "mean_neg_bp": 82.32943115810963,
+      "spread_bp": -61.281393397881615,
+      "p_value": 0.2738178885017022
+    },
+    {
+      "horizon": 5,
+      "n_pos": 761,
+      "n_neg": 14,
+      "mean_pos_bp": 35.944583264011165,
+      "mean_neg_bp": 55.97795739865872,
+      "spread_bp": -20.033374134647556,
+      "p_value": 0.8495042874687934
+    }
+  ],
+  "detrended_checks": {
+    "sent_mean_diff_vs_mkt_ret_1d": 0.07352424969738561,
+    "sent_mean_diff_vs_mkt_ret_5d": 0.06002348004104291,
+    "sent_mean_diff_vs_fwd_vol_22d": -0.0014999260591495194,
+    "news_count_diff_vs_fwd_vol_22d_lag1": 0.0014069242175739419
+  },
+  "caveats": [
+    "Market sentiment most days based on only 1-2 stocks' news (low breadth).",
+    "Sentiment mean and market both trended up 2010-2025; see detrended_checks.",
+    "Equal-weighted basket of 30 stocks (no cap data); not cap-weighted VN30 index; basket composition varies across the sample (listings/delistings).",
+    "Multiple testing: ~80 correlations across 4 corr tables reported WITHOUT correction; expect ~4 |rho| with nominal p<0.05 by chance under the null. Treat as exploratory.",
+    "Sample mismatch: mkt_news_count corr uses all days (75% tied at 0) while other measures use ~1197 news days only; rows are NOT directly comparable.",
+    "mkt_fwd_vol_22d is a forward-looking target (vol realized over [T+1..T+22]); mkt_vol_avg (Parkinson) is contemporaneous spot vol."
+  ]
+}

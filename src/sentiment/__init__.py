@@ -15,10 +15,9 @@ __version__ = "1.0.0"
 __author__ = "QUY"
 __date__ = "2026-06-27"
 
-from .models.finbert_sentiment import FinBERTSentiment
-from .processing.har_sentiment_features import HARSentimentFeatures
+# TEMPORARILY COMMENTED OUT FOR CRAWLING (models require transformers)
+# Uncomment after transformers is installed
+# from .models.finbert_sentiment import FinBERTSentiment
+# from .processing.har_sentiment_features import HARSentimentFeatures
 
-__all__ = [
-    "FinBERTSentiment",
-    "HARSentimentFeatures",
-]
+__all__ = []  # Will add FinBERTSentiment, HARSentimentFeatures after transformers installed

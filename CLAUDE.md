@@ -1,3 +1,119 @@
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
+# Project Quality Rules
+
+> Project-agnostic quality gate. Áp dụng cho **MỌI thay đổi** (code, docs, config, scripts) — không ngoại lệ. (Mở rộng §3.F — baseline-specific rules vẫn giữ, đây là chuẩn chung cho mọi change.)
+
+## Definition of Done
+Task chỉ "done" khi TẤT CẢ đúng:
+- **Code** thỏa mãn đúng request; không refactor không liên quan (per §3 Surgical).
+- **Tests + diff-coverage:** khi đổi behavior, viết/chạy unit test, đảm bảo **≥80% CHANGED lines covered** — đo bằng **diff-coverage** (KHÔNG phải total coverage): chạy `pytest --cov --cov-report=xml` rồi `diff-cover <report> --fail-under=80`. Change phải staged/committed để diff đo được.
+- **Checks run:** chạy test + lint — hoặc ghi `Not run` + lý do. KHÔNG claim "pass" nếu chưa chạy thật.
+- **Lint scope:** exclude vendored/generated/third-party (`.agents .claude _bmad archive data`).
+- **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
+- **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
+- **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài → `Not run` + lý do + chạy ở CI.
+- **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
+- **Similar check:** sau fix/pattern change, grep cùng idiom/duplicate trong repo + sibling repos. Apply cùng change nơi hợp lệ, hoặc list remaining as follow-up. Đừng fix 1/N copy silent.
+
+## Summary report (per change)
+Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
+- Fit THIS change: bỏ phần không relevant — **trừ code review, luôn required + tóm tắt.**
+- Cover (as applicable): what changed, files (path → purpose), tests + coverage %, code-review result + actions, commands run thật, risks/follow-ups, DoD checklist.
+- Trung thực: chỉ ghi gì thật xảy ra; `Not run` (+lý do) cho cái skip.
+
+## Code hygiene (mọi ngôn ngữ)
+- No hidden global state / unbounded in-process caches (dùng bounded TTL/size cache; externalize shared state).
+- No secrets in code (secrets manager / env).
+- No hardcoded absolute local paths.
+- No production logic chỉ sống trong notebook.
+
+## Training policy (experimentation) ⭐
+Khi **thử nghiệm** model (không phải final run):
+- **Default 5-10 epoch** — KHÔNG train >10 epoch khi chưa có quyết định.
+- **Báo cáo mỗi 5 epoch:** in val metrics (DirAcc, RMSE, R², QLIKE) + **learning curve image** (§3.C) sau mỗi 5 epoch để xem tiến độ quyết định train tiếp hay dừng.
+- **>10 epoch cần đồng ý rõ ràng** của user (dựa trên kết quả 5/10 epoch).
+- **Full run (vd 40/70 epoch)** chỉ khi user approve sau khi xem 5/10 epoch.
+- Lý do: training dài tốn thời gian; nhiều baseline no-lift (4/4 news + body) → checkpoint sớm đỡ lãng phí.
+
+## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
+- **Language/toolchain:** Python 3.11 (pip)
+- **Test command:** `python -m pytest`
+- **Coverage + diff-coverage:** `pip install pytest-cov diff-cover` → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --fail-under=80` *(chưa setup — cần install)*
+- **Lint command:** `pip install ruff` → `ruff check .` *(chưa setup — cần install)*
+- **Lint excludes:** `.agents .claude _bmad archive data`
+- **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*
+- **Code-review tool:** `/code-review` skill (Claude Code)
+- **Python extras:** tránh bare `except` + mutable default args; dùng type hints + `pathlib`
+
+> **Tooling gaps (honest):** pytest-cov, diff-cover, ruff chưa install; smoke marker chưa register. Rules áp dụng ngay cho review/code-review/summary-report; tooling setup là follow-up.
+
+---
+
 # Stock Volatility Prediction - VN30
 
 **Project:** Multi-horizon volatility forecasting cho 30 VN30 stocks  
@@ -226,6 +342,47 @@ model_file = f"models/baseline_{timestamp}/"
 ```
 
 **Documentation:** See `ml-ds-common-rules` COMMON_RULES.md "File Management and Archiving"
+
+---
+
+#### **F. Baseline Implementation Structure (MANDATORY)** ⭐
+
+**CRITICAL:** Mỗi lần implement 1 baseline MỚI, PHẢI tạo 1 folder riêng có timestamp, chứa đủ 4 sub-folder. KHÔNG dump code lẫn vào `src/` chung hay lẫn baseline cũ.
+
+**Cấu trúc bắt buộc:**
+```
+baselines/
+└── YYYY-MM-DD_<tên-baseline>/      ← timestamp = ngày bắt đầu implement
+    ├── requirements/
+    │   └── requirements.md          # Mục tiêu, input/output, success criteria, go/no-go
+    ├── design/
+    │   └── design.md                # Kiến trúc, quyết định design, data flow, file list
+    ├── code/
+    │   ├── __init__.py
+    │   └── *.py                     # Toàn bộ code baseline (extract, dataset, model, train)
+    ├── code_review/
+    │   └── code_review_<YYYY-MM-DD>.md  # Kết quả review (adversarial, per CLAUDE.md mục 5)
+    └── test/
+        ├── __init__.py
+        └── test_*.py                # Unit test + smoke test
+```
+
+**Quy tắc:**
+1. **Timestamp** = ngày bắt đầu (vd `2026-07-07_embedding_baseline`). Mỗi baseline 1 folder.
+2. **5 sub-folder BẮT BUỘC**: `requirements/`, `design/`, `code/`, `code_review/`, `test/`. Không bỏ sót. Code review (adversarial, theo mục 5) phải chạy TRƯỚC khi coi baseline "done".
+3. **Cô lập cứng (hard isolation)**: code baseline KHÔNG sửa file/module của baseline khác hay `src/` chung. Import read-only từ `src/` thì ĐƯỢC.
+4. **Code phải chạy được**: mỗi script tự bootstrap `sys.path` (project root + `code/`) vì tên folder có dấu gạch (`-`) không hợp lệ cho `python -m`. Chạy bằng `python <path>/<script>.py`.
+5. **Test phải dùng `pytest`** (`pip install pytest`). Test phải chạy được bằng `pytest test/` (đặt tên hàm `test_*` để pytest auto-discover; KHÔNG dùng plain-assert runner là primary). Phải chạy với dummy data (không phụ thuộc data thật nặng) → verify kiến trúc trước khi train thật. Lệnh chuẩn: `pytest <baseline>/test/ -v`.
+6. **Results/models** vẫn lưu vào `results/`, `models/` gốc (theo 3.D), KHÔNG tạo riêng trong baseline folder.
+7. **Unit test issues PHẢI fix hết**: mọi test fail/error (pytest) phải được fix **hoàn toàn** trước khi baseline "done". KHÔNG skip test để qua, KHÔNG để test đỏ tồn tại. Test mới phát hiện bug → fix bug rồi verify test pass.
+
+**Verify trước khi coi baseline "done":**
+- [ ] Folder timestamp + 5 sub-folder tồn tại (requirements, design, code, code_review, test)
+- [ ] `requirements.md` có success criteria + go/no-go rõ ràng
+- [ ] `design.md` có data flow + quyết định design
+- [ ] `code/` chạy được (smoke test pass)
+- [ ] `code_review/` có kết quả review adversarial (HIGH/MEDIUM đã fix, phải fix hết)
+- [ ] `test/` pass với **pytest** (`pytest test/ -v` pass; ít nhất: shape correctness + 1 property test)
 
 ---
 

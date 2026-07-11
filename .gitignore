@@ -1,6 +1,9 @@
 # Claude Code
 .claude/
 
+# Agent tooling / skills (vendored, not project code)
+.agents/
+
 # BMad workflow
 _bmad/
 _bmad-output/
@@ -13,6 +16,9 @@ data/raw/vn100_enhanced/
 data/raw/hnx/
 data/raw/hnx_enhanced/
 data/processed_all/
+# Intermediate sentiment/news datasets (regenerable; exclude from VCS)
+data/raw/news/
+data/sentiment_*/
 
 # External resources (copyrighted material)
 docs/paper/
@@ -23,6 +29,13 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Test / coverage artifacts
+.coverage
+coverage*.xml
+*.cover
+htmlcov/
+.tox/
 build/
 develop-eggs/
 dist/
@@ -72,3 +85,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Backup files
+*.bak
+*.bak_*
+
+# Temp files
+temp_github_dataset

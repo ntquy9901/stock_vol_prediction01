@@ -1,0 +1,17 @@
+# Ruff config — CLAUDE.md Project Quality Rules (lint)
+target-version = "py311"
+line-length = 120
+
+# Exclude vendored / generated / third-party dirs (not project's own code)
+extend-exclude = [".agents", ".claude", "_bmad", "archive", "data", "docs", "models", "results"]
+
+[lint]
+select = ["E", "F", "W"]   # pycodestyle errors/warnings + pyflakes
+# E402 (module import not at top) ignored: baseline/data-pipeline files use a
+# sys.path bootstrap BEFORE imports — mandated by CLAUDE.md §3.F.4 for hard isolation
+# (folder names have dashes, not valid python -m modules).
+ignore = ["E402"]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]   # re-exports / package markers
+"src/data_aggregation/update_design_23.py" = ["E501"]   # doc generator: long markdown lines intentional

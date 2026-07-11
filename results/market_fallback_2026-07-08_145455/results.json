@@ -1,0 +1,32 @@
+{
+  "model": "MarketFallbackBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": true,
+  "validation_metrics": {
+    "mse": 6.138463504612446e-06,
+    "rmse": 0.0024775922797370124,
+    "mae": 0.0007392793195322156,
+    "r2": 0.6524146795272827,
+    "qlike": 0.7108011245727539,
+    "directional_accuracy": 68.55345911949685,
+    "directional_accuracy_per_stock": 47.25843558282209
+  },
+  "test_metrics": {
+    "mse": 7.042253855615854e-06,
+    "rmse": 0.0026537245251939496,
+    "mae": 0.0007310644723474979,
+    "r2": 0.7118237018585205,
+    "qlike": 0.5819989442825317,
+    "directional_accuracy": 67.86735277301315,
+    "directional_accuracy_per_stock": 48.1978527607362
+  },
+  "val_test_diff": {
+    "mse_diff": 9.037903510034084e-07,
+    "rmse_diff": 0.00017613224545693718,
+    "mae_diff": -8.214847184717655e-06,
+    "r2_diff": 0.05940902233123779,
+    "qlike_diff": -0.12880218029022217,
+    "directional_accuracy_diff": -0.6861063464836974
+  }
+}

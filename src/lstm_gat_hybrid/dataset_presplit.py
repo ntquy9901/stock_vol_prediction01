@@ -183,6 +183,11 @@ class MultiStockDatasetWithPreSplitData(Dataset):
 
             y = y_normalized
 
+            # ✅ FIX: Clip normalized targets to prevent extreme values from distribution shift
+            # This handles cases where validation/test values are far outside training range
+            # (e.g., VHM has std=7e-8 in training but 1.5e-3 in validation → 20000x amplification)
+            y = np.clip(y, -10.0, 10.0)
+
             # DEBUG: Log normalized target statistics
             if idx == 0:
                 print(f"[DEBUG __getitem__] After normalization: {stocks_normalized}/{len(self.stock_names)} stocks normalized")

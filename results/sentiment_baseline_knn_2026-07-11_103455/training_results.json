@@ -1,0 +1,30 @@
+{
+  "model": "Sentiment Baseline (Parallel LSTM-GNN + sentiment, knn)",
+  "timestamp": "2026-07-11_103455",
+  "architecture": "Parallel LSTM-GNN + 2 daily sentiment features (lexicon scorer)",
+  "graph_method": "knn",
+  "features": "3 HAR + 2 sentiment (sentiment_1d, news_count_1d)",
+  "config": {
+    "num_features_per_stock": 5,
+    "learning_rate": 0.001,
+    "batch_size": 11,
+    "num_epochs_trained": 5,
+    "best_epoch": 2,
+    "patience": 5,
+    "weight_decay": 1e-05
+  },
+  "training_summary": {
+    "num_epochs_trained": 5,
+    "best_epoch": 2,
+    "best_val_loss": 1.088304877281189,
+    "total_time_minutes": 8.053175814946492
+  },
+  "test_metrics": {
+    "mse": 7.167536750785075e-06,
+    "rmse": 0.0026772255696494974,
+    "mae": 0.0007154810009524226,
+    "r2": 0.7066970467567444,
+    "qlike": 0.568023145198822,
+    "directional_accuracy": 67.39089003239947
+  }
+}

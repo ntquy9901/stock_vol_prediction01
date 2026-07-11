@@ -1,0 +1,1852 @@
+ticker,date,sentiment_1d,title,rating,is_earnings,is_event
+ACB,2010-11-26,0.0,ACB: Báo cáo phân tích cổ phiếu 26/11/2010 | ACB: Báo cáo phân tích cổ phiếu 26/11/2010,,False,False
+ACB,2011-06-08,0.0,ACB: Báo cáo phân tích cổ phiếu 08/06/2011,,False,False
+ACB,2011-10-03,0.0,ACB: Báo cáo phân tích cổ phiếu 03/10/2011,,False,False
+ACB,2012-08-22,0.0,ACB: Báo cáo cập nhật - Định giá cao so với NH khác,,False,False
+ACB,2012-11-09,0.5,ACB: Báo cáo cập nhật lợi nhuận 9 tháng đầu năm 2012,,False,False
+ACB,2013-10-25,0.0,HPG: Báo cáo cập nhật - Thu hồi khoản phải thu từ CTCP đầu tư Hà Nội ACB,,False,False
+ACB,2015-03-10,0.5,ACB : Báo cáo cập nhật - Khuyến nghị KHẢ QUAN,POS,False,False
+ACB,2015-05-25,0.6666666666666666,ACB : [KQ +19%] - KQLN Q1/2015 trái chiều đưa ACB khỏi vùng khuyến nghị mua,POS,True,False
+ACB,2015-09-11,0.0,ACB : Những bước tiến vững chắc nhất kể từ năm 2011,,False,False
+ACB,2017-08-15,0.5,ACB : Báo cáo cập nhật - Khuyến nghị Tăng tỷ trọng,,False,False
+ACB,2018-04-20,0.5,ACB : Báo cáo cập nhật ngắn - Khuyến nghị Khả quan,POS,False,False
+ACB,2018-11-29,0.5,ACB : Báo cáo cập nhật - Khuyến nghị [Mua +27.2%],POS,False,False
+ACB,2019-06-18,0.6666666666666666,ACB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+ACB,2019-08-06,0.6666666666666666,ACB - Báo cáo cập nhật [TĂNG TỶ TRỌNG +44.6%] - Duy trì chất lượng tài sản tốt và lợi nhuận tăng ổn ,,False,False
+ACB,2019-11-08,0.6666666666666666,Báo cáo nhanh cổ phiểu ACB - Khuyến nghị MUA,POS,True,False
+ACB,2019-12-04,0.5,Báo cáo cập nhật ACB - MUA,POS,False,False
+ACB,2020-03-04,0.0,Báo cáo cập nhật ACB - NẮM GIỮ,NEU,False,False
+ACB,2020-04-15,0.5,Báo cáo cập nhật ACB - MUA,POS,False,False
+ACB,2020-04-27,0.0,Báo cáo nhanh ACB,,True,False
+ACB,2020-05-12,0.5,ACB – Cập nhật KQKD [Mua +46%] Khẳng định nội lực,POS,True,False
+ACB,2020-06-19,0.5,"Khuyến nghị tích cực đối với VCB, ACB và TCB",POS,False,False
+ACB,2020-06-22,0.5,Khuyến nghị tích cực dành cho ACB với giá mục tiêu 29.600 đồng/CP,POS,False,False
+ACB,2020-07-24,0.6666666666666666,ACB – Tin vắn [17.5%] Có thể thêm room tăng trưởng tín dụng 3-4%,,False,False
+ACB,2020-08-03,0.5833333333333333,ACB – Cập nhật 2Q20 [MUA +30.2%] Nền tảng thu nhập ngoài lãi vững chắc | Khuyến nghị mua cổ phiếu ACB,POS,True,False
+ACB,2020-08-13,0.5,Khuyến nghị tích cực dành cho cổ phiếu ACB,POS,False,False
+ACB,2020-10-22,0.5,ACB: Kết quả LNTT quý 3/2020 khả quan (+34% YoY),POS,True,False
+ACB,2020-10-28,-0.5,ACB: Vững vàng nhờ khẩu vị rủi ro thấp,,False,False
+ACB,2020-11-04,0.6666666666666666,ACB – Cập nhật 3Q20 [MUA +23%] Tăng tốc,POS,True,False
+ACB,2020-11-27,0.0,ACB: Trợ lực đến từ thương vụ banca độc quyền,,False,False
+ACB,2020-12-09,0.5,Khuyến nghị tích cực đối với cổ phiếu ACB,POS,False,False
+ACB,2021-02-19,0.6666666666666666,ACB: Duy trì tốc độ tăng trưởng ấn tượng,,False,False
+ACB,2021-02-24,0.5,ACB – Cập nhật 4Q20 [MUA +15.5%] Quản lý tốt chi phí tín dụng,POS,True,False
+ACB,2021-03-16,0.6666666666666666,"ACB – Tin vắn [MUA +9.3%] Mục tiêu LNTT 2021 10.6 nghìn tỷ, tăng 10.5% n/n",POS,False,False
+ACB,2021-03-18,0.0,ACB: Chất lượng tốt với các chất xúc tác ngắn hạn,,False,False
+ACB,2021-04-16,0.75,ACB: Lợi nhuận tăng trưởng ổn định,,False,False
+ACB,2021-04-26,0.5,Khuyến nghị tích cực dành cho cổ phiếu ACB,POS,False,False
+ACB,2021-05-11,0.25,ACB – Cập nhật 1Q21 [MUA +15.7%] NIM tăng xoa dịu xu hướng tăng nợ xấu,POS,True,False
+ACB,2021-05-14,0.5,Khuyến nghị tích cực dành cho cổ phiếu ACB,POS,False,False
+ACB,2021-06-18,0.0,"SAB, GVR và ACB sẽ thay thế REE, SBT và TCH trong rổ VN30",,False,False
+ACB,2021-06-24,-0.5,ACB: Tập trung kinh doanh mảng bán lẻ,,False,False
+ACB,2021-08-11,0.5,"ACB: Khuyến nghị KHẢ QUAN với giá hợp lý 41,117 đồng/cp",POS,False,False
+ACB,2021-08-30,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 38,500 đồng/cp",POS,False,False
+ACB,2021-10-22,0.0,"ACB: Khuyến nghị NẮM GIỮ với giá mục tiêu 37,000 đồng/cp",NEU,False,False
+ACB,2021-10-28,0.5,"ACB: Khuyến nghị TÍCH CỰC với giá mục tiêu 41,940 đồng/cp",POS,False,False
+ACB,2021-12-17,0.6666666666666666,"ACB : Khuyến nghị MUA với giá mục tiêu 39,850 đồng/cp",POS,False,False
+ACB,2022-01-27,0.0,"ACB : Khuyến nghị OUTPERFORM với giá mục tiêu 41,914 đồng/cp",POS,False,False
+ACB,2022-04-07,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 39,850 đồng/ cổ phiếu",POS,False,False
+ACB,2022-05-11,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 40,700 VND/cổ phiếu",POS,False,False
+ACB,2022-06-09,0.5,"ACB: Khuyến nghị Khả quan với giá mục tiêu 41,700 đồng/cổ phiếu.",POS,False,False
+ACB,2022-07-29,0.6666666666666666,ACB: Khuyến nghị MUA với giá mục tiêu 31.800 đồng/cổ phiếu,POS,False,False
+ACB,2022-10-27,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 31,880 đồng/cổ phiếu",POS,False,False
+ACB,2022-11-04,0.0,"ACB: Khuyến nghị với giá mục tiêu 33,500 đồng/cổ phiếu",,False,False
+ACB,2022-11-21,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 27,800 đồng/cổ phiếu | ACB: Khuyến nghị MUA với giá mục tiêu 28,000 đồng/cổ phiếu",POS,False,False
+ACB,2022-11-23,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 26,300 đồng/cổ phiếu",POS,False,False
+ACB,2023-01-11,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 27,958 đồng/cổ phiếu.",POS,False,False
+ACB,2023-04-13,0.0,ACB: Báo cáo cập nhật ĐHCĐ 2023,,False,False
+ACB,2023-06-02,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 25,300 đồng/cổ phiếu",POS,False,False
+ACB,2023-06-15,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 27,300 đồng/cổ phiếu",POS,False,False
+ACB,2023-06-28,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 25,400 đồng/cổ phiếu",POS,False,False
+ACB,2023-08-07,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 31,800 đồng/cổ phiếu",POS,False,False
+ACB,2023-09-06,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 25,630 đồng/cổ phiếu",POS,False,False
+ACB,2023-09-14,0.0,ACB: Chờ đợi một cú hích,,False,False
+ACB,2023-09-18,0.5,"ACB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 26,000 đồng/cổ phiếu",,False,False
+ACB,2023-09-26,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,100 đồng/cổ phiếu",POS,False,False
+ACB,2023-10-25,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 29,000 đồng/cổ phiếu | ACB: Khuyến nghị MUA với giá mục tiêu 31,800 đồng/cổ phiếu",POS,False,False
+ACB,2023-11-08,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 31,800 đồng/cổ phiếu",POS,False,False
+ACB,2023-11-15,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 25,300 đồng/cổ phiếu",POS,False,False
+ACB,2023-11-28,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,000 đồng/cổ phiếu",POS,False,False
+ACB,2024-01-30,0.3333333333333333,"ACB: Khuyến nghị MUA với giá mục tiêu 33,000 đồng/cổ phiếu. | ACB: Cập nhật cuộc họp với các chuyên viên phân tích",POS,False,False
+ACB,2024-01-31,0.25,"ACB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 29,200 đồng/cổ phiếu. | ACB: Khuyến nghị với giá mục tiêu 28,300 đồng/cổ phiếu.",,False,False
+ACB,2024-02-20,0.3333333333333333,"ACB: Khuyến nghị MUA với giá mục tiêu 31,600 đồng/cổ phiếu. | ACB: Khuyến nghị với giá mục tiêu 31,900 đồng/cổ phiếu.",POS,False,False
+ACB,2024-03-06,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 33,400 đồng/cổ phiếu",POS,False,False
+ACB,2024-04-04,0.0,ACB: Cập nhật Đại hội cổ đông thường niên 2024,,False,False
+ACB,2024-06-06,0.0,"ACB: Khuyến nghị TÍCH LŨY với giá mục tiêu 31,600 đồng/cổ phiếu",,False,False
+ACB,2024-06-13,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,200 đồng/cổ phiếu",POS,False,False
+ACB,2024-09-04,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 31,200 đồng/cổ phiếu",POS,False,False
+ACB,2024-09-13,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,900 đồng/cổ phiếu",POS,False,False
+ACB,2024-10-25,0.0,ACB: Cập nhật KQKD 3Q2024 với chuyên viên phân tích,,True,False
+ACB,2024-10-29,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 29,471 đồng/cổ phiếu",POS,False,False
+ACB,2024-11-20,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 31,100 đồng/cổ phiếu",POS,False,False
+ACB,2024-12-06,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 37,400 đồng/cổ phiếu",POS,False,False
+ACB,2025-03-13,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 35,400 đồng/cổ phiếu",POS,False,False
+ACB,2025-04-18,0.5,"ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,500 đồng/cổ phiếu.",POS,False,False
+ACB,2025-05-26,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 26,200 đồng/cổ phiếu",POS,False,False
+ACB,2025-08-20,0.0,ACB: Báo cáo cập nhật KQKD Q2/2025,,True,False
+ACB,2025-09-04,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 32,500 đồng/cổ phiếu",POS,False,False
+ACB,2025-09-16,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 34,000 đồng/cổ phiếu",POS,False,False
+ACB,2025-10-01,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 31,300 đồng/cổ phiếu",POS,False,False
+ACB,2025-10-03,0.5,"ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,300 đồng/cổ phiếu",POS,False,False
+ACB,2025-10-24,0.0,ACB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+ACB,2025-10-29,0.5,"ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 33,400 đồng/cổ phiếu",POS,False,False
+ACB,2025-10-31,0.0,"ACB: Khuyến nghị NẮM GIỮ với giá mục tiêu 28,400 đồng/cổ phiếu",NEU,False,False
+ACB,2025-12-11,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 32,600 đồng/cổ phiếu",POS,False,False
+ACB,2025-12-23,0.0,ACB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+ACB,2026-01-06,0.0,ACB: Báo cáo Phân tích kỹ thuật,,False,False
+ACB,2026-01-29,0.0,ACB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+ACB,2026-01-30,0.25,"ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,500 đồng/cổ phiếu | ACB: Khuyến nghị NẮM GIỮ với giá mục tiêu 27,100 đồng/cổ phiếu",POS,False,False
+ACB,2026-02-24,0.0,"ACB: Khuyến nghị OUTPERFORM với giá mục tiêu 28,700 đồng/cổ phiếu",POS,False,False
+ACB,2026-03-19,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 29,500 đồng/cổ phiếu",POS,False,False
+ACB,2026-04-10,0.3888888888888888,"ACB: Khuyến nghị MUA với giá mục tiêu 31,640 đồng/cổ phiếu | ACB: Báo cáo cập nhật ĐHCĐ 2026 | ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,300 đồng/cổ phiếu",POS,False,False
+ACB,2026-04-13,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,900 đồng/cổ phiếu",POS,False,False
+ACB,2026-04-17,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 33,000 đồng/cổ phiếu",POS,False,False
+ACB,2026-05-05,0.0,ACB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+ACB,2026-05-12,0.5,"ACB: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,500 đồng/cổ phiếu",POS,False,False
+ACB,2026-05-26,0.0,ACB: Báo cáo Phân tích Kỹ thuật 26/05/2026,,False,False
+ACB,2026-06-01,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 30,600 đồng/cổ phiếu",POS,False,False
+ACB,2026-06-02,0.0,ACB: Báo cáo Phân tích Kỹ thuật 02/06/2026,,False,False
+ACB,2026-06-04,0.6666666666666666,"ACB: Khuyến nghị MUA với giá mục tiêu 31,800 đồng/cổ phiếu",POS,False,False
+ACB,2026-06-05,0.0,"ACB: Khuyến nghị TRUNG LẬP với giá mục tiêu 29,500 đồng/cổ phiếu",NEU,False,False
+BCM,2020-03-12,0.0,Báo cáo thăm doanh nghiệp BCM,,False,False
+BCM,2020-12-24,0.0,BCM: Dòng tiền ngắn hạn cải thiện,,False,False
+BCM,2021-10-29,0.6666666666666666,"BCM: Khuyến nghị MUA với giá mục tiêu 70,800 đồng/cp",POS,False,False
+BCM,2021-12-15,0.6666666666666666,"BCM : Khuyến nghị MUA với giá mục tiêu 1 năm 66,400 đồng/cp",POS,False,False
+BCM,2022-09-15,0.0,"BCM: Khuyến nghị TRUNG LẬP với giá mục tiêu 98,300 đồng/cổ phiếu",NEU,False,False
+BCM,2022-12-01,0.5,"BCM: Khyến nghị KHẢ QUAN với giá mục tiêu 88,700 đồng/cổ phiếu",POS,False,False
+BCM,2022-12-23,0.0,Bản tin ETF VN30 nửa đầu 2023: BCM thay thế KDH,,False,False
+BCM,2023-08-16,0.0,"BCM: Khuyến nghị NẮM GIỮ với giá mục tiêu 78,000 đồng/cổ phiếu. | BCM: Khuyến nghị NẮM GIỮ với giá mục tiêu 78,000 đồng/cổ phiếu",NEU,False,False
+BCM,2023-09-13,0.75,BCM: VSIP là động lực thúc đẩy tăng trưởng lợi nhuận - MIRAE,,False,False
+BCM,2023-10-04,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 78,813 đồng/cổ phiếu",POS,False,False
+BCM,2024-03-25,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 78,000 đồng/cổ phiếu",POS,False,False
+BCM,2024-06-28,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 84,700 đồng/cổ phiếu",POS,False,False
+BCM,2024-08-08,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,500 đồng/cổ phiếu",POS,False,False
+BCM,2024-10-04,0.5,"BCM,: Khuyến nghị KHẢ QUAN với giá mục tiêu 84,700 đồng/cổ phiếu",POS,False,False
+BCM,2024-10-25,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 74,900 đồng/cổ phiếu",POS,False,False
+BCM,2024-11-26,0.0,BCM: Báo cáo cập nhật ngắn KQKD Q3.2024,,True,False
+BCM,2025-02-07,-0.5,BCM: Cập nhật về phê duyệt chào bán công khai của Ủy ban chứng khoán Nhà nước và công bố giá khởi đi,,False,False
+BCM,2025-04-22,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 72,500 đồng/cổ phiếu.",POS,False,False
+BCM,2025-08-04,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 89,900 đồng/cổ phiếu",POS,False,False
+BCM,2025-08-11,0.0,"BCM: Khuyến nghị NẮM GIỮ với giá mục tiêu 80,000 đồng/cổ phiếu",NEU,False,False
+BCM,2025-10-14,0.5,"BCM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 74,500 đồng/cổ phiếu",,False,False
+BCM,2025-10-31,0.0,BCM: Báo cáo cập nhật KQKD Q3/2025,,True,False
+BCM,2025-11-25,0.0,"BCM: Khuyến nghị TRUNG LẬP với giá mục tiêu 73,643 đồng/cổ phiếu",NEU,False,False
+BCM,2025-12-15,0.0,BCM: Báo cáo cập nhật KQKD Q3/2025,,True,False
+BCM,2026-02-02,0.0,BCM: Báo cáo cập nhật KQKD Q4/2025,,True,False
+BCM,2026-03-12,0.0,"BCM: Khuyến nghị OUTPERFORM với giá mục tiêu 74,530 đồng/cổ phiếu",POS,False,False
+BCM,2026-03-25,0.5,"BCM: Khuyến nghị KHẢ QUAN với giá mục tiêu 72,600 đồng/cổ phiếu",POS,False,False
+BCM,2026-05-21,0.6666666666666666,"BCM: Khuyến nghị MUA với giá mục tiêu 83,000 đồng/cổ phiếu",POS,False,False
+BID,2015-01-30,0.0,BID: Báo cáo cập nhật - Kế hoạch kinh doanh năm 2015 đầy tham vọng,,False,False
+BID,2015-02-13,-0.5,BID: Báo cáo cập nhật - Việc định giá các cổ phần bán cho nhà đầu tư nước ngoài sẽ không ảnh hưởng đ,,False,False
+BID,2015-03-16,0.0,BID : Báo cáo cập nhật - Khuyến nghị Phù Hợp Thị Trường,NEU,False,False
+BID,2015-09-18,0.0,BID : Một loạt chuỗi sự kiện khiến nhà đầu tư do dự,,False,False
+BID,2019-03-01,0.0,BID : Cập nhật kết quả kinh doanh năm 2018 - Khuyến nghị Tích lũy,,True,False
+BID,2019-05-06,0.0,BID : Báo cáo lần đầu - Khuyến nghị Nắm giữ,NEU,False,False
+BID,2019-06-07,0.5,BID : Báo cáo cập nhật - Khuyến nghị Tăng tỷ trọng,,False,False
+BID,2019-08-08,0.0,BID : Báo cáo cập nhật - Khuyến nghị Trung lập,NEU,False,False
+BID,2019-10-23,0.0,Báo cáo cập nhật BID - Khuyến nghị Giữ,NEU,False,False
+BID,2020-03-12,0.0,Báo cáo cập nhật BID - NẮM GIỮ,NEU,False,False
+BID,2020-11-16,0.0,Báo cáo cập nhật cổ phiếu BID,,False,False
+BID,2021-03-22,0.0,Báo cáo cập nhật BID - Nắm giữ,NEU,False,False
+BID,2021-05-21,0.6666666666666666,"BID: Quý 1/2021, Lợi nhuận sau thuế tăng 88.4% YoY",,True,False
+BID,2021-09-30,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 49,057 đồng/cp",POS,False,False
+BID,2021-11-25,0.0,"BID : Khuyến nghị THEO DÕI với giá mục tiêu 51,200 đồng/cp",,False,False
+BID,2021-12-16,0.0,"BID : Khuyến nghị NẮM GIỮ với giá mục tiêu 51,600 đồng/cp",NEU,False,False
+BID,2022-01-19,0.5,"BID : Khuyến nghị Tăng Tỷ Trọng với giá mục tiêu 49,000 đồng/cp",,False,False
+BID,2022-02-24,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 55,000 đồng/ cổ phiếu",POS,False,False
+BID,2022-03-10,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 42,300 đồng/ cổ phiếu",NEU,False,False
+BID,2022-09-05,0.5,"BID: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 46,000 đồng/cổ phiếu.",,False,False
+BID,2022-12-08,0.0,"BID: Khuyến nghị GIỮ với giá mục tiêu 40,900 đồng/cổ phiếu",NEU,False,False
+BID,2022-12-12,0.0,"BID: Khuyến nghị NẮM GIỮ với giá mục tiêu 44,800 đồng/cổ phiếu",NEU,False,False
+BID,2023-04-13,0.5,"BID: Khuyến nghị KHẢ QUAN với giá mục tiêu 49,850 đồng/cổ phiếu",POS,False,False
+BID,2023-04-28,0.0,BID: Báo cáo cập nhật ĐHCĐ 2023,,False,False
+BID,2023-06-01,0.0,"BID: Khuyến nghị NẮM GIỮ với giá mục tiêu 46,300 đồng/cp",NEU,False,False
+BID,2023-06-29,0.0,"BID: Khuyến nghị NẮM GIỮ với giá mục tiêu 49,150 đồng/cổ phiếu",NEU,False,False
+BID,2023-08-17,0.0,"BID: Khuyến nghị NẮM GIỮ với giá mục tiêu 46,200 đồng/cổ phiếu",NEU,False,False
+BID,2023-12-05,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 47,900 đồng/cổ phiếu",POS,False,False
+BID,2024-05-21,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 53,800 đồng/cổ phiếu",NEU,False,False
+BID,2024-06-12,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 52,200 đồng/cổ phiếu",NEU,False,False
+BID,2024-08-21,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 52,600 đồng/cổ phiếu",NEU,False,False
+BID,2024-09-13,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 51,772 đồng/cổ phiếu",NEU,False,False
+BID,2024-09-25,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 53,500 đồng/cổ phiếu",NEU,False,False
+BID,2024-09-27,0.0,"BID: Khuyến nghị Nắm Giữ với giá mục tiêu 54,200 đồng/cổ phiếu",NEU,False,False
+BID,2024-11-14,0.0,"BID: Khuyến nghị THEO DÕI với giá mục tiêu 50,800 đồng/cổ phiếu",,False,False
+BID,2024-11-22,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 51,800 đồng/cổ phiếu",NEU,False,False
+BID,2024-12-02,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 53,900 đồng/cổ phiếu",POS,False,False
+BID,2025-08-04,0.5,"BID: Khuyến nghị KHẢ QUAN với giá mục tiêu 41,300 đồng/cổ phiếu",POS,False,False
+BID,2025-08-12,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 48,000 đồng/cổ phiếu",POS,False,False
+BID,2025-08-29,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 48,000 đồng/cổ phiếu",NEU,False,False
+BID,2025-11-03,0.0,BID: Báo cáo cập nhật KQKD Q3/2025,,True,False
+BID,2025-11-25,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 46,100 đồng/cổ phiếu",POS,False,False
+BID,2025-12-05,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 51,800 đồng/cổ phiếu",POS,False,False
+BID,2026-01-07,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 43,088 đồng/cổ phiếu",POS,False,False
+BID,2026-01-23,0.0,"BID: Khuyến nghị TRUNG LẬP với giá mục tiêu 50,100 đồng/cổ phiếu",NEU,False,False
+BID,2026-02-09,0.0,"BID: Khuyến nghị NẮM GIỮ với giá mục tiêu 56,000 đồng/cổ phiếu",NEU,False,False
+BID,2026-03-11,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 49,600 đồng/cổ phiếu",POS,False,False
+BID,2026-03-19,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 47,720 đồng/cổ phiếu | BID: Khuyến nghị MUA với giá mục tiêu 47,720 đồng/cổ phiếu",POS,False,False
+BID,2026-04-01,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 48,800 đồng/cổ phiếu",POS,False,False
+BID,2026-04-14,0.6666666666666666,"BID: Khuyến nghị MUA với giá mục tiêu 50,000 đồng/cổ phiếu",POS,False,False
+BID,2026-04-24,0.0,BID: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+BID,2026-06-03,0.0,"BID: Khuyến nghị THEO DÕI với giá mục tiêu 46,900 đồng/cổ phiếu",,False,False
+BVH,2011-05-13,0.0,BVH: Báo cáo phân tích cổ phiếu 13/05/2011,,False,False
+BVH,2013-09-19,0.0,BVH: Báo cáo phân tích công ty,,False,False
+BVH,2015-01-29,0.0,BVH: Báo cáo phân tích doanh nghiệp,,False,False
+BVH,2021-02-19,0.0,BVH – Tin vắn – Hoạt động tài chính ấn tượng trong năm 2020,,False,False
+BVH,2022-06-29,0.6666666666666666,"BVH: Khuyến nghị MUA với giá mục tiêu 65,800 đồng/cổ phiếu.",POS,False,False
+BVH,2022-11-07,0.5,"BVH: Khuyến nghị KHẢ QUAN với giá mục tiêu 76,000 đồng/cổ phiếu",POS,False,False
+BVH,2022-12-07,0.0,BVH: Cập nhật Kết quả kinh doanh,,True,False
+BVH,2023-05-31,0.0,"BVH: Khuyến nghị TRUNG LẬP với giá mục tiêu 46,159 đồng/cổ phiếu.",NEU,False,False
+BVH,2023-06-02,0.6666666666666666,"BVH: Khuyến nghị MUA với giá mục tiêu 48,400 đồng/cổ phiếu",POS,False,False
+BVH,2025-02-14,0.5,"BVH: Khuyến nghị Tăng tỷ trọng với giá mục tiêu 62,100 đồng/cổ phiếu",,False,False
+CTG,2011-03-21,0.0,CTG: Báo cáo phân tích cổ phiếu 21/03/2011,,False,False
+CTG,2011-06-08,0.0,CTG: Báo cáo phân tích cổ phiếu 08/06/2011,,False,False
+CTG,2011-09-20,0.0,CTG: Báo cáo phân tích cổ phiếu 20/09/2011,,False,False
+CTG,2011-12-02,0.0,CTG: Cập nhật báo cáo Qúy 3/2011,,False,False
+CTG,2012-09-10,0.0,"CTG: Báo cáo lần đầu - Định giá cao, nợ xấu ảnh hưởng lợi nhuận",,False,False
+CTG,2014-12-10,-0.5,Vietnam Today 10/12/2014 - Thị trường phục hồi với thanh khoản khiêm tốn - CTG đã bán hơn 6.000 tỷ đ,NEG,False,False
+CTG,2015-04-02,0.0,CTG : Báo cáo cập nhật - Khuyến nghị PHÙ HỢP THỊ TRƯỜNG,NEU,False,False
+CTG,2015-09-03,0.0,CTG : Báo cáo cập nhật - NẮM GIỮ,NEU,False,False
+CTG,2017-03-03,0.0,CTG : Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+CTG,2018-06-01,0.5,CTG : Báo cáo lần đầu - Khuyến nghị Khả quan,POS,False,False
+CTG,2018-07-18,0.0,CTG : Báo cáo cập nhật - Khuyến nghị Nắm giữ,NEU,False,False
+CTG,2019-06-14,0.0,CTG : Báo cáo cập nhật - Khuyến nghị Trung lập,NEU,False,False
+CTG,2020-04-01,0.5,Báo cáo cập nhật CTG - MUA,POS,False,False
+CTG,2020-04-03,0.0,Báo cáo phân tích cổ phiếu CTG,,False,False
+CTG,2021-02-26,0.5,Khuyến nghị tích cực cho CTG với giá mục tiêu 50.800 đồng/CP,POS,False,False
+CTG,2021-03-17,0.0,CTG: Cập nhật Analyst meeting Ngân hàng VietinBank,,False,False
+CTG,2021-03-29,0.0,"CTG: Báo cáo cập nhật - Giá trị hợp lý 44,700 đ/cp",,False,False
+CTG,2021-08-05,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 39,200 đồng/cp",POS,False,False
+CTG,2021-08-19,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 42,000 đồng/cp",POS,False,False
+CTG,2021-10-28,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 41,850 đồng/cp",POS,False,False
+CTG,2021-10-29,0.0,CTG: Cập nhật nhanh KQKD Quý 3/2021,,True,False
+CTG,2021-11-19,0.5,"CTG : Khuyến nghị KHẢ QUAN với giá mục tiêu 39,700 đồng/cp",POS,False,False
+CTG,2021-11-25,0.6666666666666666,"CTG : Khuyến nghị MUA với giá mục tiêu 45,900 đồng/cp",POS,False,False
+CTG,2022-02-07,0.0,"CTG: Khuyến nghị OUTPERFORM với giá mục tiêu 42,500",POS,False,False
+CTG,2022-05-13,0.6666666666666666,"CTG: Khuyến nghị MUA giá mục tiêu 38,400 đồng/cổ phiếu",POS,False,False
+CTG,2022-06-01,0.0,"CTG: khuyến nghị PHÙ HỢP THỊ TRƯỜNG mức giá hợp lý 29,228 đồng/cổ phiếu.",NEU,False,False
+CTG,2022-08-02,0.0,"CTG: Khuyến nghị OUTPERFORM với giá mục tiêu 33,800 đồng/cổ phiếu.",POS,False,False
+CTG,2022-08-17,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 38,900 đồng/cổ phiếu.",POS,False,False
+CTG,2022-08-18,0.5,CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 36.200 đồng/cổ phiếu.,POS,False,False
+CTG,2022-08-19,0.0,"CTG: Khuyến nghị TRUNG LẬP với giá hợp lý 31,526 đồng/cổ phiếu",NEU,False,False
+CTG,2022-11-25,0.5833333333333333,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 34,400 đồng/cố phiếu | CTG: Khuyến nghị MUA với giá mục tiêu 31,000 đồng/cổ phiếu",POS,False,False
+CTG,2022-12-01,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 38,200 đồng/cổ phiếu",POS,False,False
+CTG,2023-02-02,0.0,"CTG: Khuyến nghị NEUTRAL với giá mục tiêu 30,600 đồng/cổ phiếu",NEU,False,False
+CTG,2023-03-29,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 35,900 đồng/cổ phiếu",POS,False,False
+CTG,2023-05-04,0.0,"CTG: Khuyến nghị TRUNG LẬP với giá mục tiêu 29,900 đồng/cổ phiếu",NEU,False,False
+CTG,2023-08-07,0.0,"CTG: Khuyến nghị OUTPERFORM với giá mục tiêu 37,700 đồng/cổ phiếu",POS,False,False
+CTG,2023-08-11,0.0,CTG: Khẳng định nền tảng vững chắc,,False,False
+CTG,2023-09-12,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 38,500 đồng/cổ phiếu",POS,False,False
+CTG,2023-09-13,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 37,000 đồng/cổ phiếu",POS,False,False
+CTG,2023-09-25,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 36,000 đồng/cổ phiếu",POS,False,False
+CTG,2023-11-06,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 36,000 đồng/cổ phiếu",POS,False,False
+CTG,2024-02-19,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 42,000 đồng/cổ phiếu.",POS,False,False
+CTG,2024-05-29,0.0,"CTG: Khuyến nghị TRUNG LẬP với giá mục tiêu 33,800 đồng/cổ phiếu",NEU,False,False
+CTG,2024-06-18,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 40,200 đồng/cổ phiếu",POS,False,False
+CTG,2024-08-06,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 39,300 đồng/cổ phiếu",POS,False,False
+CTG,2024-08-29,0.0,"CTG: Khuyến nghị Trung lập với giá mục tiêu 39,000 đồng/cổ phiếu",NEU,False,False
+CTG,2024-09-18,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 40,200 đồng/cổ phiếu",POS,False,False
+CTG,2024-09-19,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 40,700 đồng/cổ phiếu",POS,False,False
+CTG,2024-11-01,0.0,"CTG: Khuyến nghị OUTPERFORM với giá mục tiêu 41,962 đồng/cổ phiếu",POS,False,False
+CTG,2024-11-22,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 44,800 đồng/cổ phiếu",POS,False,False
+CTG,2024-11-25,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 44,600 đồng/cổ phiếu",POS,False,False
+CTG,2025-02-07,0.5,"CTG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 46,000 đồng/cổ phiếu",,False,False
+CTG,2025-02-17,0.6666666666666666,"CTG: Báo cáo cập nhật Kết quả kinh doanh - KQKD Q4 mạnh mẽ đóng góp lớn vào tăng trưởng LNST cả năm,",,True,False
+CTG,2025-02-24,0.0,"CTG: Khuyến nghị Trung lập với giá mục tiêu 43,500 đồng/cổ phiếu",NEU,False,False
+CTG,2025-03-03,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 48,800 đồng/cổ phiếu",POS,False,False
+CTG,2025-03-06,0.5,"CTG: Khuyến nghị Khả quan với giá mục tiêu 47,600 đồng/cổ phiếu",POS,False,False
+CTG,2025-03-24,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 52,100 đồng/cổ phiếu.",POS,False,False
+CTG,2025-05-08,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 45,200 đồng/cổ phiếu.",POS,False,False
+CTG,2025-09-10,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 60,000 đồng/cổ phiếu",POS,False,False
+CTG,2025-10-09,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 65,400 đồng/cổ phiếu",POS,False,False
+CTG,2025-10-31,0.0,CTG: Báo cáo cập nhật KQKD Q3/2025,,True,False
+CTG,2025-11-28,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 58,000 đồng/cổ phiếu",POS,False,False
+CTG,2025-12-04,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 63,600 đồng/cổ phiếu",POS,False,False
+CTG,2025-12-12,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 61,400 đồng/cổ phiếu",POS,False,False
+CTG,2025-12-15,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 61,800 đồng/cổ phiếu",POS,False,False
+CTG,2025-12-19,0.5,"CTG: Khuyến nghị KHẢ QUAN với giá mục tiêu 40,200 đồng/cổ phiếu",POS,False,False
+CTG,2026-01-15,0.0,CTG: Báo cáo cập nhật KQKD Q3/2025,,True,False
+CTG,2026-03-04,0.0,CTG: Báo cáo cập nhật KQKD Q4/2025,,True,False
+CTG,2026-03-17,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 44,900 đồng/cổ phiếu",POS,False,False
+CTG,2026-03-19,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 40,000 đồng/cổ phiếu",POS,False,False
+CTG,2026-04-14,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 44,800 đồng/cổ phiếu",POS,False,False
+CTG,2026-04-28,0.0,CTG: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+CTG,2026-05-06,0.0,CTG: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+CTG,2026-05-07,0.0,CTG: Báo cáo cập nhật KQKD Q1/2026,,True,False
+CTG,2026-06-09,0.6666666666666666,"CTG: Khuyến nghị MUA với giá mục tiêu 50,000 đồng/cổ phiếu",POS,False,False
+FPT,2010-12-20,0.0,FPT: Báo cáo phân tích cổ phiếu 20/12/2010,,False,False
+FPT,2010-12-29,0.0,FPT: Báo cáo phân tích cổ phiếu 29/12/2010,,False,False
+FPT,2011-07-14,0.0,FPT: Báo cáo phân tích cổ phiếu 14/07/2011,,False,False
+FPT,2012-03-05,0.0,FPT: Báo cáo phân tích cổ phiếu,,False,False
+FPT,2012-09-05,0.0,FPT: Báo cáo cập nhật - Điều chỉnh kế hoạch kinh doanh,,False,False
+FPT,2013-02-21,0.6666666666666666,FPT: Không đạt kế hoạch năm 2012 như dự báo - Kết quả lợi nhuận,,True,False
+FPT,2013-11-22,0.0,FPT: Báo cáo cập nhật - Chậm rãi bước về đích,,False,False
+FPT,2013-11-25,0.5,FPT: Báo cáo cập nhật - Dự báo LN 2013 tăng 9%,,False,False
+FPT,2014-04-08,0.6666666666666666,FPT: Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+FPT,2014-06-02,0.6666666666666666,FPT: Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+FPT,2014-08-28,0.0,FPT: Báo cáo phân tích doanh nghiệp,,False,False
+FPT,2014-12-04,0.25,FPT: Báo cáo cập nhật nhanh - Động lực tăng trưởng đến từ mảng bán lẻ,,False,False
+FPT,2015-03-26,0.5,FPT : TRIỂN VỌNG KHẢ QUAN 2015,POS,False,False
+FPT,2015-04-21,0.6666666666666666,FPT : Báo cáo lần đầu - Khuyến nghị MUA,POS,False,False
+FPT,2015-05-11,0.0,FPT : Báo cáo cập nhật - Khối công nghệ phục hồi,,False,False
+FPT,2015-06-26,0.6666666666666666,FPT : Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+FPT,2015-11-04,0.6666666666666666,FPT : Báo cáo cập nhật 9T.2015 - Khuyến nghị MUA,POS,False,False
+FPT,2017-04-04,0.6666666666666666,FPT : Báo cáo cập nhật - Khuyến Nghị Mua,POS,False,False
+FPT,2017-08-02,0.6666666666666666,FPT : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+FPT,2017-10-03,0.0,FPT : Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+FPT,2017-11-15,0.5,FPT : Báo cáo cập nhật - Tiếp đà bứt phá,,False,False
+FPT,2018-02-08,0.6666666666666666,FPT : Báo cáo cập nhật công ty - Khuyến nghị Mua,POS,False,False
+FPT,2018-04-05,0.5,FPT : Báo cáo ngắn - Khuyến nghị Khả quan,POS,True,False
+FPT,2018-05-03,0.5,FPT : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+FPT,2018-10-17,0.5,FPT : Báo cáo cập nhật - Khuyến nghị [Mua+33%],POS,False,False
+FPT,2019-04-16,0.6666666666666666,FPT : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+FPT,2019-10-10,0.6666666666666666,FPT : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+FPT,2019-10-21,0.5,FPT : Báo cáo cập nhật - Canh mua vùng 55,POS,False,False
+FPT,2019-12-18,0.0,Báo cáo cập nhật FPT,,False,False
+FPT,2020-03-11,0.5,Báo cáo cập nhật FPT - MUA,POS,False,False
+FPT,2020-04-10,0.0,Báo cáo ĐHCĐ - FPT,,False,False
+FPT,2020-04-22,0.5,Báo cáo cập nhật FPT - KHẢ QUAN,POS,False,False
+FPT,2020-05-20,0.0,Báo cáo cập nhật FPT,,False,False
+FPT,2020-06-23,0.5,"FPT : Báo cáo cập nhật - Khuyến nghị [ Mua +24,5% ]",POS,False,False
+FPT,2020-07-16,0.0,Báo cáo ngắn cổ phiểu FPT,,True,False
+FPT,2020-09-09,0.6666666666666666,Khuyến nghị mua FPT với giá mục tiêu 61.500 đồng/CP,POS,False,False
+FPT,2020-09-18,0.6666666666666666,"Cập nhật FPT - Nắm giữ - Tăng trưởng ổn định, kỳ vọng phục hồi",NEU,False,False
+FPT,2020-09-24,0.6666666666666666,Khuyến nghị mua đối với cổ phiếu FPT,POS,False,False
+FPT,2020-10-23,0.6666666666666666,FPT: Lợi nhuận trước thuế 9 tháng đầu năm tăng 8.7% yoy,,False,False
+FPT,2020-12-16,0.6666666666666666,FPT: Dự kiến tiếp tục tăng trưởng mạnh tháng 12,,False,False
+FPT,2021-02-02,0.5,Khuyến nghị tích cực cho FPT với giá mục tiêu 78.400 đồng/CP,POS,False,False
+FPT,2021-02-09,0.6666666666666666,FPT: Khả quan với biên LNG tăng bền vững,POS,False,False
+FPT,2021-03-22,0.0,Báo cáo cập nhật cổ phiếu FPT,,False,False
+FPT,2021-04-02,0.6666666666666666,FPT: Ghi nhận tăng trưởng trong 2 tháng đầu năm,,False,False
+FPT,2021-04-14,0.0,FPT: Cập nhật ĐHĐCĐ,,False,False
+FPT,2021-05-27,0.8,FPT: Doanh thu và biên lợi nhuận gộp tăng trưởng đều đặn,,False,False
+FPT,2021-06-03,0.6666666666666666,"FPT: Khuyến nghị MUA đối với cổ phiếu FPT. Giá mục tiêu là 104,200 VND/cp",POS,False,False
+FPT,2021-08-18,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 111,593 đồng/cp",POS,False,False
+FPT,2021-08-25,0.5,FPT: Triển vọng kinh doanh vẫn tích cực,POS,False,False
+FPT,2021-09-10,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 115,000 đồng/cp",POS,False,False
+FPT,2021-09-17,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 100,000 đồng/cp",NEU,False,False
+FPT,2021-10-27,0.5,"FPT: Khuyến nghị TÍCH CỰC với giá kỳ vọng 120,000 đồng/cp",POS,False,False
+FPT,2021-12-28,0.6666666666666666,"FPT : Khuyến nghị MUA với giá mục tiêu 123,000 đồng/cp",POS,False,False
+FPT,2022-02-15,0.0,"FPT: Khuyến nghị OUTPERFORM với giá mục tiêu 125,000/ cổ phiếu",POS,False,False
+FPT,2022-03-11,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 166,900 đồng/ cổ phiếu",POS,False,False
+FPT,2022-03-25,0.0,FPT: Khuyến nghị với giá mục tiêu 120.500 VNĐ/cổ phiếu.,,False,False
+FPT,2022-06-15,0.5833333333333333,"FPT: khuyến nghị KHẢ QUAN với giá mục tiêu 103.890 VNĐ/ cổ phiếu. | FPT: Khuyến nghị MUA với giá mục tiêu 106,000 đồng/cổ phiếu",POS,False,False
+FPT,2022-06-21,0.0,FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 115.000 đồng/cổ phiếu.,NEU,False,False
+FPT,2022-08-26,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 98,273 đồng/cổ phiếu",POS,False,False
+FPT,2022-09-14,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 90,000 đồng/cổ phiếu",POS,False,False
+FPT,2022-10-26,0.0,"FPT: Khuyến nghị với giá mục tiêu 90,200 đồng/cổ phiếu",,False,False
+FPT,2022-10-28,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 96,600 đồng/cổ phiếu",POS,False,False
+FPT,2022-11-07,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 104,100 đồng/cổ phiếu",POS,False,False
+FPT,2022-11-10,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 95,400 đồng/cổ phiếu",POS,False,False
+FPT,2022-11-11,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 90,000 đồng/cổ phiếu",NEU,False,False
+FPT,2022-11-28,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 92,700 đồng/cổ phiếu.",POS,False,False
+FPT,2022-12-06,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 101,900 đồng/cổ phiếu",POS,False,False
+FPT,2023-04-24,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 95,900 đồng/cổ phiếu",POS,False,False
+FPT,2023-06-22,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 111,800 đồng/cổ phiếu",POS,False,False
+FPT,2023-08-24,0.5,"FPT: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 100,000 đồng/cổ phiếu",,False,False
+FPT,2023-09-18,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 107,300 đồng/cổ phiếu",NEU,False,False
+FPT,2023-10-23,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 114,155 đồng/cổ phiếu",POS,False,False
+FPT,2023-11-28,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 108,500 đồng/cổ phiếu",POS,False,False
+FPT,2023-11-29,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 120,740 đồng/cổ phiếu",POS,False,False
+FPT,2023-12-13,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 120,740 đồng/cổ phiếu",POS,False,False
+FPT,2023-12-18,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 120,740 đồng/cổ phiếu",POS,False,False
+FPT,2023-12-21,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 105,000 đồng/cổ phiếu",NEU,False,False
+FPT,2024-01-23,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 120,740 đồng/cổ phiếu.",POS,False,False
+FPT,2024-01-29,0.3333333333333333,"FPT: Khuyến nghị THEO DÕI với giá mục tiêu 113,000 đồng/cổ phiếu. | FPT: Khuyến nghị MUA với giá mục tiêu 116,117 đồng/cổ phiếu.",POS,False,False
+FPT,2024-02-26,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 120,000 đồng/cổ phiếu",POS,False,False
+FPT,2024-04-11,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 115,000 đồng/cổ phiếu",POS,False,False
+FPT,2024-04-12,0.0,FPT: Cập nhật ĐHCĐ - VƯƠN TẦM DẪN LỐI.,,False,False
+FPT,2024-05-29,0.0,"FPT: Khuyến nghị THEO DÕI với giá mục tiêu 160,000 đồng/cổ phiếu",,False,False
+FPT,2024-06-03,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 158,700 đồng/cổ phiếu",POS,False,False
+FPT,2024-06-07,0.0,"FPT: Khuyến nghị TRUNG LẬP với giá mục tiêu 150,849 đồng/cổ phiếu",NEU,False,False
+FPT,2024-06-27,0.0,"FPT: Khuyến nghị TRUNG LẬP với giá mục tiêu 141,500 đồng/cổ phiếu",NEU,False,False
+FPT,2024-08-08,0.0,"FPT: Khuyến nghị OUTPERFORM với giá mục tiêu 147,000 đồng/cổ phiếu",POS,False,False
+FPT,2024-09-18,0.0,"FPT: Khuyến nghị TRUNG LẬP với giá mục tiêu 142,800 đồng/cổ phiếu",NEU,False,False
+FPT,2024-09-26,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 147,300 đồng/cổ phiếu",POS,False,False
+FPT,2024-09-30,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 150,000 - 160,000 đồng/cổ phiếu",NEU,False,False
+FPT,2024-10-03,0.6666666666666666,FPT: Báo cáo cập nhật KQKD - Tiếp đà tăng trưởng 2 chữ số với động lực từ khối Công nghệ,,True,False
+FPT,2024-10-11,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 158,800 đồng/cổ phiếu",POS,False,False
+FPT,2024-10-23,0.5,"FPT: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 150,000 - 160,000 đồng/cổ phiếu",,False,False
+FPT,2025-01-15,0.0,"FPT: Khuyến nghị NẮM GIỮ với giá mục tiêu 158,600 đồng/cổ phiếu",NEU,False,False
+FPT,2025-02-13,0.6666666666666666,FPT: Báo cáo cập nhật KQKD - Xu hướng chuyển đổi số thúc đẩy đà tăng trưởng năm 2025,,True,False
+FPT,2025-04-08,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 118,500 đồng/cổ phiếu",POS,False,False
+FPT,2025-04-17,0.5833333333333333,"FPT: Khuyến nghị MUA với giá mục tiêu 139,200 đồng/cổ phiếu. | FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 129,600 đồng/cổ phiếu.",POS,False,False
+FPT,2025-04-18,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 146,700 đồng/cổ phiếu.",POS,False,False
+FPT,2025-05-19,0.0,"FPT: Khuyến nghị TRUNG LẬP với giá mục tiêu 122,500 đồng/cổ phiếu.",NEU,False,False
+FPT,2025-06-05,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 141,100 đồng/cổ phiếu",POS,False,False
+FPT,2025-08-18,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 122,000 đồng/cổ phiếu",POS,False,False
+FPT,2025-08-19,0.5,"FPT: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 117,048 đồng/cổ phiếu",,False,False
+FPT,2025-08-28,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 124,000 đồng/cổ phiếu",POS,False,False
+FPT,2025-09-19,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 118,200 đồng/cổ phiếu",POS,False,False
+FPT,2025-10-28,0.3333333333333333,"FPT: Khuyến nghị OUTPERFORM với giá mục tiêu 115,000 đồng/cổ phiếu | FPT: Khuyến nghị MUA với giá mục tiêu 122,400 đồng/cổ phiếu",POS,False,False
+FPT,2025-10-29,0.5,"FPT: Khuyến nghị KHẢ QUAN với giá mục tiêu 120,000 đồng/cổ phiếu",POS,False,False
+FPT,2026-01-28,0.0,FPT: Báo cáo cập nhật KQKD Q4/2025,,True,False
+FPT,2026-01-30,0.0,FPT: Báo cáo cập nhật KQKD Q4/2025,,True,False
+FPT,2026-02-02,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 124,400 đồng/cổ phiếu",POS,False,False
+FPT,2026-02-06,0.0,"FPT: Khuyến nghị TRUNG LẬP với giá mục tiêu 111,300 đồng/cổ phiếu",NEU,False,False
+FPT,2026-03-03,0.0,"FPT: Khuyến nghị OUTPERFORM với giá mục tiêu 105,800 đồng/cổ phiếu",POS,False,False
+FPT,2026-03-18,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 118,100 đồng/cổ phiếu",POS,False,False
+FPT,2026-03-23,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 118,000 đồng/cổ phiếu",POS,False,False
+FPT,2026-04-16,0.0,FPT: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+FPT,2026-04-22,0.6666666666666666,"FPT: Khuyến nghị MUA với giá mục tiêu 92,000 đồng/cổ phiếu",POS,False,False
+GAS,2012-11-21,0.0,GAS: Báo cáo cập nhật KQKD Quý 3/2012 - Cổ phiếu đáng đầu tư,,True,False
+GAS,2013-07-15,0.0,GAS: Báo cáo cập nhật - Khuyến nghị NẮM GIỮ,NEU,False,False
+GAS,2014-06-30,0.6666666666666666,GAS: Báo cáo cập nhật - Giữ vững đà tăng trưởng,NEU,False,False
+GAS,2015-02-09,-0.5,GAS: Báo cáo cập nhật - Giá dầu giảm đe dọa KQKD và triển vọng 2015,,True,False
+GAS,2015-04-20,0.0,GAS : Báo cáo cập nhật - Khuyến nghị PHÙ HỢP THỊ TRƯỜNG,NEU,False,False
+GAS,2015-06-05,0.0,"GAS : [KQ +13,9%] - Chưa có đột biến về triển vọng trong hai năm tới",,False,False
+GAS,2015-12-25,-0.5,"GAS : [PHTT +10,7%] - Triển vọng ảm đạm nhưng ảnh hưởng từ giá dầu thô sẽ giảm dần",,False,False
+GAS,2018-02-06,0.6666666666666666,GAS : Báo cáo cập nhật công ty - Khuyến nghị Mua,POS,False,False
+GAS,2018-05-24,0.0,GAS : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường -5.2%],NEU,False,False
+GAS,2019-03-27,0.0,GAS : Báo cáo ngắn - Khuyến nghị Trung lập,NEU,True,False
+GAS,2019-04-09,-0.5,GAS : Báo cáo cập nhật - Khuyến nghị [ Bán -13.8%],NEG,False,False
+GAS,2019-10-22,0.0,Báo cáo cập nhật GAS - Khuyến nghị NẮM GIỮ,NEU,False,False
+GAS,2020-03-03,0.5,Báo cáo cập nhật GAS - MUA,POS,False,False
+GAS,2020-04-08,0.0,Báo cáo cập nhật GAS - GIỮ,NEU,False,False
+GAS,2020-04-22,0.0,Báo cáo cập nhật GAS,,False,False
+GAS,2020-04-27,0.0,Báo cáo cập nhật GAS - NẮM GIỮ,NEU,False,False
+GAS,2020-06-05,0.5,GAS - Kết quả 5 tháng vượt tiến độ kế hoạch năm,,True,False
+GAS,2020-07-27,0.6666666666666666,GAS: Báo cáo lần đầu - Khuyến nghị Mua,POS,False,False
+GAS,2020-10-27,0.6666666666666666,Khuyến nghị mua GAS với mức giá mục tiêu 86.500 đồng/CP,POS,False,False
+GAS,2020-11-09,0.6666666666666666,Khuyến nghị mua đối với cổ phiếu GAS,POS,False,False
+GAS,2020-11-27,0.0,GAS: Động lực trung hạn đến từ vận chuyển khí,,False,False
+GAS,2021-01-27,0.0,Cập nhật GAS – NẮM GIỮ Ngày 27/01/2021,NEU,False,False
+GAS,2021-02-02,0.5,GAS: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+GAS,2021-03-09,0.5,Báo cáo cập nhật GAS - MUA,POS,False,False
+GAS,2021-04-20,0.0,Báo cáo lần đầu cổ phiếu GAS,,False,False
+GAS,2021-05-05,0.0,GAS: Thời điểm tốt để mở vị thế mới,,False,False
+GAS,2021-05-27,0.6666666666666666,GAS: Khuyến nghị mua GAS với mức giá mục tiêu 92.700 đồng/CP,POS,False,False
+GAS,2021-06-15,0.0,GAS: Khuyến nghị phù hợp cho cổ phiếu GAS với giá mục tiêu 95.200 đồng/CP,,False,False
+GAS,2021-06-23,0.0,GAS: Khuyến nghị GIỮ ngày 23/06/2021,NEU,False,False
+GAS,2021-07-26,0.0,"GAS: Khuyến nghị nắm giữ cổ phiếu GAS với giá mục tiêu 98,900 đồng/CP",NEU,False,False
+GAS,2021-07-29,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 109,800 đồng/cp",POS,False,False
+GAS,2021-08-27,0.5,"GAS: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 102,500 đồng/cp",,False,False
+GAS,2021-10-07,0.0,"GAS: Khuyến nghị NẮM GIỮ với giá mục tiêu 122,500 đồng/cp",NEU,False,False
+GAS,2021-12-16,0.6666666666666666,"GAS : Khuyến nghị MUA với giá mục tiêu 125,000 đồng/cp",POS,False,False
+GAS,2022-03-16,0.5,Báo cáo ngành dầu khí: GAS hưởng lợi nhiều nhất từ giá dầu tăng,,False,False
+GAS,2022-05-04,0.5,GAS: Khuyến nghị Khả quan với giá mục tiêu 143.100 đồng/cổ phiếu,POS,False,False
+GAS,2022-05-23,0.3888888888888888,"GAS: Khuyến nghi MUA với giá mục tiêu 134,300 VND/ cổ phiếu. | GAS: Khuyến nghị MUA với giá mục tiêu 140,400 VNĐ/cổ phiếu | GAS: Khuyến nghị với giá mục tiêu 124,100 đồng/cổ phiếu.",POS,False,False
+GAS,2022-06-03,0.5,GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 143.000 đồng/cp,POS,False,False
+GAS,2022-06-21,0.0,"GAS: Khuyến nghị với giá mục tiêu 133,600 đồng/cổ phiếu.",,False,False
+GAS,2022-08-04,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 151,100 đồng/cổ phiếu.",POS,False,False
+GAS,2022-08-18,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 150,700 đồng/cổ phiếu.",POS,False,False
+GAS,2022-08-22,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 136,100 đồng/cổ phiếu.",POS,False,False
+GAS,2022-09-15,0.0,"GAS: Khuyến nghị NẮM GIỮ với giá mục tiêu 119,000 đồng/cổ phiếu",NEU,False,False
+GAS,2022-10-13,0.0,"GAS: Khuyến nghị NEUTRAL với giá mục tiêu 118,301 đồng/cổ phiếu",NEU,False,False
+GAS,2022-11-07,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 140,200 đồng/cổ phiếu",POS,False,False
+GAS,2022-12-28,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 128,000 đồng/cổ phiếu.",POS,False,False
+GAS,2023-04-13,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 102,300 đồng/cổ phiếu",NEU,False,False
+GAS,2023-04-18,0.0,"GAS: Khuyến nghị GIỮ với giá mục tiêu 106,000 đồng/cổ phiếu",NEU,False,False
+GAS,2023-05-26,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 102,300 đồng/cổ phiếu.",NEU,False,False
+GAS,2023-06-09,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 118,000 đồng/cổ phiếu",POS,False,False
+GAS,2023-08-15,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 122,000 đồng/cổ phiếu",POS,False,False
+GAS,2023-08-16,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 111,000 đồng/cổ phiếu",POS,False,False
+GAS,2023-08-25,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 113,900 đồng/cổ phiếu",POS,False,False
+GAS,2023-09-13,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 118,800 đồng/cổ phiếu",POS,False,False
+GAS,2023-11-10,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 98,300 đồng/cổ phiếu",POS,False,False
+GAS,2023-12-13,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 84,000 đồng/cổ phiếu",NEU,False,False
+GAS,2023-12-19,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 87,300 đồng/cổ phiếu",POS,False,False
+GAS,2023-12-21,0.0,"GAS: Khuyến nghị NẮM GIỮ với giá mục tiêu 88,407 đồng/cổ phiếu",NEU,False,False
+GAS,2023-12-26,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 84,000 đồng/cổ phiếu",NEU,False,False
+GAS,2024-03-07,0.0,"GAS: Khuyến nghị NẮM GIỮ với giá mục tiêu 87,100 đồng/cổ phiếu",NEU,False,False
+GAS,2024-04-23,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 81,900 đồng/cổ phiếu",NEU,False,False
+GAS,2024-05-07,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,000 đồng/cổ phiếu",POS,False,False
+GAS,2024-05-30,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 93,800 đồng/cổ phiếu",POS,False,False
+GAS,2024-06-05,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 84,000 đồng/cổ phiếu",NEU,False,False
+GAS,2024-06-06,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 87,100 đồng/cổ phiếu",POS,False,False
+GAS,2024-08-14,0.0,"GAS: Khuyến nghị THEO DÕI với giá mục tiêu 83,100 đồng/cổ phiếu",,False,False
+GAS,2024-08-29,0.6666666666666666,GAS: Báo cáo cập nhật KQKD - Lợi nhuận sau thuế 6T/2024 đã vượt kế hoạch cả năm.,,True,False
+GAS,2024-09-04,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 87,100 đồng/cổ phiếu",NEU,False,False
+GAS,2024-09-19,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 79,000 đồng/cổ phiếu",NEU,False,False
+GAS,2024-11-12,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 76,200 đồng/cổ phiếu",POS,False,False
+GAS,2024-11-13,0.0,"GAS: Khuyến nghị THEO DÕI với giá mục tiêu 75,500 đồng/cổ phiếu",,False,False
+GAS,2025-04-29,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 69,963 đồng/cổ phiếu.",POS,False,False
+GAS,2025-05-16,0.0,"GAS: Khuyến nghị NEUTRAL với giá mục tiêu 63,990 đồng/cổ phiếu.",NEU,False,False
+GAS,2025-06-27,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu: 68,100 đồng/cổ phiếu",NEU,False,False
+GAS,2025-08-07,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 74,900 đồng/cổ phiếu",POS,False,False
+GAS,2025-08-18,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 84,900 đồng/cổ phiếu",POS,False,False
+GAS,2025-08-28,0.5,"GAS: Khuyến nghị KHẢ QUAN với giá mục tiêu 72,500 đồng/cổ phiếu",POS,False,False
+GAS,2025-09-22,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 73,300 đồng/cổ phiếu",POS,False,False
+GAS,2025-10-31,0.0,GAS: Báo cáo cập nhật KQKD Q3/2025,,True,False
+GAS,2025-11-10,0.0,GAS: Báo cáo cập nhật KQKD Q3/2025,,True,False
+GAS,2025-12-01,0.5,"GAS: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 75,000 đồng/cổ phiếu",,False,False
+GAS,2025-12-19,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 73,100 đồng/cổ phiếu",POS,False,False
+GAS,2025-12-23,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 82,500 đồng/cổ phiếu",POS,False,False
+GAS,2025-12-31,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 78,700 đồng/cổ phiếu",NEU,False,False
+GAS,2026-02-10,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 115,400 đồng/cổ phiếu",NEU,False,False
+GAS,2026-02-24,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 135,000 đồng/cổ phiếu",POS,False,False
+GAS,2026-03-16,0.0,"GAS: Khuyến nghị THEO DÕI với giá mục tiêu 87,900 đồng/cổ phiếu",,False,False
+GAS,2026-04-14,0.6666666666666666,"GAS: Khuyến nghị MUA với giá mục tiêu 94,500 đồng/cổ phiếu",POS,False,False
+GAS,2026-05-18,0.0,"GAS: Khuyến nghị THEO DÕI với giá mục tiêu 87,300 đồng/cổ phiếu",,False,False
+GAS,2026-05-25,0.0,GAS: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+GAS,2026-05-27,0.0,"GAS: Khuyến nghị TRUNG LẬP với giá mục tiêu 86,000 đồng/cổ phiếu",NEU,False,False
+GVR,2020-10-28,0.6666666666666666,Khuyến nghị mua GVR với giá mục tiêu 16.280 đồng/CP,POS,False,False
+GVR,2021-03-17,0.5,Báo cáo cập nhật GVR - MUA,POS,False,False
+GVR,2021-03-19,0.0,Báo cáo cơ hội đầu tư cp GVR,,False,False
+GVR,2021-06-18,0.0,"SAB, GVR và ACB sẽ thay thế REE, SBT và TCH trong rổ VN30",,False,False
+GVR,2021-06-25,0.5,GVR: Dư địa tăng giá vẫn còn nhưng cần chú ý mục tiêu,,False,False
+GVR,2021-09-23,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 46,900 đồng/cp",POS,False,False
+GVR,2022-05-20,0.6666666666666666,GVR :Khuyến nghị mua với giá mục tiêu 35.400 đồng/ cổ phiếu,POS,False,False
+GVR,2022-08-08,0.0,"GVR: Khuyến nghị TRUNG LẬP với giá mục tiêu 24,510 đồng/cổ phiếu",NEU,False,False
+GVR,2022-08-09,0.0,GVR: Khuyến nghị NẮM GIỮ với giá mục tiêu 27.400 đồng/cổ phiếu.,NEU,False,False
+GVR,2023-04-04,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 21,500 đồng/cổ phiếu",POS,False,False
+GVR,2023-06-20,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 23,800 đồng/cổ phiếu",POS,False,False
+GVR,2023-09-15,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 26,700 đồng/cổ phiếu",POS,False,False
+GVR,2024-03-12,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 39,600 đồng/cổ phiếu",POS,False,False
+GVR,2024-03-20,0.0,"GVR: Khuyến nghị NẮM GIỮ với giá mục tiêu 35,000 đồng/cổ phiếu",NEU,False,False
+GVR,2024-06-17,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 38,800 đồng/cổ phiếu",POS,False,False
+GVR,2024-06-27,0.0,"GVR: Khuyến nghị TRUNG LẬP với giá mục tiêu 36,100 đồng/cổ phiếu",NEU,False,False
+GVR,2024-09-12,0.0,"GVR: Khuyến nghị TRUNG LẬP với giá mục tiêu 34,300 đồng/cổ phiếu",NEU,False,False
+GVR,2025-02-20,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 39,600 đồng/cổ phiếu",POS,False,False
+GVR,2025-05-26,0.5,"GVR: Khuyến nghị KHẢ QUAN với giá mục tiêu 34,300 đồng/cổ phiếu",POS,False,False
+GVR,2025-06-18,0.0,"GVR: Đẩy mạnh HĐKD cốt lõi – Cao su, BĐS KCN",,False,False
+GVR,2025-08-05,0.0,"GVR: Khuyến nghị NẮM GIỮ với giá mục tiêu 32,000 đồng/cổ phiếu",NEU,False,False
+GVR,2025-09-16,0.6666666666666666,"GVR: Khuyến nghị MUA với giá mục tiêu 34,500 đồng/cổ phiếu",POS,False,False
+GVR,2026-03-13,0.0,"GVR: Khuyến nghị TRUNG LẬP với giá mục tiêu 37,500 đồng/cổ phiếu",NEU,False,False
+GVR,2026-05-21,0.0,"GVR: Khuyến nghị TRUNG LẬP với giá mục tiêu 36,200 đồng/cổ phiếu",NEU,False,False
+HDB,2018-03-06,0.5,HDB : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+HDB,2018-06-12,0.0,HDB : Báo cáo lần đầu - Khuyến nghị Phù hợp thị trường,NEU,False,False
+HDB,2019-04-02,0.0,HDB : Báo cáo lần đầu - Khuyến nghị NEUTRAL,NEU,False,False
+HDB,2019-05-31,0.0,HDB : Báo cáo cập nhật - Khuyến nghị [Tích lũy +14%],,False,False
+HDB,2019-06-05,0.0,"HDB : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +3,4%]",NEU,False,False
+HDB,2020-03-20,0.5,Báo cáo cập nhật HDB - MUA,POS,False,False
+HDB,2020-05-19,0.6666666666666666,HDB : Báo cáo cập nhật - Khuyến nghị Mua (+27.5%) | Khuyến nghị mua dành cho HDB với giá mục tiêu 29.600 đồng/CP,POS,False,False
+HDB,2020-06-18,0.0,Báo cáo cập nhật HDB - TÍCH LŨY,,False,False
+HDB,2020-08-04,0.6666666666666666,HDB: Báo cáo nhanh - Khuyến nghị Mua,POS,True,False
+HDB,2020-10-30,0.0,HDB: Thỏa thuận với PG Bank có thể khó xảy ra?,,False,False
+HDB,2020-11-06,0.6666666666666666,HDB: Khuyến nghị mua HDB với giá mục tiêu 42.241 đồng/cp,POS,False,False
+HDB,2020-11-19,0.5,HDB: Triển vọng tích cực,POS,False,False
+HDB,2020-12-04,0.6666666666666666,HDB: Duy trì mức tăng trưởng tốt,,False,False
+HDB,2021-12-22,0.6666666666666666,"HDB : Khuyến nghị MUA với giá mục tiêu 36,400 đồng/cp",POS,False,False
+HDB,2022-03-15,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 34,850 đồng/ cổ phiếu",POS,False,False
+HDB,2022-10-27,0.0,"HDB: Khuyến nghị NẮM GIỮ với giá mục tiêu 26,480 đồng/cổ phiếu",NEU,False,False
+HDB,2022-12-21,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 25,000 đồng/cổ phiếu.",POS,False,False
+HDB,2023-03-22,0.0,"HDB: Khuyến nghị GIỮ với giá mục tiêu 20,400 đồng/cổ phiếu.",NEU,False,False
+HDB,2023-08-08,0.0,HDB: Thời kỳ khó khăn của Tài chính tiêu dùng,,False,False
+HDB,2023-09-05,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 19,000 đồng/cổ phiếu",POS,False,False
+HDB,2023-11-13,0.0,"HDB: Khuyến nghị TRUNG LẬP với giá mục tiêu 20,100 đồng/cổ phiếu",NEU,False,False
+HDB,2023-11-14,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 22,700 đồng/cổ phiếu",POS,False,False
+HDB,2024-02-07,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 27,000 đồng/cổ phiếu.",POS,False,False
+HDB,2024-03-13,0.5,HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 29.700 đồng/cổ phiếu,POS,False,False
+HDB,2024-03-22,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,700 đồng/cổ phiếu",POS,False,False
+HDB,2024-04-24,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 29,400 đồng/cổ phiếu",POS,False,False
+HDB,2024-06-26,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 28,680 đồng/cổ phiếu",POS,False,False
+HDB,2024-08-09,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 32,900 đồng/cổ phiếu",POS,False,False
+HDB,2024-08-13,0.0,"HDB: Khuyến nghị THEO DÕI với giá mục tiêu 28,100 đồng/cổ phiếu",,False,False
+HDB,2024-09-18,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,300 đồng/cổ phiếu",POS,False,False
+HDB,2025-09-16,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 39,450 đồng/cổ phiếu",POS,False,False
+HDB,2025-11-11,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 32,770 đồng/cổ phiếu",POS,False,False
+HDB,2025-11-20,0.0,"HDB: Khuyến nghị NẮM GIỮ với giá mục tiêu 34,400 đồng/cổ phiếu",NEU,False,False
+HDB,2025-11-21,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 37,000 đồng/cổ phiếu",POS,False,False
+HDB,2025-12-08,0.0,"HDB: Khuyến nghị NẮM GIỮ với giá mục tiêu 37,500 đồng/cổ phiếu",NEU,False,False
+HDB,2026-01-13,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 32,191 đồng/cổ phiếu",POS,False,False
+HDB,2026-02-04,0.0,HDB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+HDB,2026-03-19,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 32,000 đồng/cổ phiếu",POS,False,False
+HDB,2026-03-25,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 29,700 đồng/cổ phiếu",POS,False,False
+HDB,2026-04-07,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 33,400 đồng/cổ phiếu",POS,False,False
+HDB,2026-04-24,0.0,HDB: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+HDB,2026-05-04,0.0,HDB: Báo cáo cập nhật KQKD Q1/2026 | HDB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+HDB,2026-05-28,0.6666666666666666,"HDB: Khuyến nghị MUA với giá mục tiêu 35,000 đồng/cổ phiếu",POS,False,False
+HDB,2026-06-05,0.5,"HDB: Khuyến nghị KHẢ QUAN với giá mục tiêu 32,000 đồng/cổ phiếu",POS,False,False
+HPG,2010-09-28,0.0,HPG: Báo cáo phân tích cổ phiếu 28/9/2010,,False,False
+HPG,2011-06-06,0.0,HPG: Báo cáo phân tích cổ phiếu 06/06/2011,,False,False
+HPG,2011-07-11,0.0,HPG: Báo cáo phân tích cổ phiếu 11/07/2011,,False,False
+HPG,2011-08-30,0.0,HPG: Báo cáo phân tích cổ phiếu 30/08/2011,,False,False
+HPG,2011-09-07,0.0,HPG: Báo cáo phân tích cổ phiếu 07/09/2011,,False,False
+HPG,2011-12-12,0.0,HPG: Báo cáo phân tích công ty tóm tắt,,False,False
+HPG,2011-12-13,0.0,HPG: Báo cáo cập nhật Quý 3/2011,,True,False
+HPG,2012-09-18,0.5,HPG: Báo cáo cập nhật - Lợi nhuận biên thu hẹp mạnh,,False,False
+HPG,2013-07-16,0.5,HPG: Báo cáo cập nhật - Ước LNST 6 tháng 2013 tăng mạnh,,False,False
+HPG,2013-10-23,0.5,HPG: Báo cáo cập nhật - LN Quý 3/13 Tăng Mạnh 72% N/N | HPG: Báo cáo cập nhật - Tỷ lệ sinh lời cao nhất khu vực nhưng chưa được đánh giá đúng mức,,True,False
+HPG,2013-10-25,0.0,HPG: Báo cáo cập nhật - Thu hồi khoản phải thu từ CTCP đầu tư Hà Nội ACB,,False,False
+HPG,2013-11-22,0.0,HPG: Báo cáo cập nhật - Một chương mới bắt đầu,,False,False
+HPG,2013-12-09,-0.25,HPG: Báo cáo cập nhật - THÊM VÀO - Giảm giá bán trung bình để tăng thị phần,,False,False
+HPG,2014-08-01,0.5,"HPG: Báo cáo cập nhật - KQLN 6T đầu năm ấn tượng, triển vọng phát triển khả quan",POS,False,False
+HPG,2014-08-18,0.0,HPG: Báo cáo cập nhật - Thép Hòa Phát trên đường phủ rộng toàn quốc,,False,False
+HPG,2014-10-30,0.0,HPG: Báo cáo phân tích doanh nghiệp,,False,False
+HPG,2014-12-31,0.6666666666666666,HPG: Báo cáo cập nhật - Hoạt động kinh doanh cốt lõi tăng trưởng mạnh,,False,False
+HPG,2015-06-02,-0.5,"HPG : [Giữ KN KQ + 17,2%] - Môi trường cạnh tranh ngày càng bất lợi - Cập nhật",NEU,False,False
+HPG,2017-02-21,0.5,HPG : Báo cáo nhanh - Tăng vốn sẽ tốt hơn cho Hòa Phát,,True,True
+HPG,2017-02-22,0.0,HPG : Bản tin cập nhật nhanh: KQKD Q4 và cả năm 2016,,True,False
+HPG,2017-07-25,0.5,HPG : Báo cáo nhanh - Khuyến nghị Tăng tỷ trọng,,True,False
+HPG,2018-01-08,0.6666666666666666,HPG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+HPG,2018-02-28,0.5,HPG : Báo cáo phân tích - Khuyến nghị Tăng tỷ trọng,,False,False
+HPG,2018-05-11,0.6666666666666666,HPG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+HPG,2018-07-31,0.0,HPG : Báo cáo cập nhật - Khuyến nghị Phù hợp thị trường,NEU,False,False
+HPG,2018-08-10,0.5,"HPG : Báo cáo cập nhật - Khuyến nghị [Mua +31,1%]",POS,False,False
+HPG,2018-10-09,0.0,HPG : Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+HPG,2019-04-08,0.5,"HPG : Báo cáo cập nhật - Khuyến nghị [Mua +37,2%]",POS,False,False
+HPG,2019-07-29,0.6666666666666666,HPG : Báo cáo KQKD - Khuyến nghị Mua,POS,True,False
+HPG,2019-08-07,0.6666666666666666,HPG - Cập nhật KQKD [TĂNG TỶ TRỌNG +15.8%] - Kết quả kinh doanh 2Q2019 vượt kì vọng thị trường,,True,False
+HPG,2019-08-26,0.0,Báo cáo cập nhật cổ phiếu HPG,,False,False
+HPG,2019-10-08,0.5,HPG : Báo cáo cập nhật - Khuyến nghị Tăng tỷ trọng,,False,False
+HPG,2019-11-04,0.0,Báo cáo cập nhật cổ phiếu HPG,,False,False
+HPG,2019-11-19,0.5,Báo cáo cập nhật HPG - MUA,POS,False,False
+HPG,2019-12-04,0.0,Báo cáo nhanh HPG,,True,False
+HPG,2019-12-23,0.5,Báo cáo ngắn HPG - TĂNG TỶ TRỌNG,,True,False
+HPG,2019-12-26,0.0,Báo cáo thăm dự án HPG,,False,False
+HPG,2019-12-27,0.0,HPG – Mọi ánh nhìn hướng về Dung Quất – Cập nhật,,False,False
+HPG,2020-01-31,0.5,HPG - Báo cáo ngắn - KQKD 4Q19 tích cực nhờ Hòa Phát,POS,True,False
+HPG,2020-02-12,0.0,Báo cáo cập nhật HPG,,False,False
+HPG,2020-02-26,0.5,HPG : Báo cáo cập nhật HPG - MUA,POS,False,False
+HPG,2020-03-03,0.0,Báo cáo cập nhật HPG - NẮM GIỮ,NEU,False,False
+HPG,2020-03-04,0.0,Báo cáo cập nhật cổ phiếu HPG,,False,False
+HPG,2020-03-13,0.5,Báo cáo cập nhật HPG - MUA,POS,False,False
+HPG,2020-04-15,0.0,Báo cáo cập nhật HPG,,False,False
+HPG,2020-04-29,0.0,Báo cáo nhanh HPG,,True,False
+HPG,2020-05-04,0.5,Báo cáo cập nhật HPG - KHẢ QUAN,POS,False,False
+HPG,2020-05-21,0.6666666666666666,Khuyến nghị mua dành cho cổ phiếu HPG | Báo cáo cập nhật HPG - Khuyến nghị Mua,POS,False,False
+HPG,2020-05-29,0.5,Báo cáo cập nhật HPG - MUA,POS,False,False
+HPG,2020-07-30,0.75,Cập nhật HPG - Canh mua - Tăng trưởng mạnh mẽ ngay trong dịch bệnh,POS,False,False
+HPG,2020-08-17,0.0,Báo cáo Doanh nghiệp - HPG,,False,False
+HPG,2020-08-18,0.5,Báo cáo cập nhật HPG - MUA,POS,False,False
+HPG,2020-09-17,0.5,Báo cáo cập nhật HPG - MUA | Cập nhật HPG - Canh mua - Lò cao số 3 vận hành thành công trong tháng 8,POS,False,False
+HPG,2020-09-21,0.6666666666666666,Khuyến nghị mua cổ phiếu HPG với giá mục tiêu 29.900 đồng/CP,POS,False,False
+HPG,2020-10-15,0.6666666666666666,HPG: Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+HPG,2020-10-16,0.75,"Cập nhật HPG: Vượt mọi kỷ lục kinh doanh, lợi nhuận quý III gấp đôi cùng kỳ",,True,False
+HPG,2021-02-18,0.6666666666666666,HPG: Báo cáo cập nhật - Duy trì tốc độ tăng trưởng cao,,False,False
+HPG,2021-03-08,0.0,Báo cáo cập nhật cổ phiếu HPG,,False,False
+HPG,2021-03-12,0.0,Báo cáo phân tích cổ phiếu HPG,,False,False
+HPG,2021-03-22,0.6666666666666666,Khuyến nghị mua dành cho cổ phiếu HPG | HPG: Khuyến nghị MUA,POS,False,False
+HPG,2021-04-13,0.75,HPG: Mở đầu thập kỷ mới bằng mức tăng trưởng kỷ lục,,False,False
+HPG,2021-04-22,0.1666666666666666,HPG: Cập nhật họp ĐHĐCĐ Tập đoàn Hòa Phát | HPG: Cập nhật triển vọng từ ĐHCĐ 2021 | HPG: Khi triều dâng - Khuyến nghị Khả quan,POS,False,False
+HPG,2021-04-23,0.0,Báo cáo cập nhật cổ phiếu HPG,,False,False
+HPG,2021-05-07,0.5,HPG: Xu hướng giá thép tăng cao,,False,False
+HPG,2021-05-25,0.75,"HPG: Giá thép tăng 20% và Dung Quất 1 hoạt động hết công suất sẽ thúc đẩy doanh thu, lợi nhuận của H",,False,False
+HPG,2021-06-25,0.0,HPG: Báo cáo phân tích cổ phiếu HPG,,False,False
+HPG,2021-08-02,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 54,000 đồng/cp",POS,False,False
+HPG,2021-08-05,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 64,700 đồng/cp",POS,False,False
+HPG,2021-08-18,0.5833333333333333,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 58,500 đồng/cp | HPG: Khuyến nghị MUA với giá mục tiêu 66,000 đồng/cp",POS,False,False
+HPG,2022-01-28,0.0,HPG : Cập nhật nhanh KQKD Quý 4.2021,,True,False
+HPG,2022-02-23,0.6666666666666666,"HPG : Khuyến nghị MUA với giá mục tiêu 56,700 đồng/ cổ phiếu",POS,False,False
+HPG,2022-03-03,0.5,"HPG: Khuyến nghị TĂNG TỈ TRỌNG với giá mục tiêu 65,000 đồng/ cổ phiếu",,False,False
+HPG,2022-03-23,0.6666666666666666,"HPG : Khuyến nghị MUA với giá mục tiêu 56,700 đồng/ cổ phiếu.",POS,False,False
+HPG,2022-05-10,0.5,HPG: Khuyến nghị KHẢ QUAN – Giá mục tiêu 1 năm: 50.600 đồng/cổ phiếu,POS,False,False
+HPG,2022-05-31,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 58,900 đồng/cổ phiếu.",POS,False,False
+HPG,2022-06-10,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 57,800 đồng/cổ phiếu.",POS,False,False
+HPG,2022-06-16,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 54,870 đồng/cổ phiếu.",POS,False,False
+HPG,2022-06-28,0.0,HPG: Khuyến nghị lướt sóng ngắn hạn trong vùng từ 21.000 – 26.000 đồng/cổ phiếu,,False,False
+HPG,2022-07-27,0.0,HPG: Khuyến nghị TRUNG LẬP,NEU,False,False
+HPG,2022-08-05,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,600 đồng/cổ phiếu.",POS,False,False
+HPG,2022-08-08,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 31,800 đồng/cổ phiếu.",POS,False,False
+HPG,2022-10-17,0.0,HPG: Khuyến nghị NẮM GIỮ,NEU,False,False
+HPG,2022-11-01,0.0,"HPG: Khuyến nghị TRUNG LẬP với giá mục tiêu 18,000 đồng/cổ phiếu",NEU,False,False
+HPG,2022-11-03,0.0,HPG: Khuyến nghị NẮM GIỮ.,NEU,False,False
+HPG,2022-11-07,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 17,700 đồng/cổ phiếu.",POS,False,False
+HPG,2022-11-09,0.0,"HPG: Khuyến nghị TRUNG LẬP với giá mục tiêu 15,700 đồng/cổ phiếu",NEU,False,False
+HPG,2022-11-11,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 20,900 đồng/cổ phiếu",POS,False,False
+HPG,2022-11-14,0.0,"HPG: Khuyến nghị với giá mục tiêu 35,075 đồng/cổ phiếu.",,False,False
+HPG,2022-11-16,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 15,300 đồng/cổ phiếu",POS,False,False
+HPG,2022-11-25,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 18,000 đồng/cổ phiếu",POS,False,False
+HPG,2022-12-16,0.0,"HPG: Khuyến nghị NẮM GIỮ với giá mục tiêu 22,100 đồng/cổ phiếu.",NEU,False,False
+HPG,2023-03-07,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 24,400 đồng/cổ phiếu",POS,False,False
+HPG,2023-04-03,0.0,"HPG: Khuyến nghị TRUNG LẬP với giá mục tiêu 20,950 đồng/cổ phiếu | HPG: Khuyến nghị OUTPERFORM với giá mục tiêu 26,275 đồng/cổ phiếu",POS,False,False
+HPG,2023-04-25,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,500 đồng/cổ phiếu",POS,False,False
+HPG,2023-06-07,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 24,800 đồng/cổ phiếu",POS,False,False
+HPG,2023-08-11,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 31,600 đồng/cổ phiếu",POS,False,False
+HPG,2023-09-06,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 33,000 đồng/cổ phiếu",POS,False,False
+HPG,2023-09-21,0.5,"HPG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 35,000 đồng/cổ phiếu",,False,False
+HPG,2023-10-10,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 30,160 đồng/cổ phiếu",POS,False,False
+HPG,2023-10-11,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 28,600 đồng/cổ phiếu",POS,False,False
+HPG,2023-10-18,0.0,HPG: Khuyến nghị NẮM GIỮ,NEU,False,False
+HPG,2023-10-31,0.0,"HPG: Khuyến nghị THEO DÕI với giá mục tiêu 29,000 đồng/cổ phiếu",,False,False
+HPG,2023-11-01,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,300 đồng/cổ phiếu",POS,False,False
+HPG,2023-12-07,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,000 đồng/cổ phiếu",POS,False,False
+HPG,2023-12-13,0.0,"HPG: Khuyến nghị TRUNG LẬP với giá mục tiêu 31,000 đồng/cổ phiếu",NEU,False,False
+HPG,2023-12-18,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 32,200 đồng/cổ phiếu",POS,False,False
+HPG,2024-02-01,0.0,"HPG: Khuyến nghị với giá mục tiêu 32,769 đồng/cổ phiếu.",,False,False
+HPG,2024-02-22,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,550 đồng/cổ phiếu.",POS,False,False
+HPG,2024-02-27,0.5833333333333333,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 37,000 đồng/cổ phiếu | HPG: Khuyến nghị MUA với giá mục tiêu 32,700 đồng/cổ phiếu",POS,False,False
+HPG,2024-03-04,0.0,"HPG: Khuyến nghị NẮM GIỮ với giá mục tiêu 32,700 đồng/cổ phiếu",NEU,False,False
+HPG,2024-03-20,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,800 đồng/cổ phiếu",POS,False,False
+HPG,2024-03-21,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,000 đồng/cổ phiếu",POS,False,False
+HPG,2024-04-11,0.0,"HPG: Cập nhật ĐHCĐ - Triển vọng kinh doanh lạc quan, tập trung triển khai dự án Dung Quất 2",,False,False
+HPG,2024-06-11,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,300 đồng/cổ phiếu",POS,False,False
+HPG,2024-08-02,0.0,"HPG: Khuyến nghị với giá mục tiêu 33,500 đồng/cổ phiếu",,False,False
+HPG,2024-09-05,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 28,200 đồng/cổ phiếu | HPG: Khuyến nghị MUA với giá mục tiêu 31,000 đồng/cổ phiếu",POS,False,False
+HPG,2024-09-18,0.0,HPG: Khuyến nghị OUTPERFORM với giá mục tiêu 34.500 đồng/cổ phiếu,POS,False,False
+HPG,2024-10-08,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,000 đồng/cổ phiếu",POS,False,False
+HPG,2024-10-17,0.5,"HPG: Khuyến nghị Tăng tỷ trọng với giá mục tiêu 32,000 đồng/cổ phiếu",,False,False
+HPG,2024-11-05,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 37,500 đồng/cổ phiếu",POS,False,False
+HPG,2024-11-06,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 31,700 đồng/cổ phiếu",POS,False,False
+HPG,2024-11-13,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 37,400 đồng/cổ phiếu",POS,False,False
+HPG,2024-12-06,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,700 đồng/cổ phiếu",POS,False,False
+HPG,2024-12-23,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 28,85 đồng/cổ phiếu",POS,False,False
+HPG,2025-02-10,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 32,400 đồng/cổ phiếu",POS,False,False
+HPG,2025-02-20,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 33,500 đồng/cổ phiếu",POS,False,False
+HPG,2025-02-21,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,300 đồng/cổ phiếu",POS,False,False
+HPG,2025-02-27,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,000 đồng/cổ phiếu",POS,False,False
+HPG,2025-03-13,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,600 đồng/cổ phiếu",POS,False,False
+HPG,2025-03-26,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 33,000 đồng/cổ phiếu.",POS,False,False
+HPG,2025-04-17,0.6666666666666666,HPG: Động lực tăng trưởng từ chiến lược phát triển thép công nghệ cao,,False,False
+HPG,2025-04-18,0.25,HPG: Cập nhật Đại hội cổ đông 2025 | HPG: Báo cáo Cập nhật ĐHCĐ 2025 - THÊM NHIỀU THÔNG TIN TÍCH CỰC VẾ DỰ ÁN DUNG QUẤT 2,POS,False,False
+HPG,2025-04-21,0.0,HPG: Báo cáo cập nhật ĐHCĐ năm 2025,,False,False
+HPG,2025-04-29,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 33,000 đồng/cổ phiếu.",POS,False,False
+HPG,2025-08-15,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,300 đồng/cổ phiếu",POS,False,False
+HPG,2025-08-27,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 31,597 đồng/cổ phiếu",POS,False,False
+HPG,2025-09-04,0.0,"HPG: Khuyến nghị TÍCH LŨY với giá mục tiêu 33,700 đồng/cổ phiếu",,False,False
+HPG,2025-09-05,0.0,HPG: Báo cáo Phân tích kỹ thuật,,False,False
+HPG,2025-09-16,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,300 đồng/cổ phiếu",POS,False,False
+HPG,2025-10-02,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,800 đồng/cổ phiếu",POS,False,False
+HPG,2025-10-13,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,750 đồng/cổ phiếu",POS,False,False
+HPG,2025-10-30,0.0,HPG: Báo cáo cập nhật KQKD Q3/2025,,True,False
+HPG,2025-11-04,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,000 đồng/cổ phiếu",POS,False,False
+HPG,2025-11-25,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,700 đồng/cổ phiếu",POS,False,False
+HPG,2025-12-15,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,900 đồng/cổ phiếu",POS,False,False
+HPG,2026-02-05,0.0,HPG: Báo cáo cập nhật KQKD Q4/2025,,True,False
+HPG,2026-02-09,0.5,"HPG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 36,200 đồng/cổ phiếu",,False,False
+HPG,2026-02-23,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,000 đồng/cổ phiếu",POS,False,False
+HPG,2026-02-24,0.0,"HPG: Khuyến nghị OUTPERFORM với giá mục tiêu 36,000 đồng/cổ phiếu",POS,False,False
+HPG,2026-02-25,0.5833333333333333,"HPG: Khuyến nghị MUA với giá mục tiêu 39,022 đồng/cổ phiếu | HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 35,600 đồng/cổ phiếu",POS,False,False
+HPG,2026-03-10,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 35,800 đồng/cổ phiếu",POS,False,False
+HPG,2026-04-10,0.0,HPG: Báo cáo cập nhật 10/04/2026,,False,False
+HPG,2026-04-23,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 36,600 đồng/cổ phiếu",POS,False,False
+HPG,2026-05-04,0.0,HPG: Báo cáo cập nhật KQKD Q1/2026,,True,False
+HPG,2026-05-12,0.0,HPG: Báo cáo cập nhật KQKD Q1/2026,,True,False
+HPG,2026-05-20,0.5,"HPG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 36,200 đồng/cổ phiếu",,False,False
+HPG,2026-05-25,0.5,"HPG: Khuyến nghị KHẢ QUAN với giá mục tiêu 36,600 đồng/cổ phiếu",POS,False,False
+HPG,2026-06-09,0.6666666666666666,"HPG: Khuyến nghị MUA với giá mục tiêu 34,500 đồng/cổ phiếu",POS,False,False
+MBB,2012-06-07,0.5,"MBB: Báo cáo lần đầu - Lợi nhuận tốt, định giá hấp dẫn",,False,False
+MBB,2012-08-28,0.6666666666666666,MBB: Báo cáo cập nhật - Tăng trưởng tốt định giá hấp dẫn,,False,False
+MBB,2012-09-14,0.0,MBB: Báo cáo cập nhật kết quả 6 tháng đầu năm,,True,False
+MBB,2012-11-16,0.8,MBB: Báo cáo cập nhật kết quả kinh doanh 9T/2012 - Dẫn đầu tăng trưởng lợi nhuận,,True,False
+MBB,2013-03-22,0.0,MBB: Báo cáo phân tích công ty - Khuyến nghị Nắm Giữ,NEU,False,False
+MBB,2014-06-23,-0.5,MBB: Báo cáo cập nhật - LN Q2/2014 dự báo giảm so với cùng kỳ,,True,False
+MBB,2015-02-04,0.0,MBB: Báo cáo cập nhật,,False,False
+MBB,2015-06-09,0.6666666666666666,MBB : Báo cáo phân tích - Khuyến nghị MUA,POS,False,False
+MBB,2015-10-06,0.0,"MBB : Sáp nhập công ty Tài chính Cổ phần Sông Đà, thành lập công ty tài chính tiêu dùng",,False,True
+MBB,2015-10-14,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+MBB,2015-11-26,0.0,MBB : Báo cáo lần đầu - Khuyến nghị: Nắm giữ,NEU,False,False
+MBB,2017-04-18,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua mạnh,POS,False,False
+MBB,2017-05-11,0.5,MBB : Báo cáo nhanh - Mua dài hạn,POS,True,False
+MBB,2017-08-02,0.6666666666666666,MBB : Báo cáo thăm doanh nghiệp - Khuyến nghị Mua mạnh,POS,False,False
+MBB,2018-03-22,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MBB,2018-05-22,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua vào,POS,False,False
+MBB,2018-06-18,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MBB,2018-10-29,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MBB,2019-02-12,0.6666666666666666,MBB : Báo cáo nhanh - Khuyến nghị Mua,POS,True,False
+MBB,2019-03-07,0.6666666666666666,MBB : Báo cáo lần đầu - Khuyến nghị Mua,POS,False,False
+MBB,2019-09-13,0.6666666666666666,Báo cáo cập nhật – Khuyến nghị OUTPERFORM - MBB vẫn duy trì được đà tăng trưởng tốt cho năm 2020,POS,False,False
+MBB,2019-09-24,0.0,MBB : Báo cáo nhanh - Cập nhật ngày 24/09/2019,,True,False
+MBB,2019-10-31,0.6666666666666666,MBB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MBB,2019-11-12,0.0,Báo cáo phân tích cổ phiếu MBB,,False,False
+MBB,2020-02-12,0.0,Báo cáo cập nhật MBB - THEO DÕI,,False,False
+MBB,2020-03-27,0.4,MBB – Covid-19 làm giảm tăng trưởng lợi nhuận 2020,,False,False
+MBB,2020-04-01,0.5,Báo cáo cập nhật MBB - MUA,POS,False,False
+MBB,2020-04-27,0.0,Báo cáo cập nhật cổ phiếu MBB,,False,False
+MBB,2020-05-14,0.5,MBB – Cập nhật KQKD [MUA +64%] Thừa nhận khó khăn trong ngắn hạn,POS,True,False
+MBB,2020-07-31,0.0,MBB: Dự phòng giảm giúp cải thiện lợi nhuận,,False,False
+MBB,2020-08-13,0.5,MBB – Cập nhật 2Q20 [MUA +35.4%] Trở lại đường đua,POS,True,False
+MBB,2020-10-28,0.0,Báo cáo cập nhật cổ phiếu MBB,,False,False
+MBB,2020-12-17,0.6666666666666666,Khuyến nghị mua MBB với giá mục tiêu là 28.900 đồng/CP,POS,False,False
+MBB,2021-01-22,0.5,MBB: Tín dụng tăng tốc trong Quý 4,,True,False
+MBB,2021-02-03,0.75,MBB – Cập nhật [MUA +35.2%] Tăng trưởng tín dụng tăng vọt trong 4Q20,POS,True,False
+MBB,2021-03-16,0.0,Báo cáo cập nhật cổ phiếu MBB,,False,False
+MBB,2021-04-19,0.5,Báo cáo lần đầu MBB – MUA ngày 19/04/2021,POS,False,False
+MBB,2021-05-06,0.5,MBB: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+MBB,2021-07-23,0.0,MBB: Cập nhật KQKD quý 2/2021,,True,False
+MBB,2021-08-19,0.6666666666666666,"MBB: Khuyến nghị MUA với giá hợp lý 39,484 đồng/cp",POS,False,False
+MBB,2021-09-17,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 33,200 đồng/cp",POS,False,False
+MBB,2021-10-28,0.0,"MBB: Khuyến nghị OUTPERFORM với giá kỳ vọng 33,000 đồng/cp",POS,False,False
+MBB,2022-02-23,0.6666666666666666,MBB: Khuyến nghị MUA với giá mục tiêu 49.800 đồng/CP,POS,False,False
+MBB,2022-02-28,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 41,101 đồng/ cổ phiếu",POS,False,False
+MBB,2022-03-25,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 40,800 đồng/ cổ phiếu",POS,False,False
+MBB,2022-05-18,0.6666666666666666,"MBB: Khuyến nghị MUA, giá mục tiêu 36,500 VND/cp",POS,False,False
+MBB,2022-07-29,0.0,"MBB: Khuyến nghị OUTPERFORM với giá mục tiêu 31,300 đồng/cổ phiếu.",POS,False,False
+MBB,2022-08-03,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 44,200 đồng/cổ phiếu.",POS,False,False
+MBB,2022-08-24,0.5,MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 34.000 đồng/cổ phiếu.,POS,False,False
+MBB,2022-10-06,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 33,800 đồng/cổ phiếu",POS,False,False
+MBB,2022-10-26,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 32,792 đồng/cổ phiếu",POS,False,False
+MBB,2022-11-08,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,600 đồng/cổ phiếu",POS,False,False
+MBB,2022-11-14,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 22,000 đồng/cổ phiếu",POS,False,False
+MBB,2022-12-23,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 30,200 đồng/cổ phiếu",POS,False,False
+MBB,2023-03-10,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 29,300 đồng/cổ phiếu",POS,False,False
+MBB,2023-05-04,0.6666666666666666,"MBB: Khuyến nghị MUA với giá muc tiêu 27,800 đồng/cổ phiếu",POS,False,False
+MBB,2023-05-25,0.6666666666666666,MBB: Khuyến nghị MUA với giá mục tiêu 22.300 đồng/cổ phiếu,POS,False,False
+MBB,2023-06-01,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 29,300 đồng/cổ phiếu.",POS,False,False
+MBB,2023-08-02,0.0,"MBB: Khuyến nghị OUTPERFORM với giá mục tiêu 22,700 đồng/cổ phiếu",POS,False,False
+MBB,2023-11-02,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 30,050 đồng/cổ phiếu",POS,False,False
+MBB,2024-02-22,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 30,100 đồng/cổ phiếu.",POS,False,False
+MBB,2024-03-20,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 28,100 đồng/cổ phiếu",POS,False,False
+MBB,2024-04-04,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,150 đồng/cổ phiếu",POS,False,False
+MBB,2024-06-19,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 27,000 đồng/cổ phiếu",POS,False,False
+MBB,2024-09-09,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 29,100 đồng/cổ phiếu",POS,False,False
+MBB,2024-10-21,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 29,000 đồng/cổ phiếu",POS,False,False
+MBB,2024-11-21,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 31,100 đồng/cổ phiếu",POS,False,False
+MBB,2024-12-27,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 29,000 đồng/cổ phiếu",POS,False,False
+MBB,2025-02-14,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 28,200 đồng/cổ phiếu",POS,False,False
+MBB,2025-04-29,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 26,000 đồng/cổ phiếu | MBB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 27,000 đồng/cổ phiếu.",POS,False,False
+MBB,2025-06-19,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 31,100đ/cổ phiếu",POS,False,False
+MBB,2025-06-25,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,700 đồng/cổ phiếu",POS,False,False
+MBB,2025-10-27,0.0,MBB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+MBB,2025-10-28,0.0,MBB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+MBB,2025-10-29,0.0,"MBB: Khuyến nghị NẮM GIỮ với giá mục tiêu 29,500 đồng/cổ phiếu",NEU,False,False
+MBB,2025-11-03,0.0,MBB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+MBB,2025-11-05,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 31,600 đồng/cổ phiếu",POS,False,False
+MBB,2025-11-20,0.5,"MBB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 27,000 đồng/cổ phiếu",,False,False
+MBB,2025-12-04,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 30,000 đồng/cổ phiếu",POS,False,False
+MBB,2025-12-09,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 29,000 đồng/cổ phiếu",POS,False,False
+MBB,2025-12-26,0.0,MBB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+MBB,2026-01-30,0.0,MBB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+MBB,2026-02-04,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 34,100 đồng/cổ phiếu",POS,False,False
+MBB,2026-02-05,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,000 đồng/cổ phiếu",POS,False,False
+MBB,2026-02-06,0.5,"MBB: Khuyến nghị TÍCH CỰC với giá mục tiêu 34,150 đồng/cổ phiếu",POS,False,False
+MBB,2026-02-12,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 37,230 đồng/cổ phiếu",POS,False,False
+MBB,2026-02-13,0.5,"MBB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 32,400 đồng/cổ phiếu",,False,False
+MBB,2026-02-25,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 35,500 đồng/cổ phiếu",POS,False,False
+MBB,2026-03-11,0.6666666666666666,"MBB: Khuyến nghị MUA với giá mục tiêu 32,400 đồng/cổ phiếu",POS,False,False
+MBB,2026-03-24,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 30,380 đồng/cổ phiếu",POS,False,False
+MBB,2026-03-26,0.0,"MBB: Khuyến nghị OUTPERFORM với giá mục tiêu 34,207 đồng/cổ phiếu",POS,False,False
+MBB,2026-03-27,0.5,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,600 đồng/cổ phiếu",POS,False,False
+MBB,2026-04-20,0.25,"MBB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,000 đồng/cổ phiếu | MBB: Báo cáo cập nhật ĐHCĐ 2026",POS,False,False
+MBB,2026-04-28,0.0,"MBB: Khuyến nghị TÍCH LŨY với giá mục tiêu 29,600 đồng/cổ phiếu",,False,False
+MSN,2010-11-29,0.0,MSN: Báo cáo phân tích cổ phiếu 29/11/2010,,False,False
+MSN,2010-11-30,0.0,MSN: Báo cáo phân tích cổ phiếu 30/11/2010,,False,False
+MSN,2010-12-28,0.0,MSN: Báo cáo phân tích cổ phiếu 28/12/2010,,False,False
+MSN,2012-02-21,0.0,MSN: Báo cáo cập nhật Kết quả kinh doanh,,True,False
+MSN,2014-02-28,0.75,MSN: Báo cáo cập nhật - KHẢ QUAN - Tăng trưởng ấn tượng trong các năm tới,POS,False,False
+MSN,2014-12-15,0.0,MSN: Báo cáo cập nhật - Khuyến nghị Neutral,NEU,False,False
+MSN,2014-12-29,0.5,MSN: Báo cáo cập nhật - Khuyến nghị KHẢ QUAN,POS,False,False
+MSN,2015-04-03,0.6666666666666666,MSN : Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+MSN,2015-04-15,0.0,MSN : Bản tin cập nhật công ty,,False,False
+MSN,2015-05-15,0.0,MSN : Bản tin cập nhật công ty,,False,False
+MSN,2017-02-22,0.6666666666666666,MSN : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MSN,2017-12-15,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Khả quan + 10,3%]",POS,False,False
+MSN,2018-03-13,0.0,"MSN : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +5,1%]",NEU,False,False
+MSN,2018-04-26,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Mua +25,3%]",POS,False,False
+MSN,2018-05-14,0.0,MSN : Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+MSN,2018-05-31,0.0,MSN : Báo cáo cập nhật - Khuyến nghị NEUTRAL,NEU,False,False
+MSN,2018-07-25,0.6666666666666666,MSN : Báo cáo Kết quả kinh doanh - Khuyến nghị Mua,POS,True,False
+MSN,2018-08-03,0.6666666666666666,MSN : Báo cáo cập nhật - Khuyến nghị Mua vào,POS,False,False
+MSN,2018-08-09,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Mua +22,2%]",POS,False,False
+MSN,2018-09-19,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Mua +20,6%]",POS,False,False
+MSN,2018-10-29,0.0,MSN : Báo cáo Kết quả kinh doanh,,True,False
+MSN,2018-11-21,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Khả quan +18,8%]",POS,False,False
+MSN,2018-12-05,0.0,MSN : Báo cáo cập nhật - Khuyến nghị Nắm giữ,NEU,False,False
+MSN,2019-01-15,0.5,MSN : Báo cáo cập nhật - Khuyến nghị [Mua +23%],POS,False,False
+MSN,2019-02-21,0.0,MSN : Báo cáo thăm doanh nghiệp,,False,False
+MSN,2019-03-01,0.0,MSN : Báo cáo lần đầu - Khuyến nghị Trung lập,NEU,False,False
+MSN,2019-03-04,0.0,MSN : Báo cáo cập nhật - Khuyến nghị Theo dõi - Hoàn thành tái cơ cấu nợ vay,,False,False
+MSN,2019-04-18,0.0,MSN : Báo cáo cập nhật - Khuyến nghị [Giữ +9.5%],NEU,False,False
+MSN,2019-06-20,0.0,MSN : Báo cáo cập nhật - Khuyến nghị Theo dõi,,False,False
+MSN,2019-08-30,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Mua +27,2%]",POS,False,False
+MSN,2019-10-02,0.0,Báo cáo cập nhật MSN - Khuyến nghị Theo dõi,,False,False
+MSN,2019-11-29,0.0,Báo cáo cập nhật cổ phiếu MSN,,False,False
+MSN,2019-12-30,0.5,"MSN : Báo cáo cập nhật - Khuyến nghị [Mua +25,6%]",POS,False,False
+MSN,2020-03-20,0.5,Báo cáo cập nhật MSN - MUA,POS,False,False
+MSN,2020-08-25,0.5,Báo cáo cập nhật MSN - MUA,POS,False,False
+MSN,2020-10-13,0.0,MSN – Rủi ro trung hạn gia tăng,,False,False
+MSN,2021-01-25,0.6666666666666666,"MSN: Khuyến nghị mua với giá mục tiêu 120,000 đ/cp",POS,False,False
+MSN,2021-02-04,0.0,MSN – Tâm điểm ngành hàng Tiêu dùng,,False,False
+MSN,2021-02-24,0.6666666666666666,MSN: Kỳ vọng tăng trưởng mạnh mẽ trong 2021,,False,False
+MSN,2021-04-01,0.5,MSN: Mua thăm dò với tỷ trọng thấp,POS,False,False
+MSN,2021-08-10,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 160,000 đồng/cp",POS,False,False
+MSN,2021-08-25,0.6666666666666666,"MSN: Khuyến nghị MUA với giá hợp lý 171,800 đồng/cp",POS,False,False
+MSN,2021-11-03,0.0,MSN: Báo cáo cập nhật KQKD Q3.2021,,True,False
+MSN,2021-11-23,0.5,MSN: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 179000 đồng/cp,,False,False
+MSN,2022-02-21,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 197,800 đồng/ cổ phiếu",POS,False,False
+MSN,2022-03-18,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 187,700 đồng/ cổ phiếu",POS,False,False
+MSN,2022-06-16,0.0,"MSN: Khuyến nghị GIỮ với giá mục tiêu 115,922 đồng/cổ phiếu.",NEU,False,False
+MSN,2022-12-15,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 118,100 đồng/cổ phiếu.",POS,False,False
+MSN,2022-12-21,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 116,000 đồng/cổ phiếu",POS,False,False
+MSN,2022-12-22,0.0,"MSN: Khuyến nghị TRUNG LẬP với giá mục tiêu 85,300 đồng/cổ phiếu",NEU,False,False
+MSN,2023-06-02,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 84,100 đồng/cổ phiếu",POS,False,False
+MSN,2023-09-07,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 97,100 đồng/cổ phiếu",POS,False,False
+MSN,2023-09-27,0.0,"MSN: Khuyến nghị THEO DÕI với giá mục tiêu 85,800 đồng/cổ phiếu",,False,False
+MSN,2023-12-13,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 78,600 đồng/cổ phiếu",POS,False,False
+MSN,2024-03-04,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 93,200 đồng/cổ phiếu",POS,False,False
+MSN,2024-05-17,0.0,"MSN: Khuyến nghị với giá mục tiêu 84,800 đồng/cổ phiếu",,False,False
+MSN,2024-08-14,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 96,400 đồng/cổ phiếu",POS,False,False
+MSN,2024-10-24,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 96,400 đồng/cổ phiếu",POS,False,False
+MSN,2024-11-01,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 108,000 đồng/cổ phiếu",POS,False,False
+MSN,2024-12-25,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 108,000 đồng/cổ phiếu",POS,False,False
+MSN,2025-05-19,0.3333333333333333,"MSN: Khuyến nghị MUA với giá mục tiêu 83,000 đồng/cổ phiếu. | MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 89,200 đồng/cổ phiếu.",POS,False,False
+MSN,2025-06-06,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 93,208 đồng/cổ phiếu",POS,False,False
+MSN,2025-08-29,0.0,"MSN: Khuyến nghị NẮM GIỮ với giá mục tiêu 91,580 đồng/cổ phiếu",NEU,False,False
+MSN,2025-09-22,0.3333333333333333,"MSN: Khuyến nghị MUA với giá mục tiêu 104,700 đồng/cổ phiếu | MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 106,000 đồng/cổ phiếu",POS,False,False
+MSN,2025-10-10,0.5,"MSN: Khuyến nghị KHẢ QUAN với giá mục tiêu 98,300 đồng/cổ phiếu",POS,False,False
+MSN,2025-11-17,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 98,300 đồng/cổ phiếu",POS,False,False
+MSN,2025-12-15,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 98,800 đồng/cổ phiếu",POS,False,False
+MSN,2026-03-02,0.0,"MSN: Khuyến nghị OUTPERFORM với giá mục tiêu 117,500 đồng/cổ phiếu",POS,False,False
+MSN,2026-03-04,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 107,000 đồng/cổ phiếu",POS,False,False
+MSN,2026-03-11,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 105,300 đồng/cổ phiếu",POS,False,False
+MSN,2026-04-24,0.0,MSN: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+MSN,2026-05-07,0.0,MSN: Báo cáo cập nhật KQKD Q1/2026,,True,False
+MSN,2026-05-14,0.0,MSN: Báo cáo Phân tích Kỹ thuật 14/05/2026,,False,False
+MSN,2026-05-22,0.6666666666666666,"MSN: Khuyến nghị MUA với giá mục tiêu 91,200 đồng/cổ phiếu",POS,False,False
+MWG,2014-09-08,0.6666666666666666,MWG: Báo cáo cập nhật - KQ khảo sát của chúng tôi xóa bỏ những nghi ngờ về tiềm năng tăng trưởng của,,False,False
+MWG,2015-03-05,-0.6666666666666666,MWG: Báo cáo cập nhật định giá - Khuyến nghị BÁN,NEG,False,False
+MWG,2015-03-10,0.5,MWG : Báo cáo cập nhật - Tham vọng DT 2015 tăng 49% n/n,,False,False
+MWG,2015-05-15,0.5,MWG : [Nâng lên MUA +39%] – Định giá trở nên hấp dẫn; KQ Quý 1 phù hợp dự báo,POS,True,False
+MWG,2015-05-25,0.0,MWG : Báo cáo lần đầu - Lạc quan với triển vọng kinh doanh năm 2015,,False,False
+MWG,2015-12-16,0.75,MWG : [MUA +32%] - Kế hoạch tăng trưởng mảng kinh doanh cốt lõi cao hơn dự kiến,POS,False,False
+MWG,2017-04-05,0.6666666666666666,MWG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MWG,2017-05-29,0.0,MWG : Báo cáo nhanh - Khuyến nghị Theo dõi,,True,False
+MWG,2017-07-21,0.6666666666666666,MWG : Báo cáo Kết quả Kinh doanh - Khuyến nghị Mua,POS,True,False
+MWG,2017-08-07,0.6666666666666666,MWG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MWG,2018-03-05,0.5,MWG : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+MWG,2018-06-14,0.5,MWG : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+MWG,2018-08-07,0.6666666666666666,MWG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MWG,2018-10-08,0.5,MWG : Báo cáo công ty - Khuyến nghị [Mua +25%],POS,False,False
+MWG,2018-12-17,0.6666666666666666,MWG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MWG,2019-06-27,0.5,MWG : Báo cáo cập nhật - Khuyến nghị [MUA +12%],POS,False,False
+MWG,2019-11-18,0.5,Báo cáo cập nhật MWG - MUA,POS,False,False
+MWG,2019-11-22,0.0,Báo cáo cập nhật cổ phiếu MWG,,False,False
+MWG,2019-11-26,0.0,Báo cáo cập nhật cổ phiếu MWG,,False,False
+MWG,2020-03-03,0.5,Báo cáo cập nhật MWG - MUA,POS,False,False
+MWG,2020-03-20,0.0,Báo cáo cập nhật cổ phiếu MWG,,False,False
+MWG,2020-04-03,0.0,MWG : Cập nhật sơ bộ về ảnh hưởng và phương án ứng phó dịch Covid-19,,False,False
+MWG,2020-04-13,0.6666666666666666,MWG : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+MWG,2020-04-15,0.5,Báo cáo cập nhật MWG - KHẢ QUAN,POS,False,False
+MWG,2020-05-14,0.0,Báo cáo cập nhật MWG,,False,False
+MWG,2020-05-15,0.5,Báo cáo cập nhật MWG - MUA,POS,False,False
+MWG,2020-05-21,0.6666666666666666,Khuyến nghị mua đối với MWG với giá mục tiêu 107.800 đồng/CP,POS,False,False
+MWG,2020-06-15,0.5,Khuyến nghị trung lập MWG trong nửa cuối năm 2020 và tích cực trong dài hạn,POS,False,False
+MWG,2020-08-21,0.5,Báo cáo cập nhật MWG - KHẢ QUAN,POS,False,False
+MWG,2020-08-31,0.5,Báo cáo cập nhật MWG - MUA,POS,False,False
+MWG,2020-10-29,0.75,MWG: Lợi nhuận Q3 phục hồi với mức tăng trưởng 2 chữ số,,True,False
+MWG,2020-11-17,0.75,MWG – Tin vắn [MUA +41%] Tổng doanh thu tháng 10 tăng 10%,POS,False,False
+MWG,2020-11-20,0.5,"MWG: Duy trì hồi phục, triển vọng tươi sáng",,False,False
+MWG,2020-12-08,0.5,Cập nhật MWG – MUA Ngày 08/12/2020,POS,False,False
+MWG,2021-03-10,0.0,Báo cáo cập nhật MWG - Giữ,NEU,False,False
+MWG,2021-05-25,0.8,MWG: Mục tiêu tăng trưởng Doanh thu thuần và Lợi nhuận sau thuế lần lượt 15% và 21%,,False,False
+MWG,2021-08-05,0.0,"MWG: Khuyến nghị NẮM GIỮ với giá mục tiêu 180,000 đồng/cp",NEU,False,False
+MWG,2021-08-25,0.0,MWG: Báo cáo cập nhật KQKD 07/2021 và triển vọng,,True,False
+MWG,2021-09-01,0.0,"MWG: Khuyến nghị GIỮ với giá mục tiêu 165,500 đồng/cp",NEU,False,False
+MWG,2021-09-08,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 128,918 đồng/cp",POS,False,False
+MWG,2021-09-16,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 140,400 đồng/cp",POS,False,False
+MWG,2021-09-17,0.0,"MWG: Khuyến nghị GIỮ với giá mục tiêu 134,000 đồng/cp",NEU,False,False
+MWG,2021-11-01,0.0,"MWG: Khuyến nghị TRUNG LẬP với giá mục tiêu 135,700 đồng/cp",NEU,False,False
+MWG,2021-11-17,0.6666666666666666,"MWG : Khuyến nghị MUA với giá mục tiêu 168,800 đồng/cp",POS,False,False
+MWG,2021-11-19,0.0,"MWG : Khuyến nghị OUTPERFORM với giá kỳ vọng 185,700 đồng/cp",POS,False,False
+MWG,2021-11-30,0.6666666666666666,"MWG : Khuyến nghị MUA với giá mục tiêu 156,802 đồng/cp",POS,False,False
+MWG,2021-12-03,0.5,"MWG : Khuyến nghị KHẢ QUAN với giá mục tiêu 180,500 đồng/cp",POS,False,False
+MWG,2022-02-22,0.0,"MWG : Khuyến nghị OUTPERFORM với giá mục tiêu 184,300 đồng/ cổ phiếu",POS,False,False
+MWG,2022-05-24,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 186,790 đồng/cổ phiếu.",POS,False,False
+MWG,2022-05-26,0.6666666666666666,MWG: Khuyến nghị MUA với giá mục tiêu 197.500 đồng/cp.,POS,False,False
+MWG,2022-08-02,0.0,MWG: Khuyến nghị OUTPERFORM,POS,False,False
+MWG,2022-08-24,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 84,912 đồng/cổ phiếu | MWG: Khuyến nghị MUA với giá mục tiêu 87,800 đồng/cổ phiếu.",POS,False,False
+MWG,2022-09-12,0.3333333333333333,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 109,799 đồng/cổ phiếu | MWG: Khuyến nghị MUA với giá mục tiêu 96,100 đồng/cổ phiếu",POS,False,False
+MWG,2022-09-27,0.0,MWG: Khuyến nghị NẮM GIỮ,NEU,False,False
+MWG,2022-09-30,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 76,684 đồng/cổ phiếu.",POS,False,False
+MWG,2022-10-11,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 81,600 đồng/cổ phiếu",POS,False,False
+MWG,2022-10-31,0.0,MWG: Khuyến nghị NẮM GIỮ.,NEU,False,False
+MWG,2022-11-02,0.0,MWG: Khuyến nghị OUTPERFORM.,POS,False,False
+MWG,2022-11-10,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 61,000 đồng/cổ phiếu",POS,False,False
+MWG,2022-11-22,0.0,"MWG: Khuyến nghị với giá mục tiêu 86,170 đồng/cổ phiếu",,False,False
+MWG,2022-11-29,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 61,300 đồng/cổ phiếu",POS,False,False
+MWG,2022-12-01,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 44,700 đồng/cổ phiếu",POS,False,False
+MWG,2022-12-02,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 53,300 đồng/cổ phiếu.",POS,False,False
+MWG,2022-12-29,0.0,"MWG: Khuyến nghị TRUNG LẬP với giá mục tiêu 43,500 đồng/cổ phiếu.",NEU,False,False
+MWG,2023-02-02,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 53,400 đồng/cổ phiếu",POS,False,False
+MWG,2023-02-20,0.0,MWG: Kế hoạch kinh doanh 2023 - vẫn còn nhiều thách thức,,False,False
+MWG,2023-02-22,0.5833333333333333,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 61,500 đồng/cổ phiếu. | MWG: Trở lại quỹ đạo tăng trưởng trong năm 2023",POS,False,False
+MWG,2023-04-10,0.0,MWG: Báo cáo cập nhật ĐHCĐ 2023,,False,False
+MWG,2023-04-11,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 45,600 đồng/cổ phiếu",POS,False,False
+MWG,2023-04-19,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 44,200 đồng/cổ phiếu",POS,False,False
+MWG,2023-06-05,0.0,"MWG: Khuyến nghị NEUTRAL với giá mục tiêu 40,855 đồng/cổ phiếu",NEU,False,False
+MWG,2023-08-11,0.0,"MWG: Khuyến nghị THEO DÕI với giá mục tiêu 52,661 đồng/cổ phiếu",,False,False
+MWG,2023-08-14,0.0,MWG: Khuyến nghị NẮM GIỮ - Khó khăn kéo dài,NEU,False,False
+MWG,2023-08-15,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 65,102 đồng/cổ phiếu",POS,False,False
+MWG,2023-08-17,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 61,500 đồng/cổ phiếu",POS,False,False
+MWG,2023-08-28,-0.5,"MWG: Kế hoạch bán vốn Bách Hóa Xanh, nếu thành công sẽ thúc đẩy định giá",,False,False
+MWG,2023-09-27,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 65,102 đồng/cổ phiếu",POS,False,False
+MWG,2023-10-09,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 65,900 đồng/cổ phiếu",POS,False,False
+MWG,2023-11-16,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 65,900 đồng/cổ phiếu",POS,False,False
+MWG,2023-12-08,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 51,170 đồng/cổ phiếu",POS,False,False
+MWG,2023-12-27,0.0,"MWG: Khuyến nghị Trung lập với giá mục tiêu 48,500 đồng/cổ phiếu",NEU,False,False
+MWG,2024-01-19,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 50,800 đồng/cổ phiếu.",POS,False,False
+MWG,2024-01-30,0.0,"MWG: Khuyến nghị với giá mục tiêu 49,000 đồng/cổ phiếu.",,False,False
+MWG,2024-02-16,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 56,100 đồng/cổ phiếu.",POS,False,False
+MWG,2024-02-20,0.0,"MWG: Khuyến nghị GIỮ với giá mục tiêu 50,150 đồng/cổ phiếu.",NEU,False,False
+MWG,2024-02-21,0.6666666666666666,MWG: Khuyến nghị MUA với giá mục tiêu 55.000 đồng/cổ phiếu.,POS,False,False
+MWG,2024-03-01,0.0,MWG: Báo cáo tham dự Analyst Meeting,,False,False
+MWG,2024-03-11,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 58,300 đồng/cổ phiếu",POS,False,False
+MWG,2024-03-20,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 54,000 đồng/cổ phiếu",POS,False,False
+MWG,2024-04-03,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 56,200 đồng/cổ phiếu",POS,False,False
+MWG,2024-04-15,0.0,MWG: Cập nhật ĐHCĐ 2024,,False,False
+MWG,2024-06-07,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 68,200 đồng/cổ phiếu",POS,False,False
+MWG,2024-06-27,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 75,300 đồng/cổ phiếu",POS,False,False
+MWG,2024-06-28,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 68,500 đồng/cổ phiếu",POS,False,False
+MWG,2024-08-02,0.5,"MWG: Khuyến nghị Tăng tỷ trọng với giá mục tiêu 73,000 đồng/cổ phiếu",,False,False
+MWG,2024-08-21,0.5,MWG: Khuyến nghị KHẢ QUAN,POS,False,False
+MWG,2024-08-22,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 80,600 đồng/cổ phiếu",POS,False,False
+MWG,2024-08-23,0.0,"MWG: Khuyến nghị TRUNG LẬP với giá mục tiêu 78,000 đồng/cổ phiếu",NEU,False,False
+MWG,2024-08-26,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 81,100 đồng/cổ phiếu",POS,False,False
+MWG,2024-09-10,0.0,"MWG: Khuyến nghị TRUNG LẬP với giá mục tiêu 72,100 đồng/cổ phiếu",NEU,False,False
+MWG,2024-10-31,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 80,600 đồng/cổ phiếu",POS,False,False
+MWG,2024-11-13,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 70,000 đồng/cổ phiếu",POS,False,False
+MWG,2024-11-22,0.5,"MWG: Khuyến nghị TĂNG TỈ TRỌNG với giá mục tiêu 70,000 đồng/cổ phiếu",,False,False
+MWG,2024-12-06,-0.6666666666666666,"MWG: Khuyến nghị BÁN với giá mục tiêu 61,000 đồng/cổ phiếu",NEG,False,False
+MWG,2024-12-09,0.0,MWG: Báo cáo cập nhật ngắn KQKD Q3.2024,,True,False
+MWG,2024-12-13,0.5,"MWG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 75,000 đồng/cổ phiếu",,False,False
+MWG,2025-02-24,0.0,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 74,700 đồng/cổ phiếu",POS,False,False
+MWG,2025-02-25,0.0,MWG: Cập nhật gặp gỡ nhà đầu tư Q4/2024,,True,False
+MWG,2025-03-05,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 68,500 đồng/cổ phiếu",POS,False,False
+MWG,2025-03-07,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 76,200 đồng/cổ phiếu | MWG: Khuyến nghị MUA với giá mục tiêu 76,200 đồng/cổ phiếu",POS,False,False
+MWG,2025-03-25,0.5833333333333333,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 81,700 đồng/cổ phiếu. | MWG: Khuyến nghị MUA với giá mục tiêu 67,800 đồng/cổ phiếu.",POS,False,False
+MWG,2025-04-11,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 69,000 đồng/cổ phiếu.",POS,False,False
+MWG,2025-06-04,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 67,600 đồng/cổ phiếu",POS,False,False
+MWG,2025-06-13,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 73,700 đồng/cổ phiếu",POS,False,False
+MWG,2025-08-28,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 87,000 đồng/cổ phiếu",POS,False,False
+MWG,2025-09-03,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 90,100 đồng/cổ phiếu",POS,False,False
+MWG,2025-09-25,0.5,"MWG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 92,500 đồng/cổ phiếu",,False,False
+MWG,2025-10-01,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 100,800 đồng/cổ phiếu",POS,False,False
+MWG,2025-10-06,0.5,"MWG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 99,200 đồng/cổ phiếu",,False,False
+MWG,2025-11-11,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 103,406 đồng/cổ phiếu",POS,False,False
+MWG,2025-11-25,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 99,500 đồng/cổ phiếu",POS,False,False
+MWG,2025-12-01,0.4444444444444444,"MWG: Khuyến nghị MUA với giá mục tiêu 106,100 đồng/cổ phiếu | MWG: Khuyến nghị MUA với giá mục tiêu 97,700 đồng/cổ phiếu | MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 99,100 đồng/cổ phiếu",POS,False,False
+MWG,2025-12-04,0.0,"MWG: Khuyến nghị THEO DÕI với giá mục tiêu 89,600 đồng/cổ phiếu",,False,False
+MWG,2025-12-16,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 106,000 đồng/cổ phiếu",POS,False,False
+MWG,2025-12-30,0.5,"MWG: Khuyến nghị KHẢ QUAN với giá mục tiêu 108,100 đồng/cổ phiếu",POS,False,False
+MWG,2026-01-12,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 105,527 đồng/cổ phiếu",POS,False,False
+MWG,2026-01-14,0.0,MWG: Báo cáo Phân tích kỹ thuật,,False,False
+MWG,2026-01-15,0.5,"MWG: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 99,500 đồng/cổ phiếu",,False,False
+MWG,2026-02-12,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 105,900 đồng/cổ phiếu",POS,False,False
+MWG,2026-02-23,0.3333333333333333,"MWG: Khuyến nghị OUTPERFORM với giá mục tiêu 116,300 đồng/cổ phiếu | MWG: Khuyến nghị MUA với giá mục tiêu 107,500 đồng/cổ phiếu",POS,False,False
+MWG,2026-03-26,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 103,100 đồng/cổ phiếu",POS,False,False
+MWG,2026-04-08,0.0,EraBlue (MWG): Báo cáo Thăm cửa hàng,,False,False
+MWG,2026-04-22,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 101,400 đồng/cổ phiếu",POS,False,False
+MWG,2026-04-24,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 104,755 đồng/cổ phiếu",POS,False,False
+MWG,2026-05-06,0.0,MWG: Báo cáo cập nhật KQKD Q1/2026,,True,False
+MWG,2026-05-18,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 93,800 đồng/cổ phiếu",POS,False,False
+MWG,2026-05-28,0.0,MWG: Báo cáo cập nhật KQKD Q1/2026,,True,False
+MWG,2026-06-09,0.6666666666666666,"MWG: Khuyến nghị MUA với giá mục tiêu 117,000 đồng/cổ phiếu",POS,False,False
+NVL,2017-05-10,0.0,NVL : Bản tin cập nhật nhanh - KQKD năm 2016 & Quý 1 năm 2017,,True,False
+NVL,2017-06-07,0.0,NVL : Báo cáo cập nhật - Khuyến nghị Phù hợp thị trường,NEU,False,False
+NVL,2018-04-16,0.5,NVL : Báo cáo ngắn - Khuyến nghị Khả quan,POS,True,False
+NVL,2018-06-13,0.5,NVL : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+NVL,2019-02-25,0.0,NVL : Báo cáo thăm doanh nghiệp,,False,False
+NVL,2019-03-01,0.0,NVL : Báo cáo cập nhật - Khuyến nghị Giữ,NEU,False,False
+NVL,2019-03-25,0.0,NVL : Bản tin cập nhật nhanh - KQKD Năm 2018,,True,False
+NVL,2019-05-29,0.0,"NVL : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +6,7%]",NEU,False,False
+NVL,2019-06-03,0.0,NVL : Bản tin cập nhật nhanh - KQKD Qúy 1 2019,,True,False
+NVL,2019-09-05,0.0,Báo cáo cập nhật NVL - Khuyến nghị GIỮ,NEU,False,False
+NVL,2019-11-12,0.0,Báo cáo cập nhật nhanh cổ phiếu NVL - Khuyến nghị NẮM GIỮ,NEU,False,False
+NVL,2020-08-27,0.0,NVL: Báo cáo Doanh nghiệp NVL - Khuyến nghị Trung lập | NVL - Tiềm năng với quỹ đất hấp dẫn,NEU,False,False
+NVL,2020-11-19,0.0,NVL: Cơ hội phía trước,,False,False
+NVL,2020-12-08,0.0,Cập nhật NVL – GIỮ Ngày 08/12/2020,NEU,False,False
+NVL,2021-02-08,0.0,NVL: Đánh bắt xa bờ,,False,False
+NVL,2021-03-19,0.0,NVL: Vững bước đến tương lai,,False,False
+NVL,2021-04-12,0.0,NVL: Báo cáo lần đầu - Khuyến nghị Trung lập,NEU,False,False
+NVL,2021-04-28,0.5,NVL-Tin vắn ĐHCĐ- Sự chuyển đổi đang tích cực,POS,False,False
+NVL,2021-05-27,0.0,NVL: Báo cáo cập nhật - Khuyến nghị nắm giữ,NEU,False,False
+NVL,2021-06-25,0.0,NVL: Khuyến nghị NẮM GIỮ,NEU,False,False
+NVL,2021-12-09,0.0,"NVL : Khuyến nghị GIỮ với giá mục tiêu 127,155 đồng/cp",NEU,False,False
+NVL,2022-05-12,0.6666666666666666,"NVL: Khuyến nghị MUA với giá mục tiêu 98,530 đồng/cổ phiếu",POS,False,False
+NVL,2022-08-03,0.6666666666666666,"NVL: Khuyến nghị MUA với giá mục tiêu 82,000 đồng/cổ phiếu",POS,False,False
+NVL,2022-08-26,0.0,"NVL: Khuyến nghị GIỮ với giá mục tiêu 90,403 đồng/cổ phiếu",NEU,False,False
+NVL,2023-06-01,0.6666666666666666,NVL: Khuyến nghị MUA với giá mục tiêu 15.200 đồng/cổ phiếu,POS,False,False
+PDR,2010-12-07,0.0,PDR: Báo cáo phân tích cổ phiếu 07/12/2010,,False,False
+PDR,2015-02-02,-0.5,PDR: Báo cáo thăm doanh nghiệp - Giảm diện tích căn hộ và chuyển đổi trái phiếu sang căn hộ EverRich,,False,False
+PDR,2015-02-04,0.6666666666666666,PDR: Báo cáo thăm doanh nghiệp - Triển vọng lợi nhuận năm 2015 khả quan,POS,False,False
+PDR,2017-03-23,0.0,PDR : Báo cáo thăm doanh nghiệp,,False,False
+PDR,2017-08-07,0.0,PDR : Báo cáo thăm doanh nghiệp,,False,False
+PDR,2020-06-05,0.0,Bản tin ETF – PDR có thể bị loại khỏi FTSE Vietnam Index,,False,False
+PDR,2020-10-28,0.5,PDR – Mở rộng đà tăng ngắn hạn,,False,False
+PDR,2021-04-14,0.6666666666666666,PDR – Tin vắn – Thị trường mới nổi duy động lực tăng trưởng,,False,False
+PDR,2021-06-24,0.75,PDR: Khuyến nghị mua và tăng giá mục tiêu của PDR lên 116.500 đồng/cổ phiếu,POS,False,False
+PDR,2022-06-30,0.6666666666666666,"PDR: Khuyến nghị MUA với giá mục tiêu 68,300 đồng/cổ phiếu.",POS,False,False
+PDR,2024-11-19,0.0,PDR: Báo cáo cập nhật ngắn KQKD Q3/2024,,True,False
+PDR,2025-04-25,0.5,"PDR: Khuyến nghị KHẢ QUAN với giá mục tiêu 18,300 đồng/cổ phiếu.",POS,False,False
+PDR,2025-12-10,0.0,PDR: Báo cáo cập nhật KQKD Q3/2025,,True,False
+PDR,2026-03-13,0.6666666666666666,"PDR: Khuyến nghị MUA với giá mục tiêu 20,000 đồng/cổ phiếu",POS,False,False
+PDR,2026-03-19,0.0,PDR: Báo cáo cập nhật KQKD Q4/2025,,True,False
+PDR,2026-03-27,0.5,"PDR: Khuyến nghị KHẢ QUAN với giá mục tiêu 20,400 đồng/cổ phiếu",POS,False,False
+PDR,2026-05-05,0.0,"PDR: Khuyến nghị NẮM GIỮ với giá mục tiêu 18,600 đồng/cổ phiếu",NEU,False,False
+PLX,2017-04-28,0.0,PLX : Báo cáo lần đầu,,False,False
+PLX,2019-11-28,0.6666666666666666,Báo cáo cập nhật PLX Q4.2019 - OUTPERFORM - Động lực tăng trưởng 2020 vẫn đến từ việc mở thêm cửa hà,POS,True,False
+PLX,2019-12-31,0.6666666666666666,PLX : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+PLX,2020-06-10,0.0,"Báo cáo cập nhật PLX - GIỮ | PLX - Bán cổ phiếu quỹ lần thứ tư, tỉ lệ free-float tăng lên 10%",NEU,False,False
+PLX,2020-08-07,0.5,PLX: Biên gộp Q2 vượt kỳ vọng do tích trữ HTK giá thấp,,True,False
+PLX,2020-11-27,0.0,PLX: Trở lại trạng thái bình thường,,False,False
+PLX,2021-03-01,0.0,Báo cáo đánh giá nhanh cổ phiếu PLX,,False,False
+PLX,2021-03-08,0.5,PLX: LỢI NHUẬN PHỤC HỒI MẠNH MẼ,,False,False
+PLX,2021-03-18,0.0,Báo cáo cơ hội đầu tư cp PLX,,False,False
+PLX,2021-03-31,0.5,PLX: Hồi phục mạnh mẽ,,False,False
+PLX,2021-06-01,0.5,PLX: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+PLX,2021-06-24,0.0,PLX: Báo cáo cập nhật cổ phiếu PLX,,False,False
+PLX,2021-08-20,0.0,PLX: Báo cáo cập nhật cổ phiếu,,False,False
+PLX,2021-09-09,0.0,"PLX: Khuyến nghị NẮM GIỮ với giá mục tiêu 48,500 đồng/cp",NEU,False,False
+PLX,2021-10-18,0.0,"PLX: Khuyến nghị TÍCH LŨY với giá mục tiêu 63,186 đồng/cp",,False,False
+PLX,2021-11-25,0.5,"PLX : Khuyến nghị KHẢ QUAN với giá mục tiêu 67,000 đồng/cp",POS,False,False
+PLX,2022-01-19,0.6666666666666666,"PLX : Khuyến nghị MUA với giá hợp lý 62,800 đồng/cp",POS,False,False
+PLX,2022-03-11,0.6666666666666666,PLX: Khuyến nghị MUA với giá mục tiêu 70.200 đồng/ cổ phiếu,POS,False,False
+PLX,2022-05-25,0.0,"PLX: Khuyến nghị với giá mục tiêu 49,000 đồng/cổ phiếu.",,False,False
+PLX,2022-06-10,0.5,PLX: Khuyến nghị KHẢ QUAN với giá mục tiêu 55.000 đồng/cổ phiếu.,POS,False,False
+PLX,2022-06-16,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 53,900 VND/cổ phiếu.",POS,False,False
+PLX,2022-06-24,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 51,900 đồng/cổ phiếu",POS,False,False
+PLX,2022-10-06,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 44,500 đồng/cổ phiếu",POS,False,False
+PLX,2022-12-09,0.5,"PLX: Khuyến nghị KHẢ QUAN với giá mục tiêu 35,800 đồng/cổ phiếu",POS,False,False
+PLX,2023-03-01,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 45,780 đồng/cổ phiếu",POS,False,False
+PLX,2023-06-14,0.5,PLX: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+PLX,2023-06-15,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 39,600 đồng/cổ phiếu",NEU,False,False
+PLX,2023-08-22,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 45,780 đồng/cổ phiếu.",POS,False,False
+PLX,2023-09-13,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 46,000 đồng/cổ phiếu",POS,False,False
+PLX,2023-09-15,0.5,"PLX: Khuyến nghị KHẢ QUAN với giá mục tiêu 45,000 đồng/cổ phiếu",POS,False,False
+PLX,2024-03-11,0.0,"PLX: Khuyến nghị KHẢQUAN với giá mục tiêu 40,800 đồng/cổ phiếu",,False,False
+PLX,2024-03-21,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 47,000 đồng/cổ phiếu",POS,False,False
+PLX,2024-05-07,0.5,"PLX: Khuyến nghị KHẢ QUAN với giá mục tiêu 43,800 đồng/cổ phiếu",POS,False,False
+PLX,2024-05-20,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 40,800 đồng/cổ phiếu",NEU,False,False
+PLX,2024-08-01,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 47,500 đồng/cổ phiếu",NEU,False,False
+PLX,2024-08-05,0.75,"PLX: Báo cáo cập nhật KQKD - KQKD Q2/2024 tăng trưởng mạnh, 6T/2024 đã vượt chỉ tiêu kế hoạch lợi nh",,True,False
+PLX,2024-08-09,0.0,"PLX: Khuyến nghị THEO DÕI với giá mục tiêu 40,500 đồng/cổ phiếu",,False,False
+PLX,2024-08-13,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 57,794 đồng/cổ phiếu",POS,False,False
+PLX,2024-08-15,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 53,500 đồng/cổ phiếu",NEU,False,False
+PLX,2024-09-11,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 48,000 đồng/cổ phiếu",NEU,False,False
+PLX,2024-10-23,0.0,PLX: KỲ VỌNG DỰ THẢO 4 NGHỊ ĐỊNH NGÀNH XĂNG DẦU,,False,False
+PLX,2024-12-10,0.0,PLX: Báo cáo cập nhật ngắn KQKD Q3.2024,,True,False
+PLX,2025-02-14,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 51,283 đồng/cổ phiếu",POS,False,False
+PLX,2025-05-26,0.5,"PLX: Khuyến nghị KHẢ QUAN với giá mục tiêu 38,000 đồng/cổ phiếu",POS,False,False
+PLX,2025-08-08,0.0,PLX: Báo cáo Phân tích kỹ thuật,,False,False
+PLX,2025-11-12,0.0,PLX: Báo cáo cập nhật KQKD Q3/2025,,True,False
+PLX,2026-02-10,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 61,000 đồng/cổ phiếu",NEU,False,False
+PLX,2026-04-29,0.6666666666666666,"PLX: Khuyến nghị MUA với giá mục tiêu 49,600 đồng/cổ phiếu",POS,False,False
+PLX,2026-05-15,0.0,"PLX: Khuyến nghị TRUNG LẬP với giá mục tiêu 43,200 đồng/cổ phiếu",NEU,False,False
+POW,2018-05-15,0.6666666666666666,POW : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+POW,2018-06-26,0.6666666666666666,POW : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+POW,2018-07-19,0.6666666666666666,POW : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+POW,2018-12-04,0.5,POW : Báo cáo lần đầu - Khuyến nghị Tăng tỷ trọng,,False,False
+POW,2019-03-13,0.5,POW : Báo cáo cập nhật - Khuyến nghị [Mua +16.8%],POS,False,False
+POW,2019-10-30,0.6666666666666666,POW : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+POW,2019-12-09,0.5,Báo cáo cập nhật POW - TĂNG TỶ TRỌNG,,False,False
+POW,2019-12-13,0.0,Báo cáo cập nhật cổ phiếu POW,,False,False
+POW,2019-12-17,0.0,Báo cáo nhanh POW,,True,False
+POW,2020-02-05,0.6666666666666666,POW : Báo cáo cập - Khuyến nghị Mua,POS,False,False
+POW,2020-03-16,0.5,Báo cáo cập nhật POW - MUA,POS,False,False
+POW,2020-03-20,0.0,Báo cáo nhanh POW,,True,False
+POW,2020-04-24,0.5,Báo cáo cập nhật POW - MUA,POS,False,False
+POW,2020-05-07,0.5,Báo cáo nhanh POW - MUA,POS,True,False
+POW,2020-05-28,0.0,Nguồn cấp khí của POW sẽ đảm bảo khi được bổ sung mỏ Sao Vàng – Đại Nguyệt vào cuối năm 2020,,False,False
+POW,2020-05-29,0.0,Báo cáo cập nhật POW,,False,False
+POW,2020-10-22,0.6666666666666666,Khuyến nghị mua dành cho cổ phiếu POW,POS,False,False
+POW,2020-11-05,0.5,Báo cáo cập nhật POW - MUA,POS,False,False
+POW,2020-11-09,0.0,POW - ĐI TÌM NÚT THẮT CHO THỊ GIÁ CỔ PHIẾU,,False,False
+POW,2020-11-20,0.0,POW: Kỳ Vọng Phục Hồi,,False,False
+POW,2020-11-30,0.6666666666666666,Khuyến nghị mua POW với giá mục tiêu 12.700 đồng/CP,POS,False,False
+POW,2020-12-10,0.5,POW: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+POW,2021-03-17,0.0,POW: CƠ HỘI ĐẾN KHI NÚT THẮT ĐƯỢC THÁO GỠ,,False,False
+POW,2021-04-23,0.5,POW: Lợi nhuận thoái vốn PVM thúc đẩy kết quả Q1/2021,,True,False
+POW,2021-06-03,0.6666666666666666,POW: Khuyến nghị MUA với giá mục tiêu 13.800 đồng/CP,POS,False,False
+POW,2021-08-25,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 13,100 đồng/cp",POS,False,False
+POW,2021-11-19,0.0,"POW : Khuyến nghị NẮM GIỮ với giá mục tiêu 15,800 đồng/cp",NEU,False,False
+POW,2021-12-13,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 21,900 đồng/cp",POS,False,False
+POW,2021-12-23,0.0,POW : Cập nhật gặp gỡ nhà đầu tư,,False,False
+POW,2022-03-10,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 19,100 đồng/ cổ phiếu",POS,False,False
+POW,2022-05-19,0.0,POW: Khuyến nghị với giá mục tiêu 16.200 đồng/cổ phiếu,,False,False
+POW,2022-06-09,0.0,"POW: Khuyến nghị với giá mục tiêu 20,400 đồng/cổ phiếu.",,False,False
+POW,2022-06-13,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 17,000 đồng/cổ phiếu.",POS,False,False
+POW,2022-06-16,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 19,800 đồng/cổ phiếu.",POS,False,False
+POW,2022-09-15,0.6666666666666666,POW: Khuyến nghị MUA với giá mục tiêu 17.000 đồng/cổ phiếu,POS,False,False
+POW,2022-09-29,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 17,600 đồng/cổ phiếu",POS,False,False
+POW,2022-11-18,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 13,800 đồng/cổ phiếu",POS,False,False
+POW,2022-12-19,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 18,400 đồng/cổ phiếu",POS,False,False
+POW,2023-03-20,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 16,200 đồng/cổ phiếu",POS,False,False
+POW,2023-04-11,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 19,600 đồng/cổ phiếu",POS,False,False
+POW,2023-05-26,0.0,"POW: Khuyến nghị NẮM GIỮ với giá mục tiêu 14,800 đồng/cổ phiếu",NEU,False,False
+POW,2023-09-11,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 15,400 đồng/cổ phiếu",POS,False,False
+POW,2023-09-20,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 14,800 đồng/cổ phiếu",POS,False,False
+POW,2023-10-13,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 13,750 đồng/cổ phiếu",POS,False,False
+POW,2023-10-25,0.0,POW: Hợp đồng PPA của NT3-4 vẫn đang chờ cơ chế giá LNG,,False,False
+POW,2023-10-26,0.0,"POW: Khuyến nghị OUTPERFORM với giá mục tiêu 14,000 đồng/cổ phiếu",POS,False,False
+POW,2023-11-06,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 16,724 đồng/cổ phiếu",POS,False,False
+POW,2023-11-07,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 14,200 đồng/cổ phiếu",POS,False,False
+POW,2023-11-08,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 13,700 đồng/cổ phiếu",POS,False,False
+POW,2023-12-01,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 13,535 đồng/cổ phiếu",POS,False,False
+POW,2023-12-28,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 12,980 đồng/cổ phiếu",NEU,False,False
+POW,2024-02-23,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 14,000 đồng/cổ phiếu.",POS,False,False
+POW,2024-03-22,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 13,300 đồng/cổ phiếu",POS,False,False
+POW,2024-05-02,0.0,POW: Khuyến nghị TRUNG LẬP,NEU,False,False
+POW,2024-05-28,0.5833333333333333,"POW: Khuyến nghị MUA với giá mục tiêu 13,900 đồng/cổ phiếu | POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 13,750 đồng/cổ phiếu",POS,False,False
+POW,2024-05-29,0.5,"POW: Khuyến nghị Khả quan với giá mục tiêu 14,800 đồng/cổ phiếu",POS,False,False
+POW,2024-06-18,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 14,000 đồng/cổ phiếu",NEU,False,False
+POW,2024-06-27,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 16,800 đồng/cổ phiếu",POS,False,False
+POW,2024-08-01,0.75,POW: Báo cáo cập nhật KQKD - Lợi nhuận Q2/2024 tăng trưởng mạnh svck,,True,False
+POW,2024-09-25,0.0,POW: Tiên phong phát triển điện LNG,,False,False
+POW,2024-10-03,0.0,POW: Khuyến nghị THEO DÕI,,False,False
+POW,2024-11-01,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 13,900 đồng/cổ phiếu",POS,False,False
+POW,2024-11-06,0.5,"POW: Khuyến nghị Khả quan với giá mục tiêu 14,900 đồng/cổ phiếu",POS,False,False
+POW,2024-11-14,0.6666666666666666,POW: Tăng trưởng bất ngờ,,False,False
+POW,2024-11-19,0.0,"POW: Khuyến nghị OUTPERFORM với giá mục tiêu 13,900 đồng/cổ phiếu",POS,False,False
+POW,2024-11-22,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 12,600 đồng/cổ phiếu",NEU,False,False
+POW,2024-11-29,0.5,"POW: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 14,000 đồng/cổ phiếu",,False,False
+POW,2025-02-06,0.0,POW: Cập nhật nhanh,,False,False
+POW,2025-03-19,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 14,900 đồng/cổ phiếu.",POS,False,False
+POW,2025-06-11,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 15,200 đồng/cổ phiếu",POS,False,False
+POW,2025-08-05,0.3333333333333333,"POW: Khuyến nghị MUA với giá mục tiêu 16,900 đồng/cổ phiếu | POW: Khuyến nghị NẮM GIỮ với giá mục tiêu 15,400 đồng/cổ phiếu",POS,False,False
+POW,2025-08-11,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 17,400 đồng/cổ phiếu",POS,False,False
+POW,2025-09-10,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 18,100 đồng/cổ phiếu",POS,False,False
+POW,2025-09-16,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 17,200 đồng/cổ phiếu",NEU,False,False
+POW,2025-09-29,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 17,600 đồng/cổ phiếu",POS,False,False
+POW,2025-11-06,0.0,POW: Báo cáo cập nhật KQKD Q3/2025,,True,False
+POW,2025-11-07,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 16,400 đồng/cổ phiếu",POS,False,False
+POW,2025-11-28,0.0,POW: Báo cáo Gặp gỡ NĐT,,False,False
+POW,2025-12-01,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 14,500 đồng/cổ phiếu",NEU,False,False
+POW,2025-12-03,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 17,200 đồng/cổ phiếu",POS,False,False
+POW,2025-12-05,0.0,"POW: Khuyến nghị TRUNG LẬP với giá mục tiêu 16,400 đồng/cổ phiếu",NEU,False,False
+POW,2025-12-29,0.0,POW: Báo cáo Phân tích kỹ thuật,,False,False
+POW,2026-01-05,0.0,POW: Báo cáo Phân tích kỹ thuật,,False,False
+POW,2026-02-04,0.0,POW: Báo cáo cập nhật KQKD Q4/2025,,True,False
+POW,2026-04-13,0.3333333333333333,"POW: Khuyến nghị MUA với giá mục tiêu 16,000 đồng/cổ phiếu | POW: Khuyến nghị OUTPERFORM với giá mục tiêu 15,300 đồng/cổ phiếu",POS,False,False
+POW,2026-05-05,0.0,POW: Báo cáo cập nhật KQKD Q1/2026,,True,False
+POW,2026-05-13,0.0,POW: Báo cáo cập nhật KQKD Q1/2026,,True,False
+POW,2026-05-14,0.6666666666666666,"POW: Khuyến nghị MUA với giá mục tiêu 17,100 đồng/cổ phiếu",POS,False,False
+POW,2026-05-20,0.0,POW: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+POW,2026-05-26,0.5,"POW: Khuyến nghị KHẢ QUAN với giá mục tiêu 16,700 đồng/cổ phiếu",POS,False,False
+SAB,2018-01-11,-0.6666666666666666,SAB : Báo cáo cập nhật - Khuyến nghị Bán,NEG,False,False
+SAB,2019-02-01,0.5,SAB : Báo cáo thăm doanh nghiệp - Quá trình tái cấu trúc đang diễn ra tích cực,POS,False,False
+SAB,2019-08-14,0.0,Báo cáo nhanh SAB 8.2019 – Nỗ lực tái cơ cấu của SAB bắt đầu thể diện qua những con số,,True,False
+SAB,2019-08-16,0.5,"SAB : Báo cáo cập nhật - Khuyến nghị [Khả quan +14,3%]",POS,False,False
+SAB,2019-12-30,0.6666666666666666,SAB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+SAB,2020-11-19,0.0,SAB: TRỞ LẠI TỪ SAU TÁI CƠ CẤU,,False,False
+SAB,2021-02-01,0.6666666666666666,SAB : LỢI NHUẬN TĂNG MẠNH NHỜ CẮT HÀNG LOẠT CHI PHÍ,,False,False
+SAB,2021-02-04,0.0,SAB: Lợi nhuận giảm nhẹ trong năm COVID thứ nhất,,False,False
+SAB,2021-06-18,0.0,"SAB, GVR và ACB sẽ thay thế REE, SBT và TCH trong rổ VN30",,False,False
+SAB,2021-09-17,0.0,"SAB: Khuyến nghị NẮM GIỮ với giá mục tiêu 167,000 đồng/cp",NEU,False,False
+SAB,2022-02-18,0.0,SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 197.400 đồng/CP,POS,False,False
+SAB,2022-03-04,0.0,"SAB: Khuyến nghị NẮM GIỮ với giá mục tiêu 151,247 đồng/ cổ phiếu",NEU,False,False
+SAB,2022-05-26,0.0,"SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 208,100 đồng/cổ phiếu.",POS,False,False
+SAB,2022-06-27,0.5,"SAB: Khuyến nghị KHẢ QUAN với giá mục tiêu 170,000 đồng/cổ phiếu.",POS,False,False
+SAB,2022-08-10,0.5,SAB: Khuyến nghị KHẢ QUAN với giá mục tiêu 213.000 đồng/cổ phiếu.,POS,False,False
+SAB,2022-08-11,0.0,"SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 220,500 đồng/cổ phiếu.",POS,False,False
+SAB,2022-11-01,0.0,"SAB: Khuyến nghị GIỮ với giá mục tiêu 191,900 đồng/cổ phiếu",NEU,False,False
+SAB,2022-11-04,0.5,"SAB: Khuyến nghị KHẢ QUAN với giá mục tiêu 204,000 đồng/cổ phiếu",POS,False,False
+SAB,2023-02-10,0.0,"SAB: Khuyến nghị NEUTRAL với giá mục tiêu 200,650 đồng/cổ phiếu",NEU,False,False
+SAB,2023-02-24,0.0,"SAB: Khuyến nghị TRUNG LẬP với giá mục tiêu 196,300 đòng/cổ phiếu",NEU,False,False
+SAB,2023-05-19,0.0,"SAB: Khuyến nghị NEUTRAL với giá mục tiêu 162,300 đồng/cổ phiếu",NEU,False,False
+SAB,2023-08-04,0.0,SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 194.000 đồng/cổ phiếu,POS,False,False
+SAB,2023-08-18,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 182,700 đồng/cổ phiếu",POS,False,False
+SAB,2023-09-08,0.0,"SAB: Khuyến nghị GIỮ với giá mục tiêu 175,900 đồng/cổ phiếu",NEU,False,False
+SAB,2023-11-13,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 78,000 đồng/cổ phiếu | SAB: Khuyến nghị MUA với giá mục tiêu 88,050 đồng/cổ phiếu",POS,False,False
+SAB,2024-02-23,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 73,900 đồng/cổ phiếu.",POS,False,False
+SAB,2024-05-20,0.0,"SAB: Khuyến nghị TRUNG LẬP với giá mục tiêu 65,400 đồng/cổ phiếu",NEU,False,False
+SAB,2024-09-06,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 68,900 đồng/cổ phiếu",POS,False,False
+SAB,2024-09-25,0.0,"SAB: Khuyến nghị TRUNG LẬP với giá mục tiêu 61,140 đồng/cổ phiếu",NEU,False,False
+SAB,2024-09-26,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 70,700 đồng/cổ phiếu",POS,False,False
+SAB,2024-10-22,0.0,"SAB: Khuyến nghị TRUNG LẬP với giá mục tiêu 59,726 đồng/cổ phiếu",NEU,False,False
+SAB,2024-11-18,0.0,"SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 65,000 đồng/cổ phiếu",POS,False,False
+SAB,2025-02-14,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 68,600 đồng/cổ phiếu",POS,False,False
+SAB,2025-04-02,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 61,700 đồng/cổ phiếu.",POS,False,False
+SAB,2025-05-19,0.5,"SAB: Khuyến nghị KHẢ QUAN với giá mục tiêu 58,000 đồng/cổ phiếu.",POS,False,False
+SAB,2025-08-11,0.0,"SAB: Khuyến nghị OUTPERFORM với giá mục tiêu 56,000 đồng/cổ phiếu",POS,False,False
+SAB,2025-10-13,0.0,"SAB: Khuyến nghị TÍCH LŨY với giá mục tiêu 48,000 đồng/cổ phiếu",,False,False
+SAB,2025-11-24,0.0,"SAB: Khuyến nghị THEO DÕI với giá mục tiêu 53,000 đồng/cổ phiếu",,False,False
+SAB,2025-12-05,0.0,"SAB: Khuyến nghị TRUNG LẬP với giá mục tiêu 55,000 đồng/cổ phiếu",NEU,False,False
+SAB,2026-01-08,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 59,000 đồng/cổ phiếu",POS,False,False
+SAB,2026-02-13,0.0,SAB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+SAB,2026-04-06,0.6666666666666666,"SAB: Khuyến nghị MUA với giá mục tiêu 55,000 đồng/cổ phiếu",POS,False,False
+SHB,2011-08-16,0.0,SHB: Báo cáo phân tích cổ phiếu 16/08/2011,,False,False
+SHB,2014-06-30,0.0,SHB: Báo cáo lần đầu - Khuyến nghị Nắm giữ,NEU,False,False
+SHB,2014-12-10,0.0,SHB: Báo cáo cập nhật - Khuyến nghị Nắm Giữ,NEU,False,False
+SHB,2015-09-10,0.0,SHB : Báo cáo cập nhật - NẮM GIỮ,NEU,False,False
+SHB,2015-10-26,0.0,"SHB : Sáp nhập công ty Tài chính Cổ phần VinaconexViettel (VVF), tỷ lệ 1:1",,False,True
+SHB,2017-12-29,0.6666666666666666,SHB : Báo cáo phân tích- Khuyến nghị Mua,POS,False,False
+SHB,2020-04-08,-0.5,Báo cáo cập nhật SHB - BÁN,NEG,False,False
+SHB,2020-12-14,0.0,SHB: Chú ý vào chất lượng tài sản,,False,False
+SHB,2021-06-03,0.5,SHB: Báo cáo cập nhật - Khuyến nghị Kém khả quan,POS,False,False
+SHB,2021-10-15,0.5,"SHB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 35,000 đồng/cp",,False,False
+SHB,2022-07-26,0.6666666666666666,"SHB: Khuyến nghị MUA với giá mục tiêu 30,300 đồng/cổ phiếu.",POS,False,False
+SHB,2023-04-13,0.0,SHB: Báo cáo cập nhật ĐHCĐ 2023,,False,False
+SHB,2023-06-06,0.6666666666666666,"SHB: Khuyến nghị MUA với giá mục tiêu 13,400 đồng/cổ phiếu",POS,False,False
+SHB,2024-10-01,0.0,SHB: Khuyến nghị THEO DÕI,,False,False
+SHB,2025-06-18,0.0,SHB: Báo cáo Phân tích kỹ thuật,,False,False
+SHB,2026-03-23,0.0,GEX: SHB: Báo cáo Phân tích Kỹ thuật 23/03/2026,,False,False
+SHB,2026-04-23,0.6666666666666666,"SHB: Khuyến nghị MUA với giá mục tiêu 20,000 đồng/cổ phiếu",POS,False,False
+SSI,2008-10-07,0.0,SSI: Triển vọng 2008-2009,,False,False
+SSI,2009-02-06,0.0,SSI: 2008 review & 2009 outlook,,False,False
+SSI,2010-09-20,0.0,"Báo cáo ngành Ngân hàng tháng 07,08/2010 - SSI",,False,False
+SSI,2012-02-08,0.0,SSI: Báo cáo phân tích cổ phiểu tóm tắt,,False,False
+SSI,2014-11-18,0.0,SSI: Báo cáo phân tích lần đầu,,False,False
+SSI,2018-02-02,0.6666666666666666,SSI : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+SSI,2018-12-14,0.5,"SSI : Báo cáo cập nhật - Khuyến nghị [Khả quan +19,7%]",POS,False,False
+SSI,2019-09-05,0.5,"SSI : Báo cáo cập nhật - Khuyến nghị [Mua +37,1%]",POS,False,False
+SSI,2020-09-21,0.5,SSI Research: Ngành BĐS khu công nghiệp - Triển vọng dài hạn tích cực,POS,False,False
+SSI,2020-11-02,0.5,"SSI Research: Ngành điện - Tiêu thụ điện toàn quốc tăng trong tháng 9, khả năng hình thành xu hướng ",,False,False
+SSI,2021-01-29,0.0,SSI Research: Triển vọng ngành cảng biển và logistics năm 2021 - Kỳ vọng phục hồi toàn cầu,,False,False
+SSI,2021-03-18,0.0,Báo cáo phân tích cổ phiếu SSI,,False,False
+SSI,2022-01-19,0.5,SSI: Triển vọng ngành bảo hiểm 2022 - Mức độ hưởng lợi từ lãi suất tăng có thể không lớn,,False,False
+SSI,2023-04-07,0.6666666666666666,"SSI: Khuyến nghị MUA với giá mục tiêu 25,449 đồng/cổ phiếu",POS,False,False
+SSI,2023-09-11,0.0,Cập nhật Ngành Hàng tiêu dùng: Ghi nhận từ hội thảo - Gặp gỡ doanh nghiệp Việt Nam do GS & SSI tổ ch,,False,False
+SSI,2023-10-13,0.0,"SSI,VND: Báo cáo phân tích kỹ thuật giữa SSI và VND",NEU,False,False
+SSI,2024-05-30,0.75,"SSI: Báo cáo cập nhật KQKD - Đẩy mạnh cho vay ký quỹ, lợi nhuận tăng trưởng mạnh",,True,False
+SSI,2024-08-15,0.6666666666666666,"SSI: Khuyến nghị MUA với giá mục tiêu 37,200 đồng/cổ phiếu",POS,False,False
+SSI,2024-12-20,0.6666666666666666,"SSI: Khuyến nghị MUA với giá mục tiêu 32,000 đồng/cổ phiếu",POS,False,False
+SSI,2025-03-13,0.6666666666666666,"SSI: Khuyến nghị MUA với giá mục tiêu 30,300 đồng/cổ phiếu",POS,False,False
+SSI,2025-10-28,0.0,"SSI: Khuyến nghị NẮM GIỮ với giá mục tiêu 33,572 đồng/cổ phiếu",NEU,False,False
+SSI,2026-03-17,0.6666666666666666,"SSI: Khuyến nghị MUA với giá mục tiêu 37,228 đồng/cổ phiếu",POS,False,False
+STB,2008-08-06,0.6666666666666666,BVSC: STB - Quy mô lớn - Tăng trưởng nhanh - Mức giá hợp lý,,False,False
+STB,2010-11-15,0.0,STB: Báo cáo phân tích cổ phiếu 15/11/2010,,False,False
+STB,2010-11-29,0.0,STB: Báo cáo phân tích cổ phiếu 29/11/2010,,False,False
+STB,2010-12-23,0.0,STB: Báo cáo phân tích cổ phiếu 23/12/2010,,False,False
+STB,2011-03-04,0.0,STB: Báo cáo phân tích cổ phiếu 04/03/2011,,False,False
+STB,2012-06-08,0.0,STB: Báo cáo cập nhật Quý 1/2012 - ĐHCDTN,,True,False
+STB,2012-10-03,0.6666666666666666,STB: Báo cáo cập nhật - Lợi nhuận vẫn tăng sau thâu tóm,,False,False
+STB,2013-02-05,0.0,Cập nhật ngành Ngân hàng - EIB và STB trên đường sáp nhập,,False,True
+STB,2014-03-27,0.0,STB: Báo cáo cập nhật - Thông qua kế hoạch sáp nhập,,False,True
+STB,2015-06-17,0.0,"STB : [Hạ KN KKQ -10,3%] – Không có nhiều lý do để lạc quan sau M&A",,False,True
+STB,2019-09-03,0.5,"STB : Báo cáo cập nhật - Khuyến nghị [Mua +72,5%]",POS,False,False
+STB,2020-08-27,0.5,Báo cáo cập nhật STB - MUA,POS,False,False
+STB,2020-10-22,0.25,STB: Dự phòng tăng làm giảm lợi nhuận,,False,False
+STB,2021-08-26,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 34,100 đồng/cp",POS,False,False
+STB,2021-11-03,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 35,800 đồng/cp",POS,False,False
+STB,2021-12-20,0.6666666666666666,"STB : Khuyến nghị MUA với giá mục tiêu 33,200 đồng/cp",POS,False,False
+STB,2022-02-24,0.5,"STB : Khuyến nghị KHẢ QUAN với giá mục tiêu 40,000 đồng/ cổ phiếu",POS,False,False
+STB,2022-06-01,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 28,860 đồng/ cổ phiếu",POS,False,False
+STB,2022-09-15,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 45,200 đồng/cổ phiếu",POS,False,False
+STB,2022-12-02,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 28,650 đồng/cổ phiếu",POS,False,False
+STB,2023-04-12,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 33,200 đồng/cổ phiếu",POS,False,False
+STB,2023-04-27,0.0,STB: Báo cáo cập nhật ĐHCĐ 2023,,False,False
+STB,2023-06-05,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 19,000 đồng/cổ phiếu",POS,False,False
+STB,2023-06-13,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 34,500 đồng/cổ phiếu",POS,False,False
+STB,2023-06-14,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 45,300 đồng/cổ phiếu",POS,False,False
+STB,2023-08-07,0.0,"STB: Khuyến nghị OUTPERFORM với giá mục tiêu 38,400 đồng/cổ phiếu",POS,False,False
+STB,2023-08-10,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 40,000 đồng/cổ phiếu",POS,False,False
+STB,2023-09-26,0.5,"STB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 36,300 đồng/cổ phiếu",,False,False
+STB,2023-11-22,0.5,"STB: Khuyến nghị KHẢ QUAN với giá mục tiêu 34,000 đồng/cổ phiếu",POS,False,False
+STB,2023-12-18,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 38,900 đồng/cổ phiếu",POS,False,False
+STB,2023-12-28,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 36,000 đồng/cổ phiếu",POS,False,False
+STB,2024-02-20,0.5,"STB: Khuyến nghị Tăng tỷ trọng với giá mục tiêu 36,000 đồng/cổ phiếu.",,False,False
+STB,2024-03-06,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 40,900 đồng/cổ phiếu",POS,False,False
+STB,2024-03-21,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 34,000 đồng/cổ phiếu",POS,False,False
+STB,2024-06-07,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 36,200 đồng/cổ phiếu",POS,False,False
+STB,2024-09-20,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 35,000 đồng/cổ phiếu",POS,False,False
+STB,2024-10-31,0.0,"STB: Khuyến nghị OUTPERFORM với giá mục tiêu 41,488 đồng/cổ phiếu",POS,False,False
+STB,2024-12-05,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 37,600 đồng/cổ phiếu",POS,False,False
+STB,2025-01-13,0.5,"STB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 35,300 đồng/cổ phiếu",,False,False
+STB,2025-02-24,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 50,700 đồng/cổ phiếu",POS,False,False
+STB,2025-04-11,0.6666666666666666,"STB: Khuyến nghị MUA với giá mục tiêu 46,136 đồng/cổ phiếu.",POS,False,False
+STB,2025-08-04,0.0,STB: Báo cáo cập nhật KQKD Q2/2025,,True,False
+STB,2025-09-05,0.0,"STB: Khuyến nghị THEO DÕI với giá mục tiêu 62,500 đồng/cổ phiếu",,False,False
+STB,2025-09-11,0.0,"STB: Khuyến nghị NẮM GIỮ với giá mục tiêu 58,300 đồng/cổ phiếu",NEU,False,False
+STB,2025-11-21,0.5,"STB: Khuyến nghị KHẢ QUAN với giá mục tiêu 57,000 đồng/cổ phiếu",POS,False,False
+STB,2026-01-07,0.0,STB: Đánh giá nhanh thông tin KQKD Q4/2025,,True,False
+STB,2026-01-15,0.0,STB: Báo cáo Phân tích kỹ thuật,,False,False
+STB,2026-01-23,0.0,STB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+STB,2026-03-26,0.0,"STB: Khuyến nghị NẮM GIỮ với giá mục tiêu 63,200 đồng/cổ phiếu",NEU,False,False
+STB,2026-03-31,0.0,STB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+STB,2026-04-15,0.0,"STB: Khuyến nghị TRUNG LẬP với giá mục tiêu 73,000 đồng/cổ phiếu | STB: Khuyến nghị TRUNG LẬP với giá mục tiêu 58,800 đồng/cổ phiếu",NEU,False,False
+STB,2026-04-17,0.0,"STB: Khuyến nghị NẮM GIỮ với giá mục tiêu 72,200 đồng/cổ phiếu",NEU,False,False
+STB,2026-05-04,0.0,STB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+STB,2026-05-11,0.0,STB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+TCB,2018-07-30,0.5,"TCB : Báo cáo cập nhật - Khuyến nghị [Mua +65,9%]",POS,False,False
+TCB,2018-10-11,0.5,TCB : Báo cáo cập nhật - Khuyến nghị Tăng tỷ trọng [+19.2%],,False,False
+TCB,2019-06-13,0.0,TCB : Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+TCB,2019-11-04,0.5,Báo cáo lần đầu TCB - MUA,POS,False,False
+TCB,2020-03-12,0.0,Báo cáo cập nhật cổ phiếu TCB,,False,False
+TCB,2020-05-14,0.5,TCB : Báo cáo cập nhật - Khuyến nghị [Khả quan +16.1%] | TCB – Cập nhật KQKD [MUA +16%] NIM cải thiện bất chấp khó khăn,POS,True,False
+TCB,2020-05-25,0.0,Khuyến nghị trung lập dành cho TCB,NEU,False,False
+TCB,2020-05-28,0.5,Báo cáo cập nhật TCB - MUA,POS,False,False
+TCB,2020-06-19,0.5,"Khuyến nghị tích cực đối với VCB, ACB và TCB",POS,False,False
+TCB,2020-06-24,0.0,TCB – Những điểm chính từ ĐHCĐ 2020,,False,False
+TCB,2020-08-07,0.0,Khuyến nghị trung lập đối với cổ phiếu TCB,NEU,False,False
+TCB,2020-11-17,0.5,TCB – Cập nhật 3Q20 [MUA +23%] NIM 3Q20 ấn tượng,POS,True,False
+TCB,2020-11-18,0.5,TCB: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+TCB,2021-01-29,0.5,Báo cáo cập nhật TCB 01.2021 – NEUTRAL - Kết quả tích cực trên các chỉ tiêu chính | TCB: Kết quả tích cực trên các chỉ tiêu chính,POS,True,False
+TCB,2021-02-25,0.0,Báo cáo phân tích cổ phiếu TCB,,False,False
+TCB,2021-03-10,0.75,TCB – Báo cáo ngắn [MUA +20.3%] Nắm bắt thời kỳ tăng trưởng mới,POS,True,False
+TCB,2021-03-19,0.0,TCB: Mức định giá vẫn còn hấp dẫn,,False,False
+TCB,2021-05-05,0.5,TCB – Cập nhật 1Q21 [MUA +27.5%] Khẳng định lợi thế CASA,POS,True,False
+TCB,2021-06-25,0.0,TCB: Báo cáo lần đầu cổ phiếu TCB,,False,False
+TCB,2021-07-23,0.3333333333333333,"TCB: Khuyến nghị MUA với giá mục tiêu 61,405 đồng/cp | TCB: Báo cáo Doanh nghiệp - TCB",POS,False,False
+TCB,2021-07-27,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 60,100 đồng/cp",POS,False,False
+TCB,2021-07-30,0.0,"TCB: Khuyến nghị THEO DÕI với giá mục tiêu 56,100 đồng/cp",,False,False
+TCB,2021-08-16,0.0,"TCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 50,400 đồng/cp",NEU,False,False
+TCB,2021-08-24,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 65,200 đồng/cp",POS,False,False
+TCB,2021-10-05,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 71,000 đồng/cp",POS,False,False
+TCB,2021-10-25,0.5,"TCB: Khuyến nghị TÍCH CỰC với giá kỳ vọng 63,300 đồng/cp",POS,False,False
+TCB,2021-11-03,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 63,100 đồng/cp",POS,False,False
+TCB,2021-11-17,0.6666666666666666,"TCB : Khuyến nghị MUA với giá mục tiêu 65,600 đồng/cp",POS,False,False
+TCB,2022-01-26,0.0,TCB: Báo cao tham dự họp mặt Nhà đầu tư,,False,False
+TCB,2022-02-10,0.5,"TCB: Khuyến nghị khả quan với giá mục tiêu: 70,000 đồng/ cổ phiếu",POS,False,False
+TCB,2022-05-09,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 65,600 VND/cổ phiếu.",POS,False,False
+TCB,2022-05-24,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 63,100 đồng/ cổ phiếu",POS,False,False
+TCB,2022-05-25,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 63,100 đồng/cp.",POS,False,False
+TCB,2022-06-07,0.0,"TCB: Khuyến nghị với giá mục tiêu 66,400 đồng/ cổ phiếu.",,False,False
+TCB,2022-07-25,0.0,"TCB: Khuyến nghị OUTPERFORM với giá mục tiêu 46,700 đồng/cổ phiếu.",POS,False,False
+TCB,2022-08-02,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 46,000 đồng/cổ phiếu.",POS,False,False
+TCB,2022-08-25,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 51,200 đồng/cổ phiếu.",POS,False,False
+TCB,2022-08-30,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 62,300 đồng/cổ phiếu.",POS,False,False
+TCB,2022-11-28,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 44,000 đồng/cổ phiếu",POS,False,False
+TCB,2022-12-16,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 42,500 đồng/cổ phiếu",POS,False,False
+TCB,2023-05-04,0.0,TCB: Kế hoạch kinh doanh 2023 thận trọng,,False,False
+TCB,2023-06-05,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 37,700 đồng/cổ phiếu",POS,False,False
+TCB,2023-08-25,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 38,300 đồng/cổ phiếu",POS,False,False
+TCB,2023-10-06,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 43,400 đồng/cổ phiếu",POS,False,False
+TCB,2023-11-09,0.0,"TCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 35,600 đồng/cổ phiếu",NEU,False,False
+TCB,2023-12-01,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 42,950 đồng/cổ phiếu",POS,False,False
+TCB,2024-01-24,0.0,"TCB: Khuyến nghị với giá mục tiêu 40,300 đồng/cổ phiếu.",,False,False
+TCB,2024-01-26,0.5833333333333333,"TCB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 42,000 đồng/cổ phiếu. | TCB: Khuyến nghị MUA với giá mục tiêu 50,340 đồng/cổ phiếu.",POS,False,False
+TCB,2024-02-20,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 44,800 đồng/cổ phiếu.",POS,False,False
+TCB,2024-02-27,0.0,"TCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 42,300 đồng/cổ phiếu",NEU,False,False
+TCB,2024-03-15,0.0,"TCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 45,200 đồng/cổ phiếu",NEU,False,False
+TCB,2024-05-07,0.0,"TCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 50,300 đồng/cổ phiếu",NEU,False,False
+TCB,2024-05-17,0.0,"TCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 54,500 đồng/cổ phiếu",NEU,False,False
+TCB,2024-08-05,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 25,400 đồng/cổ phiếu",POS,False,False
+TCB,2024-08-21,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 28,200 đồng/cổ phiếu",POS,False,False
+TCB,2024-08-23,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 29,600 đồng/cổ phiếu",POS,False,False
+TCB,2024-10-22,0.0,TCB: Cập nhật KQKD với các chuyên viên phân tích,,True,False
+TCB,2024-10-29,0.0,"TCB: Khuyến nghị Nắm giữ với giá mục tiêu 27,500 đồng/cổ phiếu",NEU,False,False
+TCB,2024-11-08,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 26,850 đồng/cổ phiếu",POS,False,False
+TCB,2024-11-14,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 28,300 đồng/cổ phiếu",POS,False,False
+TCB,2024-11-28,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 33,400 đồng/cổ phiếu",POS,False,False
+TCB,2024-12-02,0.0,"TCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 25,491 đồng/cổ phiếu",NEU,False,False
+TCB,2025-03-04,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 36,200 đồng/cổ phiếu",POS,False,False
+TCB,2025-05-15,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,800 đồng/cổ phiếu.",POS,False,False
+TCB,2025-06-04,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 36,400 đồng/cổ phiếu",POS,False,False
+TCB,2025-06-26,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu: 36,800 đồng/cổ phiếu",POS,False,False
+TCB,2025-10-22,0.0,TCB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+TCB,2025-10-23,0.0,TCB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+TCB,2025-11-05,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 42,600 đồng/cổ phiếu",POS,False,False
+TCB,2025-11-10,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 40,100 đồng/cổ phiếu",POS,False,False
+TCB,2025-12-01,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 43,100 đồng/cổ phiếu",POS,False,False
+TCB,2025-12-05,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 41,100 đồng/cổ phiếu",POS,False,False
+TCB,2026-01-07,0.0,TCB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+TCB,2026-01-22,0.0,TCB: Báo cáo cập nhật KQKD Q4/2025 | TCB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+TCB,2026-01-28,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 43,500 đồng/cổ phiếu | TCB: Khuyến nghị MUA với giá mục tiêu 43,700 đồng/cổ phiếu",POS,False,False
+TCB,2026-02-04,0.0,TCB: Báo cáo cập nhật KQKD Q4/2025,,True,False
+TCB,2026-02-26,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 41,300 đồng/cổ phiếu",POS,False,False
+TCB,2026-03-06,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 41,800 đồng/cổ phiếu",POS,False,False
+TCB,2026-03-10,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 39,200 đồng/cổ phiếu",POS,False,False
+TCB,2026-03-17,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 41,500 đồng/cổ phiếu",POS,False,False
+TCB,2026-03-19,0.5,"TCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 40,000 đồng/cổ phiếu",POS,False,False
+TCB,2026-03-20,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 42,700 đồng/cổ phiếu",POS,False,False
+TCB,2026-04-29,0.0,TCB: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+TCB,2026-05-05,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 40,300 đồng/cổ phiếu",POS,False,False
+TCB,2026-06-03,0.0,TCB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+TCB,2026-06-04,0.6666666666666666,"TCB: Khuyến nghị MUA với giá mục tiêu 42,600 đồng/cổ phiếu",POS,False,False
+TPB,2019-05-31,0.0,"TPB : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +9,6%]",NEU,False,False
+TPB,2019-09-30,0.0,Báo cáo cập nhật cổ phiếu TPB - Khuyến nghị Theo dõi,,False,False
+TPB,2019-10-03,0.5,TPB : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+TPB,2020-06-10,0.75,Lợi nhuận năm 2020 của TPB tăng trưởng 5% là khả thi,,False,False
+TPB,2020-09-25,0.75,Báo cáo lần đầu TPB 9.2020 – NEUTRAL - Nền tảng ngân hàng số mạnh; Triển vọng tăng trưởng lợi nhuận ,NEU,False,False
+TPB,2020-11-04,0.5,TPB – Tin vắn AM 3Q20 – Nỗ lực tăng quy mô ngân hàng,,True,False
+TPB,2021-03-11,0.0,TPB: Giành thị phần từ chuyển đổi số,,False,False
+TPB,2021-04-08,0.5,Khuyến nghị tích cực dành cho cổ phiếu TPB,POS,False,False
+TPB,2021-04-12,0.5,TPB: Báo cáo cập nhật TPB - Khả quan,POS,False,False
+TPB,2021-04-13,0.5,TPB: Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+TPB,2021-04-22,0.0,TPB: Báo cáo cập nhật KQKD TPB 04.2021,,True,False
+TPB,2021-05-24,0.6666666666666666,TPB: Triển vọng tăng trưởng 2021 lạc quan,,False,False
+TPB,2021-08-05,0.0,"TPB: Khuyến nghị OUTPERFORM với giá mục tiêu 42,964 đồng/cp",POS,False,False
+TPB,2021-09-09,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 44,095 đồng/cp",POS,False,False
+TPB,2021-09-24,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 48,040 đồng/cp",POS,False,False
+TPB,2021-09-27,0.0,"TPB: Khuyến nghị OUTPERFORM với giá mục tiêu 48,450 đồng/cp",POS,False,False
+TPB,2021-10-21,0.0,"TPB: Khuyến nghị OUTPERFORM với giá mục tiêu 51,000 đồng/cp",POS,False,False
+TPB,2021-11-05,0.5,"TPB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 55,000 đồng/cp",,False,False
+TPB,2021-11-19,0.0,"TPB : Khuyến nghị TRUNG LẬP với giá mục tiêu 49,000 đồng/cp",NEU,False,False
+TPB,2021-12-23,0.5,"TPB : Khuyến nghị KHẢ QUAN với giá mục tiêu 42,600 đồng/cp",POS,False,False
+TPB,2022-01-25,0.5,TPB : Giá cổ phiếu TPB đã vượt qua mức giá mục tiêu,,False,False
+TPB,2022-02-25,0.0,"TPB : Khuyến nghị TRUNG LẬP với giá mục tiêu 41,000 đồng/ cổ phiếu",NEU,False,False
+TPB,2022-03-09,0.0,TPB: Khuyến nghị OUTPERFORM với giá mục tiêu 44.693 đồng/ cổ phiếu,POS,False,False
+TPB,2022-03-29,0.0,"TPB : Khuyến nghị OUTPERFORM với giá mục tiêu 44,693 đồng/ cổ phiếu",POS,False,False
+TPB,2022-05-09,0.0,"TPB: Khuyến nghị OUTPERFORM Giá mục tiêu 44,693 đồng/cổ phiếu",POS,False,False
+TPB,2022-05-30,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 39,400 đồng/cổ phiếu.",POS,False,False
+TPB,2022-10-27,0.0,"TPB: Khuyến nghị với giá mục tiêu 24,100 đồng/cổ phiếu",,False,False
+TPB,2022-12-21,0.0,"TPB: Khuyến nghị TRUNG LẬP với giá mục tiêu 22,800 đồng/cổ phiếu.",NEU,False,False
+TPB,2022-12-27,0.0,"TPB: Khuyến nghị GIỮ với giá mục tiêu 23,600 đồng/cổ phiếu",NEU,False,False
+TPB,2022-12-28,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 34,000 đồng/cổ phiếu.",POS,False,False
+TPB,2023-02-09,0.5,"TPB: Khuyến nghị KHẢ QUAN với giá mục tiêu 31,000 đồng/cổ phiếu",POS,False,False
+TPB,2023-06-09,0.0,"TPB: Khuyến nghị TRUNG LẬP với giá mục tiêu 24,300 đồng/cổ phiếu",NEU,False,False
+TPB,2023-08-10,0.5,"TPB: Khuyến nghị KHẢ QUAN với giá mục tiêu 21,800 đồng /cổ phiếu",POS,False,False
+TPB,2023-10-24,0.0,TPB: Cập nhật Kết quả kinh doanh Q3/2023,,True,False
+TPB,2023-12-19,0.0,"TPB: Khuyến nghị TRUNG LẬP với giá mục tiêu 18,000 đồng/cổ phiếu",NEU,False,False
+TPB,2024-03-21,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 22,400 đồng/cổ phiếu",POS,False,False
+TPB,2024-05-29,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 21,873 đồng/cổ phiếu",POS,False,False
+TPB,2024-06-20,0.0,"TPB: Khuyến nghị TRUNG LẬP với giá mục tiêu 20,850 đồng/cổ phiếu",NEU,False,False
+TPB,2024-06-21,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 22,700 đồng/cổ phiếu",POS,False,False
+TPB,2025-02-05,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 17,400 đồng/cổ phiếu",POS,False,False
+TPB,2025-02-13,0.5,"TPB: Khuyến nghị KHẢ QUAN với giá mục tiêu 20,600 đồng/cổ phiếu",POS,False,False
+TPB,2025-05-12,0.5,"TPB: Khuyến nghị KHẢ QUAN với giá mục tiêu 18,200 đồng/cổ phiếu.",POS,False,False
+TPB,2025-05-19,0.0,"TPB: Khuyến với giá mục tiêu 18,200 đồng/cổ phiếu.",,False,False
+TPB,2025-06-24,0.0,TPB: Báo cáo Phân tích kỹ thuật,,False,False
+TPB,2025-09-23,0.6666666666666666,"TPB: Khuyến nghị MUA với giá mục tiêu 22,600 đồng/cổ phiếu",POS,False,False
+TPB,2025-10-31,0.0,TPB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+TPB,2025-12-24,0.0,TPB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+TPB,2026-05-11,0.0,TPB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+VCB,2011-05-16,0.0,Đằng sau việc 1.6 tỷ cổ phiếu sở hữu Nhà nước tại VCB được niêm yết,,False,False
+VCB,2011-05-17,0.0,"VCB: Báo cáo phân tích cổ phiếu 17/05/2011 | ETFs và việc niêm yết thêm 1,6 tỷ cổ phiếu của VCB",,False,False
+VCB,2011-05-26,0.0,VCB: Báo cáo phân tích cổ phiếu 26/05/2011,,False,False
+VCB,2011-08-31,0.0,VCB: Báo cáo phân tích cổ phiếu 31/08/2011,,False,False
+VCB,2011-10-13,0.0,VCB: Báo cáo phân tích cổ phiếu 13/10/2011,,False,False
+VCB,2011-12-12,0.0,VCB: Báo cáo cập nhật Qúy3/2011,,False,False
+VCB,2012-09-19,0.0,VCB: Báo cáo cập nhật kết quả kinh doanh Quý 2/2012,,True,False
+VCB,2012-11-22,0.0,VCB: Báo cáo cập nhật KQKD Quý 3/2012 - Lợi nhuận tiếp tục giảm,,True,False
+VCB,2013-02-21,0.75,"VCB: Lợi nhuận không tăng trưởng, tiếp tục xóa nợ - Kết quả lợi nhuận",,True,False
+VCB,2013-03-27,0.0,VCB: Báo cáo cập nhật - LN sau kiểm toán không thay đổi,,False,False
+VCB,2013-04-04,0.0,VCB: Báo cáo cập nhật Quý 1/2013,,True,False
+VCB,2013-10-09,0.6666666666666666,VCB: Báo cáo cập nhật - Tăng trưởng tín dụng quý 3/2013 có sự phục hồi,,True,False
+VCB,2014-01-16,0.0,VCB: Báo cáo cập nhật - Chờ đợi sự chuyển mình,,False,False
+VCB,2014-09-05,0.6666666666666666,VCB: Báo cáo cập nhật – Khuyến nghị Mua,POS,False,False
+VCB,2014-10-06,0.0,VCB: Báo cáo cập nhật – Chất lượng tài sản được duy trì tốt,,False,False
+VCB,2014-12-26,0.0,VCB: Báo cáo cập nhật - Liên tục trích lập dự phòng cao trong 4 năm gần đây giúp VCB không chịu nhiề,,False,False
+VCB,2015-01-20,0.0,VCB: Báo cáo cập nhật - Xu hướng chất lượng đã cải thiện tốt một cách đáng ngạc nhiên,,False,False
+VCB,2015-03-11,0.6666666666666666,VCB : Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+VCB,2015-05-08,0.5,VCB : Giao dịch mua trái phiếu trị giá tỷ USD gợi nhớ ưu thế thu hút nguồn tiền gửi USD từ khách hàn,POS,False,False
+VCB,2016-06-27,0.0,VCB : Báo cáo cập nhật - PHÙ HỢP THỊ TRƯỜNG [+3.6%],NEU,False,False
+VCB,2017-12-15,0.6666666666666666,VCB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+VCB,2018-04-20,0.5,VCB : Báo cáo cập nhật ngắn - Khuyến nghị Khả quan,POS,False,False
+VCB,2019-03-20,0.0,VCB : Báo cáo lần đầu - Khuyến nghị Nắm Giữ,NEU,False,False
+VCB,2019-05-31,0.0,VCB : Báo cáo cập nhật - Khuyến nghị Trung lập,NEU,False,False
+VCB,2019-10-28,0.6666666666666666,Báo cáo cập nhật VCB - Khuyến nghị MUA,POS,False,False
+VCB,2019-11-26,0.6666666666666666,Báo cáo cập nhật VCB Q4.2019 - OUTPERFORM - Dư địa tăng trưởng vẫn còn rất lớn trong các năm tới,POS,True,False
+VCB,2019-12-23,0.5,Báo cáo cập nhật VCB - MUA,POS,False,False
+VCB,2020-03-20,0.5,Báo cáo cập nhật VCB - KHẢ QUAN,POS,False,False
+VCB,2020-04-27,0.25,Báo cáo nhanh VCB | Báo cáo cập nhật VCB - MUA,POS,True,False
+VCB,2020-05-13,0.0,VCB – Cập nhật KQKD [Giữ] Sẵn sàng cho kịch bản khó khăn nhất,NEU,True,False
+VCB,2020-05-14,0.0,Báo cáo cập nhật VCB - TÍCH LŨY,,False,False
+VCB,2020-06-18,0.0,Báo cáo nhanh VCB,,True,False
+VCB,2020-06-19,0.5,"Khuyến nghị tích cực đối với VCB, ACB và TCB",POS,False,False
+VCB,2020-07-28,0.0,Khuyến nghị nắm giữ cổ phiếu VCB,NEU,False,False
+VCB,2020-07-30,0.0,VCB: Lợi nhuận 6T2020 giảm nhẹ do chi phí dự phòng cao,,False,False
+VCB,2020-09-09,0.0,Báo cáo cập nhật VCB - GIỮ,NEU,False,False
+VCB,2020-10-22,0.0,VCB: LNST Quý 3/2020 (-13% QoQ / -21% YoY),,True,False
+VCB,2020-10-27,0.0,Báo cáo cập nhật VCB - TRUNG LẬP,NEU,False,False
+VCB,2020-11-12,0.0,Báo cáo cập nhật VCB - NẮM GIỮ,NEU,False,False
+VCB,2021-01-22,0.25,"Cập nhật VCB - GIỮ, 22/01/2021 | VCB: Chất lượng tài sản tiếp tục tăng",NEU,False,False
+VCB,2021-02-03,0.0,VCB: Thời điểm tích lũy ngân hàng có chất lượng tài sản tốt nhất,,False,False
+VCB,2021-02-17,0.5,VCB – Cập nhật 4Q20 [MUA +17.7%] Nâng khuyến nghị,POS,True,False
+VCB,2021-04-16,0.0,Báo cáo cập nhật cổ phiếu VCB,,False,False
+VCB,2021-04-23,0.0,VCB: Cập nhật họp ĐHĐCĐ,,False,False
+VCB,2021-05-04,0.6666666666666666,VCB: Báo cáo nhanh - Khuyến nghị Mua,POS,True,False
+VCB,2021-05-06,0.0,Báo cáo cập nhật cổ phiếu VCB,,False,False
+VCB,2021-05-14,0.5,Cập nhật VCB – MUA ngày 14/05/2021,POS,False,False
+VCB,2021-08-26,0.0,"VCB: Khuyến nghị PHÙ HỢP THỊ TRƯỜNG với giá mục tiêu 101,200 đồng/cp",NEU,False,False
+VCB,2021-11-01,0.0,"VCB: Khuyến nghị OUTPERFORM với giá kỳ vọng 114,200 đồng/cp",POS,False,False
+VCB,2021-11-16,0.0,"VCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 117,000 đồng/cp",NEU,False,False
+VCB,2021-11-23,0.5,"VCB : Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 112,600 đồng/cp",,False,False
+VCB,2022-03-16,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 97,600 đồng/ cổ phiếu",POS,False,False
+VCB,2022-05-25,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 95,000 VND/cp.",POS,False,False
+VCB,2022-06-17,0.5,VCB: khuyến nghị Khả quan với giá mục tiêu 95.600 đồng/cổ phiếu,POS,False,False
+VCB,2022-07-26,0.5,"VCB: Khuyến nghị Khả quan với giá mục tiêu 95,600 đồng/cổ phiếu",POS,False,False
+VCB,2022-08-29,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 98,000 đồng/cổ phiếu",POS,False,False
+VCB,2022-09-19,0.0,VCB: khuyến nghị TRUNG LẬP với giá mục tiêu là 94.763 đồng/cổ phiếu,NEU,False,False
+VCB,2022-12-01,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 89,400 đồng/cổ phiếu",NEU,False,False
+VCB,2022-12-15,0.0,"VCB: Khuyến nghị với giá mục tiêu 89,000 đồng/cổ phiếu",,False,False
+VCB,2022-12-16,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 93,230 đồng/cổ phiếu",POS,False,False
+VCB,2022-12-19,0.0,"VCB: Khuyến nghị GIỮ với giá mục tiêu 87,000 đồng/cổ phiếu",NEU,False,False
+VCB,2023-02-22,0.0,"VCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 95,300 đồng/cổ phiếu",NEU,False,False
+VCB,2023-03-24,0.0,"VCB: Khuyến nghị TRUNG LẬP với giá mục tiêu 91,000 đồng/cổ phiếu.",NEU,False,False
+VCB,2023-04-07,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 94,100 đồng/cổ phiếu",NEU,False,False
+VCB,2023-05-25,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 109,850 đồng/cổ phiếu",POS,False,False
+VCB,2023-08-17,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 105,900 đồng/cổ phiếu",POS,False,False
+VCB,2023-09-22,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 101,400 đồng/cổ phiếu",POS,False,False
+VCB,2023-10-30,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 100,000 đồng/cổ phiếu",POS,False,False
+VCB,2023-10-31,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 93,000 đồng/cổ phiếu",NEU,False,False
+VCB,2023-11-07,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 99,000 đồng/cổ phiếu",NEU,False,False
+VCB,2023-11-16,0.0,"VCB: Khuyến nghị với giá mục tiêu 84,100 đồng/cổ phiếu",,False,False
+VCB,2023-12-07,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 109,600 đồng/cổ phiếu",POS,False,False
+VCB,2024-03-01,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 107,000 đồng/cổ phiếu",NEU,False,False
+VCB,2024-03-19,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 109,100 đồng/cổ phiếu",POS,False,False
+VCB,2024-04-12,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 118,700 đồng/cổ phiếu",POS,False,False
+VCB,2024-06-07,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 107,700 đồng/cổ phiếu",POS,False,False
+VCB,2024-06-13,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 105,200 đồng/cổ phiếu",POS,False,False
+VCB,2024-09-12,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 103,300 đồng/cổ phiếu",POS,False,False
+VCB,2024-11-01,0.0,"VCB: Khuyến nghị OUTPERFORM với giá mục tiêu 117,399 đồng/cổ phiếu",POS,False,False
+VCB,2024-11-07,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 109,400 đồng/cổ phiếu",POS,False,False
+VCB,2024-11-19,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 109,000 đồng/cổ phiếu",POS,False,False
+VCB,2024-11-25,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 107,500 đồng/cổ phiếu",POS,False,False
+VCB,2025-06-16,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 67,300 đồng/cổ phiếu",POS,False,False
+VCB,2025-06-17,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 67,300 đồng/cổ phiếu",POS,False,False
+VCB,2025-08-12,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 75,000 đồng/cổ phiếu",POS,False,False
+VCB,2025-08-15,0.0,VCB: Báo cáo cập nhật KQKD Q2/2025,,True,False
+VCB,2025-08-26,0.0,"VCB: Khuyến nghị THEO DÕI với giá mục tiêu 68,800 đồng/cổ phiếu",,False,False
+VCB,2025-09-09,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 77,800 đồng/cổ phiếu",POS,False,False
+VCB,2025-09-10,0.0,"VCB: Khuyến nghị NẮM GIỮ với giá mục tiêu 73,200 đồng/cổ phiếu",NEU,False,False
+VCB,2025-10-31,0.0,VCB: Báo cáo cập nhật KQKD Q3/2025,,True,False
+VCB,2025-11-13,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 76,500 đồng/cổ phiếu",POS,False,False
+VCB,2025-12-10,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 69,300 đồng/cổ phiếu",POS,False,False
+VCB,2025-12-15,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 74,100 đồng/cổ phiếu",POS,False,False
+VCB,2025-12-19,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 74,100 đồng/cổ phiếu",POS,False,False
+VCB,2025-12-30,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 67,100 đồng/cổ phiếu",POS,False,False
+VCB,2026-02-03,0.0,VCB: Báo cáo Phân tích kỹ thuật,,False,False
+VCB,2026-02-05,0.0,"VCB: Khuyến nghị OUTPERFORM với giá mục tiêu 86,300 đồng/cổ phiếu",POS,False,False
+VCB,2026-03-05,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 75,500 đồng/cổ phiếu",POS,False,False
+VCB,2026-03-11,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 72,000 đồng/cổ phiếu",POS,False,False
+VCB,2026-03-25,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 69,800 đồng/cổ phiếu",POS,False,False
+VCB,2026-04-09,0.5833333333333333,"VCB: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 68,200 đồng/cổ phiếu | VCB: Khuyến nghị MUA với giá mục tiêu 72,800 đồng/cổ phiếu",POS,False,False
+VCB,2026-04-14,0.0,"VCB: Khuyến nghị TÍCH LŨY với giá mục tiêu 68,500 đồng/cổ phiếu",,False,False
+VCB,2026-05-06,0.0,VCB: Báo cáo cập nhật KQKD Q1/2026,,True,False
+VCB,2026-05-29,0.5,"VCB: Khuyến nghị KHẢ QUAN với giá mục tiêu 75,900 đồng/cổ phiếu",POS,False,False
+VCB,2026-06-04,0.6666666666666666,"VCB: Khuyến nghị MUA với giá mục tiêu 78,500 đồng/cổ phiếu",POS,False,False
+VHM,2019-11-22,0.0,Báo cáo lần đầu cổ phiếu VHM,,False,False
+VHM,2019-12-11,0.5,"Cập nhật VHM - MUA, ngày 11/12/2019",POS,False,False
+VHM,2020-02-11,0.0,Báo cáo cập nhật VHM,,False,False
+VHM,2020-06-16,0.75,VHM - Tăng trưởng doanh thu cao trong năm 2020,,False,False
+VHM,2020-09-17,-0.5,"VHM: Đẩy mạnh bán buôn BĐS nhà ở, phát triển quỹ đất BĐS khu công nghiệp",,False,False
+VHM,2020-10-30,0.5,VHM: Lãi ròng quý 3 tăng 9% so với cùng kỳ,,True,False
+VHM,2020-11-19,0.5,VHM: Vị Thế Dẫn Đầu,,False,False
+VHM,2021-03-15,0.8333333333333334,VHM – Báo cáo ngắn [MUA +26.2%] Viễn cảnh tăng trưởng lợi nhuận tích cực không đổi,POS,True,False
+VHM,2021-04-29,0.5,VHM – Cập nhật 1Q21 [MUA] - Kết quả yếu kém quý 1/2021 chỉ là tạm thời,POS,True,False
+VHM,2021-06-08,0.6666666666666666,VHM: Khuyến nghị mua cổ phiếu VHM với giá mục tiêu 132.500 đồng/CP,POS,False,False
+VHM,2021-06-29,0.6666666666666666,"VHM: Khuyến nghị MUA, với giá mục tiêu 132,078 đồng/cp",POS,False,False
+VHM,2021-08-12,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 141,300 đồng/cp",POS,False,False
+VHM,2021-09-09,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 132,500 đồng/cp",POS,False,False
+VHM,2021-09-22,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 97,200 đồng/cp",POS,False,False
+VHM,2021-09-29,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 98,570 đồng/cp",POS,False,False
+VHM,2021-09-30,0.6666666666666666,"VHM: Khuyến nghị MUA với giá hợp lý 106,785 đồng/cp",POS,False,False
+VHM,2021-10-05,0.0,"VHM: Khuyến nghị NẮM GIỮ với giá hợp lý 75,465 đồng/cp",NEU,False,False
+VHM,2021-11-09,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 99,400 đồng/cp",POS,False,False
+VHM,2022-05-25,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 98,385 đồng/cổ phiếu.",POS,False,False
+VHM,2022-06-14,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 103,300 VND/cổ phiếu",POS,False,False
+VHM,2022-08-03,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 91,486 đồng/cổ phiếu.",POS,False,False
+VHM,2022-09-13,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 104,400 đồng/cổ phiếu",POS,False,False
+VHM,2022-11-30,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,000 đồng/cổ phiếu",POS,False,False
+VHM,2022-12-07,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 80,200 đồng/cổ phiếu",POS,False,False
+VHM,2023-06-06,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 78,300 đồng/cổ phiếu",POS,False,False
+VHM,2023-06-21,0.0,VHM: Vững vàng trước thử thách,,False,False
+VHM,2023-08-09,0.5,VHM: Báo cáo cập nhật KQKD - Duy trì lợi nhuận cao giữa khó khăn thị trường,NEU,True,False
+VHM,2023-08-21,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 72,200 đồng/cổ phiếu",POS,False,False
+VHM,2023-09-22,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 80,200 đồng/cổ phiếu",POS,False,False
+VHM,2023-09-25,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 90,000 đồng/cổ phiếu",POS,False,False
+VHM,2023-11-30,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 85,500 đồng/cổ phiếu",POS,False,False
+VHM,2023-12-07,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 75,300 đồng/cổ phiếu",POS,False,False
+VHM,2023-12-18,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 46,000 đồng/cổ phiếu",POS,False,False
+VHM,2024-01-26,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 63,300 đồng/cổ phiếu.",POS,False,False
+VHM,2024-02-02,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 77,000 đồng/cổ phiếu.",POS,False,False
+VHM,2024-03-01,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 61,400 đồng/cổ phiếu",POS,False,False
+VHM,2024-03-19,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 69,000 đồng/cổ phiếu",POS,False,False
+VHM,2024-04-15,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 69,400 đồng/cổ phiếu",POS,False,False
+VHM,2024-06-18,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 60,900 đồng/cổ phiếu",POS,False,False
+VHM,2024-09-04,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 50,000 đồng/cổ phiếu",POS,False,False
+VHM,2024-09-13,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 56,800 đồng/cổ phiếu",POS,False,False
+VHM,2024-09-25,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 54,600 đồng/cổ phiếu",POS,False,False
+VHM,2024-11-13,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 54,700 đồng/cổ phiếu",POS,False,False
+VHM,2025-02-17,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 46,500 đồng/cổ phiếu",POS,False,False
+VHM,2025-05-21,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 69,700 đồng/cổ phiếu",POS,False,False
+VHM,2025-08-11,0.0,"VHM: Báo cáo cập nhật KQKD Q2/2025 | VHM: Khuyến nghị TRUNG LẬP với giá mục tiêu 98,300 đồng/cổ phiếu",NEU,True,False
+VHM,2025-09-19,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 115,900 đồng/cổ phiếu",POS,False,False
+VHM,2025-12-03,0.5,"VHM: Khuyến nghị KHẢ QUAN với giá mục tiêu 117,700 đồng/cổ phiếu",POS,False,False
+VHM,2025-12-15,0.0,"VHM: Khuyến nghị TRUNG LẬP với giá mục tiêu 105,600 đồng/cổ phiếu",NEU,False,False
+VHM,2026-03-18,0.0,"VHM: Khuyến nghị TRUNG LẬP với giá mục tiêu 108,500 đồng/cổ phiếu",NEU,False,False
+VHM,2026-03-30,0.0,Nhóm VinGroup: Cập nhật VIC-VHM-VRE,,False,False
+VHM,2026-04-07,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 139,500 đồng/cổ phiếu",POS,False,False
+VHM,2026-04-21,0.0,VHM: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+VHM,2026-05-04,-0.6666666666666666,"VHM: Khuyến nghị BÁN với giá mục tiêu 87,200 đồng/cổ phiếu",NEG,False,False
+VHM,2026-05-27,0.6666666666666666,"VHM: Khuyến nghị MUA với giá mục tiêu 167,560 đồng/cổ phiếu",POS,False,False
+VHM,2026-05-29,0.0,"VHM: Khuyến nghị PHÙ HỢP THỊ TRƯỜNG với giá mục tiêu 153,700 đồng/cổ phiếu",NEU,False,False
+VIB,2019-06-19,0.6666666666666666,VIB : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+VIB,2020-04-29,0.0,Báo cáo nhanh VIB - KQKD Quý 1/2020,,True,False
+VIB,2020-06-03,0.6666666666666666,VIB – Lợi nhuận Q1/2020 tăng mạnh do dự phòng đi ngang,,True,False
+VIB,2020-07-17,0.5,VIB – Dư địa tăng vẫn còn,,False,False
+VIB,2020-08-04,0.6666666666666666,VIB: Báo cáo cập nhật - Tăng trưởng cao trong bối cảnh kinh tế khó khăn,,False,False
+VIB,2020-08-07,0.6666666666666666,VIB – Kỳ vọng tăng trưởng mạnh,,False,False
+VIB,2021-04-16,0.25,VIB: Tăng trưởng từ mô hình bán lẻ hiệu quả,,False,False
+VIB,2021-08-17,0.0,VIB: Cập nhật KQKD 6T/2021,,True,False
+VIB,2021-11-22,0.5,"VIB : Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 46,150 đồng/cp",,False,False
+VIB,2021-12-17,0.6666666666666666,"VIB : Khuyến nghị MUA với giá mục tiêu 54,800 đồng/cp",POS,False,False
+VIB,2022-03-03,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 46,400 đồng/ cổ phiếu",NEU,False,False
+VIB,2022-07-29,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 32,700 đồng/cổ phiếu.",POS,False,False
+VIB,2022-08-10,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 42,800 đồng/cổ phiếu.",POS,False,False
+VIB,2022-08-26,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 30,900 đồng/cổ phiếu",NEU,False,False
+VIB,2022-11-17,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 27,700 đồng/cổ phiếu",POS,False,False
+VIB,2023-06-01,0.5,"VIB: Khuyến nghị KHẢ QUAN với giá mục tiêu 27,000 đồng/cổ phiếu",POS,False,False
+VIB,2023-08-18,0.0,"VIB: Khuyến nghị: TRUNG LẬP với giá mục tiêu 22,700 đồng/cổ phiếu",NEU,False,False
+VIB,2023-09-06,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 24,100 đồng/cổ phiếu",POS,False,False
+VIB,2023-11-28,0.0,"VIB: Khuyến nghị NẮM GIỮ với giá mục tiêu 20,100 đồng/cổ phiếu",NEU,False,False
+VIB,2023-12-15,0.5,"VIB: Khuyến nghị KHẢ QUAN với giá mục tiêu 25,900 đồng/cổ phiếu",POS,False,False
+VIB,2024-01-25,0.0,VIB: Cập nhật cuộc họp với các chuyên viên phân tích,,False,False
+VIB,2024-01-26,0.0,"VIB: Khuyến nghị với giá mục tiêu 25,900 đồng/cổ phiếu.",,False,False
+VIB,2024-01-30,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 25,000 đồng/cổ phiếu.",POS,False,False
+VIB,2024-02-07,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 27,000 đồng/cổ phiếu.",POS,False,False
+VIB,2024-06-12,0.0,VIB: Cập nhật cuộc họp ĐHCĐ bất thường,,False,False
+VIB,2024-06-20,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 28,800 đồng/cổ phiếu",POS,False,False
+VIB,2024-08-14,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 22,800 đồng/cổ phiếu",NEU,False,False
+VIB,2024-08-15,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 20,800 đồng/cổ phiếu",NEU,False,False
+VIB,2024-09-24,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 25,500 đồng/cổ phiếu",POS,False,False
+VIB,2024-12-17,0.6666666666666666,"VIB: Khuyến nghị MUA với giá mục tiêu 23,012 đồng/cổ phiếu",POS,False,False
+VIB,2025-03-06,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 21,100 đồng/cổ phiếu",NEU,False,False
+VIB,2025-03-20,0.0,"VIB: Khuyến nghị TRUNG LẬP với giá mục tiêu 22,650 đồng/cổ phiếu.",NEU,False,False
+VIB,2025-06-20,0.5,"VIB: Khuyến nghị KHẢ QUAN với giá mục tiêu 22,000/cổ phiếu",POS,False,False
+VIB,2025-08-05,0.0,VIB: Báo cáo cập nhật KQKD Q2/2025,,True,False
+VIB,2025-11-18,0.0,"VIB: Khuyến nghị THEO DÕI với giá mục tiêu 21,300 đồng/cổ phiếu",,False,False
+VIB,2026-04-09,0.0,VIB: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+VIB,2026-04-17,0.0,"VIB: Khuyến nghị TÍCH LŨY với giá mục tiêu 18,800 đồng/cổ phiếu",,False,False
+VIC,2010-09-28,0.0,VIC: Báo cáo phân tích cổ phiếu 28/9/2010,,False,False
+VIC,2010-12-15,0.0,VIC: Báo cáo phân tích cổ phiếu 15/12/2010,,False,False
+VIC,2010-12-24,0.0,VIC: Báo cáo phân tích cổ phiếu 24/12/2010,,False,False
+VIC,2011-04-15,0.0,VIC: Báo cáo phân tích cổ phiếu 15/04/2011,,False,False
+VIC,2011-07-11,0.0,VIC: Báo cáo phân tích cổ phiếu 11/07/2011,,False,False
+VIC,2012-08-22,0.0,VIC: Báo cáo lần đầu-Nhà đầu tư tiên phong của ngành bất động sản,,False,False
+VIC,2014-04-14,0.0,VIC: Báo cáo khảo sát doanh nghiệp,,False,False
+VIC,2014-06-09,0.6666666666666666,VIC: Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+VIC,2014-10-13,0.0,VIC: Báo cáo phân tích doanh nghiệp,,False,False
+VIC,2015-05-18,0.5,VIC : [MUA +45%] – Thành công trên thị trường vốn giúp VIC tiến xa - Báo cáo lần đầu,POS,False,False
+VIC,2015-06-08,0.0,VIC : [Giữ KN MUA +39%] - Doanh số bán nhà ở củng cố sự lạc quan của chúng tôi - Cập nhật,POS,False,False
+VIC,2015-09-14,-0.5,VIC : Doanh số bán nhà đáp ứng kỳ vọng cao,,False,False
+VIC,2015-10-12,0.6666666666666666,VIC : Stock Pick of the Week - Khuyến nghị MUA,POS,False,False
+VIC,2015-12-10,0.5,VIC : [MUA +32%] – KQLN 2015 không phản ánh đúng tình hình thực tế,POS,False,False
+VIC,2017-06-13,0.0,VIC : Báo cáo cập nhật - Khuyến nghị Phù hợp thị trường,NEU,False,False
+VIC,2017-08-23,0.0,"VIC : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +7,6%]",NEU,False,False
+VIC,2017-09-28,0.0,VIC : Báo cáo cập nhật,,False,False
+VIC,2017-11-24,0.5,"VIC : Báo cáo cập nhật - Khuyến nghị [Mua +40,9%]",POS,False,False
+VIC,2018-02-27,0.6666666666666666,VIC : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+VIC,2018-04-04,0.5,"VIC : Báo cáo cập nhật - Khuyến nghị [Mua +25,7%]",POS,False,False
+VIC,2018-06-14,0.5,VIC : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+VIC,2018-08-01,0.0,VIC : Báo cáo Kết quả kinh doanh,,True,False
+VIC,2018-10-02,0.0,VIC : Báo cáo cập nhật - Khuyến nghị Nắm giữ,NEU,False,False
+VIC,2018-10-31,0.6666666666666666,VIC : Báo cáo Kết quả kinh doanh - Tăng trưởng tạm thời chững lại do chi phí thuế bất thường,,True,False
+VIC,2018-11-28,0.0,"VIC : Báo cáo cập nhật - Khuyến nghị [Phù hợp thị trường +9,4%]",NEU,False,False
+VIC,2019-06-04,0.0,VIC : Báo cáo lần đầu - Khuyến nghị Phù hợp thị trường,NEU,False,False
+VIC,2019-09-20,0.0,Báo cáo phân tích kỹ thuật cổ phiếu VIC - Khuyến nghị theo dõi,,False,False
+VIC,2020-03-17,0.5,"VIC : Báo cáo cập nhật - Khuyến nghị [Mua 28,6%]",POS,False,False
+VIC,2020-11-27,0.5,Báo cáo cập nhật VIC - TĂNG TỶ TRỌNG,,False,False
+VIC,2021-02-03,-0.5,VIC: KQKD 2020 suy giảm,,True,False
+VIC,2021-05-06,-0.6666666666666666,VIC – Tin vắn buổi gặp mặt – Rủi ro đã giảm đà,,False,False
+VIC,2022-04-13,0.6666666666666666,"VIC: Khuyến nghị MUA với giá mục tiêu 97,700 đồng/cổ phiếu.",POS,False,False
+VIC,2022-08-04,0.6666666666666666,"VIC: khuyến nghị MUA với giá mục tiêu 73,400 đồng/cổ phiếu.",POS,False,False
+VIC,2022-08-16,0.6666666666666666,"VIC: Khuyến nghị MUA với giá mục tiêu 82,400 đồng/cổ phiếu.",POS,False,False
+VIC,2022-11-15,0.0,VIC: Cho thuê thương mại và du lịch dẫn dắt quý 3,,True,False
+VIC,2023-04-28,0.0,"VIC: Khuyến nghị với giá mục tiêu 94,900 đồng/cổ phiếu",,False,False
+VIC,2023-10-25,0.75,VIC: Doanh thu tăng trưởng mạnh mẽ,,False,False
+VIC,2023-11-17,0.5,"VIC: Khuyến nghị KHẢ QUAN với giá mục tiêu 49,500 đồng/cổ phiếu",POS,False,False
+VIC,2023-12-19,0.6666666666666666,"VIC: Khuyến nghị MUA với giá mục tiêu 55,500 đồng/cổ phiếu",POS,False,False
+VIC,2024-01-31,0.0,VIC: Hoàn thành kế hoạch kinh doanh,,False,False
+VIC,2025-05-26,0.0,VIC: Báo cáo Phân tích kỹ thuật,,False,False
+VIC,2025-11-03,0.0,VIC: Báo cáo cập nhật KQKD Q3/2025,,True,False
+VIC,2026-03-30,0.0,Nhóm VinGroup: Cập nhật VIC-VHM-VRE,,False,False
+VIC,2026-05-15,0.0,VIC: Báo cáo cập nhật KQKD Q1/2026,,True,False
+VJC,2017-09-15,0.0,VJC : Báo cáo ngắn - Khuyến nghị Phù hợp thị trường,NEU,True,False
+VJC,2017-11-23,0.0,VJC : Báo cáo ngắn - Khuyến nghị Nắm giữ,NEU,True,False
+VJC,2018-05-07,0.6666666666666666,VJC : Báo cáo lần đầu - Khuyến nghị Mua,POS,False,False
+VJC,2018-10-08,0.0,VJC : Cập nhật Kết quả kinh doanh - Khuyến nghị [Tích lũy +19%],,True,False
+VJC,2019-04-01,0.0,VJC : Báo cáo lần đầu - Khuyến nghị Nắm giữ,NEU,False,False
+VJC,2019-06-11,0.0,VJC : Báo cáo ngắn - Tiến vào mùa cao điểm,,True,False
+VJC,2019-06-12,0.5,"VJC : Báo cáo cập nhật - Khuyến nghị [Mua +25,2%]",POS,False,False
+VJC,2019-08-21,0.5,"VJC : Báo cáo cập nhật - Khuyến nghị [Mua +23,7%]",POS,False,False
+VJC,2019-12-03,-0.5,Báo cáo cập nhật VJC - GIẢM TỶ TRỌNG,,False,False
+VJC,2020-02-11,0.0,Báo cáo cập nhật VJC - Nắm giữ,NEU,False,False
+VJC,2020-02-19,0.0,Báo cáo cập nhật VJC - GIỮ,NEU,False,False
+VJC,2020-08-06,0.0,VJC - Khó khăn mùa Covid,,False,False
+VJC,2020-11-19,0.0,VJC: Qua tâm bão,,False,False
+VJC,2021-03-04,0.0,VJC: Sân bay Long Thành mang đến kỳ vọng mới,,False,False
+VJC,2021-08-03,0.0,VJC: Kết quả kinh doanh 6 tháng đầu năm 2021,,True,False
+VJC,2022-08-09,0.0,"VJC: Khuyến nghị TRUNG LẬP với giá mục tiêu 132,000 đồng/cổ phiếu.",NEU,False,False
+VJC,2023-11-29,0.0,"VJC: Khuyến nghị TRUNG LẬP với giá mục tiêu 120,100 đồng/cổ phiếu",NEU,False,False
+VJC,2025-01-23,0.5,"VJC: Báo cáo cập nhật - Khuyến nghị Tăng Tỷ Trọng với giá mục tiêu VND 113,683",,False,False
+VJC,2026-04-13,0.0,"VJC: Khuyến nghị THEO DÕI với giá mục tiêu 152,700 đồng/cổ phiếu",,False,False
+VJC,2026-04-28,0.0,VJC: Báo cáo cập nhật ĐHCĐ 2026,,False,False
+VJC,2026-06-05,0.0,VJC: Báo cáo Phân tích Kỹ thuật 05/06/2026,,False,False
+VNM,2008-08-05,0.0,MS: VNM Q2 result final,,True,False
+VNM,2008-12-03,0.0,BVSC: Weekly Report - VNM Quaterly Update,,False,False
+VNM,2009-05-13,0.0,CTCP Sữa Việt Nam - VNM,,False,False
+VNM,2010-10-04,0.0,VNM: Báo cáo phân tích cổ phiếu 4/10/2010,,False,False
+VNM,2010-12-01,0.0,VNM: Báo cáo phân tích cổ phiếu 01/12/2010,,False,False
+VNM,2010-12-13,0.0,VNM: Báo cáo phân tích cổ phiếu 13/12/2010,,False,False
+VNM,2011-02-09,0.0,VNM: Báo cáo phân tích cổ phiếu 09/02/2011,,False,False
+VNM,2011-02-16,0.0,VNM: Báo cáo phân tích cổ phiếu 16/02/2011,,False,False
+VNM,2011-04-22,0.0,VNM: Báo cáo phân tích cổ phiếu 22/04/2011,,False,False
+VNM,2011-07-26,0.0,VNM: Báo cáo phân tích cổ phiếu 26/07/2011,,False,False
+VNM,2011-11-07,0.0,VNM: Báo cáo cổ phiếu Q3/2011,,True,False
+VNM,2011-12-26,0.0,VNM: Báo cáo phân tích cổ phiếu,,False,False
+VNM,2012-04-20,0.0,VNM: Including 5-year forecasts for 2012-2016,,False,False
+VNM,2012-05-18,0.0,VNM: Báo cáo sơ bộ kết quả kinh doanh Quý 1/2012,,True,False
+VNM,2012-09-07,0.6666666666666666,VNM: Báo cáo cập nhật - Doanh thu nội địa tăng trở lại,,False,False
+VNM,2012-11-01,0.6666666666666666,VNM: Báo cáo cập nhật - Duy trì tăng trưởng,,False,False
+VNM,2012-11-07,0.0,VNM: Báo cáo cập nhật kết quả kinh doanh Quý 3/2012,,True,False
+VNM,2012-12-26,0.0,VNM: Báo cáo lần đầu - Lựa chọn an toàn cho nhà đầu tư,,False,False
+VNM,2013-05-09,0.6666666666666666,VNM: Tăng trưởng bền vững,,False,False
+VNM,2013-07-18,0.0,VNM: Báo cáo cập nhật - Biên LN gộp kì vọng giữ ở mức cao,NEU,False,False
+VNM,2013-08-01,0.3333333333333333,"VNM: Báo cáo cập nhật - KQLN 6T đầu năm như dự báo, quản trị hàng tồn kho tốt giúp LN biên cao | VNM: Báo cáo cập nhật - Tăng trưởng bền vững",,False,False
+VNM,2013-08-14,0.0,VNM: Báo cáo phân tích công ty,,False,False
+VNM,2013-08-28,0.5,VNM: Báo cáo cập nhật - Triển vọng ngành khả quan,POS,False,False
+VNM,2013-11-04,0.75,"VNM: Báo cáo cập nhật - THÊM VÀO - Tăng trưởng mạnh, biên lợi nhuận gộp ở mức cao",,False,False
+VNM,2014-04-08,0.5,VNM: Báo cáo cập nhật - Áp lực ngắn hạn lên biên lợi nhuận gộp,,False,False
+VNM,2014-04-17,0.6666666666666666,VNM: Báo cáo cập nhật - Khuyến nghị MUA với giá hợp lý 150.986 đồng,POS,False,False
+VNM,2014-06-30,0.5,"VNM: Báo cáo cập nhật - Vượt thách thức, tạo cơ hội",,False,False
+VNM,2014-08-19,0.5,VNM: Báo cáo cập nhật - Sức ép cạnh tranh tiếp tục gia tăng,,False,False
+VNM,2014-09-25,0.0,VNM: Báo cáo cập nhật - Triển vọng tốt nhờ nguyên liệu giá thấp,,False,False
+VNM,2014-11-10,0.6666666666666666,VNM: Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+VNM,2014-11-21,0.6666666666666666,VNM: Báo cáo lần đầu - Khuyến nghị MUA,POS,False,False
+VNM,2015-01-29,0.0,VNM: Báo cáo cập nhật - Khuyến nghị OUTPERFORM,POS,False,False
+VNM,2015-02-27,0.6666666666666666,VNM: Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+VNM,2015-03-25,0.6666666666666666,VNM : Báo cáo cập nhật - Khuyến nghị MUA,POS,False,False
+VNM,2015-05-18,0.25,VNM : [Giữ KN MUA +28%] - Chi phí bán hàng ảnh hưởng đến lợi nhuận nhưng định giá vẫn rẻ,POS,False,False
+VNM,2015-09-28,0.0,VNM : Khuyến nghị OUTPERFORM,POS,False,False
+VNM,2015-11-04,0.5,VNM : [MUA +22%] - Định giá lại cổ phiếu hàng đầu Việt Nam - Cập nhật,POS,False,False
+VNM,2017-08-07,0.0,VNM : Báo cáo cập nhật - Khuyến nghị Phù hợp thị trường,NEU,False,False
+VNM,2017-09-18,0.5,VNM : Báo cáo cập nhật - Khuyến nghị Tăng tỷ trọng,,False,False
+VNM,2017-10-23,0.0,VNM : Báo cáo cập nhật - Khuyến nghị Neutral,NEU,False,False
+VNM,2018-05-10,0.5,VNM : Báo cáo cập nhật - Khuyến nghị Khả quan,POS,False,False
+VNM,2019-02-12,0.5,"VNM : Báo cáo cập nhật - Khuyến nghị [Kém khả quan -14,4%]",POS,False,False
+VNM,2019-04-11,0.0,VNM : Báo cáo cập nhật - Khuyến nghị Giữ,NEU,False,False
+VNM,2019-05-27,0.5,"VNM : Báo cáo cập nhật - Khuyến nghị NEUTRAL - Lợi nhuận kỳ vọng -7,3%",NEU,False,False
+VNM,2019-06-07,0.0,Báo cáo cập nhật cổ phiếu VNM,,False,False
+VNM,2019-08-08,0.0,Báo cáo cập nhật cổ phiếu VNM,,False,False
+VNM,2019-08-26,0.0,Báo cáo cập nhật VNM 8.2019 – Khuyến nghị NEUTRAL,NEU,False,False
+VNM,2019-10-01,0.0,Báo cáo cập nhật cổ phiếu VNM - Khuyến nghị Nắm giữ,NEU,False,False
+VNM,2019-11-20,0.0,Báo cáo cập nhật VNM 11.2019 – NEUTRAL,NEU,False,False
+VNM,2020-02-26,0.0,Báo cáo cập nhật VNM - Nắm Giữ,NEU,False,False
+VNM,2020-04-06,0.6666666666666666,VNM : Báo cáo cập nhật - Khuyến nghị Mua,POS,False,False
+VNM,2020-04-08,0.5,Báo cáo cập nhật VNM - KHẢ QUAN,POS,False,False
+VNM,2020-04-13,0.0,Báo cáo Cập nhật Cổ phiếu VNM,,False,False
+VNM,2020-05-18,0.0,Khuyến nghị trung lập dành cho cổ phiếu VNM,NEU,False,False
+VNM,2020-06-10,0.0,Báo cáo cập nhật VNM,,False,False
+VNM,2020-07-28,0.0,Báo cáo cập nhật VNM - THEO DÕI,,False,False
+VNM,2020-11-23,0.6666666666666666,VNM – Cập nhật 3Q20 [Nắm giữ] Tỷ lệ SG&A thấp thúc đẩy tăng trưởng LNST 4Q20,NEU,True,False
+VNM,2021-01-29,0.5,GTN: Lợi nhuận thăng hoa dưới sự “cải tổ” của VNM,,False,False
+VNM,2021-02-19,0.0,Báo cáo cập nhật cổ phiếu VNM,,False,False
+VNM,2021-04-01,0.75,VNM: Tăng trưởng tích cực,POS,False,False
+VNM,2021-04-02,0.0,VNM: Khuyến nghị - GIỮ,NEU,False,False
+VNM,2021-05-04,0.6666666666666666,Khuyến nghị mua dành cho cổ phiếu VNM,POS,False,False
+VNM,2021-08-11,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 88,100 đồng/cp",NEU,False,False
+VNM,2021-10-11,0.0,"VNM: Khuyến nghị TÍCH LŨY với giá mục tiêu 100,000 đồng/cp",,False,False
+VNM,2021-12-06,0.75,"VNM : Khuyến nghị MUA với giá khả quan 106,800 đồng/cp",POS,False,False
+VNM,2022-02-15,0.0,"VNM: Khuyến nghị NEUTRAL với giá mục tiêu 91,000 đồng/ cổ phiếu",NEU,False,False
+VNM,2022-05-13,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 84,100 VNĐ/cp.",POS,False,False
+VNM,2022-08-10,0.0,VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 80.000 Đồng/cổ phiếu.,NEU,False,False
+VNM,2022-08-12,0.6666666666666666,VNM: Khuyến nghị MUA với giá mục tiêu 81.132 đồng/cổ phiếu,POS,False,False
+VNM,2022-08-18,0.0,"VNM: Khuyến nghị NEUTRAL với giá mục tiêu 83,800 đồng/cổ phiếu.",NEU,False,False
+VNM,2022-08-24,0.5,"VNM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 90,000 đồng/cổ phiếu",,False,False
+VNM,2022-10-11,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 85,776 đồng/cổ phiếu",POS,False,False
+VNM,2022-11-04,0.0,"VNM: Khuyên nghị NẮM GIỮ với giá mục tiêu 83,900 đồng/cổ phiếu",NEU,False,False
+VNM,2022-11-08,0.5,"VNM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 91,200 đồng/cổ phiếu",,False,False
+VNM,2022-11-17,0.5,"VNM: Khuyến nghị KHẢ QUAN với giá mục tiêu 85,000 đồng/cổ phiếu",POS,False,False
+VNM,2022-11-24,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 88,100 đồng/cổ phiếu",NEU,False,False
+VNM,2022-12-06,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 91,700 đồng/cổ phiếu",NEU,False,False
+VNM,2023-02-13,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 82,000 đồng/cổ phiếu.",NEU,False,False
+VNM,2023-02-20,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 89,963 đồng/cổ phiếu.",POS,False,False
+VNM,2023-02-21,0.0,"VNM: Khuyến nghị GIỮ với giá mục tiêu 74,065 đồng/cổ phiếu.",NEU,False,False
+VNM,2023-02-22,0.0,"VNM: Khuyến nghị NEUTRAL với giá mục tiêu 83,500 đồng/cổ phiếu",NEU,False,False
+VNM,2023-03-06,0.5,"VNM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 85,100 đồng/cổ phiếu",,False,False
+VNM,2023-04-28,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 82,900 đồng/cổ phiếu",NEU,False,False
+VNM,2023-06-07,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 72,000 đồng/cổ phiếu",NEU,False,False
+VNM,2023-06-08,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 78,200 đồng/cổ phiếu",POS,False,False
+VNM,2023-06-12,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 84,200 đồng/cổ phiếu | VNM: Báo cáo cập nhật - Khuyến nghị Mua",POS,False,False
+VNM,2023-06-27,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 79,700 đồng/cổ phiếu",POS,False,False
+VNM,2023-08-01,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 83,000 đồng/cổ phiếu",NEU,False,False
+VNM,2023-08-08,0.0,VNM: Khuyến nghị NẮM GIỮ,NEU,False,False
+VNM,2023-08-23,0.3333333333333333,"VNM: Khuyến nghị GIỮ với giá mục tiêu 73,100 đồng/cổ phiếu | VNM: Khuyến nghị MUA với giá mục tiêu 77,000 đồng/cổ phiếu",POS,False,False
+VNM,2023-08-24,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 86,000 đồng/cổ phiếu | VNM: Khuyến nghị MUA với giá mục tiêu 82,000 đồng/cổ phiếu",POS,False,False
+VNM,2023-09-05,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 84,000 đồng/cổ phiếu",NEU,False,False
+VNM,2023-09-14,0.5,"VNM: Khuyến nghị KHẢ QUAN với giá mục tiêu: 89,300 đồng/cổ phiếu.",POS,False,False
+VNM,2023-11-16,0.5,"VNM: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,600 đồng/cổ phiếu",POS,False,False
+VNM,2023-11-30,0.6666666666666666,VNM: Khuyến nghị MUA với giá mục tiêu 83.000 đồng/cổ phiếu,POS,False,False
+VNM,2023-12-04,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 76,700 đồng/cổ phiếu",NEU,False,False
+VNM,2024-02-23,0.5,"VNM: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,000 đồng/cổ phiếu.",POS,False,False
+VNM,2024-03-14,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 79,500 đồng/cổ phiếu",NEU,False,False
+VNM,2024-03-18,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 85,800 đồng/cổ phiếu",POS,False,False
+VNM,2024-04-26,0.5,"VNM: Khuyến nghị KHẢ QUAN với giá mục tiêu 82,000 đồng/cổ phiếu",POS,False,False
+VNM,2024-05-02,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 84,400 đồng/cổ phiếu",POS,False,False
+VNM,2024-08-06,0.0,"VNM: Khuyến nghị OUTPERFORM với giá mục tiêu 85,900 đồng/cổ phiếu",POS,False,False
+VNM,2024-08-07,0.0,"VNM: Khuyến nghị NẮM GIỮ với giá mục tiêu 76,100 đồng/cổ phiếu",NEU,False,False
+VNM,2024-08-08,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 83,831 đồng/cổ phiếu",POS,False,False
+VNM,2024-11-07,0.0,VNM: Kỳ vọng hoàn thành kế hoạch 2024 được thúc đẩy bởi thị trường xuất khẩu,,False,False
+VNM,2024-11-08,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 75,000 đồng/cổ phiếu",NEU,False,False
+VNM,2024-11-13,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 82,100 đồng/cổ phiếu",POS,False,False
+VNM,2024-11-21,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 76,000 đồng/cổ phiếu",POS,False,False
+VNM,2024-12-30,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 74,950 đồng/cổ phiếu",POS,False,False
+VNM,2025-01-21,0.5,"VNM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 72,500 đồng/cổ phiếu",,False,False
+VNM,2025-02-19,0.0,"VNM: Khuyến nghị OUTPERFORM với giá mục tiêu 75,700 đồng/cổ phiếu",POS,False,False
+VNM,2025-02-26,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 67,500 đồng/cổ phiếu",NEU,False,False
+VNM,2025-03-12,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 74,800 đồng/cổ phiếu",POS,False,False
+VNM,2025-04-11,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 71,300 đồng/cổ phiếu.",POS,False,False
+VNM,2025-04-18,0.5,"VNM: Khuyến nghị Tăng tỷ trọng với giá mục tiêu 66,000 đồng/cổ phiếu.",,False,False
+VNM,2025-08-07,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 65,500 đồng/cổ phiếu",POS,False,False
+VNM,2025-08-19,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 66,200 đồng/cổ phiếu",NEU,False,False
+VNM,2025-08-27,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 65,800 đồng/cổ phiếu",NEU,False,False
+VNM,2025-09-09,0.0,"VNM: Khuyến nghị TÍCH LŨY với giá mục tiêu 65,500 đồng/cổ phiếu",,False,False
+VNM,2025-11-06,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 71,600 đồng/cổ phiếu",POS,False,False
+VNM,2026-01-14,0.0,VNM: Báo cáo Phân tích kỹ thuật,,False,False
+VNM,2026-02-05,0.0,"VNM: Khuyến nghị THEO DÕI với giá mục tiêu 78,000 đồng/cổ phiếu",,False,False
+VNM,2026-03-04,0.5,"VNM: Khuyến nghị TĂNG TỶ TRỌNG với giá mục tiêu 76,800 đồng/cổ phiếu",,False,False
+VNM,2026-03-17,0.0,"VNM: Khuyến nghị TRUNG LẬP với giá mục tiêu 70,400 đồng/cổ phiếu",NEU,False,False
+VNM,2026-03-27,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 68,400 đồng/cổ phiếu",POS,False,False
+VNM,2026-05-18,0.6666666666666666,"VNM: Khuyến nghị MUA với giá mục tiêu 73,500 đồng/cổ phiếu",POS,False,False

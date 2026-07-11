@@ -350,6 +350,11 @@ class MultiStockDatasetWithGraphMethod(Dataset):
                 else:
                     y_normalized[stock_idx] = y[stock_idx]
 
+            # ✅ FIX: Clip normalized targets to prevent extreme values from distribution shift
+            # This handles cases where validation/test values are far outside training range
+            # (e.g., VHM has std=7e-8 in training but 1.5e-3 in validation → 20000x amplification)
+            y_normalized = np.clip(y_normalized, -10.0, 10.0)
+
             y = y_normalized
 
         x = torch.FloatTensor(x)

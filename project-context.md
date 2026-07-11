@@ -3,7 +3,7 @@
 **Project:** Multi-horizon volatility forecasting for VN30 stocks
 **Focus:** 5-day ahead forecasts (Phase 1)
 **Methodology:** HAR-R with Parkinson volatility, enhanced with LSTM, GNN, TimesFM
-**Last Updated:** 2026-06-19 (Updated: Standardized hyperparameters & metrics)
+**Last Updated:** 2026-06-29 (Added: SOTA sentiment-volatility fusion architectures)
 
 ---
 
@@ -91,6 +91,72 @@ SINGLE_HORIZON_CONFIG = {
     'loss': 'QLIKE'
 }
 ```
+
+### Sentiment Analysis Integration (Research Phase - DEFERRED) 📊
+
+**Status:** Research complete, implementation deferred until baseline complete
+
+**Research Findings (2026-06-28):**
+- ✅ **Date-based organization is industry standard** (FNSPID: 15.7M time-aligned news)
+- ✅ **Per-ticker, per-date architecture** is proven approach
+- ✅ **Integration pattern:** 3 HAR + 3 sentiment features = 6 total per stock
+- ❌ **No Vietnamese historical dataset** available (GitHub: 1,005 articles, NO dates)
+- ❌ **Cafef.vn blocked** (search returns 404, RSS 0% stock content)
+
+**Decision Rationale:**
+- LSTM-GNN baseline incomplete (68.02% Dir Acc < 70% target)
+- Sentiment is enhancement, not core requirement
+- Defer until baseline reaches 70%+ Dir Acc
+
+**SOTA Fusion Architectures (2026-06-29 Research):** 🚀
+- ✅ **Per-stock per-day news is CONFIRMED FEASIBLE** (FNSPID: 15.7M records)
+- ✅ **MSGCA (2025) - TOP CHOICE:** Gated cross-attention, code available
+- ✅ **Late Fusion PROVEN SUPERIOR:** 0.876 vs 0.828 accuracy (+5.8%)
+- ✅ **LSTM-Transformer Hybrid:** Simple, matches current setup
+- ✅ **Complete Pipeline Identified:** Data → Sentiment → Alignment → Fusion → Prediction
+
+**Architecture Options:**
+1. **MSGCA (Recommended):** Gated cross-attention, stable fusion, SOTA 2025
+2. **LSTM-Transformer Hybrid:** Separate branches, late fusion, interpretable
+3. **Temporal Fusion Transformer:** Multi-horizon (1d, 5d, 10d, 22d), variable selection
+
+**Target Architecture (When Ready):**
+```python
+SENTIMENT_PIPELINE = {
+    'data_source': 'vnstock OR Vietstock.vn crawler',
+    'organization': 'per-ticker, per-date (FNSPID pattern)',
+    'features': [
+        'sentiment_score_3d',      # 3-day rolling mean
+        'sentiment_confidence',    # Model confidence
+        'news_count_norm'          # Normalized news count
+    ],
+    'sentiment_model': 'vinai/phobert-base (Vietnamese)',
+    'integration': 'Late fusion (separate branches, fuse at decision layer)',
+    'architecture': 'MSGCA or LSTM-Transformer hybrid',
+    'timeline': '4 weeks (data → crawler → pipeline → fusion → training)'
+}
+```
+
+**Data Structure (Planned):**
+```
+data/sentiment/
+├── raw/by_ticker/{TICKER}/{DATE}/articles/*.json
+├── raw/by_date/{DATE}/{TICKER}.json
+└── processed/sentiment_features/{TICKER}_sentiment.csv
+```
+
+**Key Resources:**
+- SOTA Fusion Research: `_bmad-output/planning-artifacts/research/technical-sentiment-volatility-fusion-sota-2026-06-29.md` (NEW!)
+- Data Collection Research: `_bmad-output/planning-artifacts/research/technical-financial-news-crawling-dataset-research-2026-06-28.md`
+- Memory SOTA: `memory/project_sentiment_volatility_fusion_sota.md` (NEW!)
+- Memory Patterns: `memory/feedback_sentiment_volatility_fusion_architectures.md` (NEW!)
+- Memory Data: `memory/feedback_financial_news_data_organization.md`
+- Memory Links: `memory/reference_sentiment_analysis_resources.md`
+
+**Next Actions (When Resuming):**
+1. Test vnstock package for news functionality (2-3 days)
+2. Manual inspection of Vietstock.vn (1 day)
+3. Build proof-of-concept crawler (1 ticker, 1 week)
 
 ---
 
@@ -342,15 +408,22 @@ IMPROVEMENT_TARGETS = {
 - **HAR methodology:** Corsi (2009) - HAR-R for daily data
 - **QLIKE loss:** "Stylized favorite of volatility forecasting literature"
 - **22-day standard:** ~22 trading days per month (industry convention)
+- **FNSPID dataset:** Zdong et al. (2024) - 15.7M time-aligned news records
 
 ### Project Documentation
 - **Project requirements:** `docs/requirements.md`
 - **Technical configuration:** `docs/technical_config.md`
 - **ML/DS common rules:** `docs/common-rules/COMMON_RULES.md`
+- **LSTM-GAT Architecture:** `docs/project/LSTM_GAT_ARCHITECTURE.md`
 
 ### External Resources
 - **ML/DS common rules repo:** `D:\bmad-projects\ml-ds-common-rules`
 - **HAR-X paper:** `docs/paper/1-s2.0-S1544612323003641-main.pdf`
+- **FNSPID GitHub:** [FNSPID_Financial_News_Dataset](https://github.com/Zdong104/FNSPID_Financial_News_Dataset)
+
+### Sentiment Analysis Resources
+- **Research:** `_bmad-output/planning-artifacts/research/technical-financial-news-crawling-dataset-research-2026-06-28.md`
+- **Memory:** `memory/` (project_sentiment_research_status.md, feedback_financial_news_data_organization.md, reference_sentiment_analysis_resources.md)
 
 ---
 
@@ -361,6 +434,125 @@ IMPROVEMENT_TARGETS = {
 ---
 
 ## 📝 UPDATE HISTORY
+
+### 2026-07-08 - Embedding baseline: learning curves + 6-ep verify
+- Train script thêm learning curve mỗi 5 epoch (`--plot_every`, reuse `plot_learning_curves_with_analysis` từ `train_parallel_enhanced.py`) → đóng gap CLAUDE.md **§3.C**. Verify: 2 PNG/run (epoch 5 + final) trong `results/embedding_baseline_*/`.
+- **Pending:** full 20-epoch go/no-go thật (val DirAcc embedding vs scalar sentiment matched-epoch).
+
+### 2026-07-07 - Embedding baseline BUILT + adversarial review + real PhoBERT extraction
+**Baseline (NEW convention `baselines/YYYY-MM-DD_<name>/`):** `baselines/2026-07-07_embedding_baseline/` với 5 sub-folder `requirements/design/code/code_review/test` (rule mới CLAUDE.md **§3.F**). Code: `extract_embeddings.py` (PhoBERT frozen → PCA 768→64), `dataset_embedding.py` (5-tuple `(x_har, adj, x_emb, mask, y)`), `model_embedding.py` (`ArticleSetAttentionPooling` + HAR reuse `ParallelLSTMGNN.get_embeddings` + concat), `train_embedding_baseline.py`.
+**Code review (skill `/code-review`, adversarial):** 10 findings (3 HIGH, 7 MEDIUM) → **ALL FIXED + re-verified** (pytest 6 pass). File `code_review/code_review_2026-07-07.md`.
+**Real extraction DONE:** PhoBERT → 3,442 ticker-matched articles → PCA 64-d (fit 625 train articles, explained var 82.9%, no leakage) → 30 caches `data/sentiment_embedding/{TICKER}_emb.npz`.
+**5-epoch real training:** DirAcc val 70.29% / test 68.44% (undertrained — chưa go/no-go).
+**Rule additions (CLAUDE.md §3.F):** rule 5 (pytest mandatory, installed 9.1.1), rule 7 (test issues phải fix hết).
+**Env:** `npx skills add K-Dense-AI/scientific-agent-skills` → ~200 scientific skills (aeon, scikit-learn, statistical-analysis... relevant time-series).
+
+### 2026-07-06 - News aggregation (9 sources) + sparsity analysis + 2 design docs (thầy góp ý)
+**Aggregation (NEW `src/data_aggregation/`):** gộp 9 nguồn crawled → `crawl_data/aggregated/unified_articles.csv` (58,755 raw → **21,107 unique** sau dedup). Script `aggregate_news_sources.py` (cô lập). 2 họ schema unified, 2 format date (ISO + DD/MM/YYYY).
+**Sparsity analysis (`analyze_news_sparsity.py`):** article-level đều (gap lấp; 2021-2026 ~10.5K bài) NHƯNG per-stock-day **vẫn cực thưa** — test chỉ **5.5%** stock-day có tin (match-rate ~20% bài match mã VN30). → "test mù tin" giải quyết ở article, KHÔNG ở per-stock-day. Bottleneck là match-rate, không phải số bài.
+**2 design docs:** `docs/project/SENTIMENT_LATENT_SPACE_TECHNIQUES.md` (VIB/VAE/noise injection — kỹ thuật "random latent vector" thầy gợi ý), `SENTIMENT_NEWS_EMBEDDING_ARCHITECTURE.md` (scalar → embedding, SOTA FNSPID). + timestamped copy `SENTIMENT_ANALYSIS_DESIGN_2026-07-06.md` (mục 2.3 cập nhật sparsity mới).
+
+### 2026-07-04 - Sentiment Baseline Implementation (ISOLATED, lexicon done; phobert pending)
+
+**Status:** Sentiment integration moved from research → working baseline experiment. Isolated package `src/sentiment_baseline/` (does NOT modify `src/lstm_gat_hybrid/` or `data/processed/`). Design doc: `docs/project/SENTIMENT_ANALYSIS_DESIGN.md`.
+
+**Built:**
+- `lexicon.py` (default scorer), `phobert_scorer.py` (HuggingFace XLM-RoBERTa, lazy-load).
+- `process_news_to_sentiment.py` → `data/sentiment_baseline/{TICKER}_sentiment.csv` (cols: date, sentiment_1d, news_count_1d, news_titles for review).
+- `dataset_sentiment.py` (subclass + dataloader copy, 5 features = 3 HAR + 2 sentiment).
+- `train_sentiment_baseline.py` (reuses existing train_epoch/validate; supports --epochs/--resume_from/--sentiment_dir).
+
+**Design decisions (simplicity-first):** daily sentiment (not rolling — LSTM aggregates 22-day window itself); dropped rolling, news_coverage_flag, has_news (redundant), T+1 alignment (no timestamp; 5-day horizon doesn't need it; windowing prevents lookahead).
+
+**Results (lexicon, k-NN):** DirAcc 68.17% (10ep) → 68.57% (20ep); R² 0.714 (= HAR baseline). NOT clearly better than HAR-only 69.98%@70ep — unfair (need HAR-only at same epochs as control). Lexicon quality: 57% news-days non-zero, misses 43% (generic titles) + negation errors. More news data did NOT help with lexicon → bottleneck is scorer quality.
+
+**⚠️ Gotcha:** transformers 5.x breaks XLM-R tokenizer (tiktoken conversion on sentencepiece). MUST pin `transformers<5` (4.57.6) + install `sentencepiece tiktoken`.
+
+**Data status:** 12,212 unique news articles; test set (2021-2026) = 6,822 articles, all years covered → "test blind" problem SOLVED.
+
+**Pending:** phobert processing+train run (interrupted); HAR-only control at 10/15/20 ep for fair comparison.
+
+### 2026-06-28 - Sentiment Analysis Research (DEFERRED)
+**Changes:**
+- ✅ **Comprehensive research completed:** 25 academic papers + technical resources analyzed
+- ✅ **Confirmed date-based organization as industry standard** (FNSPID gold standard)
+- ✅ **Defined target architecture:** Per-ticker, per-date structure with 3 sentiment features
+- ✅ **Created memory system:** 3 memory files for patterns, resources, status tracking
+- ⏸️ **Implementation deferred:** Baseline LSTM-GNN incomplete (68.02% < 70% target)
+
+**Research Findings:**
+- **FNSPID (2024):** 15.7M time-aligned news + 29.7M prices (4,775 stocks, 1999-2023)
+- **Organization:** Per-ticker, per-date is industry standard
+- **Integration:** 3 HAR + 3 sentiment features = 6 total per stock
+- **Vietnam market:** No public historical dataset, Cafef.vn blocked
+
+**Decision Rationale:**
+- Sentiment is enhancement, not core requirement
+- Priority: Complete baseline first (70%+ Dir Acc target)
+- Timeline: 4 weeks for full sentiment pipeline (deferred)
+
+**Files Created:**
+- `vietnam-stock-news-data-sources-plan.md` - 5 data sources comparison
+- `_bmad-output/planning-artifacts/research/technical-financial-news-crawling-dataset-research-2026-06-28.md` - 25 sources, implementation plan
+- `memory/project_sentiment_research_status.md` - Current status, blockers, action plan
+- `memory/feedback_financial_news_data_organization.md` - Mandatory patterns (date-based, FNSPID pattern)
+- `memory/reference_sentiment_analysis_resources.md` - 29 categorized resource links
+- `MEMORY.md` - Memory index for future reference
+
+**Project Context Updated:**
+- Added "Sentiment Analysis Integration" section with research findings
+- Updated "Key References" with FNSPID and sentiment resources
+- Documented defer rationale and next actions
+
+**Next Actions (When Resuming):**
+1. Test vnstock package (2-3 days)
+2. Manual Vietstock.vn inspection (1 day)
+3. Build proof-of-concept crawler (1 week)
+
+### 2026-06-29 - SOTA Sentiment-Volatility Fusion Research (DEFERRED)
+**Changes:**
+- ✅ **SOTA architectures identified:** MSGCA (2025), LSTM-Transformer Hybrid, TFT
+- ✅ **Per-stock per-day CONFIRMED FEASIBLE:** FNSPID proves 15.7M records possible
+- ✅ **Late fusion PROVEN SUPERIOR:** 0.876 vs 0.828 accuracy (+5.8%), +11.7% recall
+- ✅ **Complete pipeline defined:** Data → Sentiment → Alignment → Fusion → Prediction
+- ✅ **Implementation details provided:** Code examples for all architectures
+- ⏸️ **Implementation deferred:** Baseline LSTM-GNN incomplete (68.02% < 70% target)
+
+**SOTA Architectures (2025-2026):**
+- **MSGCA (2025) - TOP CHOICE:** Gated cross-attention, code available, stable fusion
+- **LSTM-Transformer Hybrid:** Separate branches, late fusion, interpretable
+- **Temporal Fusion Transformer:** Multi-horizon (1d, 5d, 10d, 22d), variable selection
+- **Gated Multi-Task Fusion:** FinBERT + CNN-BiLSTM, dynamic weighting
+
+**Key Findings:**
+- **Per-Stock Per-Day:** YES, standard practice (FNSPID, Kaggle datasets)
+- **Late vs Early Fusion:** Late fusion superior (5.8% better accuracy, 11.7% better recall)
+- **Expected Improvement:** +2-5% Dir Acc, -5-10% RMSE when integrated
+- **Vietnamese Models:** PhoBERT (vinai/phobert-base) for sentiment extraction
+
+**Files Created:**
+- `_bmad-output/planning-artifacts/research/technical-sentiment-volatility-fusion-sota-2026-06-29.md` - 16 sources, complete guide
+- `memory/project_sentiment_volatility_fusion_sota.md` - SOTA status, architecture selection
+- `memory/feedback_sentiment_volatility_fusion_architectures.md` - SOTA patterns, implementation
+- `MEMORY.md` - Updated with new memory files
+
+**Project Context Updated:**
+- Added SOTA architectures section with MSGCA, LSTM-Transformer, TFT
+- Updated integration: Late fusion (not early fusion)
+- Added SOTA research to key resources
+- Updated next actions with architecture selection
+
+**Implementation Readiness:**
+- All SOTA architectures documented with code examples
+- Complete data pipeline pattern provided
+- Expected performance improvements: 70-73% Dir Acc (vs 68.02% baseline)
+- Timeline: 4 weeks when ready (data → crawler → pipeline → fusion → training)
+
+**Next Actions (When Resuming):**
+1. Complete LSTM-GNN baseline (70%+ Dir Acc target)
+2. Choose architecture (MSGCA recommended)
+3. Implement per-stock per-date crawler
+4. Train with 6 features (3 HAR + 3 sentiment)
 
 ### 2026-06-19 - Standardization Update
 **Changes:**

@@ -1,0 +1,111 @@
+{
+  "units": "returns are decimal; *_bp fields are basis points (1 bp = 0.01%).",
+  "n_tickers_price": 30,
+  "n_tickers_with_events": 29,
+  "skipped_tickers": [
+    "SSB"
+  ],
+  "n_pooled_events": 1851,
+  "group_counts": {
+    "pos": 1044,
+    "neu": 784,
+    "neg": 23
+  },
+  "thresholds": {
+    "pos": 0.2,
+    "neg": -0.2
+  },
+  "note_class_imbalance": "Sentiment is severely positive-skewed; the 'neg' group is an extreme-tail, rare sample (see neg_composition).",
+  "neg_composition": {
+    "n_neg_events_total": 23,
+    "n_tickers_with_neg": 14,
+    "n_tickers_with_ge2_neg": 6,
+    "top_contributors": {
+      "GAS": 3,
+      "MWG": 3,
+      "VIC": 3,
+      "VHM": 2,
+      "HPG": 2,
+      "ACB": 2,
+      "BID": 1,
+      "CTG": 1
+    }
+  },
+  "mann_whitney_pos_vs_neg": [
+    {
+      "horizon": 1,
+      "n_pos": 1041,
+      "n_neg": 23,
+      "mean_pos_bp": 22.011599197020445,
+      "mean_neg_bp": 46.01400922042304,
+      "spread_bp": -24.002410023402597,
+      "p_raw": 0.9871350435881978,
+      "p_demeaned": 0.9890532953955816
+    },
+    {
+      "horizon": 2,
+      "n_pos": 1041,
+      "n_neg": 23,
+      "mean_pos_bp": 29.453933211197935,
+      "mean_neg_bp": 99.76070368659599,
+      "spread_bp": -70.30677047539807,
+      "p_raw": 0.5376369983185483,
+      "p_demeaned": 0.5862046694068306
+    },
+    {
+      "horizon": 3,
+      "n_pos": 1040,
+      "n_neg": 23,
+      "mean_pos_bp": 35.504393908046715,
+      "mean_neg_bp": 89.52081676928333,
+      "spread_bp": -54.01642286123662,
+      "p_raw": 0.96522077757398,
+      "p_demeaned": 0.9310541150069079
+    },
+    {
+      "horizon": 5,
+      "n_pos": 1037,
+      "n_neg": 23,
+      "mean_pos_bp": 65.25253839778851,
+      "mean_neg_bp": 141.6080783561906,
+      "spread_bp": -76.35553995840206,
+      "p_raw": 0.7550800608468549,
+      "p_demeaned": 0.7472449876186265
+    },
+    {
+      "horizon": 10,
+      "n_pos": 1033,
+      "n_neg": 23,
+      "mean_pos_bp": 106.26483434756621,
+      "mean_neg_bp": 170.41400515385274,
+      "spread_bp": -64.14917080628653,
+      "p_raw": 0.46794650610218547,
+      "p_demeaned": 0.5498821667864747
+    }
+  ],
+  "ret_vs_vol_correlation_paired": {
+    "ret_vs_vol_by_horizon": {
+      "1": {
+        "mean_abs_corr_return": 0.13896987902543453,
+        "mean_abs_corr_volatility": 0.12702939767571458
+      },
+      "5": {
+        "mean_abs_corr_return": 0.13419184568848422,
+        "mean_abs_corr_volatility": 0.09544489823324802
+      }
+    },
+    "n_tickers_paired": {
+      "1": 29,
+      "5": 29
+    }
+  },
+  "per_ticker_corr_note": "corr_ret*Kd computed over ALL event days (pos+neu+neg), dominated by the large neutral mass; corr_posneg_ret5d uses pos+neg days only.",
+  "go_no_go": {
+    "verdict": "NO-GO",
+    "alpha_bonferroni_corrected": 0.01,
+    "primary_horizon": 5,
+    "p_value_primary_demeaned_or_raw": 0.7472449876186265,
+    "significant_horizons_raw_p": [],
+    "horizons_with_spread_ge_30bp": []
+  }
+}

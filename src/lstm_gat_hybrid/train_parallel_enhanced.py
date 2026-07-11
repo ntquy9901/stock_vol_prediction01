@@ -199,6 +199,20 @@ def train_epoch(model, dataloader, criterion, optimizer, device, config):
         optimizer.zero_grad()
         predictions = model(x, adj_matrix)
 
+        # ✅ PER-BRANCH ACTIVATION LOGGING (first batch only, to detect dead/exploding branches)
+        if n_batches == 0:
+            h_lstm, h_gnn = model.get_embeddings(x, adj_matrix)
+            print(f"    [BRANCH LSTM] mean={h_lstm.mean():.6f}, std={h_lstm.std():.6f}, min={h_lstm.min():.6f}, max={h_lstm.max():.6f}")
+            print(f"    [BRANCH GNN ] mean={h_gnn.mean():.6f}, std={h_gnn.std():.6f}, min={h_gnn.min():.6f}, max={h_gnn.max():.6f}")
+            if h_lstm.std() < 0.01:
+                print(f"    ⚠️ WARNING: LSTM branch near-constant (std < 0.01)")
+            if h_gnn.std() < 0.01:
+                print(f"    ⚠️ WARNING: GNN branch near-constant (std < 0.01)")
+            if h_lstm.isnan().any():
+                print(f"    ❌ FATAL: LSTM embeddings contain NaN!")
+            if h_gnn.isnan().any():
+                print(f"    ❌ FATAL: GNN embeddings contain NaN!")
+
         # Check for NaN in predictions
         if torch.isnan(predictions).any() or torch.isinf(predictions).any():
             print(f"    ❌ FATAL: Model output contains NaN/Inf at batch {n_batches+1}!")
@@ -234,18 +248,16 @@ def train_epoch(model, dataloader, criterion, optimizer, device, config):
 
 def validate(model, dataloader, criterion, device, dataset=None):
     """
-    Validate model with loss computed on ORIGINAL scale (consistent with test)
+    Validate model.
 
-    FIXED: Inverse transform predictions BEFORE computing loss to ensure
-    Val Loss and Test MSE are on the same scale for proper comparison.
+    Returns avg_loss on NORMALIZED scale (matches train_epoch so learning curves
+    share the same axis and the overfitting monitor is meaningful).
+    Business metrics in the returned dict are on DENORMALIZED (raw) scale.
 
-    Key changes:
-    1. Collect all normalized predictions and targets
-    2. Inverse transform to original scale
-    3. Compute loss on ORIGINAL scale (not normalized)
-    4. Compute metrics on ORIGINAL scale
-
-    This ensures Val Loss and Test MSE are comparable.
+    Additionally computes per-stock R² and directional accuracy
+    (temporal skill along the window axis per stock, then averaged).
+    These are stored as 'r2_per_stock' and 'directional_accuracy_per_stock'
+    in the metrics dict alongside the existing pooled metrics.
     """
     model.eval()
     n_batches = 0
@@ -352,25 +364,53 @@ def validate(model, dataloader, criterion, device, dataset=None):
         print(f"  targets_denorm range: [{all_targets_denorm.min():.6f}, {all_targets_denorm.max():.6f}]")
 
         # ========================================================================
-        # Step 4: ✅ FIX: Compute loss on ORIGINAL scale (consistent with test)
+        # Step 4: avg_loss on NORMALIZED scale (matches train_epoch for curves)
+        # Business metrics are computed on denormalized (raw) scale
         # ========================================================================
-        print(f"[DEBUG validate] Computing loss on ORIGINAL scale...")
-        loss_tensor = criterion(
-            torch.FloatTensor(all_predictions_denorm).to(device),
-            torch.FloatTensor(all_targets_denorm).to(device)
+        print(f"[DEBUG validate] Computing avg_loss on NORMALIZED scale (for learning curves)...")
+        loss_tensor_norm = criterion(
+            torch.FloatTensor(all_predictions_norm).to(device),
+            torch.FloatTensor(all_targets_norm).to(device)
         )
-        avg_loss = loss_tensor.item()
+        avg_loss = loss_tensor_norm.item()
 
-        # Compute metrics on denormalized data
+        # Business metrics on denormalized (raw volatility) scale
         metrics = evaluate_predictions(all_targets_denorm, all_predictions_denorm)
 
-        print(f"[DEBUG validate] Loss computed on ORIGINAL scale: {avg_loss:.6f}")
+        # ------------------------------------------------------------------
+        # Per-stock metrics: reshape [n_windows * n_stocks] → [n_windows, n_stocks]
+        # Flattening order: element i → stock_idx = i % n_stocks (row-major y.reshape)
+        # R² and directional accuracy are computed along the TIME (window) axis
+        # per stock and then averaged, giving honest temporal-skill estimates.
+        # ------------------------------------------------------------------
+        n_stocks = len(actual_dataset.stock_names)
+        n_windows = len(all_predictions_denorm) // n_stocks
+        if n_windows > 0 and len(all_predictions_denorm) == n_windows * n_stocks:
+            preds_2d = all_predictions_denorm.reshape(n_windows, n_stocks)
+            targets_2d = all_targets_denorm.reshape(n_windows, n_stocks)
+            r2_per_stock_list = []
+            dir_acc_per_stock_list = []
+            for s in range(n_stocks):
+                p_s = preds_2d[:, s]
+                t_s = targets_2d[:, s]
+                ss_res = np.sum((t_s - p_s) ** 2)
+                ss_tot = np.sum((t_s - np.mean(t_s)) ** 2)
+                r2_s = 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+                r2_per_stock_list.append(r2_s)
+                actual_changes_s = np.sign(np.diff(t_s))
+                pred_changes_s = np.sign(np.diff(p_s))
+                dir_acc_s = float(np.mean(actual_changes_s == pred_changes_s) * 100)
+                dir_acc_per_stock_list.append(dir_acc_s)
+            metrics['r2_per_stock'] = float(np.mean(r2_per_stock_list))
+            metrics['directional_accuracy_per_stock'] = float(np.mean(dir_acc_per_stock_list))
+
+        print(f"[DEBUG validate] avg_loss (normalized MSE): {avg_loss:.6f}")
+        print(f"[DEBUG validate] Denorm MSE (business): {metrics['mse']:.6f}")
     else:
         # ========================================================================
-        # FALLBACK: Compute on normalized scale (WARNING: not consistent with test!)
+        # FALLBACK: no normalizers available, stay on normalized scale throughout
         # ========================================================================
-        print(f"[WARNING validate] No inverse transform applied! Computing loss on NORMALIZED scale!")
-        print(f"[WARNING validate] This will cause Val Loss and Test MSE to be on DIFFERENT scales!")
+        print(f"[WARNING validate] No inverse transform available. Loss on NORMALIZED scale.")
 
         loss_tensor = criterion(
             torch.FloatTensor(all_predictions_norm).to(device),
@@ -378,7 +418,7 @@ def validate(model, dataloader, criterion, device, dataset=None):
         )
         avg_loss = loss_tensor.item()
 
-        # Compute metrics on normalized scale
+        # Compute metrics on normalized scale (best available)
         metrics = evaluate_predictions(all_targets_norm, all_predictions_norm)
 
         print(f"[DEBUG validate] Loss computed on NORMALIZED scale: {avg_loss:.6f}")
@@ -410,7 +450,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     config = LSTMGATConfig()
 
     # Apply paper's hyperparameters
-    config.learning_rate = 0.0001  # ✅ FIX: Further reduced to prevent NaN (was 0.001)
+    config.learning_rate = 0.001  # ✅ FIX: Restored from 0.0001 — original was masking a different bug
     config.batch_size = 11  # Paper: best among 11, 21
 
     # Quick test mode or full training
@@ -429,7 +469,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     config.weight_decay = 1e-5  # LSTM-HAR: L2 regularization
     config.gradient_clip = 0.5  # ✅ Increased clipping to prevent exploding gradients (was 1.0)
     config.lstm_dropout = 0.2  # LSTM-HAR: LSTM dropout
-    config.fusion_dropout = 0.3  # LSTM-HAR: FC dropout
+    config.fusion_dropout = 0.15  # ✅ REDUCED from 0.3 to prevent over-regularization
 
     print(f"\nConfiguration:")
     print(f"  Architecture: Parallel LSTM + GNN (concatenation fusion)")
@@ -476,7 +516,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
         remove_outliers=True,
         n_std=3.0,
         data_augmentation=True,
-        augmentation_prob=0.3,
+        augmentation_prob=0.15,  # ✅ REDUCED from 0.3 to prevent over-regularization
         augmentation_factor=0.1
     )
 

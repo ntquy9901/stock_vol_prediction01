@@ -1,0 +1,32 @@
+{
+  "model": "EmbeddingBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": false,
+  "validation_metrics": {
+    "mse": 5.974830401100917e-06,
+    "rmse": 0.0024443466204900066,
+    "mae": 0.0007169264135882258,
+    "r2": 0.6616802215576172,
+    "qlike": 0.6946569085121155,
+    "directional_accuracy": 70.28778349533067,
+    "directional_accuracy_per_stock": 47.87193251533743
+  },
+  "test_metrics": {
+    "mse": 7.012504283920862e-06,
+    "rmse": 0.002648113344236017,
+    "mae": 0.0007143327384255826,
+    "r2": 0.7130411267280579,
+    "qlike": 0.5521984100341797,
+    "directional_accuracy": 68.43910806174958,
+    "directional_accuracy_per_stock": 48.6771472392638
+  },
+  "val_test_diff": {
+    "mse_diff": 1.037673882819945e-06,
+    "rmse_diff": 0.00020376672374601036,
+    "mae_diff": -2.593675162643194e-06,
+    "r2_diff": 0.051360905170440674,
+    "qlike_diff": -0.1424584984779358,
+    "directional_accuracy_diff": -1.8486754335810929
+  }
+}

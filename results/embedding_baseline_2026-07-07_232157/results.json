@@ -1,0 +1,15 @@
+{
+  "model": "EmbeddingBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": true,
+  "test_metrics": {
+    "mse": 7.078538601490436e-06,
+    "rmse": 0.0026605523113613903,
+    "mae": 0.0007099914364516735,
+    "r2": 0.7103389501571655,
+    "qlike": 0.5615118741989136,
+    "directional_accuracy": 67.5624166190204,
+    "directional_accuracy_per_stock": 48.42791411042945
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "units": "returns decimal (*_bp = basis points); vol is forward 22-day realized.",
+  "composition": {
+    "total": 1851,
+    "with_rating": 1270,
+    "rating_breakdown": {
+      "POS": 971,
+      "NaN": 581,
+      "NEU": 292,
+      "NEG": 7
+    },
+    "earnings_update": 182,
+    "event_shock": 6,
+    "unclassified": 435
+  },
+  "rating_return_per_stock_bp": [
+    {
+      "horizon": 1,
+      "n_pos": 968,
+      "n_neg": 7,
+      "n_neu": 292,
+      "mean_pos_bp": 24.614833573054028,
+      "mean_neg_bp": 142.6527503735196,
+      "mean_neu_bp": -21.55747902116943,
+      "spread_pos_neg_bp": -118.03791680046558,
+      "p_value": 0.5573884690258137
+    },
+    {
+      "horizon": 3,
+      "n_pos": 967,
+      "n_neg": 7,
+      "n_neu": 291,
+      "mean_pos_bp": 35.20439640502017,
+      "mean_neg_bp": 308.70993514947617,
+      "mean_neu_bp": -36.21215398017062,
+      "spread_pos_neg_bp": -273.505538744456,
+      "p_value": 0.5688731324718787
+    },
+    {
+      "horizon": 5,
+      "n_pos": 964,
+      "n_neg": 7,
+      "n_neu": 291,
+      "mean_pos_bp": 60.30755882271533,
+      "mean_neg_bp": 325.952862156096,
+      "mean_neu_bp": -7.341840187803025,
+      "spread_pos_neg_bp": -265.6453033333807,
+      "p_value": 0.7053894207331808
+    }
+  ],
+  "category_forward_vol_vs_no_news": [
+    {
+      "category": "all_news",
+      "n_days": 1178,
+      "pooled_ratio_vs_no_news": 0.8654242166326923,
+      "yearmatched_median_ratio": 1.0343874793603176,
+      "yearmatched_mean_ratio": 0.9898299496869174,
+      "n_years_matched": 18,
+      "p_value_pooled": 1.051391008284652e-11
+    },
+    {
+      "category": "rating_POS",
+      "n_days": 719,
+      "pooled_ratio_vs_no_news": 0.880143063958273,
+      "yearmatched_median_ratio": 1.013086753189154,
+      "yearmatched_mean_ratio": 0.991654451769369,
+      "n_years_matched": 12,
+      "p_value_pooled": 1.7100818384586617e-06
+    },
+    {
+      "category": "rating_NEG",
+      "n_days": 7,
+      "pooled_ratio_vs_no_news": 0.8606125629433254,
+      "yearmatched_median_ratio": NaN,
+      "yearmatched_mean_ratio": NaN,
+      "n_years_matched": 0,
+      "p_value_pooled": 0.4019591734224518
+    },
+    {
+      "category": "earnings_update",
+      "n_days": 153,
+      "pooled_ratio_vs_no_news": 0.8161286231890462,
+      "yearmatched_median_ratio": 0.9425353061047558,
+      "yearmatched_mean_ratio": 0.9658290471166201,
+      "n_years_matched": 14,
+      "p_value_pooled": 0.00013417730075203227
+    },
+    {
+      "category": "event_shock",
+      "n_days": 6,
+      "pooled_ratio_vs_no_news": 0.7686375186961515,
+      "yearmatched_median_ratio": 0.7890137596380078,
+      "yearmatched_mean_ratio": 0.7890137596380078,
+      "n_years_matched": 1,
+      "p_value_pooled": 0.2930213849440003
+    }
+  ],
+  "interpretation_notes": [
+    "Corpus is ~89% periodic (analyst ratings + earnings updates); event/shock news is ~0.5%.",
+    "An event-vs-periodic vol comparison is infeasible (too few event news).",
+    "NEG ratings are very rare (analyst optimism bias) AND typically issued after price drops, so any higher forward return reflects mean reversion, not predictive value.",
+    "yearmatched_median_ratio controls for the coverage trend (news sparse pre-2018, dense post-2018 = different vol regimes); compare to pooled_ratio to see the confound.",
+    "Multiple testing: ~8 Mann-Whitney tests across categories/horizons, uncorrected; treat p-values as exploratory."
+  ]
+}
