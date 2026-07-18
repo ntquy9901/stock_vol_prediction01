@@ -11,10 +11,10 @@
 ## 0. TÓM TẮT ĐIỀU HÀNH (đọc 30 giây)
 
 - **Model tốt nhất vẫn là Parallel LSTM-GNN (k-NN graph): test DirAcc 69.98%, R² 0.714, QLIKE 0.529** — duy nhất vượt mục tiêu 55% DirAcc.
-- **Tuần này thử 3 cách đưa tin tức vào → đều KHÔNG vượt HAR-only** (embedding 68.76%, market-fallback 68.69%, decay 67.87%). Cả 3 cluster ~68–69%, thấp hơn HAR-only 1–1.2%.
+- **Tuần này thử 4 cách đưa tin tức vào** (embedding 68.76%, market-fallback 68.69%, decay 67.87%, **latent-noise 69.33%**). Cả 4 đều dưới HAR-only 69.98%, cluster ~68–69.3%. Latent-noise (gợi ý thầy #2) là news variant cao nhất nhưng vẫn −0.65% so HAR-only (caveat: epoch chưa match).
 - **Kết luận trung thực:** bottleneck là **DATA** (tin chỉ có tiêu đề, ~5.5% ngày-mã có tin), KHÔNG phải kiến trúc. Đã được EDA tuần này xác nhận.
 - **Crawl body bài (nội dung đầy đủ)** là lever #1 — nhưng việc crawl thuộc một project khác, project này chỉ **tiêu thụ** text.
-- **Phản hồi 2 gợi ý của thầy:** (1) *dùng embedding thay scalar score* → **đã làm** (Embedding Baseline, test 68.76%, vẫn no-lift); (2) *thêm vector ngẫu nhiên cho tin thưa* → **chưa code**, đã có design doc + kế hoạch (xem §2.4.6).
+- **Phản hồi 2 gợi ý của thầy:** (1) *dùng embedding thay scalar score* → **đã làm** (Embedding Baseline, test 68.76%); (2) *thêm vector ngẫu nhiên cho tin thưa* → **đã làm xong** (Latent Noise Baseline, test **69.33%** @ 10 epoch — cao nhất các news variant, nhưng vẫn dưới HAR-only 69.98%). Chi tiết §2.4.6.
 - **1 bug dữ liệu đang mở:** SSB truncation — toàn bộ stock bị cắt về 1299 dòng (bỏ mất 2012–2026 của các mã dài lịch sử).
 
 Toàn bộ số liệu dưới đây được trích từ file `results/.../training_results.json` thật (có ghi đường dẫn). Không có số bịa.
@@ -36,6 +36,7 @@ Toàn bộ số liệu dưới đây được trích từ file `results/.../trai
 | 7 | Parallel LSTM-GNN + embedding (PhoBERT) | 40 | 68.76% | 0.717 | 0.553 | 0.002628 | 6.91e-6 | `results/embedding_baseline_2026-07-08_003719/` |
 | 8 | Parallel LSTM-GNN + market-fallback | 40 | 68.69% | 0.706 | 0.548 | 0.002683 | 7.20e-6 | `results/market_fallback_2026-07-08_171348/` |
 | 9 | Parallel LSTM-GNN + sentiment-decay | 10 | 67.87% | ~0.707 | ~0.56 | ~0.0027 | – | `results/sentiment_decay_*` (tuần này) |
+| 10 | 🆕 Parallel LSTM-GNN + latent-noise (gợi ý thầy #2) | 10 | **69.33%** | 0.713 | 0.544 | 0.002675 | 7.20e-6 | `results/latent_noise_2026-07-11_124004/` |
 
 > ⚠️ **Lưu ý so sánh RMSE:** Các model #1–#4 (single-stock) dự báo 1 mã/lúc trên scale đã normalize khác, nên RMSE của chúng (~0.0005) **không so sánh trực tiếp** với model #5–#9 (multi-stock GNN, RMSE ~0.0026, dùng 1 normalizer chung cho 30 mã). **Metric so sánh công bằng là DirAcc + R² + QLIKE.**
 
@@ -74,9 +75,10 @@ Lần train đầu (trước 28/06), Simple LSTM & LSTM-HAR dùng **random split
 | Embedding PhoBERT (768→64) | 68.76% | −1.22 |
 | Market-fallback (dense market branch) | 68.69% | −1.29 |
 | Sentiment-decay (carry-forward) | 67.87% | −2.11 |
+| 🆕 Latent-noise (vector ngẫu nhiên, gợi ý thầy) | **69.33%** | −0.65 (gần nhất) |
 | HAR-only (không news) | **69.98%** | — (cao nhất) |
 
-→ **Tất cả cách đưa news đều thấp hơn HAR-only.** Đây không phải do code sai (pipeline đã review, không leakage, val/test gap tốt) — mà do **signal tin tức quá yếu/thưa so với nhiễu HAR**.
+→ **Tất cả cách đưa news đều thấp hơn HAR-only.** Latent-noise (gợi ý thầy #2) là **gần nhất** (−0.65%, 69.33%) — tín hiệu tích cực nhỏ nhưng chưa đủ vượt. Đây không phải do code sai (pipeline đã review, không leakage, val/test gap tốt) — mà do **signal tin tức quá yếu/thưa so với nhiễu HAR**.
 
 **Bằng chứng độc lập (event-study, không qua model):** EDA sentiment↔price tuần này cũng cho **NO-GO** — kiểm định Mann-Whitney p>0.54 mọi horizon, corr sentiment→return/vol chỉ ~0.13 (xem §2.4d). → Root cause được xác nhận **ở cấp dữ liệu thống kê**, không phải do cách tích hợp vào model. Phân tích root cause ở §4.
 
@@ -215,6 +217,7 @@ Theo rule CLAUDE.md §3.F, mỗi baseline 1 folder timestamped + 5 sub-folder (r
 | 2 | **Embedding** | vector 64-d PhoBERT, nhánh riêng | `EmbeddingBaseline` | `+[B,22,30,10,64]` | `baselines/2026-07-07_embedding_baseline/` |
 | 3 | **Market-fallback** | embedding mã + embedding thị trường, gate | `MarketFallbackBaseline` | `+[B,22,15,64]` market | `baselines/2026-07-08_market_fallback/` |
 | 4 | **Decay** | scalar nhưng score được carry-forward+decay | reuse #1 | như #1 | `baselines/2026-07-11_sentiment_decay/` |
+| 5 | 🆕 **Latent-noise** (gợi ý thầy #2) | embedding + nhiễu Gauss `z+σ·ε` trên news_rep (train only) | `LatentNoiseBaseline` (subclass #2) | như #2 | `baselines/2026-07-11_latent_noise/` |
 
 #### 2.4.0 Pipeline xử lý NEWS chung (feeding cả 4 variant)
 
@@ -397,20 +400,48 @@ def compute_decay_state(scores, masks, decay=0.9):
 | # | Gợi ý của thầy | Trạng thái | Mapping vào project |
 |---|----------------|-----------|---------------------|
 | **1** | Dùng **embedding vector** thay vì sentiment score (score "mất mác thông tin") | ✅ **ĐÃ LÀM** | = Embedding Baseline §2.4.2 |
-| **2** | Thêm **vector phát sinh ngẫu nhiên** (latent noise) cho trường hợp tin thưa | 🟡 **CHƯA code** — mới ở design doc | kế hoạch §5 |
+| **2** | Thêm **vector phát sinh ngẫu nhiên** (latent noise) cho trường hợp tin thưa | ✅ **ĐÃ LÀM** (Tier A) | = Latent Noise Baseline `baselines/2026-07-11_latent_noise/` |
 
 **Gợi ý 1 — embedding thay scalar score: ĐÃ THỰC HIỆN và report.**
 Thầy nhận xét đúng: sentiment score là **nén lossy** (~99% ngữ nghĩa mất khi rút 1 câu về 1 số). Project đã build **Embedding Baseline** (§2.4.2): PhoBERT frozen → CLS 768-d → PCA 768→64 (fit train-only, chống leakage) → nhánh riêng `ArticleSetAttentionPooling` + `NewsTemporalEncoder` → concat với HAR.
 - **Kết quả:** test DirAcc **68.76%** (val 71.32%), R² 0.717, QLIKE 0.553 — `results/embedding_baseline_2026-07-08_003719/`.
 - **Kết luận trung thực:** embedding **giữ nhiều thông tin hơn** (64-d vs 2 số) NHƯNG **vẫn no-lift** so với HAR-only 69.98% (thấp hơn 1.2%). Lý do: **94.5% ngày-mã vẫn không có tin** → `no_news_token` học được chiếm đa số, signal thực tế bị pha loãng. → Embedding giải đúng bài toán "mất mác thông tin", nhưng vấp phải bottleneck **sparsity** (không phải representation).
 
-**Gợi ý 2 — vector ngẫu nhiên cho tin thưa: CHƯA code, đã có design doc.**
-Ý thầy (= kỹ thuật latent-space: thêm lớp random hóa vector để chống dữ liệu semantic thưa). Project đã khảo sát SOTA và viết design: `docs/project/SENTIMENT_LATENT_SPACE_TECHNIQUES.md`, đề xuất 2 tier:
-- **(A) Latent Noise Injection — rẻ nhất, làm trước (~5 dòng):** `z = μ + σ·ε` (ε~N(0,1), reparameterization), hoặc đơn giản hơn `z = z + σ·noise`. Không đổi loss. Đây là kỹ thuật thầy ám chỉ — lên kế hoạch code sau matched-epoch control.
-- **(B) Variational Information Bottleneck (VIB, Alemi 2017) — đầy đủ:** encoder → (μ, σ) → KL term + β-warmup (β-warmup **bắt buộc** để tránh posterior collapse).
-- **Caveat trung thực:** latent noise là **regularizer**, chỉ giúp nếu signal đã có; nếu sentiment thực sự yếu (EDA §2.4.5 đã chứng minh corr ~0.13) thì khó lift. Nên tôi xếp nó **sau** matched-epoch control và crawl body — đúng thứ tự simplicity-first.
+**Gợi ý 2 — vector ngẫu nhiên cho tin thưa: ĐÃ CODE xong Tier A + train 10 epoch.**
+Ý thầy (= kỹ thuật latent-space: thêm lớp random hóa vector để chống dữ liệu semantic thưa). Đã thực thi Tier A trong baseline mới `baselines/2026-07-11_latent_noise/`:
+- **Cài đặt (Tier A):** subclass `EmbeddingBaseline`, thêm `news_rep += σ·ε` (ε~N(0,1), σ=0.1) **chỉ ở train mode**, tắt ở eval (validate/test công bằng). Cô lập cứng, reuse HAR+news branch của embedding baseline, 7/7 pytest pass. Code: `code/model_latent_noise.py`.
 
-→ **Tóm lại cho thầy:** gợi ý embedding đã thực thi đầy đủ (kết quả no-lift, đã report), gợi ý latent-noise đã thiết kế (design doc + kế hoạch) nhưng chưa code — sẽ làm nếu 2 bước rẻ hơn (matched-epoch control, body corpus) không đủ.
+**Kiến trúc (diagram) — điểm chèn nhiễu:**
+```
+x_har[B,22,30,3] adj              x_emb[B,22,30,10,64] mask       (giống Embedding Baseline §2.4.2)
+     │                                       │
+     ▼                                       ▼
+ ┌────────────────┐               ┌─────────────────────────┐
+ │ har.get_embed  │               │ ArticleSetAttentionPool │  ← reuse nguyên vẹn
+ │  h_lstm[B,30,64]│              │  → daily[B,22,30,64]     │
+ │  h_gnn[B,30,256]│              │ NewsTemporalEncoder      │
+ └───────┬────────┘               │  → news_rep[B,30,64]     │
+         │                        └────────────┬────────────┘
+         │                                     │
+         │                         ┌───────────▼──────────────┐
+         │                         │ if self.training & σ>0:  │   ← CHỈ thêm ở Tier A
+         │                         │   news_rep += σ·ε        │      (ε~N(0,1))
+         │                         │ eval mode → bỏ qua       │      → validate/test
+         │                         └───────────┬──────────────┘      deterministic
+         │                                     │
+         └────► concat [B,30, 64+256+64=384] ◄─┘
+                         │
+                    fusion MLP → ŷ[B,30]
+```
+**Khác biệt duy nhất vs Embedding Baseline = 1 dòng nhiễu** trên `news_rep`. Lý do chọn vị trí này: gợi ý thầy nhắm "tin thưa" → nhiễu đúng nhánh news (HAR đã mạnh 69.98%, nhiễu vào đó có thể hại). Eval tắt noise để validate/test không ngẫu nhiên → so sánh công bằng.
+- **Đường cong val DirAcc (10 epoch, resume từ ckpt epoch 5):** 68.48→68.12→69.43→70.40→69.58 (ep1-5) → 68.25→69.14→69.26→69.43→**71.28** (ep6-10, best).
+- **Kết quả test:** DirAcc **69.33%**, R² 0.713, QLIKE 0.544 — `results/latent_noise_2026-07-11_124004/`.
+- **So sánh:** latent-noise 69.33% **cao nhất các news variant** (> embedding 68.76% +0.57%, QLIKE cũng tốt hơn 0.544<0.553) NHƯNG vẫn −0.65% so HAR-only 69.98%. → Tín hiệu tích cực **nhỏ** (gợi ý thầy có tác dụng marginal), chưa đủ vượt HAR.
+- **Caveat trung thực:** 10ep vs embedding 40ep vs HAR 70ep — **chưa matched-epoch**, chênh ±0.5% có thể trong noise. Cần matched-epoch control để chốt. Đây là kết quả **khuyến khích** nhất trong 5 news variant → đáng train thêm + tune σ.
+- **Train tiếp tới 15 epoch (đã thử, dừng):** resume từ ckpt 10-epoch, val epoch 11 = 70.59% (ổn định ~70–71%, không thấy lift đột phá). Run dừng sớm do CPU bận chạy song song pipeline body-corpus extraction + full-corpus EDA → **10 epoch vẫn là kết quả chính thức**. Tiếp tục train tới 40 epoch khi CPU rảnh.
+- **Defer (Tier B):** Variational Information Bottleneck (VIB, Alemi 2017) — encoder (μ, σ) + KL term + β-warmup (β-warmup bắt buộc tránh posterior collapse). Chỉ làm nếu Tier A matched-epoch vẫn hứa hẹn.
+
+→ **Tóm lại cho thầy:** cả 2 gợi ý đều **đã thực thi**. Gợi ý embedding (68.76%) và latent-noise (69.33%) đều được report đầy đủ. Latent-noise cho **kết quả khuyến khích nhất** (cao nhất các news variant, QLIKE tốt hơn) nhưng chưa vượt HAR-only — bước tiếp: matched-epoch control + train thêm/tune σ để chốt, rồi mới cân nhắc Tier B (VIB).
 
 ### 2.5 TimesFM (foundation model — reference)
 
@@ -613,7 +644,7 @@ Tuần này đã setup `pytest.ini` (smoke marker), `ruff.toml` (lint clean), c�
 
 1. **Fix SSB truncation** (§4.1) → re-train k-NN → xác nhận có tái lặp 69.98% không (ưu tiên #1, ảnh hưởng khả tín).
 2. **Matched-epoch control** (§4.2.2) → chốt dứt khoát NO-GO cho news, hoặc tìm điều kiện nó lift.
-3. **Latent noise injection** (gợi ý thầy #2, §2.4.6 tier A) → nếu matched-epoch vẫn no-lift, thêm `z = μ + σ·ε` (~5 dòng) vào nhánh news để chống tin thưa. Đây là bước rẻ nhất trước khi văng VIB đầy đủ.
+3. **Latent noise — follow-up** (gợi ý thầy #2, đã code Tier A, 10ep test 69.33%) → làm **matched-epoch control** (latent-noise vs embedding vs HAR cùng epoch), tune σ (0.05/0.1/0.2), train thêm tới 40 epoch. Nếu vẫn hứa hẹn → Tier B (VIB).
 4. **Chờ body corpus** từ project crawl → re-run embedding với `--use_body`.
 5. Hoàn thiện EDA sentiment↔price → quyết định go/no-go cuối cho sentiment làm feature chính.
 6. (Nếu thời gian) full run TimesFM trên data đã fix.

@@ -68,6 +68,7 @@ def main():
     cols = df["date"].tolist()
     titles = df["title"].tolist()
     leads = df["lead"].tolist()
+    bodies = df["body"].tolist() if "body" in df.columns else [""] * len(df)
     for i in range(len(df)):
         y = (cols[i] or "")[:4]
         if not (y.isdigit() and len(y) == 4):
@@ -76,8 +77,11 @@ def main():
         articles[y] += 1
         title = titles[i] or ""
         lead = leads[i] or ""
+        body = bodies[i] or ""
         mt = set(pat.findall(title))
-        mf = mt | set(pat.findall(lead)) if lead else mt
+        # search title + body + lead (body now available from 2026-07-11 crawl)
+        search_text = (title + " " + body + " " + lead).strip()
+        mf = set(pat.findall(search_text)) if search_text else mt
         if mt:
             match_title[y] += 1
             for t in mt:

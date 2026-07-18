@@ -58,6 +58,45 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Spec-Driven Development (SDD)
+
+> Áp dụng theo yêu cầu user 2026-07-15. Nguồn: github/spec-kit `spec-driven.md`
+> (https://github.com/github/spec-kit/blob/main/spec-driven.md), bài tóm tắt tiếng Việt trên Viblo,
+> và Microsoft "Spec-Driven Development for AI-Native Engineering"
+> (https://developer.microsoft.com/blog/spec-driven-development-ai-native-engineering).
+
+**Nguyên tắc cốt lõi:** Spec là nguồn chân lý (source of truth), KHÔNG phải code — code chỉ là bản
+dịch của spec sang 1 ngôn ngữ/framework cụ thể. "Spec quality = output quality." Spec phải đủ chính
+xác, đầy đủ, không mơ hồ để sinh ra hệ thống chạy được — chỗ chưa rõ PHẢI đánh dấu
+`[NEEDS CLARIFICATION]` và hỏi user, KHÔNG tự giả định rồi code (siết §1 Think Before Coding thành
+artifact văn bản bắt buộc, không chỉ nói miệng).
+
+**Vòng đời bắt buộc cho mọi feature/baseline mới (mapping vào cấu trúc §3.F đã có — KHÔNG tạo
+folder/artifact trùng lặp):**
+
+1. **Constitution** — Đã có sẵn: chính file `CLAUDE.md` này là constitution của project (nguyên tắc,
+   tiêu chuẩn, gate). Spec/plan mới phải tuân theo rule đã có ở đây; conflict thì CLAUDE.md thắng —
+   sửa CLAUDE.md trước rồi mới sửa spec.
+2. **Specify** — Viết spec TRƯỚC khi code: mục tiêu, input/output, acceptance criteria, edge case,
+   go/no-go. Dùng `requirements/requirements.md` (đã bắt buộc §3.F) làm spec.md.
+3. **Clarify** — Rà lại spec tìm chỗ mơ hồ/thiếu, đánh dấu `[NEEDS CLARIFICATION]`, hỏi user resolve
+   trước khi sang Plan — không suy diễn thay user.
+4. **Plan** — Kiến trúc, data flow, quyết định design, dependency. Dùng `design/design.md`
+   (đã bắt buộc §3.F) làm plan.md. Qua 2 gate trước khi implement:
+   - **Simplicity Gate:** không thêm project/abstraction/config vượt mức cần (per §2 Simplicity First).
+   - **Anti-Abstraction Gate:** dùng thẳng thư viện/framework có sẵn, không tự wrap khi không cần.
+   - Nếu buộc phải phá 1 trong 2 gate → ghi rõ lý do (complexity tracking) trong `design.md`.
+5. **Tasks** — Tách plan thành danh sách task đánh số, mỗi task có tiêu chí verify được (test/smoke
+   pass) — LIỆT KÊ rõ trước khi code (siết §4 Goal-Driven Execution thành checklist tường minh).
+6. **Implement** — Test-First bắt buộc: viết test → xác nhận test FAIL → implement code → test pass
+   → refactor nếu cần. KHÔNG viết implementation code trước khi có test tương ứng cho hành vi đó.
+7. **Validate** — Xác nhận output khớp spec (acceptance criteria ở bước Specify) trước khi coi done —
+   trùng với Definition of Done ở dưới, không làm lại 2 lần.
+
+**Right-sizing (KHÔNG áp dụng máy móc mọi việc):** Full vòng đời 7 pha dùng cho baseline mới (§3.F)
+và thay đổi kiến trúc lớn (vd LSTM-GAT, TimesFM, tầng model mới). Fix nhỏ 1-dòng / sửa doc-typo /
+lint fix thì dùng judgment (per tradeoff đầu file) — không bắt viết đủ 7 pha cho việc trivial.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
@@ -71,14 +110,31 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Definition of Done
 Task chỉ "done" khi TẤT CẢ đúng:
 - **Code** thỏa mãn đúng request; không refactor không liên quan (per §3 Surgical).
-- **Tests + diff-coverage:** khi đổi behavior, viết/chạy unit test, đảm bảo **≥80% CHANGED lines covered** — đo bằng **diff-coverage** (KHÔNG phải total coverage): chạy `pytest --cov --cov-report=xml` rồi `diff-cover <report> --fail-under=80`. Change phải staged/committed để diff đo được.
-- **Checks run:** chạy test + lint — hoặc ghi `Not run` + lý do. KHÔNG claim "pass" nếu chưa chạy thật.
+- **Tests + coverage:** khi đổi behavior, viết/chạy unit test và đạt coverage gate — chi tiết + lệnh ở section **Testing quality rules (ENFORCED)** ngay dưới đây (C0=100% / C1≥80% trên CHANGED lines, đo bằng **diff-coverage**, KHÔNG phải total coverage). Change phải staged/committed để diff đo được.
+- **Checks run:** bắt buộc chạy test + lint. KHÔNG claim "pass" nếu chưa chạy thật.
 - **Lint scope:** exclude vendored/generated/third-party (`.agents .claude _bmad archive data`).
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
-- **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài → `Not run` + lý do + chạy ở CI.
+- **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.
 - **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
 - **Similar check:** sau fix/pattern change, grep cùng idiom/duplicate trong repo + sibling repos. Apply cùng change nơi hợp lệ, hoặc list remaining as follow-up. Đừng fix 1/N copy silent.
+
+## Testing quality rules (ENFORCED)
+
+> Nguồn: mượn từ project sibling `thesis/data_eda` (CLAUDE.md), áp dụng theo yêu cầu user 2026-07-15.
+
+Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial review có thể tìm bug thật (vd: date mass-NaT, tz-aware crash, NaN bị đếm nhầm thành duplicate, dead code, thiếu acceptance criteria) ngay cả khi line coverage = 100%. Do đó, với MỌI thay đổi behavior:
+
+- **Coverage gate (BẮT BUỘC), tách C0/C1:**
+  - **C0 (line coverage) = 100%** trên CHANGED lines (mọi dòng thực thi phải được test chạy qua).
+  - **C1 (branch coverage) ≥ 80%** trên CHANGED lines (mọi nhánh điều kiện phải được cover; >80% chấp nhận khi cover toàn bộ bất khả thi — phải nêu lý do).
+  - Lệnh: `python -m pytest --cov=src --cov-report=xml -q && diff-cover coverage.xml --fail-under=100` (gate C0); sau đó soi report coverage.xml/html để xác nhận C1 ≥80% trên các dòng đổi.
+  - `pytest --cov` xanh KHÔNG đủ — `diff-cover` trên changed lines mới là gate thật.
+- **Test I/O runner, không chỉ pure helper.** Unit test hàm thuần dễ bỏ sót bug ở code load-data/ghi-report/train-loop. Mọi hàm `run_*()`/report-builder/`train_epoch`-style phải có ít nhất 1 test tích hợp (monkeypatch path hoặc dùng tmp fixture) trước khi coi task done.
+- **Data-pipeline test phải có real-data-sample smoke.** Synthetic fixture bỏ sót lỗi encoding (UTF-8 vs cp1252), mixed date format (ISO vs DD/MM), mixed timezone, schema drift giữa nguồn crawl khác nhau (đúng loại lỗi từng gặp ở `aggregate_news_sources.py`). Ít nhất 1 test/phase đọc 1 lát cắt nhỏ dữ liệu thật (không phải toàn bộ) và assert chạy không exception + output hợp lý.
+- **Code review = 3-layer (Blind Hunter + Edge Case Hunter + Acceptance Auditor) qua `/code-review`, chạy TRƯỚC khi coi done.** Self-review KHÔNG thay thế được. Xử lý hết finding critical/major trước khi done; ghi minor thành follow-up trong summary report.
+
+**Tooling gap hiện tại:** `diff-cover --fail-under=100` chưa từng được set up/chạy thật trong repo này (xem "Tooling gaps" ở §Per-project setup) — cho tới khi cài xong, ghi `Not run` + lý do trong summary report thay vì claim đã đạt C0=100%.
 
 ## Summary report (per change)
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
@@ -103,7 +159,7 @@ Khi **thử nghiệm** model (không phải final run):
 ## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
 - **Language/toolchain:** Python 3.11 (pip)
 - **Test command:** `python -m pytest`
-- **Coverage + diff-coverage:** `pip install pytest-cov diff-cover` → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --fail-under=80` *(chưa setup — cần install)*
+- **Coverage + diff-coverage:** `pip install pytest-cov diff-cover` → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --fail-under=100` (C0 gate; C1≥80% soi thủ công trong report — xem §Testing quality rules ENFORCED) *(chưa setup — cần install)*
 - **Lint command:** `pip install ruff` → `ruff check .` *(chưa setup — cần install)*
 - **Lint excludes:** `.agents .claude _bmad archive data`
 - **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*

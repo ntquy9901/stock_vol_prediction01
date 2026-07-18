@@ -51,19 +51,23 @@ MIN_PAIRS = 30
 # Load + score
 # ---------------------------------------------------------------------------
 def _score_text(r) -> str:
+    """Score text = title + lead ONLY (short -> fast CPU inference; title+lead carry
+    the sentiment signal). Body is intentionally NOT used: full-body articles would
+    hit the 256-token cap and ~10x the scoring time on CPU for marginal signal gain."""
     title = str(r.get("title", "") or "")
     lead = r.get("lead")
-    body = r.get("body")
     if pd.notna(lead) and len(str(lead)) > 5:
         return (title + " " + str(lead)).strip()
-    if pd.notna(body) and len(str(body)) > 20:
-        return (title + " " + str(body)[:500]).strip()
     return title.strip()
 
 
-def score_articles(force: bool = False) -> pd.DataFrame:
+def score_articles(force: bool = False, analyst_sample: int = 4000,
+                   max_length: int = 128, batch_size: int = 64) -> pd.DataFrame:
+    """Score with a direct HF pipeline (max_length=128 -> fast on CPU).
+    Scores ALL real-news (cafef/ssi/vndirect) fully + a reproducible sample of the
+    analyst/brokerage titles, which is enough for a representative daily signal."""
     if SCORED_CACHE.exists() and not force:
-        print(f"[info] loading cached scores: {SCORED_CACHE}")
+        print(f"[info] loading cached scores: {SCORED_CACHE}", flush=True)
         return pd.read_csv(SCORED_CACHE, parse_dates=["date"])
 
     df = pd.read_csv(UNIFIED)
@@ -71,21 +75,34 @@ def score_articles(force: bool = False) -> pd.DataFrame:
     df = df[df["date"].notna()].copy()
     df["score_text"] = df.apply(_score_text, axis=1)
     df = df[df["score_text"].str.len() > 0].reset_index(drop=True)
-    print(f"[info] scoring {len(df)} articles with XLM-R (CPU)...")
-
-    texts = df["score_text"].tolist()
-    scores = []
-    BATCH = 64
-    for i in range(0, len(texts), BATCH):
-        scores.extend(phobert_scorer.score_batch(texts[i:i + BATCH], batch_size=BATCH))
-        if i % 2048 == 0:
-            print(f"  ...{i}/{len(texts)}", flush=True)
-    df["sentiment"] = scores
     df["is_real_news"] = df["source"].astype(str).isin(REAL_NEWS_SOURCES)
+
+    real = df[df["is_real_news"]]
+    other = df[~df["is_real_news"]].sample(n=min(analyst_sample, len(df[~df["is_real_news"]])),
+                                           random_state=42)
+    to_score = pd.concat([real, other]).sort_values("date").reset_index(drop=True)
+    print(f"[info] scoring {len(to_score)} articles (real_news={len(real)} + "
+          f"analyst_sample={len(other)}) with XLM-R max_length={max_length}...", flush=True)
+
+    from transformers import pipeline, AutoTokenizer
+    tok = AutoTokenizer.from_pretrained(phobert_scorer.DEFAULT_MODEL, use_fast=False)
+    pipe = pipeline("sentiment-analysis", model=phobert_scorer.DEFAULT_MODEL,
+                    tokenizer=tok, truncation=True, max_length=max_length)
+    texts = to_score["score_text"].tolist()
+    scores = []
+    for i in range(0, len(texts), batch_size):
+        res = pipe(texts[i:i + batch_size], batch_size=batch_size,
+                   truncation=True, max_length=max_length)
+        scores.extend(phobert_scorer._label_to_score(r.get("label", ""), float(r.get("score", 0.0)))
+                      for r in res)
+        if i % 1000 == 0:
+            print(f"  ...{i}/{len(texts)}", flush=True)
+    to_score["sentiment"] = [max(-1.0, min(1.0, s)) for s in scores]
+
     keep = ["unified_id", "source", "date", "title", "sentiment", "is_real_news"]
-    df[keep].to_csv(SCORED_CACHE, index=False)
-    print(f"[info] cached scores -> {SCORED_CACHE}")
-    return df[keep]
+    to_score[keep].to_csv(SCORED_CACHE, index=False)
+    print(f"[info] cached {len(to_score)} scores -> {SCORED_CACHE}", flush=True)
+    return to_score[keep]
 
 
 # ---------------------------------------------------------------------------

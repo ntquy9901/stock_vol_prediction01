@@ -1,0 +1,32 @@
+{
+  "model": "RestTsBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": false,
+  "validation_metrics": {
+    "mse": 6.0596958064707e-06,
+    "rmse": 0.0024616449391556654,
+    "mae": 0.000733611814212054,
+    "r2": 0.6568748354911804,
+    "qlike": 0.7007421851158142,
+    "directional_accuracy": 69.79226224509243,
+    "directional_accuracy_per_stock": 47.7760736196319
+  },
+  "test_metrics": {
+    "mse": 6.956358447496314e-06,
+    "rmse": 0.002637490937898425,
+    "mae": 0.0007257279939949512,
+    "r2": 0.7153386473655701,
+    "qlike": 0.564924955368042,
+    "directional_accuracy": 68.17228892700591,
+    "directional_accuracy_per_stock": 48.52377300613497
+  },
+  "val_test_diff": {
+    "mse_diff": 8.96662641025614e-07,
+    "rmse_diff": 0.0001758459987427595,
+    "mae_diff": -7.883820217102766e-06,
+    "r2_diff": 0.05846381187438965,
+    "qlike_diff": -0.13581722974777222,
+    "directional_accuracy_diff": -1.6199733180865223
+  }
+}

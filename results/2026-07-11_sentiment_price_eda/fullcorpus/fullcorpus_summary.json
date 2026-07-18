@@ -1,0 +1,104 @@
+{
+  "n_articles_scored": 10548,
+  "n_real_news": 6548,
+  "sentiment_distribution": {
+    "mean": 0.040216154721274176,
+    "neg_lt_-0.2": 554,
+    "pos_gt_0.2": 1261
+  },
+  "corr_sentiment_to_market": [
+    {
+      "measure": "sent_all (all news)",
+      "n_days_with_sent": 2758,
+      "mkt_ret_1d+0": 0.027169589188907453,
+      "mkt_ret_3d+0": 0.011986614917471288,
+      "mkt_ret_5d+0": 0.016460284793941484,
+      "mkt_fwd_vol_22d+0": 0.03579340515912632,
+      "mkt_abs_ret_1d+0": 0.008167551804820362
+    },
+    {
+      "measure": "sent_realnews (cafef/ssi/vndirect)",
+      "n_days_with_sent": 1996,
+      "mkt_ret_1d+0": 0.022148847021255726,
+      "mkt_ret_3d+0": 0.017230039255782953,
+      "mkt_ret_5d+0": 0.03484615512024081,
+      "mkt_fwd_vol_22d+0": 0.05832087072067801,
+      "mkt_abs_ret_1d+0": 0.017500682893187566
+    }
+  ],
+  "yearmatched_vol_ratio": {
+    "all_news": {
+      "n_years": 13,
+      "median_ratio": 1.0329734178777479,
+      "mean_ratio": 1.0573342970056516
+    },
+    "real_news": {
+      "n_years": 5,
+      "median_ratio": 1.0499889552677553,
+      "mean_ratio": 1.03217346097686
+    }
+  },
+  "direction_return_all_bp": [
+    {
+      "horizon": 1,
+      "n_pos": 277,
+      "n_neg": 43,
+      "mean_pos_bp": 2.6554522437861583,
+      "mean_neg_bp": 35.42601141708667,
+      "spread_bp": -32.77055917330051,
+      "p_value": 0.17003261235025557
+    },
+    {
+      "horizon": 3,
+      "n_pos": 277,
+      "n_neg": 43,
+      "mean_pos_bp": 14.836490610154103,
+      "mean_neg_bp": 60.598106889454435,
+      "spread_bp": -45.761616279300334,
+      "p_value": 0.38632009340082896
+    },
+    {
+      "horizon": 5,
+      "n_pos": 277,
+      "n_neg": 43,
+      "mean_pos_bp": 30.400851424957196,
+      "mean_neg_bp": 91.4024576022218,
+      "spread_bp": -61.001606177264605,
+      "p_value": 0.5975445833797308
+    }
+  ],
+  "direction_return_realnews_bp": [
+    {
+      "horizon": 1,
+      "n_pos": 384,
+      "n_neg": 41,
+      "mean_pos_bp": 3.0936870153693987,
+      "mean_neg_bp": -5.363544549491893,
+      "spread_bp": 8.457231564861292,
+      "p_value": 0.982391715411435
+    },
+    {
+      "horizon": 3,
+      "n_pos": 384,
+      "n_neg": 41,
+      "mean_pos_bp": 15.703832440406046,
+      "mean_neg_bp": -3.9751420831173716,
+      "spread_bp": 19.67897452352342,
+      "p_value": 0.9010006443117363
+    },
+    {
+      "horizon": 5,
+      "n_pos": 384,
+      "n_neg": 41,
+      "mean_pos_bp": 35.091387529340594,
+      "mean_neg_bp": 39.25713159416108,
+      "spread_bp": -4.165744064820484,
+      "p_value": 0.9973318665738982
+    }
+  ],
+  "caveats": [
+    "XLM-R scores title (+lead/body-chunk), truncated to 256 tokens.",
+    "sent_realnews uses only cafef/ssi/vndirect (~6.5k journalism articles w/ body).",
+    "Year-matched ratio controls the coverage-trend confound found in the prior market analysis."
+  ]
+}

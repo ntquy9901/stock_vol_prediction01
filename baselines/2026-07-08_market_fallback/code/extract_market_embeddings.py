@@ -28,7 +28,7 @@ for _p in (str(_ROOT), str(_CODE)):
 import numpy as np
 import pandas as pd
 
-UNIFIED = Path(r"D:/bmad-projects/crawl_data/aggregated/unified_articles.csv")
+UNIFIED = _ROOT.parent / "crawl_data" / "aggregated" / "unified_articles.csv"  # [HIGH-2]
 OUT_DIR = _ROOT / "data" / "sentiment_embedding"
 OUT_FILE = OUT_DIR / "market_emb.npz"
 
@@ -53,11 +53,17 @@ def main():
                     help="PCA fit on articles before this date (approx of train split)")
     ap.add_argument("--batch_size", type=int, default=32)
     ap.add_argument("--max_len", type=int, default=64)
+    ap.add_argument("--input", default=str(UNIFIED), help="Input articles CSV")
+    ap.add_argument("--emb_dir", default=str(OUT_DIR), help="Output cache dir")
+    ap.add_argument("--use_body", action="store_true", help="Use title+body+lead (needs 'body' column)")
     args = ap.parse_args()
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    print(f"[market] loading {UNIFIED.name}")
-    df = pd.read_csv(UNIFIED, dtype=str, encoding="utf-8-sig", keep_default_na=False)
+    out_dir = Path(args.emb_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file = out_dir / "market_emb.npz"
+    print(f"[market] loading {Path(args.input).name} use_body={args.use_body}")
+    df = pd.read_csv(args.input, dtype=str, encoding="utf-8-sig", keep_default_na=False)
+    has_body = "body" in df.columns
 
     # ALL articles with a parseable date + non-empty text (NO ticker filter)
     DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -65,14 +71,16 @@ def main():
     skipped_date = 0
     for r in df.itertuples(index=False):
         d = _norm_date(getattr(r, "date", "") or "")
-        if not DATE_RE.match(d):   # [MED-4] skip non-YYYY-MM-DD (would break string train_cutoff compare)
+        if not DATE_RE.match(d):
             skipped_date += 1
             continue
         title = getattr(r, "title", "") or ""
         lead = getattr(r, "lead", "") or ""
-        text = (title + " " + lead).strip()
+        body = (getattr(r, "body", "") or "") if (args.use_body and has_body) else ""
+        text = (title + " " + body + " " + lead).strip() if body else (title + " " + lead).strip()
         if not text:
             continue
+        text = text[: args.max_len * 6]
         records.append({"date": d, "text": text})
     if skipped_date:
         print(f"[market][warn] skipped {skipped_date} rows with non-YYYY-MM-DD date")

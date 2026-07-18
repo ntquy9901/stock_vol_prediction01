@@ -1,0 +1,32 @@
+{
+  "model": "PureMarketBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": false,
+  "validation_metrics": {
+    "mse": 6.072255928302184e-06,
+    "rmse": 0.0024641947829467914,
+    "mae": 0.000728083832655102,
+    "r2": 0.6561636328697205,
+    "qlike": 0.6961687803268433,
+    "directional_accuracy": 70.57366113969887,
+    "directional_accuracy_per_stock": 46.22315950920246
+  },
+  "test_metrics": {
+    "mse": 7.04024569131434e-06,
+    "rmse": 0.0026533461310794602,
+    "mae": 0.0007299267454072833,
+    "r2": 0.7119058966636658,
+    "qlike": 0.5600890517234802,
+    "directional_accuracy": 68.91557080236326,
+    "directional_accuracy_per_stock": 45.03450920245399
+  },
+  "val_test_diff": {
+    "mse_diff": 9.679897630121559e-07,
+    "rmse_diff": 0.00018915134813266878,
+    "mae_diff": 1.8429127521812916e-06,
+    "r2_diff": 0.05574226379394531,
+    "qlike_diff": -0.13607972860336304,
+    "directional_accuracy_diff": -1.658090337335608
+  }
+}

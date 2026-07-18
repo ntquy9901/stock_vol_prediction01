@@ -28,8 +28,8 @@ for _p in (str(_ROOT), str(_CODE)):
 import numpy as np
 import pandas as pd
 
-# [HIGH-2] sibling crawl_data dir (derived from project root, not hardcoded absolute)
-UNIFIED = _ROOT.parents[1] / "crawl_data" / "aggregated" / "unified_articles.csv"
+# [HIGH-2] sibling crawl_data dir (D:/bmad-projects/crawl_data, derived from project root)
+UNIFIED = _ROOT.parent / "crawl_data" / "aggregated" / "unified_articles.csv"
 STOCK_DIR = _ROOT / "data" / "processed"
 SUMMARY = STOCK_DIR / "processing_summary.csv"
 OUT_DIR = _ROOT / "data" / "sentiment_embedding"

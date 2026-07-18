@@ -1,0 +1,33 @@
+{
+  "model": "GatedCrossAttnBaseline",
+  "emb_dim": 64,
+  "d_news": 64,
+  "num_heads": 4,
+  "smoke": true,
+  "validation_metrics": {
+    "mse": 6.012759058648953e-06,
+    "rmse": 0.0024520927916065805,
+    "mae": 0.0007222823332995176,
+    "r2": 0.6595325469970703,
+    "qlike": 0.7120842337608337,
+    "directional_accuracy": 67.8482942633886,
+    "directional_accuracy_per_stock": 47.20092024539877
+  },
+  "test_metrics": {
+    "mse": 7.165165698097553e-06,
+    "rmse": 0.002676782714023974,
+    "mae": 0.0007190982578322291,
+    "r2": 0.706794023513794,
+    "qlike": 0.5752395987510681,
+    "directional_accuracy": 67.25748046502763,
+    "directional_accuracy_per_stock": 47.87193251533742
+  },
+  "val_test_diff": {
+    "mse_diff": 1.1524066394485999e-06,
+    "rmse_diff": 0.00022468992241739347,
+    "mae_diff": -3.184075467288494e-06,
+    "r2_diff": 0.04726147651672363,
+    "qlike_diff": -0.13684463500976562,
+    "directional_accuracy_diff": -0.5908137983609691
+  }
+}

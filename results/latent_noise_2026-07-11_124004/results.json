@@ -1,0 +1,35 @@
+{
+  "model": "LatentNoiseBaseline",
+  "tier": "A (additive Gaussian noise, no loss change)",
+  "noise_std": 0.1,
+  "emb_dim": 64,
+  "d_news": 64,
+  "smoke": false,
+  "epochs_run": 5,
+  "validation_metrics": {
+    "mse": 6.007723641232587e-06,
+    "rmse": 0.002451065817401195,
+    "mae": 0.0007206558366306126,
+    "r2": 0.6598176956176758,
+    "qlike": 0.6916635036468506,
+    "directional_accuracy": 71.27882599580713,
+    "directional_accuracy_per_stock": 47.87193251533742
+  },
+  "test_metrics": {
+    "mse": 7.023004855000181e-06,
+    "rmse": 0.0026500952539484654,
+    "mae": 0.0007117842906154692,
+    "r2": 0.7126114368438721,
+    "qlike": 0.5435495972633362,
+    "directional_accuracy": 69.33485801410329,
+    "directional_accuracy_per_stock": 49.19478527607362
+  },
+  "val_test_diff": {
+    "mse_diff": 1.0152812137675937e-06,
+    "rmse_diff": 0.00019902943654727043,
+    "mae_diff": -8.871546015143394e-06,
+    "r2_diff": 0.05279374122619629,
+    "qlike_diff": -0.1481139063835144,
+    "directional_accuracy_diff": -1.9439679817038353
+  }
+}

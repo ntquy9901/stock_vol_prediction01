@@ -28,31 +28,26 @@ from pathlib import Path
 import pandas as pd
 
 _ROOT = Path(__file__).resolve().parents[2]  # project root (src/data_aggregation/)
-RAW_DIR = _ROOT.parents[1] / "crawl_data" / "data"  # [HIGH-2] sibling crawl_data dir (not hardcoded absolute)
-OUT_DIR = _ROOT.parents[1] / "crawl_data" / "aggregated"
+RAW_DIR = _ROOT.parent / "crawl_data" / "data"  # [HIGH-2] sibling crawl_data dir (D:/bmad-projects/crawl_data)
+OUT_DIR = _ROOT.parent / "crawl_data" / "aggregated"
 
-FILES_A = ["data.csv", "data_2021_2025.csv", "data_archive.csv", "vnstock_articles.csv"]
+FILES_A = ["data.csv", "data_2021_2025.csv", "data_archive.csv", "vnstock_articles.csv",
+           "vnstock_pdf_raw.csv"]  # vnstock_pdf_raw: new (2026-07-11), has body + full schema
 FILES_B = ["cafef_articles.csv", "ssi_articles.csv", "vndirect_articles.csv",
            "hsc_articles.csv", "news_articles.csv"]
 
-UNIFIED_COLS = ["unified_id", "source", "title", "lead", "category", "author",
+UNIFIED_COLS = ["unified_id", "source", "title", "lead", "body", "category", "author",
                 "date", "pub_datetime", "url", "pdf_url", "pdf_filename",
                 "collected_at", "origin_file"]
 
 
 def _read(name: str) -> pd.DataFrame:
-    # [MED-5 fix] count + log malformed rows instead of silently dropping.
-    # engine="python" required for the on_bad_lines callable (slightly slower; fine for these sizes).
-    dropped = {"n": 0}
-
-    def _count_skip(_line):
-        dropped["n"] += 1
-        return None  # skip the bad row
-
+    # [MED-5 reverted] engine="python" + callable BROKE body text parsing (embedded
+    # newlines in body → treated as bad lines → 90%+ rows silently dropped).
+    # C engine (default) correctly handles quoted fields with embedded newlines/commas.
+    # on_bad_lines="skip" drops only genuinely malformed rows (rare).
     df = pd.read_csv(RAW_DIR / name, dtype=str, encoding="utf-8-sig",
-                     keep_default_na=False, engine="python", on_bad_lines=_count_skip)
-    if dropped["n"]:
-        print(f"[aggregator] {name}: dropped {dropped['n']} malformed rows (extra unquoted commas)")
+                     keep_default_na=False, on_bad_lines="skip")
     return df
 
 
@@ -70,7 +65,8 @@ def normalize_a(df: pd.DataFrame, origin: str) -> pd.DataFrame:
         "unified_id": df.get("id", ""),
         "source": df.get("source", ""),
         "title": df.get("title", ""),
-        "lead": "",
+        "lead": _pick(df, "lead"),   # vnstock_pdf_raw has lead; Family A originals don't (="")
+        "body": _pick(df, "body"),   # vnstock_pdf_raw has body; Family A originals don't
         "category": "",
         "author": "",
         "date": df.get("date", ""),
@@ -92,6 +88,7 @@ def normalize_b(df: pd.DataFrame, origin: str) -> pd.DataFrame:
         "source": _pick(df, "source"),
         "title": _pick(df, "title"),
         "lead": _pick(df, "lead"),
+        "body": _pick(df, "body"),   # cafef/ssi/vndirect now have body text (2026-07-11 crawl)
         "category": _pick(df, "category", "section"),
         "author": _pick(df, "author"),
         "date": _pick(df, "pub_date"),

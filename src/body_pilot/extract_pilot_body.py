@@ -16,7 +16,7 @@ import fitz  # [MED-4] top-level: fail loud if pymupdf missing (was silently ret
 import pandas as pd
 
 _ROOT = Path(__file__).resolve().parents[2]
-_CRAWL = _ROOT.parents[1] / "crawl_data"  # [HIGH-2] sibling crawl_data dir (not hardcoded absolute)
+_CRAWL = _ROOT.parent / "crawl_data"  # [HIGH-2] sibling crawl_data dir (D:/bmad-projects/crawl_data)
 
 PDF_DIR = _CRAWL / "data" / "pdf"
 UNIFIED = _CRAWL / "aggregated" / "unified_articles.csv"
