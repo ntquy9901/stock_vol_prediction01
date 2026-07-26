@@ -1,0 +1,216 @@
+"""Dual-group news-embedding dataset with a DIRECTED volatility-spillover graph.
+
+Hard-isolated copy of
+`2026-07-25_dual_group_news_embedding_baseline/code/dataset_dual_news.py` (CLAUDE.md §3.F rule
+3 — no edits to sibling baseline files). The ONLY change: a new `graph_method='spillover'` branch
+that calls `graph_spillover.construct_directed_spillover_graph` instead of
+`graph_correlation.construct_correlation_graph`/`DynamicGraphBuilder` (k-NN). Everything else
+(HAR cols, news panel loader, sequence windowing, normalization) is identical to the sibling.
+"""
+import sys
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parents[3]
+_CODE = Path(__file__).resolve().parent
+_SIBLING_CODE = _ROOT / "baselines" / "2026-07-25_dual_group_news_embedding_baseline" / "code"
+for _p in (str(_ROOT), str(_CODE), str(_SIBLING_CODE)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+import numpy as np
+import torch
+from torch.utils.data import DataLoader
+
+from src.common.data_normalization import VolatilityNormalizer
+from src.lstm_gat_hybrid.dataset_presplit import MultiStockDatasetWithPreSplitData
+
+from dataset_dual_news import HAR_COLS, load_news_panel, _norm_date
+from graph_spillover import construct_directed_spillover_graph
+
+__all__ = ["HAR_COLS", "load_news_panel", "MultiStockDatasetWithSpilloverNews",
+           "create_spillover_news_dataloaders"]
+
+
+class MultiStockDatasetWithSpilloverNews(MultiStockDatasetWithPreSplitData):
+    """Dataset returning (x_har, adj, x_news, y), adj built by a DIRECTED spillover graph
+    when `graph_method='spillover'` (falls back to sibling's 'correlation'/'knn' otherwise, for
+    test/comparison convenience)."""
+
+    def __init__(self, *args, news_panel_path=None, **kwargs):
+        self._news_panel_path = Path(news_panel_path) if news_panel_path else None
+        self._news_by_ticker: dict[str, dict[str, np.ndarray]] = {}
+        self._news_feature_cols: list[str] = []
+        self._n_feat = None
+        super().__init__(*args, **kwargs)
+
+    def _create_sequences(self):
+        if self._news_panel_path is not None and self._news_panel_path.exists():
+            self._news_by_ticker, self._news_feature_cols = load_news_panel(self._news_panel_path)
+        if self._news_feature_cols:
+            self._n_feat = len(self._news_feature_cols)
+        else:
+            self._n_feat = 146
+            print(f"[spillover_news] no panel found at {self._news_panel_path} -> dummy n_feat={self._n_feat}")
+
+        sequences = []
+        min_length = min(len(df) for df in self.stock_data_with_har.values())
+
+        all_volatility_list = []
+        for stock in self.stock_names:
+            vol = self.stock_data_with_har[stock]['parkinson_volatility'].values[:min_length]
+            all_volatility_list.append(vol)
+        all_volatility = np.stack(all_volatility_list, axis=1)
+
+        if self.graph_method == 'knn':
+            from src.lstm_gat_hybrid.graph_utils_fixed import DynamicGraphBuilder
+            self.graph_builder = DynamicGraphBuilder(self.config)
+        elif self.graph_method not in ('correlation', 'spillover'):
+            raise ValueError(f"Unknown graph_method: {self.graph_method}")
+
+        self._total_cells = 0
+        self._matched_cells = 0
+
+        for i in range(min_length - self.seq_length - self.forecast_horizon):
+            sequence_volatility = all_volatility[i:i + self.seq_length]
+            if self.graph_method == 'spillover':
+                adj_matrix = construct_directed_spillover_graph(
+                    sequence_volatility, k=self.k_neighbors)
+            elif self.graph_method == 'correlation':
+                from src.lstm_gat_hybrid.graph_correlation import construct_correlation_graph
+                adj_matrix = construct_correlation_graph(
+                    sequence_volatility, corr_threshold=self.graph_threshold)
+            else:  # knn
+                graph_data = {'volatility': sequence_volatility, 'returns': sequence_volatility}
+                adj_matrix = self.graph_builder.build_graph_from_data(graph_data, 'correlation')
+
+            x_har_all, x_news_all, y_all = [], [], []
+            for stock_name in self.stock_names:
+                stock_feats = self.stock_data_with_har[stock_name]
+                window_dates = [_norm_date(d) for d in
+                                stock_feats['date'].iloc[i:i + self.seq_length].astype(str).tolist()]
+
+                x_har_all.append(stock_feats[HAR_COLS].iloc[i:i + self.seq_length].values)
+
+                news_cache = self._news_by_ticker.get(stock_name) or {}
+                day_feats = []
+                for d in window_dates:
+                    vec = news_cache.get(d)
+                    self._total_cells += 1
+                    if vec is not None:
+                        self._matched_cells += 1
+                        day_feats.append(vec)
+                    else:
+                        day_feats.append(np.zeros(self._n_feat, dtype=np.float32))
+                x_news_all.append(np.stack(day_feats))
+
+                target_idx = i + self.seq_length + self.forecast_horizon - 1
+                y_all.append(stock_feats['parkinson_volatility'].iloc[target_idx])
+
+            x_har = np.stack(x_har_all, axis=1).astype(np.float32)
+            x_news = np.stack(x_news_all, axis=1).astype(np.float32)
+            y = np.array(y_all, dtype=np.float32)
+            sequences.append((x_har, adj_matrix, x_news, y))
+
+        cov = 100.0 * self._matched_cells / max(1, self._total_cells)
+        any_panel = bool(self._news_by_ticker)
+        print(f"[spillover_news] date-match coverage: {self._matched_cells}/{self._total_cells} "
+              f"cells ({cov:.2f}%)")
+        if any_panel and self._matched_cells == 0:
+            raise RuntimeError(
+                "ZERO news-to-stockday matches despite panel loaded — date format mismatch?"
+            )
+        return sequences
+
+    def __getitem__(self, idx):
+        x_har, adj, x_news, y = self.sequences[idx]
+
+        if self.normalize:
+            x_har_n = np.zeros_like(x_har, dtype=np.float32)
+            for s_idx, sname in enumerate(self.stock_names):
+                if sname in self.feature_normalizers:
+                    for f_idx in range(x_har.shape[2]):
+                        x_har_n[:, s_idx, f_idx] = self.feature_normalizers[sname].transform(
+                            x_har[:, s_idx, f_idx:f_idx + 1]).flatten()
+                else:
+                    x_har_n[:, s_idx, :] = x_har[:, s_idx, :]
+            x_har = x_har_n
+
+            y_n = np.zeros_like(y, dtype=np.float32)
+            for s_idx, sname in enumerate(self.stock_names):
+                if sname in self.target_normalizers:
+                    y_n[s_idx] = self.target_normalizers[sname].transform(
+                        y[s_idx:s_idx + 1].reshape(1, -1)).flatten()[0]
+                else:
+                    y_n[s_idx] = y[s_idx]
+            y = np.clip(y_n, -10.0, 10.0)
+
+        return (torch.FloatTensor(x_har), torch.FloatTensor(adj),
+                torch.FloatTensor(x_news), torch.FloatTensor(y))
+
+
+def create_spillover_news_dataloaders(
+    data_dir, news_panel_path, seq_length=22, forecast_horizon=5, graph_method='spillover',
+    graph_threshold=0.7, k_neighbors=8, batch_size=32, train_ratio=0.7,
+    val_ratio=0.15, test_ratio=0.15, num_workers=0, normalize=True,
+    remove_outliers=True, n_std=3.0, config=None,
+):
+    """Mirror of sibling's create_dual_news_dataloaders, default graph_method='spillover'."""
+    from src.lstm_gat_hybrid.dataset_with_graph_method import (
+        _load_raw_stock_data, _split_raw_data_by_date, _generate_har_for_split,
+    )
+    print(f"\n[create_spillover_news_dataloaders] graph_method={graph_method}, "
+          f"news_panel_path={news_panel_path}")
+
+    stock_data_raw = _load_raw_stock_data(data_dir=data_dir, remove_outliers=remove_outliers, n_std=n_std)
+    train_raw, val_raw, test_raw, _, _, min_length = \
+        _split_raw_data_by_date(stock_data_raw, train_ratio, val_ratio, test_ratio)
+    train_har = _generate_har_for_split(train_raw, 'train')
+    val_har = _generate_har_for_split(val_raw, 'val')
+    test_har = _generate_har_for_split(test_raw, 'test')
+
+    common_stocks = sorted(set(train_har.keys()))
+    train_har_c = {k: v for k, v in train_har.items() if k in common_stocks}
+    train_raw_c = {k: v for k, v in train_raw.items() if k in common_stocks}
+    val_har_c = {k: v for k, v in val_har.items() if k in common_stocks}
+    val_raw_c = {k: v for k, v in val_raw.items() if k in common_stocks}
+    test_har_c = {k: v for k, v in test_har.items() if k in common_stocks}
+    test_raw_c = {k: v for k, v in test_raw.items() if k in common_stocks}
+    print(f"[spillover_news] common stocks: {len(common_stocks)}")
+
+    ds_kwargs = dict(seq_length=seq_length, forecast_horizon=forecast_horizon,
+                     graph_method=graph_method, graph_threshold=graph_threshold,
+                     k_neighbors=k_neighbors, normalize=normalize, config=config,
+                     news_panel_path=news_panel_path)
+    train_ds = MultiStockDatasetWithSpilloverNews(train_raw_c, train_har_c, common_stocks,
+                                                  train_mode=True, **ds_kwargs)
+    val_ds = MultiStockDatasetWithSpilloverNews(val_raw_c, val_har_c, common_stocks,
+                                                train_mode=False, **ds_kwargs)
+    test_ds = MultiStockDatasetWithSpilloverNews(test_raw_c, test_har_c, common_stocks,
+                                                 train_mode=False, **ds_kwargs)
+    print(f"[spillover_news] sequences - train={len(train_ds)}, val={len(val_ds)}, test={len(test_ds)}")
+    print(f"[spillover_news] detected n_feat={train_ds._n_feat}")
+
+    if normalize:
+        for sn in common_stocks:
+            for ds in (train_ds, val_ds, test_ds):
+                ds.feature_normalizers[sn] = VolatilityNormalizer()
+                ds.target_normalizers[sn] = VolatilityNormalizer()
+        for s_idx, sn in enumerate(train_ds.stock_names):
+            feats, targs = [], []
+            for x_har, _adj, _xnews, y in train_ds.sequences:
+                feats.append(x_har[:, s_idx, :])
+                targs.append(y[s_idx])
+            feats = np.concatenate(feats, axis=0)
+            targs = np.array(targs)
+            train_ds.feature_normalizers[sn].fit(feats)
+            train_ds.target_normalizers[sn].fit(targs.reshape(-1, 1))
+            val_ds.feature_normalizers[sn] = train_ds.feature_normalizers[sn]
+            val_ds.target_normalizers[sn] = train_ds.target_normalizers[sn]
+            test_ds.feature_normalizers[sn] = train_ds.feature_normalizers[sn]
+            test_ds.target_normalizers[sn] = train_ds.target_normalizers[sn]
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    print("[create_spillover_news_dataloaders] COMPLETE")
+    return train_loader, val_loader, test_loader, (train_ds, val_ds, test_ds)

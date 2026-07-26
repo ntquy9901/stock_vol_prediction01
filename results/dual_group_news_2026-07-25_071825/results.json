@@ -1,0 +1,32 @@
+{
+  "model": "DualGroupNewsBaseline",
+  "n_feat": 146,
+  "d_news": 64,
+  "smoke": false,
+  "validation_metrics": {
+    "mse": 6.01448118686676e-06,
+    "rmse": 0.0024524439212481007,
+    "mae": 0.0007242801366373897,
+    "r2": 0.6594350337982178,
+    "qlike": 0.6930818557739258,
+    "directional_accuracy": 70.53554412044977,
+    "directional_accuracy_per_stock": 48.46625766871166
+  },
+  "test_metrics": {
+    "mse": 6.969609785301145e-06,
+    "rmse": 0.0026400018532760816,
+    "mae": 0.0007160062086768448,
+    "r2": 0.7147964239120483,
+    "qlike": 0.5457763075828552,
+    "directional_accuracy": 68.70592719649323,
+    "directional_accuracy_per_stock": 47.69938650306749
+  },
+  "val_test_diff": {
+    "mse_diff": 9.55128598434385e-07,
+    "rmse_diff": 0.00018755793202798092,
+    "mae_diff": -8.273927960544825e-06,
+    "r2_diff": 0.055361390113830566,
+    "qlike_diff": -0.14730554819107056,
+    "directional_accuracy_diff": -1.8296169239565359
+  }
+}

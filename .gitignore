@@ -56,6 +56,13 @@ wheels/
 venv/
 env/
 ENV/
+.venv_gpu_encode/
+
+# News embedding cache (regenerable from crawl_data + PhoBERT, tens of GB, not source)
+data/external_news_embeddings/
+
+# Ad-hoc rollback snapshots of regenerable feature panels (not source, not the current result)
+data/features/*_backup_*.parquet
 
 # Jupyter Notebook
 .ipynb_checkpoints

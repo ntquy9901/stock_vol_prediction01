@@ -435,6 +435,55 @@ IMPROVEMENT_TARGETS = {
 
 ## 📝 UPDATE HISTORY
 
+### 2026-07-26 - Dual-group rebuild + SOTA pivot (spillover/QLIKE) + per-ticker isolated gate BREAKTHROUGH + VN30 universe audit
+
+**Context:** continuing the 2026-07-07→07-25 news-fusion baseline lineage (see entries below and
+`docs/reports/2026-07-25_*` / `2026-07-26_*`). Session covered: (1) GPU cache expansion cleanup +
+embedding-cache documentation, (2) dual-group panel rebuild with 12 newly-classified sources,
+(3) SOTA literature research → 2 new baselines, (4) a genuine breakthrough after ~10 null
+results, (5) an audit that found the project's stock universe is stale vs. current VN30.
+
+**1. Docs + cleanup:** `docs/EMBEDDING_STORAGE_SPECIFICATION.md` +
+`docs/EMBEDDING_USAGE_IMPLEMENTATION_GUIDE.md` (cache structure, cross-project reuse, train/val/
+test split handling for the PhoBERT embedding cache). Deleted 2 old cache backups (~8.8GB).
+
+**2. Dual-group panel rebuilt (12 new sources)** — **regression, not improvement**: Test DirAcc
+68.25% vs. 68.71% pre-rebuild (-0.46pp), QLIKE/R²/RMSE all slightly worse. More news volume from
+mostly-general-press sources diluted rather than helped.
+
+**3. SOTA research → 2 untouched knobs identified:** every prior baseline kept the inter-stock
+graph symmetric/same-day (`graph_correlation.py`) and the loss plain MSE (QLIKE only used for
+eval). 2025-2026 literature (Zhang/Pu/Cucuringu/Dong IJF 2025; Chi et al. 2026) flags both as
+gaps. Built `baselines/2026-07-26_spillover_qlike_baseline` (directed lead-lag graph + MSE+QLIKE
+loss) — **also null** (Test DirAcc 68.23% vs. 68.25%, no real lift).
+
+**4. BREAKTHROUGH — `baselines/2026-07-26_per_ticker_news_gate_baseline`:** per-ticker learnable
+gate (`gate_logits`, one free scalar per stock, NOT shared weights like `gated_crossattn`'s
+`gate_mlp`) — gradient PROVEN isolated per ticker (direct perturbation test, not just reasoning).
+Trained to epoch 40 (4× resumed 10-epoch runs, user-approved after each). **Result: first clear
+win after ~10 consecutive null results** — new project-best QLIKE (0.5473 @ epoch 20), R² ties/
+edges the previous record. BUT: (a) aggregate metrics peaked ~epoch 20, degraded slightly by
+epoch 40 (mild overfitting); (b) per-ticker gate values took ~30 epochs to stabilize (r=0.98
+epoch30-vs-40) — single-epoch snapshots are NOT reliable; (c) even fully-converged gate values
+still don't strongly match the independent ablation's per-ticker usefulness signal (r=0.35,
+p=0.053 — best of 5 methods tried, still not conclusive). Full detail:
+`memory/project_null_result_pattern_and_sota_pivot.md` (auto-memory).
+
+**5. VN30 ticker universe audit (verified against official HOSE PDF, Kỳ 1/2026):** this
+project's 32-ticker price universe (`data/processed/`) is STALE vs. the current official VN30
+(30 tickers) by **5 extra** (BCM, BVH, NVL, PDR, POW — no longer in VN30) **+ 3 missing** (DGC,
+LPB, VPL — added in rebalances since this project's data was collected). Separately, and
+independently, the news ticker-mention regex (`vendor_config.py::VN30_TICKERS`) is ALSO missing
+VPB/VRE vs. the project's own 32-ticker universe — meaning `dual_group_news_panel.parquet` has
+**zero rows** for VPB/VRE; any per-ticker "news usefulness" reading for those 2 tickers in ANY
+baseline is a zero-input artifact, not a real signal. Neither issue fixed yet (both flagged,
+pending decision — fixing #1 requires collecting new price history + full retrain; #2 is a small
+regex+rebuild fix). Full detail: `memory/project_vn30_ticker_universe_mismatch.md` (auto-memory).
+
+**Reports:** `docs/reports/2026-07-26_2000_summaryOfUpdate_report.md`,
+`2026-07-26_2230_summaryOfUpdate_report.md`, `2026-07-26_2245_summaryOfUpdate_report.md`,
+`2026-07-26_2330_summaryOfUpdate_report.md` (this consolidated one).
+
 ### 2026-07-08 - Embedding baseline: learning curves + 6-ep verify
 - Train script thêm learning curve mỗi 5 epoch (`--plot_every`, reuse `plot_learning_curves_with_analysis` từ `train_parallel_enhanced.py`) → đóng gap CLAUDE.md **§3.C**. Verify: 2 PNG/run (epoch 5 + final) trong `results/embedding_baseline_*/`.
 - **Pending:** full 20-epoch go/no-go thật (val DirAcc embedding vs scalar sentiment matched-epoch).
