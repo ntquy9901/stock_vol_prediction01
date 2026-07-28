@@ -1,0 +1,7 @@
+- [Autonomous execution](feedback_autonomous_execution.md) — user OK with long unattended runs once plan is agreed
+- [Cross-project vendoring](feedback_cross_project_vendoring.md) — recompute split-boundary constants, don't copy them
+- [Dual-group news baseline](project_dual_group_news_baseline.md) — 2026-07-25 baseline, results, leakage fix
+- [Selective news gate finding](project_selective_news_gate_finding.md) — per-ticker news usefulness disagrees across 4 methods (EDA x2, ablation, learned gate)
+- [GPU setup + macro news baseline](project_gpu_setup_and_macro_news_baseline.md) — Python 3.14 has no CUDA torch (use .venv_gpu_encode), 7.5M-article encode, macro news baseline tied existing results
+- [Null-result pattern + SOTA pivot](project_null_result_pattern_and_sota_pivot.md) — ~10 variants null, then per-ticker isolated gate got new best QLIKE/R2 but gate values still don't match independent usefulness signal
+- [VN30 ticker universe mismatch](project_vn30_ticker_universe_mismatch.md) — project's 32-ticker universe stale vs official VN30 (5 extra/3 missing); separately VPB/VRE missing from news regex entirely
