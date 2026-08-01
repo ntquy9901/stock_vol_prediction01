@@ -27,6 +27,7 @@ def merge_features(
     sentiment_dir: str = None,
     output_dir: str = None,
     feature_set: str = "full",
+    horizon: int = 5,
 ):
     """
     Merge HAR, market, and sentiment features for a single ticker.
@@ -38,6 +39,8 @@ def merge_features(
         sentiment_dir: Directory with sentiment CSVs
         output_dir: Directory to save enhanced CSV
         feature_set: "har" (3), "har_market" (6), or "full" (9)
+        horizon: forecast horizon in trading days ahead (default 5). Target column
+            is named f"target_{horizon}d".
 
     Returns:
         Path to enhanced CSV file
@@ -69,8 +72,9 @@ def merge_features(
         df["Date"] = pd.to_datetime(df["date"])
         df = df.set_index("Date")
 
-    # Add target (5-day ahead)
-    df["target_5d"] = df["parkinson_volatility"].shift(-5)
+    # Add target (horizon-day ahead)
+    target_col = f"target_{horizon}d"
+    df[target_col] = df["parkinson_volatility"].shift(-horizon)
 
     if feature_set in ["har_market", "full"]:
         # Load market data
@@ -102,13 +106,13 @@ def merge_features(
             print(f"[WARN] Sentiment file not found for {ticker}, skipping sentiment features")
 
     # Drop rows with NaN target
-    df = df.dropna(subset=["target_5d"])
+    df = df.dropna(subset=[target_col])
 
     # Save
     output_file = os.path.join(output_dir, f"{ticker}_enhanced.csv")
     df.to_csv(output_file)
 
-    n_features = len([c for c in df.columns if c != "target_5d"])
+    n_features = len([c for c in df.columns if c != target_col])
     print(f"[OK] {ticker}: {len(df)} rows, {n_features} features -> {output_file}")
 
     return output_file
@@ -148,6 +152,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Merge features for enhanced volatility prediction")
     parser.add_argument("--tickers", nargs="+", default=["AAPL", "MSFT", "GOOGL"])
     parser.add_argument("--feature_set", default="full", choices=["har", "har_market", "full"])
+    parser.add_argument("--forecast_horizon", type=int, default=5, choices=[1, 5, 10],
+                         help="Forecast horizon in trading days ahead")
     args = parser.parse_args()
 
-    merge_all_tickers(tickers=args.tickers, feature_set=args.feature_set)
+    merge_all_tickers(tickers=args.tickers, feature_set=args.feature_set, horizon=args.forecast_horizon)

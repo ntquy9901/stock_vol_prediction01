@@ -75,8 +75,9 @@ data/features/*_backup_*.parquet
 # MLflow
 mlruns/
 
-# Experiments
-experiments/
+# Experiments (root-level scratch dir only — do NOT match src/experiments/,
+# which holds real project code, e.g. src/experiments/sp500/)
+/experiments/
 *.pkl
 *.joblib
 
