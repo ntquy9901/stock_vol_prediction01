@@ -78,20 +78,43 @@ def process_all_stocks(raw_dir: str, output_dir: str):
     print("=" * 80)
 
 
+import argparse
+
+MARKET_PATHS = {
+    "vn30": {
+        "raw": os.path.join(project_root, 'data/raw/prices'),
+        "processed": os.path.join(project_root, 'data/processed'),
+    },
+    "sp500": {
+        "raw": os.path.join(project_root, 'data/raw/prices_sp500'),
+        "processed": os.path.join(project_root, 'data/processed_sp500'),
+    },
+}
+
+
 def main():
     """Main execution function."""
-    print("=" * 80)
-    print("PROCESS RAW OHLCV DATA TO PARKINSON VOLATILITY")
-    print("=" * 80)
+    parser = argparse.ArgumentParser(description="Process OHLCV data to Parkinson volatility")
+    parser.add_argument(
+        "--market", default="vn30", choices=["vn30", "sp500"],
+        help="Market to process (default: vn30)"
+    )
+    parser.add_argument("--raw_dir", default=None, help="Override raw data directory")
+    parser.add_argument("--output_dir", default=None, help="Override output directory")
+    args = parser.parse_args()
 
-    # Define directories (relative to project root)
-    raw_dir = os.path.join(project_root, 'data/raw/prices')
-    output_dir = os.path.join(project_root, 'data/processed')
+    paths = MARKET_PATHS[args.market]
+    raw_dir = args.raw_dir or paths["raw"]
+    output_dir = args.output_dir or paths["processed"]
+
+    print("=" * 80)
+    print(f"PROCESS RAW OHLCV DATA TO PARKINSON VOLATILITY (market={args.market})")
+    print("=" * 80)
 
     # Check if raw directory exists
     if not os.path.exists(raw_dir):
         print(f"[ERROR] Raw data directory not found: {raw_dir}")
-        print("Please ensure raw OHLCV files are in data/raw/prices/")
+        print(f"Please ensure raw OHLCV files are in {raw_dir}/")
         return
 
     # Process all stocks

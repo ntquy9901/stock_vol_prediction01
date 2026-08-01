@@ -93,6 +93,9 @@ def process_single_stock(raw_file: str, output_dir: str) -> Tuple[str, int]:
         # Load raw data
         df = pd.read_csv(raw_file)
 
+        # Normalize column names to lowercase
+        df.columns = [col.lower() for col in df.columns]
+
         # Validate OHLCV data
         validate_ohlc_data(df)
 
