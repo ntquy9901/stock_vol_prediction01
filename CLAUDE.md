@@ -140,7 +140,27 @@ Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial rev
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
 - Fit THIS change: bỏ phần không relevant — **trừ code review, luôn required + tóm tắt.**
 - Cover (as applicable): what changed, files (path → purpose), tests + coverage %, code-review result + actions, commands run thật, risks/follow-ups, DoD checklist.
-- Trung thực: chỉ ghi gì thật xảy ra; `Not run` (+lý do) cho cái skip.
+- Chỉ ghi gì thật xảy ra; `Not run` (+lý do) cho cái skip.
+
+## Văn phong báo cáo — khách quan (ENFORCED, áp dụng MỌI report/tài liệu, không riêng summary report)
+
+> Áp dụng theo yêu cầu user 2026-08-01. Lý do vi phạm trước đó: file/nội dung report từng dùng
+> cách xưng hô cá nhân ("thầy") và ngôn từ tự khẳng định ("báo cáo trung thực") — không phù hợp
+> văn phong tài liệu kỹ thuật khách quan.
+
+- **KHÔNG xưng hô/gọi tên vai trò cụ thể** trong nội dung hay tên file: không dùng "thầy",
+  "giảng viên", "sinh viên", hay bất kỳ cách xưng hô cá nhân nào khác. Viết như tài liệu kỹ thuật
+  trung lập, không phải thư/lời nhắn gửi một người cụ thể.
+- **KHÔNG dùng ngôn từ chủ quan/hoa mỹ** (cảm thán, nhấn mạnh cảm xúc, tự khen). Chỉ nêu sự kiện,
+  số liệu, kết luận — để dữ liệu tự nói, không cần tính từ tô điểm.
+- **KHÔNG tự khẳng định "trung thực"/"thành thật"/"honest"** ở đầu hay cuối báo cáo (vd "Báo cáo
+  trung thực:", "Lưu ý trung thực:"). Việc báo cáo đúng sự thật là mặc định bắt buộc (đã có rule
+  "chỉ ghi gì thật xảy ra" ở trên) — không cần tuyên bố lại, tuyên bố này chính nó mang tính chủ
+  quan/phòng vệ, không phải văn phong khách quan.
+- **Cách viết đúng:** nêu thẳng dữ kiện + số liệu + nguồn trích dẫn (file/`results.json`), không
+  thêm câu dẫn nhập mang tính cá nhân hoá hay tự đánh giá về độ tin cậy của chính báo cáo.
+- Áp dụng cho: tên file, tiêu đề, mọi section trong `docs/reports/`, `docs/report_*/`,
+  `code_review/`, và bất kỳ markdown nào sinh ra làm báo cáo.
 
 ## Code hygiene (mọi ngôn ngữ)
 - No hidden global state / unbounded in-process caches (dùng bounded TTL/size cache; externalize shared state).

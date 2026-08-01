@@ -1,0 +1,78 @@
+{
+  "by_month": {
+    "1": {
+      "mean_delta_qlike": 0.002280687214806676,
+      "n": 450
+    },
+    "2": {
+      "mean_delta_qlike": 0.000464553915662691,
+      "n": 406
+    },
+    "3": {
+      "mean_delta_qlike": 0.0023361339699476957,
+      "n": 453
+    },
+    "4": {
+      "mean_delta_qlike": 0.0031939921900629997,
+      "n": 365
+    },
+    "5": {
+      "mean_delta_qlike": -0.0008639380102977157,
+      "n": 392
+    },
+    "6": {
+      "mean_delta_qlike": 0.003189111826941371,
+      "n": 413
+    },
+    "7": {
+      "mean_delta_qlike": 0.004215503577142954,
+      "n": 430
+    },
+    "8": {
+      "mean_delta_qlike": 0.005681418813765049,
+      "n": 467
+    },
+    "9": {
+      "mean_delta_qlike": 0.004905338864773512,
+      "n": 387
+    },
+    "10": {
+      "mean_delta_qlike": 0.0017449230654165149,
+      "n": 458
+    },
+    "11": {
+      "mean_delta_qlike": 0.0043186224065721035,
+      "n": 515
+    },
+    "12": {
+      "mean_delta_qlike": 0.005219825077801943,
+      "n": 512
+    }
+  },
+  "tet_window": {
+    "n_inside": 235,
+    "mean_delta_inside": 0.0018828097963705659,
+    "n_outside": 5013,
+    "mean_delta_outside": 0.0031986921094357967,
+    "welch_t_stat": -0.8162475228309631,
+    "welch_p_value": 0.41508424282073975
+  },
+  "earnings_window": {
+    "n_inside": 1154,
+    "mean_delta_inside": 0.0033851785119622946,
+    "n_outside": 4094,
+    "mean_delta_outside": 0.0030705933459103107,
+    "welch_t_stat": 0.39200103282928467,
+    "welch_p_value": 0.6950899362564087
+  },
+  "tet_proximity_corr": {
+    "pearson_r": -0.01902303844690323,
+    "p_value": 0.16823863983154297,
+    "n": 5248
+  },
+  "earnings_proximity_corr": {
+    "pearson_r": -0.01956792175769806,
+    "p_value": 0.1563771814107895,
+    "n": 5248
+  }
+}
