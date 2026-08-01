@@ -88,6 +88,9 @@ folder/artifact trùng lặp):**
    - Nếu buộc phải phá 1 trong 2 gate → ghi rõ lý do (complexity tracking) trong `design.md`.
 5. **Tasks** — Tách plan thành danh sách task đánh số, mỗi task có tiêu chí verify được (test/smoke
    pass) — LIỆT KÊ rõ trước khi code (siết §4 Goal-Driven Execution thành checklist tường minh).
+   - **Task granularity:** Mỗi task nên hoàn thành trong **2-5 phút** (per Superpowers methodology).
+     Task >10 phút → chia nhỏ hơn. Mỗi task = 1 file change nhỏ hoặc 1 function.
+   - **Mỗi task có:** file path cụ thể, verification step rõ ràng, estimated time.
 6. **Implement** — Test-First bắt buộc: viết test → xác nhận test FAIL → implement code → test pass
    → refactor nếu cần. KHÔNG viết implementation code trước khi có test tương ứng cho hành vi đó.
 7. **Validate** — Xác nhận output khớp spec (acceptance criteria ở bước Specify) trước khi coi done —
@@ -114,6 +117,11 @@ Task chỉ "done" khi TẤT CẢ đúng:
 - **Checks run:** bắt buộc chạy test + lint. KHÔNG claim "pass" nếu chưa chạy thật.
 - **Lint scope:** exclude vendored/generated/third-party (`.agents .claude _bmad archive data`).
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
+  - **Two-stage review (per Superpowers):** Khi task phức tạp, tách review thành 2 stage:
+    1. **Spec compliance:** Code có khớp spec/plan không? Có test không? Output đúng không?
+    2. **Code quality:** Clean code, edge cases, performance, security?
+    - Stage 1 fail → fix trước, không sang stage 2. Stage 1 pass → sang stage 2.
+    - Stage đơn giản: review gộp 1 lần như bình thường.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
 - **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.
 - **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
@@ -790,6 +798,26 @@ patience = 15            # Early stopping patience
 
 ## 7. Development Workflow
 
+### **Isolated Experiments (Git Worktrees)** ⭐
+
+Khi chạy nhiều experiment song song (vd: VN30 baseline + S&P 500 + cross-market), dùng **git worktree** thay vì clone riêng:
+
+```bash
+# Tạo worktree cho experiment mới
+git worktree add ../stock_vol_sp500 global-benchmark
+
+# Mỗi worktree = 1 experiment độc lập
+../stock_vol_prediction01/       → master (VN30 production)
+../stock_vol_sp500/              → global-benchmark (S&P 500 experiment)
+```
+
+**Quy tắc:**
+- Mỗi worktree có `.git` riêng → commit/checkout độc lập
+- Cùng remote repo → dễ push/pull, không duplicate data
+- Xóa worktree khi done: `git worktree remove ../stock_vol_sp500`
+- **Branch experiment:** Luôn tạo branch riêng cho experiment (vd `global-benchmark`, `experiment-sentiment`)
+- **Không commit experiment code vào master** — chỉ merge khi experiment thành công và đã review
+
 ### **Code Review Process**
 
 **Before Committing:**
@@ -806,6 +834,18 @@ patience = 15            # Early stopping patience
 - [ ] Coverage > 85%
 - [ ] Documentation updated
 - [ ] Results saved with timestamp
+
+### **Finishing a Development Branch** (per Superpowers)
+
+Khi experiment branch hoàn thành:
+
+1. **Verify:** Tất cả tests pass, results đúng spec
+2. **Quyết định:**
+   - **Merge vào master:** Experiment thành công, code production-ready → tạo PR
+   - **Giữ lại branch:** Experiment cần thêm work → tiếp tục trên branch
+   - **Xóa branch:** Experiment thất bại/không cần → `git branch -D <branch>` + `git worktree remove <path>`
+3. **Cleanup:** Xóa worktree, branch cũ, temporary files
+4. **Document:** Ghi kết experiment vào `docs/reports/` — kể cả experiment thất bại (lessons learned)
 
 ---
 
