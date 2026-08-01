@@ -156,6 +156,21 @@ Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<Y
 - No hardcoded absolute local paths.
 - No production logic chỉ sống trong notebook.
 
+## Writing style (reports, docs, summaries) ⭐
+
+**BẮT BUỘC khách quan, trung tính, không cảm xúc.**
+
+- **KHÔNG dùng từ ngữ chỉ vai trò cá nhân:** "thầy", "giảng viên", "sinh viên", "em", "anh", "chị", "bạn", "quý thầy cô", "hội đồng"
+- **KHÔNG dùng từ ngữ hoa mỹ, cảm xúc:** "thành thật", "rất", "cực kỳ", "xuất sắc", "ấn tượng", "đáng kinh ngạc", "tuyệt vời", "hy vọng", "mong rằng"
+- **KHÔNG dùng từ ngữ xin phép, nhún nhường:** "em xin", "chúng em kính", "dù còn hạn chế", "chưa hoàn thiện"
+- **Dùng cấu trúc bị động hoặc chủ ngữ trung tính:** "Kết quả cho thấy...", "Dữ liệu được thu thập từ...", "Mô hình đạt..."
+- **Dùng số liệu cụ thể thay vì mô tả định tính:** Thay vì "cải thiện đáng kể" → "cải thiện 3.9%"
+- **Báo cáo sự kiện, không bình luận:** Ghi nhận kết quả, không đánh giá "tốt/xấu", "thành công/thất bại"
+- **Tiêu đề section trung tính:** "Kết quả" thay vì "Kết quả ấn tượng", "Hạn chế" thay vì "Những hạn chế đáng tiếc"
+- No secrets in code (secrets manager / env).
+- No hardcoded absolute local paths.
+- No production logic chỉ sống trong notebook.
+
 ## Training policy (experimentation) ⭐
 Khi **thử nghiệm** model (không phải final run):
 - **Default 5-10 epoch** — KHÔNG train >10 epoch khi chưa có quyết định.

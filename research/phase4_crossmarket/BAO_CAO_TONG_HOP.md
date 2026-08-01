@@ -1,7 +1,6 @@
-# BÁO CÁO NGHIÊN CỨU: Cross-Market Volatility Forecasting
+# BÁO CÁO: Cross-Market Volatility Forecasting
 
-**Sinh viên:** Nguyễn Thanh Quý  
-**Đề tài:** Dự báo biến động cổ phiếu VN30 với dữ liệu benchmark toàn cầu  
+**Dự án:** Stock Volatility Prediction VN30  
 **Ngày:** 2026-08-01  
 **Branch:** `global-benchmark` (GitHub: ntquy9901/stock_vol_prediction01)
 
@@ -9,18 +8,18 @@
 
 # PHẦN 1: TỔNG QUAN
 
-## 1.1 Mục tiêu nghiên cứu
+## 1.1 Mục tiêu
 
-Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu VN30, sau đó **mở rộng ra thị trường quốc tế** (S&P 500) để:
-1. So sánh hiệu suất model trên 2 thị trường khác nhau
-2. Thử nghiệm khả năng **chuyển giao cross-market** (train S&P 500 → test VN30 và ngược lại)
-3. Đánh giá tác động của **dữ liệu thị trường** (VIX, lãi suất) và **tin tức** (sentiment) lên độ chính xác
+Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu VN30, mở rộng sang dữ liệu benchmark toàn cầu (S&P 500) để:
+1. So sánh hiệu suất mô hình trên hai thị trường
+2. Thử nghiệm khả năng chuyển giao cross-market (train S&P 500 → test VN30 và ngược lại)
+3. Đánh giá tác động của dữ liệu thị trường (VIX, lãi suất) và tin tức (sentiment) lên độ chính xác
 
-## 1.2 Phương pháp tiếp cận
+## 1.2 Phương pháp
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        PIPELINE TỔNG QUAN                        │
+│                        PIPELINE                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │  Phase 1: Download dữ liệu S&P 500 từ Hugging Face              │
@@ -30,7 +29,7 @@ Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu 
 │           + Sentiment từ tin tức (FinBERT)                       │
 │                                                                 │
 │  Phase 3: Merge features (HAR + Market + Sentiment = 9 features)│
-│           → Train model, so sánh HAR-only vs Full features      │
+│           → Train mô hình, so sánh HAR-only vs Full features    │
 │                                                                 │
 │  Phase 4: Cross-market experiments                              │
 │           → Train S&P 500 → Test VN30 (và ngược lại)            │
@@ -38,21 +37,21 @@ Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu 
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 1.3 Kết quả chính (Tóm tắt)
+## 1.3 Kết quả (Tóm tắt)
 
 | Thí nghiệm | Features | Dir Acc | RMSE | QLIKE |
 |------------|----------|---------|------|-------|
 | **S&P 500 (HAR-only)** | 3 | 50.89% | 0.000304 | 1.959 |
-| **S&P 500 (Full)** | 9 | **51.67%** | **0.000292** | **1.952** |
+| **S&P 500 (Full)** | 9 | 51.67% | 0.000292 | 1.952 |
 | **S&P 500 → VN30** | 3 | 48.32% | 0.000229 | 0.0795 |
 | **VN30 → S&P 500** | 3 | 49.75% | 0.000638 | 0.5174 |
 | **VN30 (baseline)** | 3 | 67.90% | 0.0003 | ~0.12 |
 
-### Phát hiện quan trọng:
+### Nhận xét
 
-1. **Full features (9) tốt hơn HAR-only (3)** trên mọi chỉ số (+0.78pp DirAcc, -3.9% RMSE)
-2. **Cross-market generalization kém** — model train trên thị trường này không dự tốt trên thị trường kia
-3. **Mô hình market-specific là cần thiết** — cần kỹ thuật domain adaptation để transfer
+1. Full features (9) có chỉ số cao hơn HAR-only (3) trên mọi metric: +0.78pp DirAcc, -3.9% RMSE
+2. Cross-market generalization có DirAcc thấp hơn in-market: 48-50% so với 52-68%
+3. Mô hình market-specific cho kết quả cao hơn mô hình cross-market
 
 ---
 
@@ -93,7 +92,7 @@ Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu 
 
 | Indicator | Symbol | Mô tả | Rows |
 |-----------|--------|-------|------|
-| VIX | ^VIX | Chỉ số sợ hãi thị trường | 3,772 |
+| VIX | ^VIX | Chỉ số biến động thị trường | 3,772 |
 | Treasury 10Y | ^TNX | Lãi suất trái phiếu 10 năm | 3,771 |
 | S&P 500 Index | ^GSPC | Chỉ số S&P 500 | 3,772 |
 
@@ -104,7 +103,7 @@ Xây dựng hệ thống dự báo biến động (volatility) cho cổ phiếu 
 | Field | Mô tả | Ví dụ |
 |-------|-------|-------|
 | date | Ngày | 2024-03-25 |
-| sentiment_score | Điểm cảm xúc (-1 đến +1) | 0.779 (tích cực) |
+| sentiment_score | Điểm cảm xúc (-1 đến +1) | 0.779 |
 | sentiment_confidence | Độ tin cậy (0 đến 1) | 0.863 |
 | news_count | Số bài báo trong ngày | 3 |
 
@@ -147,7 +146,7 @@ T     | 25.2  | 24.5  | 0.0015    | 0.0015    | 0.0012     | 0.0012
 
 ```python
 # Market indicators (merged by Date)
-vix           = VIX index level (market fear)
+vix           = VIX index level
 treasury_10y  = 10-year Treasury rate
 sp500_index   = S&P 500 index level
 ```
@@ -478,7 +477,7 @@ Test Results:
 | Thí nghiệm | Train Data | Test Data | Features | Epochs | Dir Acc | RMSE | QLIKE |
 |------------|------------|-----------|----------|--------|---------|------|-------|
 | **S&P 500 HAR-only** | S&P 500 (3 tickers) | S&P 500 (3 tickers) | 3 | 10 | 50.89% | 0.000304 | 1.959 |
-| **S&P 500 Full** | S&P 500 (3 tickers) | S&P 500 (3 tickers) | 9 | 10 | **51.67%** | **0.000292** | **1.952** |
+| **S&P 500 Full** | S&P 500 (3 tickers) | S&P 500 (3 tickers) | 9 | 10 | 51.67% | 0.000292 | 1.952 |
 | **S&P 500 → VN30** | S&P 500 (257 tickers) | VN30 (32 tickers) | 3 | 38 | 48.32% | 0.000229 | 0.0795 |
 | **VN30 → S&P 500** | VN30 (32 tickers) | S&P 500 (3 tickers) | 3 | 13 | 49.75% | 0.000638 | 0.5174 |
 | **VN30 Baseline** | VN30 (32 tickers) | VN30 (32 tickers) | 3 | 70 | 67.90% | 0.0003 | ~0.12 |
@@ -489,35 +488,35 @@ Test Results:
 - Dir Acc: +0.78pp (51.67% vs 50.89%)
 - RMSE: -3.9% (0.000292 vs 0.000304)
 - QLIKE: -0.4% (1.952 vs 1.959)
-- **Kết luận:** Market data + sentiment giúp cải thiện nhẹ nhưng nhất quán
+- Market data và sentiment có tác động cải thiện nhẹ trên cả ba metric
 
 **2. Cross-market generalization:**
-- S&P 500 → VN30: 48.32% (thấp hơn VN30-only 67.90% → **giảm 19.58pp**)
-- VN30 → S&P 500: 49.75% (thấp hơn S&P 500-only 51.67% → **giảm 1.92pp**)
-- **Kết luận:** Model không transfer tốt giữa thị trường emerging (VN30) và developed (S&P 500)
+- S&P 500 → VN30: 48.32% (thấp hơn VN30-only 67.90%, chênh lệch 19.58pp)
+- VN30 → S&P 500: 49.75% (thấp hơn S&P 500-only 51.67%, chênh lệch 1.92pp)
+- Mô hình train trên thị trường này có DirAcc thấp hơn khi test trên thị trường kia
 
 **3. Early stopping:**
-- S&P 500 → VN30: dừng ở epoch 38 (model không học được pattern VN30)
-- VN30 → S&P 500: dừng ở epoch 13 (model memorize S&P 500 nhanh nhưng không generalize)
-- **Kết luận:** Cross-market cần nhiều epoch hơn hoặc kỹ thuật domain adaptation
+- S&P 500 → VN30: dừng ở epoch 38
+- VN30 → S&P 500: dừng ở epoch 13
+- Cross-market experiments có xu hướng dừng sớm hơn so với in-market (70 epochs)
 
 ---
 
 ## 2.7 Hạn chế và Hướng phát triển
 
-### 2.7.1 Hạn chế hiện tại
+### 2.7.1 Hạn chế
 
 | Hạn chế | Mô tả | Impact |
 |---------|-------|--------|
-| **Feature mismatch** | VN30 chỉ có 3 HAR, S&P 500 có 9 | Không thể so sánh fair với full features |
-| **Sentiment sparse** | Chỉ 7-10 days/ticker (news dataset nhỏ) | Sentiment features không đủ dense |
+| **Feature mismatch** | VN30 chỉ có 3 HAR, S&P 500 có 9 | Không thể so sánh với full features |
+| **Sentiment sparse** | Chỉ 7-10 days/ticker | Sentiment features không đủ dense |
 | **Cross-market test size** | VN30 → S&P 500 test chỉ 3 tickers | Kết quả có thể không representative |
 | **Training epochs** | Cross-market chỉ train 13-38 epochs | Chưa đạt convergence |
 
 ### 2.7.2 Hướng phát triển
 
-1. **Domain Adaptation:** Fine-tune S&P 500 model trên VN30 data (transfer learning)
-2. **Multi-market Training:** Combine S&P 500 + VN30 trong cùng 1 model
+1. **Domain Adaptation:** Fine-tune S&P 500 model trên VN30 data
+2. **Multi-market Training:** Combine S&P 500 + VN30 trong cùng mô hình
 3. **Full Sentiment:** Process toàn bộ 4,589 news articles cho 257 tickers
 4. **Hyperparameter Tuning:** Optimize cho cross-market transfer
 5. **Advanced Architectures:** LSTM-GAT, TimesFM, Kronos foundation model
@@ -568,8 +567,6 @@ stock_vol_prediction01_branchGlobal/
 # Phase 1: Download S&P 500 data
 python src/experiments/sp500/download_sp500.py --tickers AAPL MSFT GOOGL
 
-# Phase 2: Download market data + sentiment (tự động trong script)
-
 # Phase 3: Train với feature sets khác nhau
 python src/experiments/sp500/train_enhanced.py --feature_set har --epochs 10
 python src/experiments/sp500/train_enhanced.py --feature_set full --epochs 10
@@ -589,11 +586,11 @@ python -m pytest tests/test_sp500/ -v
 
 ## 2.10 Kết luận
 
-1. **Hệ thống hoạt động end-to-end:** Từ download dữ liệu → feature engineering → training → evaluation → cross-market experiments
-2. **Full features (9) cải thiện nhẹ so với HAR-only (3):** +0.78pp DirAcc, -3.9% RMSE
-3. **Cross-market generalization kém:** Model train trên thị trường này không dự tốt trên thị trường kia (48-50% vs 52-68% in-market)
-4. **Cần domain adaptation:** Để transfer knowledge giữa markets, cần kỹ thuật như fine-tuning, multi-task learning, hoặc domain adversarial training
-5. **19/19 tests pass:** Code quality đảm bảo với test coverage đầy đủ
+1. Hệ thống hoạt động end-to-end: download dữ liệu → feature engineering → training → evaluation → cross-market experiments
+2. Full features (9) có chỉ số cao hơn HAR-only (3): +0.78pp DirAcc, -3.9% RMSE
+3. Cross-market generalization có DirAcc thấp hơn in-market: 48-50% so với 52-68%
+4. Mô hình market-specific cho kết quả cao hơn mô hình cross-market
+5. 19/19 tests pass
 
 ---
 
