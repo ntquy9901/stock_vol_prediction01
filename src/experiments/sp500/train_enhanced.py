@@ -178,7 +178,8 @@ def main():
         val_losses.append(val_loss)
         scheduler.step(val_loss)
 
-        print(f"Epoch {epoch+1}/{args.epochs} - Train Loss: {train_loss:.6f} - Val Loss: {val_loss:.6f} - Val DirAcc: {val_metrics['directional_accuracy']:.2f}%")
+        print(f"Epoch {epoch+1}/{args.epochs} - Train Loss: {train_loss:.6f} - "
+              f"Val Loss: {val_loss:.6f} - Val DirAcc: {val_metrics['directional_accuracy']:.2f}%")
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
@@ -188,7 +189,8 @@ def main():
     model.load_state_dict(torch.load(os.path.join(results_dir, "best_model.pth")))
     test_loss, test_metrics = evaluate_pooled(model, per_ticker, "test", criterion, device, args.batch_size)
 
-    print(f"\n[TEST] DirAcc: {test_metrics['directional_accuracy']:.2f}% - RMSE: {test_metrics['rmse']:.6f} - QLIKE: {test_metrics['qlike']:.6f}")
+    print(f"\n[TEST] DirAcc: {test_metrics['directional_accuracy']:.2f}% - "
+          f"RMSE: {test_metrics['rmse']:.6f} - QLIKE: {test_metrics['qlike']:.6f}")
 
     # Save results
     results = {

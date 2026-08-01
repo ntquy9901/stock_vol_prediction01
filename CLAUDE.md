@@ -142,7 +142,9 @@ Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial rev
 - **Data-pipeline test phải có real-data-sample smoke.** Synthetic fixture bỏ sót lỗi encoding (UTF-8 vs cp1252), mixed date format (ISO vs DD/MM), mixed timezone, schema drift giữa nguồn crawl khác nhau (đúng loại lỗi từng gặp ở `aggregate_news_sources.py`). Ít nhất 1 test/phase đọc 1 lát cắt nhỏ dữ liệu thật (không phải toàn bộ) và assert chạy không exception + output hợp lý.
 - **Code review = 3-layer (Blind Hunter + Edge Case Hunter + Acceptance Auditor) qua `/code-review`, chạy TRƯỚC khi coi done.** Self-review KHÔNG thay thế được. Xử lý hết finding critical/major trước khi done; ghi minor thành follow-up trong summary report.
 
-**Tooling gap hiện tại:** `diff-cover --fail-under=100` chưa từng được set up/chạy thật trong repo này (xem "Tooling gaps" ở §Per-project setup) — cho tới khi cài xong, ghi `Not run` + lý do trong summary report thay vì claim đã đạt C0=100%.
+**Cập nhật 2026-08-01:** `pytest-cov`/`diff-cover`/`ruff` đã install và verify chạy thật (xem §Per-project
+setup). Gate `diff-cover --fail-under=100` giờ PHẢI chạy thật cho mọi thay đổi (không còn lý do ghi
+`Not run` vì "chưa cài" — nếu skip, phải ghi lý do khác cụ thể, vd file không có test tương ứng).
 
 ## Summary report (per change)
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
@@ -182,14 +184,18 @@ Khi **thử nghiệm** model (không phải final run):
 ## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
 - **Language/toolchain:** Python 3.11 (pip)
 - **Test command:** `python -m pytest`
-- **Coverage + diff-coverage:** `pip install pytest-cov diff-cover` → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --fail-under=100` (C0 gate; C1≥80% soi thủ công trong report — xem §Testing quality rules ENFORCED) *(chưa setup — cần install)*
-- **Lint command:** `pip install ruff` → `ruff check .` *(chưa setup — cần install)*
-- **Lint excludes:** `.agents .claude _bmad archive data`
-- **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*
-- **Code-review tool:** `/code-review` skill (Claude Code)
+- **Coverage + diff-coverage:** `pytest-cov`/`diff-cover` đã install (2026-08-01) → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --compare-branch=<base>` (C0 gate; C1≥80% soi thủ công trong report — xem §Testing quality rules ENFORCED). Lưu ý: `--fail-under=100` chỉ nên bật khi code review + test coverage đã đủ chín — dùng `--compare-branch=HEAD~1` (hoặc branch base) để đọc % thật trước.
+- **Lint command:** `ruff` đã install (2026-08-01) → `ruff check .` (config: `ruff.toml`, đã có exclude list)
+- **Lint excludes:** `.agents .claude _bmad archive data` (khớp `ruff.toml` `extend-exclude`)
+- **Smoke command:** `python -m pytest -m smoke` (marker `smoke` đã register trong `pytest.ini`)
+- **Code-review tool:** `/code-review` skill (Claude Code) — chỉ gọi được qua user gõ trực tiếp `/code-review`, KHÔNG gọi được qua Skill tool trong 1 agent session (`disable-model-invocation`) — nếu cần review trong session, tự làm adversarial review thủ công + `ReportFindings`.
 - **Python extras:** tránh bare `except` + mutable default args; dùng type hints + `pathlib`
 
-> **Tooling gaps (honest):** pytest-cov, diff-cover, ruff chưa install; smoke marker chưa register. Rules áp dụng ngay cho review/code-review/summary-report; tooling setup là follow-up.
+> **Tooling status (2026-08-01):** pytest-cov, diff-cover, ruff đã install + verify chạy thật (xem
+> `docs/reports/2026-08-01_1213_summaryOfUpdate_report.md` và báo cáo cập nhật sau đó). Smoke marker đã
+> có sẵn trong `pytest.ini` từ trước (claim "chưa register" trước đây là sai, đã sửa). `D:\bmad-projects\
+> ml-ds-common-rules` (§2, ML/DS Common Rules) KHÔNG tồn tại trên máy hiện tại — chưa install được,
+> cần user cung cấp lại đường dẫn đúng nếu muốn dùng package này.
 
 ---
 

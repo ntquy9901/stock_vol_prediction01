@@ -8,7 +8,6 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-import pytest
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
@@ -128,10 +127,9 @@ class TestScalerReuse:
         assert abs(feature_scaler.mean_[0] - train_mean) < 1e-6
         assert abs(feature_scaler.scale_[0] - train_std) < 1e-6
 
-        # Manually transform a known val-split raw value with the TRAIN scaler and
-        # compare against what the val dataset actually stored.
-        val_start = train_end + int(n_rows * 0.15)
-        val_start = train_end  # val split begins right after train
+        # Manually transform a known val-split raw value (val split begins right
+        # after train) with the TRAIN scaler and compare against what the val
+        # dataset actually stored.
         raw_val_first = values[train_end]
         expected_scaled = (raw_val_first - train_mean) / train_std
 

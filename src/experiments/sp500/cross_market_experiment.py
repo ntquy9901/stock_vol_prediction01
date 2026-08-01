@@ -241,7 +241,8 @@ def run_experiment(train_market, test_market, horizon=5, epochs=70, patience=15,
     # Evaluate on cross-market test
     test_metrics = evaluate_full_series(model, per_ticker_test_full, device, batch_size)
 
-    print(f"\n[TEST] DirAcc: {test_metrics['directional_accuracy']:.2f}% - RMSE: {test_metrics['rmse']:.6f} - QLIKE: {test_metrics['qlike']:.6f}")
+    print(f"\n[TEST] DirAcc: {test_metrics['directional_accuracy']:.2f}% - "
+          f"RMSE: {test_metrics['rmse']:.6f} - QLIKE: {test_metrics['qlike']:.6f}")
 
     train_rows = sum(len(df) for df in train_ticker_dfs.values())
     test_rows = sum(len(df) for df in test_ticker_dfs.values())
