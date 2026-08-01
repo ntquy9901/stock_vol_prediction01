@@ -71,6 +71,16 @@ concatenating true/pred arrays — done in the caller (`train_enhanced.py`/`cros
 not inside the shared module, since "how to aggregate across tickers for reporting" is caller policy,
 not a dataset-building concern.
 
+**Follow-up fix (2026-08-01, same-day follow-up session):** while debugging the horizon-1 DirAcc
+anomaly (RESULTS.md §4.1 — confirmed NOT a bug, a genuine data characteristic), found and fixed a
+4th, separate, real bug: `evaluate_pooled`/`evaluate_train_market_split`/`evaluate_full_series`
+concatenated multiple tickers' predictions before computing `directional_accuracy`, so `np.diff()`
+computed a spurious "change" at each ticker-boundary seam. Fixed via
+`src/common/evaluation.py::directional_accuracy_grouped`/`evaluate_predictions_grouped` (per-ticker
+diffs, never crosses a boundary), test-first. Verified impact on real data is negligible
+(`n_tickers - 1` spurious diffs out of 1600+ samples) — real, worth fixing, but not the explanation
+for the horizon-1 anomaly.
+
 **Known limitation (code review finding, not fixed this phase):** `build_full_series_datasets` fits
 the test-market scaler on that market's ENTIRE date range, so an early window's normalization can use
 statistics computed from chronologically later dates within the same series — a mild look-ahead in the

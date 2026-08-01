@@ -24,7 +24,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
 sys.path.insert(0, project_root)
 
-from src.common.evaluation import evaluate_predictions
+from src.common.evaluation import evaluate_predictions_grouped
 from src.common.multi_ticker_dataset import build_per_ticker_datasets
 
 
@@ -76,10 +76,13 @@ def evaluate_pooled(model, per_ticker, split, criterion, device, batch_size=64):
 
     Fixes the bug where a single (pooled) scaler was used to inverse-transform
     predictions from multiple tickers with different volatility scales.
+    directional_accuracy is computed per-ticker (evaluate_predictions_grouped)
+    to avoid a spurious "change" at the boundary between two different
+    tickers' concatenated predictions.
     """
     model.eval()
     total_loss, n_batches = 0.0, 0
-    all_true, all_pred = [], []
+    true_groups, pred_groups = [], []
     with torch.no_grad():
         for ticker, splits in per_ticker.items():
             ds = splits[split]
@@ -87,6 +90,7 @@ def evaluate_pooled(model, per_ticker, split, criterion, device, batch_size=64):
                 continue
             loader = DataLoader(ds, batch_size=batch_size)
             target_scaler = splits["target_scaler"]
+            ticker_true, ticker_pred = [], []
             for x, y in loader:
                 x, y = x.to(device), y.to(device)
                 pred = model(x).squeeze(-1)
@@ -96,11 +100,13 @@ def evaluate_pooled(model, per_ticker, split, criterion, device, batch_size=64):
 
                 pred_np = target_scaler.inverse_transform(pred.cpu().numpy().reshape(-1, 1)).flatten()
                 true_np = target_scaler.inverse_transform(y.cpu().numpy().reshape(-1, 1)).flatten()
-                all_true.extend(true_np)
-                all_pred.extend(pred_np)
+                ticker_true.extend(true_np)
+                ticker_pred.extend(pred_np)
+            true_groups.append(np.array(ticker_true))
+            pred_groups.append(np.array(ticker_pred))
 
     avg_loss = total_loss / max(n_batches, 1)
-    metrics = evaluate_predictions(np.array(all_true), np.array(all_pred))
+    metrics = evaluate_predictions_grouped(true_groups, pred_groups)
     return avg_loss, metrics
 
 

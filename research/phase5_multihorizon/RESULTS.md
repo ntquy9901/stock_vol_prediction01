@@ -96,15 +96,39 @@ S&P 500 DirAcc trails VN30's 68%+. The dominant gap is more likely the maturity 
 the original comparison (§ conversation): 3 tickers vs 30, no GAT/spatial branch, no per-ticker gate,
 10 epochs vs VN30's tuned 20+, days of iteration vs VN30's ~1 month.
 
-## 4. Open findings (not investigated further in this phase)
+## 4. Open findings
 
-1. **Horizon-1 DirAcc is anomalously low (31-36%) across all 4 sub-experiments**, while QLIKE/R² are
-   BEST at horizon 1. Opposite of the VN30 pattern (horizon 1 = easiest on all 4 metrics). Worth a
-   dedicated investigation (e.g. check whether the model's 1-day-ahead predictions are systematically
-   lagged/anti-persistent) before trusting horizon-1 forecasts from this pipeline.
-2. **SP500→VN30 horizon-1 QLIKE=6.03 is a severe outlier** paired with the sweep's highest R²
+1. **[RESOLVED 2026-08-01, follow-up session] Horizon-1 DirAcc is anomalously low (31-36%) across all
+   4 sub-experiments — root cause confirmed, NOT a code bug.** Verified empirically: a trivial
+   naive-persistence predictor ("tomorrow's volatility = today's volatility", using `har_daily_vol`
+   directly, no model at all) produces DirAcc 34.65-36.74% at horizon 1 on the real AAPL/MSFT/GOOGL
+   series — matching the trained LSTM's 30.99-36.08% almost exactly. Cause: daily Parkinson volatility
+   has strong NEGATIVE autocorrelation in its day-to-day CHANGES (measured directly: -0.35 to -0.43
+   across all 3 tickers, all 3 horizons — mean-reversion/overshoot-correction pattern). A model that
+   behaves close to a persistence predictor (favored at horizon 1, where "tomorrow ≈ today" is the
+   best simple approximation) inherits this anti-correlation: its implied day-to-day change is a lagged
+   version of the true change, which is systematically opposite-signed under negative autocorrelation.
+   This is consistent with — not contradicted by — the good QLIKE/R² at horizon 1 (magnitude is fit
+   well; only the sign of the smallest day-to-day wiggle is wrong more often than chance). Not a
+   pipeline defect; a genuine property of the target series interacting with a magnitude-optimized loss
+   (MSE) that has no incentive to get short-horizon turning points right. Diagnostic command:
+   `python -c "..."` computing `sign(diff(target_1d))` vs a naive-persistence baseline — see commit
+   history for the exact script (not persisted as a file, ran ad hoc).
+2. **[FIXED 2026-08-01, follow-up session] Cross-ticker boundary diff in `directional_accuracy`
+   (separate bug, found while investigating #1, verified NOT the cause of #1).** `evaluate_pooled` /
+   `evaluate_train_market_split` / `evaluate_full_series` concatenated multiple tickers' predictions
+   into one flat array before computing directional accuracy; `np.diff()` at the seam between ticker
+   N's last sample and ticker N+1's first sample computed a meaningless "change" between two unrelated
+   tickers' volatility values. Fixed via `src/common/evaluation.py::directional_accuracy_grouped` /
+   `evaluate_predictions_grouped` (per-ticker diffs, micro-averaged — never crosses a ticker boundary),
+   test-first (6 new tests in `tests/test_sp500/test_grouped_directional_accuracy.py`). **Verified
+   impact on real data is negligible, as expected given only `n_tickers - 1` spurious diffs exist out
+   of ~1600+ samples**: horizon-1 HAR-only DirAcc moved from 31.26% (buggy) to 30.99% (fixed) — within
+   single-seed noise. The fix is correct and now in place, but does not change any headline conclusion
+   in this report; not worth re-running the other 11 sweep cells for a sub-percentage-point shift.
+3. **SP500→VN30 horizon-1 QLIKE=6.03 is a severe outlier** paired with the sweep's highest R²
    (0.747) — likely a scale-mismatch / near-constant-prediction artifact (see §2), not investigated.
-3. **Full feature set helps at horizon 1 but hurts at horizon 5/10** for Experiment A — plausibly
+4. **Full feature set helps at horizon 1 but hurts at horizon 5/10** for Experiment A — plausibly
    because sentiment coverage is only 7-10 days per ticker (Phase 2), too sparse to help at longer
    horizons; not tested against a larger sentiment sample in this phase.
 

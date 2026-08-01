@@ -23,7 +23,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
 sys.path.insert(0, project_root)
 
-from src.common.evaluation import evaluate_predictions
+from src.common.evaluation import evaluate_predictions_grouped
 from src.common.har_features import generate_har_features
 from src.common.multi_ticker_dataset import build_per_ticker_datasets, build_full_series_datasets
 
@@ -148,10 +148,15 @@ def train_model(model, train_loader, evaluate_fn, epochs=70, patience=15, lr=1e-
 
 
 def evaluate_train_market_split(model, per_ticker_train, split, criterion, device, batch_size=64):
-    """Evaluate the train market's own val/train split (per-ticker scalers)."""
+    """Evaluate the train market's own val/train split (per-ticker scalers).
+
+    directional_accuracy is computed per-ticker (evaluate_predictions_grouped)
+    to avoid a spurious "change" at the boundary between two different
+    tickers' concatenated predictions.
+    """
     model.eval()
     total_loss, n_batches = 0.0, 0
-    all_true, all_pred = [], []
+    true_groups, pred_groups = [], []
     with torch.no_grad():
         for ticker, splits in per_ticker_train.items():
             ds = splits[split]
@@ -159,6 +164,7 @@ def evaluate_train_market_split(model, per_ticker_train, split, criterion, devic
                 continue
             loader = DataLoader(ds, batch_size=batch_size)
             target_scaler = splits["target_scaler"]
+            ticker_true, ticker_pred = [], []
             for x, y in loader:
                 x, y = x.to(device), y.to(device)
                 pred = model(x).squeeze(-1)
@@ -167,18 +173,22 @@ def evaluate_train_market_split(model, per_ticker_train, split, criterion, devic
                 n_batches += 1
                 pred_np = target_scaler.inverse_transform(pred.cpu().numpy().reshape(-1, 1)).flatten()
                 true_np = target_scaler.inverse_transform(y.cpu().numpy().reshape(-1, 1)).flatten()
-                all_true.extend(true_np)
-                all_pred.extend(pred_np)
+                ticker_true.extend(true_np)
+                ticker_pred.extend(pred_np)
+            true_groups.append(np.array(ticker_true))
+            pred_groups.append(np.array(ticker_pred))
 
     avg_loss = total_loss / max(n_batches, 1)
-    metrics = evaluate_predictions(np.array(all_true), np.array(all_pred)) if all_true else None
+    metrics = evaluate_predictions_grouped(true_groups, pred_groups) if true_groups else None
     return avg_loss, metrics
 
 
 def evaluate_full_series(model, per_ticker_full, device, batch_size=64):
-    """Evaluate every ticker's full-series dataset (own scaler), pooled across tickers."""
+    """Evaluate every ticker's full-series dataset (own scaler), pooled across
+    tickers. directional_accuracy is computed per-ticker (see
+    evaluate_train_market_split docstring for why)."""
     model.eval()
-    all_true, all_pred = [], []
+    true_groups, pred_groups = [], []
     with torch.no_grad():
         for ticker, entry in per_ticker_full.items():
             ds = entry["data"]
@@ -186,15 +196,18 @@ def evaluate_full_series(model, per_ticker_full, device, batch_size=64):
                 continue
             loader = DataLoader(ds, batch_size=batch_size)
             target_scaler = entry["target_scaler"]
+            ticker_true, ticker_pred = [], []
             for x, y in loader:
                 x = x.to(device)
                 pred = model(x).squeeze(-1)
                 pred_np = target_scaler.inverse_transform(pred.cpu().numpy().reshape(-1, 1)).flatten()
                 true_np = target_scaler.inverse_transform(y.numpy().reshape(-1, 1)).flatten()
-                all_true.extend(true_np)
-                all_pred.extend(pred_np)
+                ticker_true.extend(true_np)
+                ticker_pred.extend(pred_np)
+            true_groups.append(np.array(ticker_true))
+            pred_groups.append(np.array(ticker_pred))
 
-    return evaluate_predictions(np.array(all_true), np.array(all_pred))
+    return evaluate_predictions_grouped(true_groups, pred_groups)
 
 
 def run_experiment(train_market, test_market, horizon=5, epochs=70, patience=15, seq_length=22, batch_size=64):
