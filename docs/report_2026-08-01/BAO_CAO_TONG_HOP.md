@@ -146,47 +146,56 @@ news_rep = LSTM(1 lớp, Linear(146→64) → ReLU → LSTM(64→64), qua 22 ng�
 Feature tin tức đã được **aggregate sẵn theo ngày** ở bước offline (`build_dual_group_panel.py`)
 — khác với baseline tin tức đầu tiên (07-07) phải pool N bài báo thô bằng attention-pooling.
 
-### 2.2.1 Ví dụ cụ thể: ngày CÓ tin vs ngày KHÔNG có tin được tổ chức thế nào khi train
+### 2.2.1 Ví dụ cụ thể: ngày CÓ tin vs KHÔNG có tin được tổ chức thế nào khi train
 
-Panel tin tức (`dual_group_news_panel.parquet`) chỉ có 1 dòng cho mỗi `(mã, ngày)` MÀ THỰC SỰ có
-ít nhất 1 bài báo nhắc tới mã đó (đã qua PCA + EWMA) — **không phải mọi ngày giao dịch đều có dòng
-trong panel**. Khi build sequence cho training, với mỗi ngày trong cửa sổ 22 ngày, code tra panel
-theo `(mã, ngày)`:
-
+**Xem trực tiếp:** `data/features/dual_group_news_panel.parquet` — mở bằng pandas:
 ```python
-# baselines/2026-07-25_dual_group_news_embedding_baseline/code/dataset_dual_news.py
-news_cache = self._news_by_ticker.get(stock_name) or {}
-day_feats = []
-for d in window_dates:
-    vec = news_cache.get(d)          # tra panel theo đúng ngày d
-    if vec is not None:
-        day_feats.append(vec)                              # CÓ tin -> vector thật (146 số)
-    else:
-        day_feats.append(np.zeros(self._n_feat, dtype=np.float32))  # KHÔNG tin -> vector 0
+import pandas as pd
+df = pd.read_parquet('data/features/dual_group_news_panel.parquet')
+sub = df[df['ticker'] == 'ACB'].sort_values('date')   # đổi mã tuỳ ý
 ```
 
-**Ví dụ tính tay (3 ngày, 2 mã, số liệu minh hoạ theo đúng format thật — 146 chiều rút gọn còn 4
-chiều đầu để dễ đọc):**
+**Thực tế đo được (chạy trên panel thật, mã ACB, 4989 dòng — gần như mọi ngày giao dịch từ
+2006 đến nay) có 3 LOẠI NGÀY, không phải 2:** 146 cột chia thành **80 cột "raw"** (`kq_emb_*`,
+`th_emb_*`, `*_topic_*_count` — tín hiệu tin NGAY HÔM ĐÓ) và **66 cột `ewma_*`** (dư âm suy giảm
+dần, half-life 30 ngày, mang theo ảnh hưởng của tin cũ):
 
-| Ngày | Mã ACB — có/không tin | x_news[ACB] (4/146 chiều đầu) | Mã FPT — có/không tin | x_news[FPT] (4/146 chiều đầu) |
-|---|---|---|---|---|
-| 2024-03-04 | **CÓ** (báo cafef đưa tin ACB) | `[0.182, -0.041, 0.077, 0.203, ...]` | KHÔNG | `[0.0, 0.0, 0.0, 0.0, ...]` |
-| 2024-03-05 | KHÔNG | `[0.0, 0.0, 0.0, 0.0, ...]` | **CÓ** (vnexpress đưa tin FPT) | `[0.095, 0.114, -0.032, 0.061, ...]` |
-| 2024-03-06 | KHÔNG | `[0.0, 0.0, 0.0, 0.0, ...]` | KHÔNG | `[0.0, 0.0, 0.0, 0.0, ...]` |
+| Loại ngày | 80 cột raw | 66 cột `ewma_*` | Tỷ lệ đo thật (mã ACB) |
+|---|---|---|---|
+| **Có tin ngay hôm đó** | số thật | số thật | 26.46% |
+| **Không tin mới, còn "dư âm" tin cũ** | NaN trong panel | vẫn số thật (chưa suy giảm hết) | ~73.5% |
+| **Chưa từng có tin trước đó** | NaN | NaN | hiếm (chỉ trước ngày panel bắt đầu có dữ liệu cho mã đó, vd trước 27/10/2006 với ACB) |
 
-**Ý nghĩa của việc "fill 0" ngày không có tin:**
-- KHÔNG có nghĩa "tin tức trung tính" (neutral) — nghĩa là **"không có tín hiệu tin tức nào cho
-  mã này vào đúng ngày này trong panel"**. Đây là 1 đơn giản hoá có chủ đích (ghi trong
-  `dataset_dual_news.py`'s docstring): không dùng mask riêng để phân biệt "không có tin" với "có
-  tin nhưng tín hiệu = 0" — model KHÔNG thể phân biệt 2 trường hợp này.
-- LSTM (`NewsFeatureLSTM`, §2.2) đọc qua 22 ngày liên tiếp — 1 mã có thể có chuỗi toàn số 0 rồi
-  xen kẽ vài ngày có vector thật, tuỳ mật độ tin tức thực tế của mã đó trong khoảng thời gian đó.
-- Tỷ lệ (mã, ngày) có tin thật trong toàn bộ panel: **77.83%** (đo khi build panel, xem
-  `2026-07-25_dual_group_news_embedding_baseline/design/design.md` §3.3) — tức ~22% (mã, ngày)
-  trong dữ liệu train/val/test là vector toàn số 0.
-- **Rủi ro đã biết:** nếu 1 mã có coverage tin tức rất thấp (nhiều ngày toàn số 0 liên tục), nhánh
-  tin tức gần như không có gì để học cho mã đó trong nhiều cửa sổ — đây là 1 phần lý do project
-  từng nghi ngờ "gate học được" không khớp tín hiệu "mã nào cần tin tức" đo độc lập (§5 mục 2).
+**Khi load để train**, hàm `load_news_panel()` áp `fillna(0.0)` lên TOÀN BỘ 146 cột — nghĩa là
+NaN (dù ở nhóm raw hay ewma) đều biến thành 0:
+```python
+# baselines/2026-07-25_dual_group_news_embedding_baseline/code/dataset_dual_news.py
+df[feature_cols] = df[feature_cols].fillna(0.0)   # NaN (raw HOẶC ewma) -> 0
+...
+vec = news_cache.get(d)                            # tra theo (mã, ngày)
+day_feats.append(vec if vec is not None else np.zeros(self._n_feat, dtype=np.float32))
+```
+
+**Hệ quả quan trọng — khác với suy nghĩ đơn giản "không tin = toàn số 0":** phần lớn "ngày không
+có tin mới" (~73.5% với ACB) **vẫn có 66/146 số khác 0** (phần EWMA mang theo ảnh hưởng tin cũ đã
+suy giảm dần) — chỉ có 80 cột raw về 0. Vector "toàn bộ 146 số = 0" CHỈ xảy ra ở loại ngày thứ 3
+(chưa từng có tin trước đó) — hiếm hơn nhiều so với giả định ban đầu.
+
+**Ví dụ tính tay (4 cột đầu, số liệu chạy thật từ panel):**
+
+| Ngày (ACB) | Loại | raw[0:4] | ewma[0:4] |
+|---|---|---|---|
+| 2006-10-27 | Có tin ngay hôm đó | `[-0.825, 0.122, 0.254, 0.874]` | `[-0.825, 0.122, 0.254, 0.874]` (mới, chưa suy giảm) |
+| 2006-10-30 | Không tin mới, còn dư âm | `[0, 0, 0, 0]` (NaN→0) | `[-0.807, 0.119, 0.248, 0.855]` (đã suy giảm nhẹ) |
+
+**Ý nghĩa:** model không thể phân biệt "raw = 0 vì hết tin" với "raw thật sự bằng 0" (không có
+mask riêng — đơn giản hoá có chủ đích, ghi trong docstring code). Nhưng nhờ phần EWMA gần như luôn
+khác 0, nhánh tin tức KHÔNG bị "chết" hoàn toàn giữa các ngày có tin thật — đây là điểm khác biệt
+quan trọng so với mô tả ban đầu của mục này.
+
+**Rủi ro đã biết:** nếu 1 mã có tin tức rất thưa (ít ngày raw thật), nhánh tin tức phần lớn dựa vào
+EWMA (xu hướng dài hạn) hơn là tín hiệu tức thời — đây là 1 phần lý do project từng nghi ngờ "gate
+học được" không khớp tín hiệu "mã nào cần tin tức" đo độc lập (§5 mục 2).
 
 ## 2.3 Per-ticker gate — cải tiến mới nhất (26/07), hiện là baseline tốt nhất QLIKE/R²
 
@@ -285,6 +294,12 @@ Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
 8. **[ĐÃ XONG]** Horizon 22-ngày: đã train 10 epoch cả 2 kiến trúc, hội tụ ngay từ epoch ~10
    (giống 10-ngày, khác 5-ngày) — xem Bảng B (§1.2) và §7.5. Chưa thử epoch >10 (theo trạng thái
    hội tụ đo được, không có lý do để train thêm).
+9. **[MỚI, quan trọng]** Toàn bộ con số DirAcc "headline" trong báo cáo này (Bảng A, B, mọi bảng
+   kết quả) dùng công thức tính trên mảng đã làm phẳng `[window, mã]` — `np.diff` chủ yếu so sánh
+   2 MÃ KHÁC NHAU cùng ngày, KHÔNG phải "cùng mã, ngày kế tiếp". Công thức tính đúng theo từng mã
+   (`directional_accuracy_per_stock`, chỉ có ở script per-ticker-gate) cho kết quả THẤP HƠN NHIỀU
+   (48.52% và 33.16% ở 2 ví dụ đo được, so với 69.51%/72.39% của công thức "headline") — xem §8
+   để có công thức, code, và số liệu đầy đủ.
 
 ---
 
@@ -664,6 +679,81 @@ Không có dấu hiệu cần train thêm.
 **Kết luận chung cho cả 4 horizon (Bảng B, §1.2):** horizon càng ngắn càng dễ dự báo VÀ hội tụ càng
 nhanh — ngoại lệ duy nhất là 5-ngày, cần nhiều epoch hơn hẳn (~20) mới đạt đỉnh dù không phải
 horizon khó nhất. Chưa có lời giải thích cho ngoại lệ này.
+
+---
+
+# 8. DirAcc TÍNH THẾ NÀO — CÔNG THỨC, SỐ BIẾN PHỤ THUỘC, VÀ 1 KHÁC BIỆT QUAN TRỌNG PHÁT HIỆN HÔM NAY
+
+**Đang có 2 công thức DirAcc khác nhau trong dự án, cho kết quả rất khác nhau.** Mọi con số DirAcc
+"headline" trong toàn bộ báo cáo này (68.42%, 69.51%, 72.35%...) dùng công thức (A) — công thức
+(B) mới là con số đo đúng nghĩa "dự báo đúng chiều biến động của 1 mã qua thời gian".
+
+## 8.1 Công thức (A) — dùng cho MỌI con số DirAcc "headline" trong báo cáo này
+
+**File:** `src/common/evaluation.py`
+```python
+def directional_accuracy(y_true, y_pred):
+    actual_changes = np.sign(np.diff(y_true))   # dấu của (y_true[i+1] - y_true[i])
+    pred_changes = np.sign(np.diff(y_pred))     # dấu của (y_pred[i+1] - y_pred[i])
+    accuracy = np.mean(actual_changes == pred_changes)
+    return accuracy * 100
+```
+**Phụ thuộc 2 biến đầu vào** (`y_true`, `y_pred` — mảng 1 chiều) nhưng mỗi phép so sánh cụ thể
+phụ thuộc **4 số vô hướng**: `y_true[i]`, `y_true[i+1]`, `y_pred[i]`, `y_pred[i+1]`.
+
+## 8.2 Công thức (B) — đúng theo từng mã, chỉ có ở script per-ticker-gate
+
+```python
+# vd baselines/2026-07-26_per_ticker_news_gate_baseline/code/train_per_ticker_gate.py
+p2 = preds_d.reshape(n_windows, n_stocks)   # sắp lại đúng theo (thời gian, mã)
+t2 = targs_d.reshape(n_windows, n_stocks)
+dir_per = [np.mean(np.sign(np.diff(t2[:, s])) == np.sign(np.diff(p2[:, s]))) * 100
+           for s in range(n_stocks)]
+directional_accuracy_per_stock = np.mean(dir_per)
+```
+
+## 8.3 Vì sao (A) và (B) khác nhau — thứ tự mảng quyết định ý nghĩa phép tính
+
+`y_true`/`y_pred` truyền vào công thức (A) là mảng **đã làm phẳng theo thứ tự `[window, mã]`**
+(mọi mã ở cùng 1 ngày liệt kê liên tiếp, rồi mới sang ngày kế tiếp) — xem `validate()`:
+```python
+preds_n.append(pred.cpu().numpy().reshape(-1))   # [B,S] -> phẳng: mã0,mã1,...,mãS-1, mã0(ngày sau),...
+```
+→ `np.diff` trên mảng này **chủ yếu so sánh 2 MÃ KHÁC NHAU Ở CÙNG 1 NGÀY** (S-1 trong mỗi S phép
+so sánh), chỉ 1/S phép so sánh rơi vào ranh giới 2 ngày — và ngay cả phép đó cũng lệch mã (mã cuối
+ngày i vs mã đầu ngày i+1). **Không có phép so sánh nào trong công thức (A) thực sự là "cùng 1 mã,
+2 ngày liên tiếp"** trừ khi số mã = 1.
+
+Công thức (B) sửa đúng: `reshape(n_windows, n_stocks)` rồi `np.diff` theo trục THỜI GIAN cho TỪNG
+CỘT (từng mã) riêng — đây mới là phép so sánh "cùng mã, ngày kế tiếp" đúng nghĩa.
+
+## 8.4 Bằng chứng số liệu thật — chênh lệch rất lớn
+
+| Run | DirAcc công thức (A) — "headline" | DirAcc công thức (B) — đúng theo mã |
+|---|---:|---:|
+| Per-ticker-gate, epoch 20 (5-ngày, kết quả tốt nhất báo cáo) | 69.51% | **48.52%** (~ngẫu nhiên) |
+| Per-ticker-gate, 1-ngày | 72.39% | **33.16%** (DƯỚI CẢ ngẫu nhiên 50%) |
+
+*(Trích trực tiếp từ `results/per_ticker_gate_2026-08-01_094139/results.json` và
+`results/per_ticker_gate_h1_2026-08-01_104140/results.json` — trường `directional_accuracy` vs
+`directional_accuracy_per_stock`.)*
+
+## 8.5 Ý nghĩa — cần đọc lại mọi con số DirAcc trong báo cáo này với sự thận trọng
+
+Toàn bộ con số DirAcc 66-74% trích dẫn xuyên suốt báo cáo (Bảng A, B, mọi bảng kết quả) dùng công
+thức (A) — **không đo đúng** "model dự báo đúng chiều biến động của 1 mã qua thời gian". Khả năng
+cao công thức (A) cho kết quả cao một cách giả tạo vì tận dụng được đồng biến động thị trường
+chung (nhiều mã tăng/giảm volatility cùng lúc do yếu tố vĩ mô/thị trường chung — so 2 mã khác nhau
+cùng ngày dễ "trùng dấu" hơn ngẫu nhiên thuần tuý, dù không phải do model dự báo đúng cho từng mã).
+Con số công thức (B) — thấp, gần hoặc dưới mức ngẫu nhiên — cho thấy khả năng dự báo ĐÚNG CHIỀU
+theo thời gian cho từng mã cụ thể **có thể yếu hơn nhiều** so với những gì các bảng so sánh trong
+báo cáo này thể hiện. Đây là phát hiện mới, chưa được sửa trong code — chỉ mới ghi nhận ở đây.
+
+**Không phải mọi baseline đều có công thức (B):** tất cả script `train_per_ticker_gate*.py` (5,
+10, 22, 1-ngày) đều tính `directional_accuracy_per_stock`; các script
+`train_har_only_reference*.py` (HAR-only) THÌ KHÔNG — trường này là `None` trong `results.json`
+của mọi run HAR-only (vd `har_only_h1_2026-08-01_103548/results.json`), nên hiện tại KHÔNG có cách
+đối chiếu công thức (B) cho riêng kiến trúc HAR-only.
 
 ---
 
