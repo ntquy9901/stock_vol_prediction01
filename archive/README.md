@@ -14,6 +14,13 @@ archive/
 │   ├── train_enhanced_lstm_har_vn30.py
 │   └── train_enhanced_lstm_har_vn30_progress.py
 │
+├── baselines/                ← Full timestamped baselines no longer in scope for the paper
+│   └── 2026-07-18_resttext_baseline/  ← Best raw QLIKE (0.5431) of all 23 baselines, but not
+│                                         seed-verified and dropped from paper scope 2026-08-02
+│                                         (user decision) in favor of the per-ticker-gate
+│                                         news-fusion lineage. Not a bug archive — moved here
+│                                         only to shrink `baselines/`'s active scope.
+│
 └── [future archives]
 ```
 
