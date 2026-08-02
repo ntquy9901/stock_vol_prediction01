@@ -77,17 +77,24 @@ VNM, VPB, VRE.
 | `data/processed/vn100_only/` | 102 | = `data/raw/vn100/` (hoặc tương đương) qua cùng pipeline, universe rộng hơn nhiều VN30 |
 | `data/processed/vn30_sentiment/` | — | Dữ liệu sentiment, không phải giá |
 
-## 5. Kết luận / khuyến nghị (chưa thực hiện, chờ quyết định)
+## 5. Kết luận / khuyến nghị
 
-1. **LPB có thể thêm ngay** — raw data đã có sẵn (`vn100_only`), chỉ cần: chuẩn hoá tên file
-   (`LPB_ohlcv_processed.csv` → `LPB_processed.csv`), copy/re-process vào `data/processed/`
-   (root), qua đúng `parkinson_utils.py` đã fix format ngày.
-2. **BSR, VPL cần crawl mới** — không có trong repo, ngoài phạm vi 1 lần sửa code, cần chạy lại
-   crawler (không rõ crawler nằm ở project này hay ở repo `crawl_data` sibling).
-3. **5 mã dư (BCM, BVH, NVL, PDR, POW)** — cần quyết định: loại bỏ khỏi universe khi build lại
-   dataset date-aligned (mục tiêu hiện tại: fix P1.2), hay giữ lại làm universe riêng (không
-   khớp tên "VN30" chính thức, cần đổi tên/caveat nếu vậy).
-4. Việc đóng băng universe 30-mã-chính-xác chỉ khả thi đầy đủ SAU KHI có BSR + VPL (crawl mới) —
-   nếu cần fix P1.2 (date alignment) ngay bây giờ mà chưa có 2 mã này, có 2 lựa chọn tạm thời:
-   (a) build trên 27 mã giao nhau (chính xác nhưng thiếu 3 mã chính thức), hoặc (b) build trên
-   29 mã (27 giao nhau + LPB có sẵn data), chờ crawl BSR/VPL sau.
+1. ~~LPB có thể thêm ngay~~ — **[ĐÃ XONG 2026-08-02]** Processed qua đúng `parkinson_utils.py`
+   (đã fix format ngày) → `data/processed/LPB_processed.csv` (1456 dòng, 2020-11-09 → 2026-06-19,
+   format ngày plain `YYYY-MM-DD` nhất quán với các mã khác).
+2. ~~BSR, VPL cần crawl mới~~ — **[ĐÃ CRAWL, QUYẾT ĐỊNH: LOẠI KHỎI UNIVERSE]** Crawl qua
+   `src/data/crawl_vietnam_stocks.py` (Yahoo Finance, `.VN` suffix) thành công:
+   - BSR: 401 dòng, 2025-01-17 → 2026-07-31 (~1.4 năm)
+   - VPL: 99 dòng, 2026-03-17 → 2026-07-31 (~4.5 tháng — mới niêm yết)
+
+   Nếu bắt buộc dùng chung khung ngày (intersection) cho cả 30 mã chính thức, khung chung chỉ còn
+   **~84 ngày lịch (~58 ngày giao dịch)** do VPL — quá ít để train LSTM+GNN (chỉ ~31 window trước
+   khi chia train/val/test). **Quyết định (2026-08-02): loại BSR và VPL khỏi universe** do dữ liệu
+   quá ít. File raw đã crawl (`data/raw/vn30/BSR_ohlcv.csv`, `VPL_ohlcv.csv`) **giữ lại, không xoá**
+   — không dùng trong pipeline hiện tại, nhưng có sẵn nếu sau này đủ lịch sử để cân nhắc lại.
+3. **5 mã dư (BCM, BVH, NVL, PDR, POW) — CHƯA quyết định**, vẫn còn trong `data/processed/`.
+   Universe hiện tại (sau khi thêm LPB, chưa loại 5 mã dư): 33 mã = 28/30 mã chính thức (thiếu
+   đúng BSR, VPL đã loại có chủ đích) + 5 mã dư nói trên.
+4. Universe cho việc fix P1.2 (date-alignment dataset) tại thời điểm này: **28 mã** (giao đủ với
+   VN30 chính thức, trừ BSR/VPL) **cộng thêm 5 mã dư nếu chưa loại** — cần chốt riêng mục 3 trước
+   khi build.
