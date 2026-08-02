@@ -11,8 +11,8 @@ _bmad-output/
 # Data files - allowing training data (will commit small files)
 # Excluding only large data directories
 data/raw/all_available/
-data/raw/vn100/
-data/raw/vn100_enhanced/
+archive/data_raw/vn100/
+archive/data_raw/vn100_enhanced/
 archive/data_raw/hnx/
 archive/data_raw/hnx_enhanced/
 data/processed_all/

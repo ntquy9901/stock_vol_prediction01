@@ -113,6 +113,13 @@ Task chỉ "done" khi TẤT CẢ đúng:
 - **Tests + coverage:** khi đổi behavior, viết/chạy unit test và đạt coverage gate — chi tiết + lệnh ở section **Testing quality rules (ENFORCED)** ngay dưới đây (C0=100% / C1≥80% trên CHANGED lines, đo bằng **diff-coverage**, KHÔNG phải total coverage). Change phải staged/committed để diff đo được.
 - **Checks run:** bắt buộc chạy test + lint. KHÔNG claim "pass" nếu chưa chạy thật.
 - **Lint scope:** exclude vendored/generated/third-party (`.agents .claude _bmad archive data`).
+- **Audit/Review scope:** `archive/` (any depth) is retired code/data, intentionally out of scope
+  for ALL audits, code review, adversarial review, and any AI-driven "find issues" pass — not
+  just lint. Do not report findings, propose fixes, or flag bugs for anything under `archive/`
+  unless the user explicitly asked to review `archive/` itself. When briefing a subagent for a
+  repo-wide audit, state this exclusion explicitly in the prompt — a subagent given only a
+  directory to explore will not otherwise know `archive/` is off-limits. `archive/README.md`
+  carries the same notice for anyone who lands there directly.
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
 - **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.

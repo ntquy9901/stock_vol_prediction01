@@ -1,5 +1,13 @@
 # Archive Directory
 
+> **⛔ OUT OF SCOPE FOR ALL AUDITS AND REVIEWS.** Everything under `archive/` (any depth) is
+> intentionally retired — not in active use, not part of the paper, not a target for fixes.
+> Code review, adversarial audits, lint, coverage, and any AI-driven "find issues"/"audit the
+> repo" pass MUST skip this entire tree. Do not report findings, propose fixes, or flag bugs for
+> anything under `archive/` — if you're an AI agent auditing this repo and you weren't explicitly
+> asked to review `archive/` itself, treat it as if it doesn't exist. See CLAUDE.md's Definition
+> of Done → "Audit/Review scope" for the project-wide rule this enforces.
+
 This directory contains deprecated and archived code from the stock volatility prediction project.
 
 ---
@@ -29,13 +37,28 @@ archive/
 │   ├── vn30_enhanced/        ← Duplicate ticker list of data/raw/vn30/ (the one actually used),
 │   │                            referenced by nothing except a one-off comparison script
 │   │                            (src/experiment/compare_crawl_results.py).
+│   ├── vn100/, vn100_enhanced/ ← VN100 track dropped from project scope entirely, 2026-08-02
+│   │                            (user decision — "không xử lý vn100"). Was gitignored in its old
+│   │                            location; .gitignore updated to the new path.
 │   └── test/, test_combined/ ← Only referenced by an already-archived script
 │                                 (archive/data_scripts/quick_test_crawl.py).
 │
-│   NOT archived despite looking similar: data/raw/vn100/, vn100_enhanced/, all_available/ —
-│   these ARE actively used by a live (non-archived) VN100 experiment track
-│   (train_and_test_vn100.py, process_vn100_data.py, evaluate_vn100*.py). Likewise
-│   data/processed/vn100_only/, vn30_sentiment/ are live (sentiment pipeline, VN100 track).
+├── data_processed/
+│   └── vn100_only/           ← Processed output of the now-archived VN100 raw data, 2026-08-02.
+│
+├── vn100_scripts/            ← 5 VN100-exclusive root-level scripts, 2026-08-02 (user decision):
+│                                 train_and_test_vn100.py, process_vn100_data.py, evaluate_vn100.py,
+│                                 evaluate_vn100_simple.py, evaluate_vn100_train_only.py.
+│                                 Confirmed not imported by any other live script before moving.
+│                                 NOT archived: src/experiment/train_with_config.py,
+│                                 src/data/crawl_vietnam_stocks.py, src/data/combine_datasets.py,
+│                                 src/sentiment/data_collection/tickers.py — these are generic,
+│                                 multi-universe utilities also used for VN30/other scopes, not
+│                                 VN100-exclusive, so archiving them would remove VN30 functionality.
+│
+│   NOT archived: data/raw/all_available/ + process_all_available.py + data/processed_all/ — a
+│   distinct, broader "generalization test" universe (210 stocks), not literally "VN100". Flagged
+│   but left alone pending explicit instruction, per the same scope-matching principle above.
 │
 └── [future archives]
 ```
