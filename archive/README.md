@@ -84,6 +84,31 @@ archive/
 │   decision on that baseline's own status (finish vs. formally close) — archiving the data
 │   without that decision would be premature.
 │
+├── lstm_gat_hybrid_legacy/   ← **[2026-08-02, user decision]** The original
+│   │                            `MultiStockDatasetWithGraphMethod` class + its non-"_fixed"
+│   │                            wrapper `create_multi_stock_dataloaders_with_graph_method`
+│   │                            (both formerly in src/lstm_gat_hybrid/dataset_with_graph_method.py)
+│   │                            — confirmed dead code: every live baseline routes through
+│   │                            `_load_raw_stock_data`/`_split_raw_data_by_date`/
+│   │                            `create_multi_stock_dataloaders_with_graph_method_fixed` (the
+│   │                            "_fixed" split-first pipeline, kept, contains the P1.2
+│   │                            date-alignment fix) or `MultiStockDatasetWithPreSplitData`
+│   │                            (dataset_presplit.py) instead. The class's own 9 tests were
+│   │                            failing (confirmed cause: this class shares remove_outliers()
+│   │                            with the live pipeline, and the P1.2 fix changed it from
+│   │                            dropping outlier rows to winsorizing them — one test assumed
+│   │                            the old drop behavior) — rather than patch tests for dead code,
+│   │                            removed the code + its exclusive dependents:
+│   ├── test_simple_fix.py, test_data_leakage_fix.py, check_data_leakage.py,
+│   │   check_training_metrics.py  ← root-level ad-hoc debug scripts, confirmed to import ONLY
+│   │                                 the now-removed class/wrapper, nothing else live.
+│   └── tests/test_dataset_data_leakage.py, test_dataset_edge_cases.py ← the class's own
+│                                    dedicated test files (formerly tests/lstm_gat_hybrid/).
+│       NOT archived/moved: tests/lstm_gat_hybrid/test_date_alignment_fix.py (tests the live
+│       "_fixed" pipeline instead, 9/9 passing) and tests/test_graph_utils.py's 4 spillover-graph
+│       failures (unrelated — missing optional `statsmodels` dependency, not dead code; spillover
+│       graph itself is used by baselines/2026-07-26_spillover_qlike_baseline, still live).
+│
 ├── vn100_scripts/            ← 5 VN100-exclusive root-level scripts, 2026-08-02 (user decision):
 │                                 train_and_test_vn100.py, process_vn100_data.py, evaluate_vn100.py,
 │                                 evaluate_vn100_simple.py, evaluate_vn100_train_only.py.
