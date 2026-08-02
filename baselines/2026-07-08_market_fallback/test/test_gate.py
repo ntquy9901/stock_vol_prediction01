@@ -13,7 +13,7 @@ for _p in (str(_ROOT), str(_CODE)):
         sys.path.insert(0, _p)
 
 import torch
-from model_embedding import GatedNewsFusion
+from market_fallback_model_embedding import GatedNewsFusion
 
 
 def test_has_news_uses_stock():

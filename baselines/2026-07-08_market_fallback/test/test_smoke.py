@@ -13,7 +13,7 @@ for _p in (str(_ROOT), str(_CODE)):
 
 import torch
 from src.lstm_gat_hybrid.config import LSTMGATConfig
-from model_embedding import MarketFallbackBaseline
+from market_fallback_model_embedding import MarketFallbackBaseline
 
 
 def test_forward_shape_and_backward():
