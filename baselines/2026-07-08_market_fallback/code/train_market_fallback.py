@@ -35,8 +35,8 @@ from src.lstm_gat_hybrid.train_parallel_enhanced import (
     EarlyStopping, plot_learning_curves_with_analysis,
 )
 
-from model_embedding import MarketFallbackBaseline
-from dataset_embedding import create_market_dataloaders
+from market_fallback_model_embedding import MarketFallbackBaseline
+from market_fallback_dataset_embedding import create_market_dataloaders
 
 
 def train_epoch(model, loader, criterion, optimizer, device, grad_clip=1.0):
