@@ -435,6 +435,41 @@ IMPROVEMENT_TARGETS = {
 
 ## 📝 UPDATE HISTORY
 
+### 2026-08-02 - global-benchmark branch (S&P500): seed + checkpoint-selection bugs found and fixed
+
+**Note:** this entry documents work on the `global-benchmark` branch/worktree
+(`C:\luanvan\stock_vol_prediction01_branchGlobal`), a separate git worktree from the VN30 work
+described elsewhere in this file (per CLAUDE.md §7). Baseline: `baselines/2026-08-01_lstm_gnn_sp500_baseline/`
+(30 S&P500 tickers, reuses `src/lstm_gat_hybrid/{model_parallel,dataset,config}.py` read-only).
+
+**Bug 1 — missing random seed:** 4 smoke runs (2026-08-01, 2 epochs, unseeded) on identical config
+produced test R² ranging from 0.9999 to -777 and QLIKE up to 19620. Root cause: no
+`torch.manual_seed`/`np.random.seed`/`random.seed` call anywhere in the training script — at 2
+epochs, unseeded weight initialization alone accounts for the variance. Fixed by adding
+`set_seed(42)` + `--seed` CLI argument. The same gap was confirmed present in the VN30 master
+project's `src/lstm_gat_hybrid` trainers (`train.py`, `train_parallel.py`,
+`train_parallel_enhanced.py`, `train_simplified.py`) and in
+`baselines/2026-07-26_per_ticker_news_gate_baseline/code/train_per_ticker_gate.py` — none of them
+set a seed, meaning the 2026-07-26 per-ticker-gate result (QLIKE 0.5473) has not been confirmed
+reproducible. Not yet fixed on the master project as of this entry.
+
+**Bug 2 — checkpoint selection:** selecting the best checkpoint by minimum validation loss (MSE)
+picked a degenerate epoch where validation directional accuracy had collapsed toward 0% while
+validation loss kept decreasing. Fixed by selecting the checkpoint with maximum validation
+directional accuracy instead (`is_new_best()`). The VN30 master project's trainers still select by
+minimum validation loss.
+
+**Post-fix results (seed=42, 5-10 epoch exploratory runs, all below the 70-epoch project
+standard):** test directional accuracy near random across horizons — 1-day: 53.07%, 5-day:
+49.26-49.54%, 22-day: 49.35%, 10-day: run incomplete at time of writing. Test R² above 0.9999 in
+all cases; this reflects agreement on volatility magnitude only, not directional skill, given HAR
+target smoothing.
+
+**Not yet complete:** `code_review/` for this baseline has no adversarial review recorded; per
+CLAUDE.md §3.F this baseline is not "done." Full detail:
+`memory/project_sp500_lstm_gnn_baseline_status.md` and `memory/project_vn30_lstm_gnn_missing_seed.md`
+(auto-memory, Claude Code project memory directory).
+
 ### 2026-07-26 - Dual-group rebuild + SOTA pivot (spillover/QLIKE) + per-ticker isolated gate BREAKTHROUGH + VN30 universe audit
 
 **Context:** continuing the 2026-07-07→07-25 news-fusion baseline lineage (see entries below and
