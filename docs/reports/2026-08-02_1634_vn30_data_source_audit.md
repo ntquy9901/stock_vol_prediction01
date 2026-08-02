@@ -95,6 +95,71 @@ VNM, VPB, VRE.
 3. **5 mã dư (BCM, BVH, NVL, PDR, POW) — CHƯA quyết định**, vẫn còn trong `data/processed/`.
    Universe hiện tại (sau khi thêm LPB, chưa loại 5 mã dư): 33 mã = 28/30 mã chính thức (thiếu
    đúng BSR, VPL đã loại có chủ đích) + 5 mã dư nói trên.
-4. Universe cho việc fix P1.2 (date-alignment dataset) tại thời điểm này: **28 mã** (giao đủ với
-   VN30 chính thức, trừ BSR/VPL) **cộng thêm 5 mã dư nếu chưa loại** — cần chốt riêng mục 3 trước
-   khi build.
+4. ~~5 mã dư — CHƯA quyết định~~ — **[ĐÃ CHỐT 2026-08-02]** Giữ cả 5 mã (BCM/BVH/NVL/PDR/POW):
+   toàn bộ đều có ≥8 năm dữ liệu (dài hơn mã ngắn nhất trong universe, SSB ~5 năm), không thu hẹp
+   thêm khung ngày intersection. Universe cuối cùng: **33 mã** (xem mục 6).
+
+---
+
+## 6. Universe dữ liệu cuối cùng (dùng cho paper)
+
+Chốt ngày 2026-08-02. 33 mã, nguồn từng mã như sau:
+
+| Mã | Nguồn raw | Số dòng | Khoảng ngày | Trong VN30 hiệu lực 2026-08-02? |
+|---|---|---|---|---|
+| ACB | `data/raw/prices/` | 4868 | 2006-11-21 → 2026-06-09 | ✅ |
+| BCM | `data/raw/prices/` | 2065 | 2018-02-21 → 2026-06-09 | ❌ (giữ lại, đủ data) |
+| BID | `data/raw/prices/` | 3083 | 2014-01-24 → 2026-06-09 | ✅ |
+| BVH | `data/raw/prices/` | 4232 | 2009-06-25 → 2026-06-09 | ❌ (giữ lại, đủ data) |
+| CTG | `data/raw/prices/` | 4217 | 2009-07-16 → 2026-06-09 | ✅ |
+| FPT | `data/raw/prices/` | 4854 | 2006-12-13 → 2026-06-09 | ✅ |
+| GAS | `data/raw/prices/` | 3508 | 2012-05-21 → 2026-06-09 | ✅ |
+| GVR | `data/raw/prices/` | 2046 | 2018-03-21 → 2026-06-09 | ✅ |
+| HDB | `data/raw/prices/` | 2100 | 2018-01-05 → 2026-06-09 | ✅ |
+| HPG | `data/raw/prices/` | 4625 | 2007-11-15 → 2026-06-09 | ✅ |
+| LPB | `data/raw/vn100/` | 1456 | 2020-11-09 → 2026-06-19 | ✅ (thêm 2026-08-02) |
+| MBB | `data/raw/prices/` | 3643 | 2011-11-01 → 2026-06-09 | ✅ |
+| MSN | `data/raw/prices/` | 4138 | 2009-11-05 → 2026-06-09 | ✅ |
+| MWG | `data/raw/prices/` | 2973 | 2014-07-14 → 2026-06-09 | ✅ |
+| NVL | `data/raw/prices/` | 2356 | 2016-12-28 → 2026-06-09 | ❌ (giữ lại, đủ data) |
+| PDR | `data/raw/prices/` | 3956 | 2010-07-30 → 2026-06-09 | ❌ (giữ lại, đủ data) |
+| PLX | `data/raw/prices/` | 2281 | 2017-04-21 → 2026-06-09 | ✅ |
+| POW | `data/raw/prices/` | 2054 | 2018-03-06 → 2026-06-09 | ❌ (giữ lại, đủ data) |
+| SAB | `data/raw/prices/` | 2372 | 2016-12-06 → 2026-06-09 | ✅ |
+| SHB | `data/raw/prices/` | 4275 | 2009-04-20 → 2026-06-09 | ✅ |
+| SSB | `data/raw/prices/` | 1299 | 2021-03-24 → 2026-06-09 | ✅ |
+| SSI | `data/raw/prices/` | 4841 | 2006-12-18 → 2026-06-09 | ✅ |
+| STB | `data/raw/prices/` | 4887 | 2006-10-27 → 2026-06-09 | ✅ |
+| TCB | `data/raw/prices/` | 2002 | 2018-06-04 → 2026-06-09 | ✅ |
+| TPB | `data/raw/prices/` | 2031 | 2018-04-19 → 2026-06-09 | ✅ |
+| VCB | `data/raw/prices/` | 4229 | 2009-06-30 → 2026-06-09 | ✅ |
+| VHM | `data/raw/prices/` | 3426 | 2011-11-10 → 2026-06-09 | ✅ |
+| VIB | `data/raw/prices/` | 2342 | 2017-01-09 → 2026-06-09 | ✅ |
+| VIC | `data/raw/prices/` | 4666 | 2007-09-19 → 2026-06-09 | ✅ |
+| VJC | `data/raw/prices/` | 2318 | 2017-02-28 → 2026-06-09 | ✅ |
+| VNM | `data/raw/prices/` | 4887 | 2006-10-27 → 2026-06-09 | ✅ |
+| VPB | `data/raw/vn30/` | 2294 | 2017-08-17 → 2026-06-19 | ✅ |
+| VRE | `data/raw/vn30/` | 2237 | 2017-11-06 → 2026-06-19 | ✅ |
+
+**Tổng hợp:** 28/30 mã VN30 chính thức (hiệu lực đến 2026-08-02) + 5 mã ngoài danh sách hiện tại
+(giữ lại vì đủ dữ liệu lịch sử, không phải sai sót). Tất cả đã qua `src/common/parkinson_utils.py`
+(đã fix format ngày 2026-08-02), format `date` thống nhất `YYYY-MM-DD` cho toàn bộ 33 mã.
+
+## 7. Giới hạn dữ liệu — lý do loại 2 mã khỏi VN30 (dùng cho mục Limitations của paper)
+
+**BSR và VPL bị loại khỏi universe huấn luyện**, mặc dù cả hai đều thuộc danh sách VN30 hiệu lực
+đến 2026-08-02. Lý do: dữ liệu lịch sử quá ngắn để tham gia vào 1 dataset yêu cầu chung 1 khung
+ngày giữa các mã (kiến trúc LSTM-GAT hybrid xây đồ thị quan hệ chéo-mã theo từng timestep, đòi
+hỏi mọi mã phải có dữ liệu tại cùng ngày).
+
+- **VPL** (Vinpearl): niêm yết 2026-03-17, chỉ 99 phiên giao dịch tính đến thời điểm audit
+  (2026-08-02). Đưa VPL vào sẽ ép khung ngày dùng chung của toàn bộ 33 mã co lại còn ~84 ngày
+  lịch (~58 ngày giao dịch) — không đủ tạo ra dù chỉ vài chục sequence 22-ngày cho train/val/test.
+- **BSR** (Binh Son Refining): niêm yết 2025-01-17, 401 phiên giao dịch tính đến thời điểm audit —
+  đủ dài hơn VPL nhiều, nhưng vẫn là mã có lịch sử ngắn thứ nhì trong toàn bộ universe, thu hẹp
+  đáng kể khung ngày nếu đưa vào cùng VPL.
+
+Dữ liệu 2 mã này (`data/raw/vn30/BSR_ohlcv.csv`, `VPL_ohlcv.csv`) đã crawl và lưu lại (không xoá)
+— có thể tái xét khi có đủ lịch sử giao dịch trong tương lai. Tại thời điểm hiện tại, việc loại
+trừ này là quyết định có chủ đích, có định lượng cụ thể, không phải một thiếu sót — nên nêu rõ
+trong phần Limitations/Dataset Description của paper, kèm 2 con số ở trên.
