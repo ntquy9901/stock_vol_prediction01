@@ -1,5 +1,3 @@
-# Claude Code
-.claude/
 
 # Agent tooling / skills (vendored, not project code)
 .agents/
