@@ -524,7 +524,17 @@ def create_multi_stock_dataloaders_with_graph_method(
 
 
 def remove_outliers(df: pd.DataFrame, n_std: float = 3.0) -> pd.DataFrame:
-    """Remove outliers using z-score method"""
+    """Winsorize outliers using z-score method (clip values, keep every row).
+
+    Previously dropped outlier rows entirely. Outlier detection runs independently
+    per ticker, so dropping rows desynced each ticker's row position from calendar
+    date relative to every other ticker (P1.2, the cross-stock date-misalignment
+    bug: position i stopped meaning "the same trading day" across tickers once
+    different rows had been removed from each). Clipping in place preserves row
+    count and date alignment — see _reindex_to_common_dates() for the remaining
+    alignment step (per-ticker date gaps unrelated to outliers, e.g. trading
+    halts) that this alone doesn't cover.
+    """
     if len(df) == 0 or 'parkinson_volatility' not in df.columns:
         return df
 
@@ -533,15 +543,65 @@ def remove_outliers(df: pd.DataFrame, n_std: float = 3.0) -> pd.DataFrame:
     if np.std(volatility_values) == 0:
         return df
 
-    z_scores = np.abs(stats.zscore(volatility_values))
-    outlier_mask = z_scores < n_std
-    df_clean = df[outlier_mask].copy()
+    z_scores = stats.zscore(volatility_values)
+    outlier_mask = np.abs(z_scores) >= n_std
+    outlier_count = int(outlier_mask.sum())
 
-    removed_count = len(df) - len(df_clean)
-    if removed_count > 0:
-        print(f"    [Outlier Removal] Removed {removed_count} outliers ({removed_count/len(df)*100:.2f}%)")
+    if outlier_count > 0:
+        mean = volatility_values.mean()
+        std = volatility_values.std()
+        lower, upper = mean - n_std * std, mean + n_std * std
+        df = df.copy()
+        df.loc[outlier_mask, 'parkinson_volatility'] = np.clip(
+            volatility_values[outlier_mask], lower, upper)
+        print(f"    [Outlier Winsorize] Clipped {outlier_count} outliers "
+              f"({outlier_count/len(df)*100:.2f}%) to [{lower:.6f}, {upper:.6f}]")
 
-    return df_clean
+    return df
+
+
+def _reindex_to_common_dates(stock_data: Dict[str, pd.DataFrame]) -> Dict[str, pd.DataFrame]:
+    """Align every ticker's DataFrame to the same trading-date axis (P1.2 fix).
+
+    Restricts to the intersection of dates present in EVERY ticker, so row
+    position i is guaranteed to be the same calendar date for every ticker —
+    a precondition the rest of this pipeline's positional indexing
+    (_split_raw_data_by_date, _create_sequences-style window construction)
+    silently assumed but never enforced. Without this, tickers with different
+    listing dates or sporadic gaps (trading halts) end up compared at the same
+    "position" while actually representing different real-world dates.
+
+    Args:
+        stock_data: ticker -> DataFrame with a 'date' column (any per-ticker
+            date range/gaps; not required to already be aligned)
+
+    Returns:
+        ticker -> DataFrame restricted to the common date index, sorted
+        chronologically, all with identical length and date sequence.
+    """
+    if not stock_data:
+        return stock_data
+
+    date_sets = [set(df['date']) for df in stock_data.values()]
+    common_dates = sorted(set.intersection(*date_sets))
+
+    print(f"\n[_reindex_to_common_dates] Common trading dates across "
+          f"{len(stock_data)} tickers: {len(common_dates)}")
+    if common_dates:
+        print(f"  Range: {common_dates[0]} -> {common_dates[-1]}")
+
+    aligned = {}
+    for ticker, df in stock_data.items():
+        df_sorted = df.sort_values('date').reset_index(drop=True)
+        aligned[ticker] = df_sorted[df_sorted['date'].isin(common_dates)].reset_index(drop=True)
+
+    lengths = {len(df) for df in aligned.values()}
+    if len(lengths) != 1:
+        raise ValueError(
+            f"_reindex_to_common_dates produced mismatched lengths {lengths} — "
+            "a ticker likely has duplicate dates; investigate before proceeding.")
+
+    return aligned
 
 
 # ========================================================================
@@ -579,7 +639,6 @@ def _load_raw_stock_data(
 
     stock_data = {}
     loaded_count = 0
-    total_outliers_removed = 0
 
     for csv_file in csv_files:
         stock_name = csv_file.stem.replace('_processed', '')
@@ -597,26 +656,26 @@ def _load_raw_stock_data(
         df['returns'] = df['parkinson_volatility'].pct_change()
         df['returns'] = df['returns'].fillna(0)
 
-        # Apply outlier removal (call the module-level function)
+        # Apply outlier winsorization (call the module-level function). This clips
+        # extreme values in place rather than dropping rows, so it never changes
+        # len(df) or which dates are present — see remove_outliers()'s docstring
+        # for why row-dropping here used to desync cross-ticker date alignment.
         if remove_outliers:
-            original_len = len(df)
-            # Call the function defined at the end of this file
             df = remove_outliers_func(df, n_std=n_std)
-            outliers_removed = original_len - len(df)
-            total_outliers_removed += outliers_removed
-            if len(df) < 30:
-                print(f"[Warning] Skipping {stock_name}: insufficient data after outlier removal ({len(df)} rows)")
-                continue
 
         stock_data[stock_name] = df
         loaded_count += 1
 
     print(f"[_load_raw_stock_data] Successfully loaded {loaded_count} stocks")
-    if remove_outliers:
-        print(f"[_load_raw_stock_data] Total outliers removed: {total_outliers_removed}")
 
     if loaded_count == 0:
         raise ValueError("No valid stock data loaded")
+
+    # P1.2 fix: align every ticker to the same trading-date axis before any
+    # downstream code does positional indexing (_split_raw_data_by_date,
+    # sequence-window construction) that silently assumed — but never
+    # enforced — that position i means the same calendar date for every ticker.
+    stock_data = _reindex_to_common_dates(stock_data)
 
     return stock_data
 
@@ -644,6 +703,17 @@ def _split_raw_data_by_date(
     # Validate ratios
     if abs(train_ratio + val_ratio + test_ratio - 1.0) > 1e-6:
         raise ValueError("train_ratio + val_ratio + test_ratio must equal 1.0")
+
+    # Positional slicing below is only a valid DATE split if every ticker is
+    # already aligned to the same date axis (see _reindex_to_common_dates,
+    # the P1.2 fix) — assert it rather than silently mis-splitting again.
+    lengths = {len(df) for df in stock_data.values()}
+    if len(lengths) != 1:
+        raise ValueError(
+            f"_split_raw_data_by_date got mismatched per-ticker lengths {lengths} — "
+            "stock_data must be reindexed to a common date axis first "
+            "(_reindex_to_common_dates), otherwise this positional split silently "
+            "compares different calendar dates across tickers (P1.2).")
 
     # Find minimum length across all stocks
     min_length = min(len(df) for df in stock_data.values())
