@@ -136,14 +136,65 @@ non-reproducibility, chưa từng được gắn cờ là vậy.
 vấn đề universe-stale riêng biệt (chưa fix) dù đã biết từ 1 tuần trước. Nếu paper dùng "VN30" làm
 tên tập dữ liệu, cần fix hoặc explicit caveat + justify trong Limitations.
 
-### 1.8 [MEDIUM] 2 cặp giá trị trùng khớp bất thường (11-13 chữ số) giữa các run độc lập, không seed
+### 1.8 [RESOLVED — root cause xác định, không phải bug cache/checkpoint] 2 cặp giá trị trùng khớp bất thường (11-13 chữ số) giữa các run độc lập, không seed
 
-(a) `results/embedding_baseline_2026-07-15_015004`'s test DirAcc khớp một run 2026-07-11 khác
-tới 11 chữ số thập phân. (b) `dual_group_news`'s run không tài liệu hóa `2026-07-26_192414` có
-test DirAcc khớp run 20-epoch của chính nó tới 13 chữ số trong khi mọi metric khác khác nhau.
-Với hệ thống không seed, xác suất trùng ngẫu nhiên gần như bằng 0 — nghi vấn cache/checkpoint bị
-tái sử dụng nhầm giữa các run, hoặc bug ghi đè results.json. **Chưa điều tra nguyên nhân gốc** —
-nên làm rõ trước khi paper trích dẫn bất kỳ số nào từ 2 run liên quan.
+**Cặp (a):** file thứ hai định vị được là `results/market_fallback_2026-07-08_145455`
+(`test_metrics.directional_accuracy = 67.86735277301315`, khớp
+`embedding_baseline_2026-07-15_015004` tới 15 chữ số hiển thị, không phải run `2026-07-11` như ghi
+ban đầu — không tìm thấy result directory `2026-07-11` nào chứa giá trị này; recheck toàn bộ
+`results/**/results.json` bằng khớp số xác nhận `market_fallback_2026-07-08_145455` là file đúng).
+**Cặp (b):** `results/dual_group_news_2026-07-26_192414` khớp
+`results/dual_group_news_2026-07-25_012212` (không phải "run 20-epoch của chính nó" — đây là 2
+run **khác nhau**, cùng thuộc `dual_group_news_embedding_baseline`) ở
+`test_metrics.directional_accuracy = 68.2485229655041`.
+
+**Điều tra (không train lại, chỉ dùng artifact có sẵn):**
+- Cả 2 file trong mỗi cặp có `validation_metrics`/`test_metrics` khác nhau ở MỌI field khác
+  (`mse`, `rmse`, `mae`, `r2`, `qlike`, và cả `directional_accuracy_per_stock`) — loại trừ giả
+  thuyết "results.json bị ghi đè/nhân bản" và "checkpoint bị load nhầm từ run khác": nếu đúng vậy,
+  TOÀN BỘ field phải giống hệt nhau, không chỉ 1 field.
+- `git blame` xác nhận `torch.manual_seed(42)`/`np.random.seed(42)` trong
+  `train_dual_news.py` được thêm ở commit `fccaf6a` (2026-08-02) — **sau** cả 2 run của cặp (b)
+  (2026-07-25, 2026-07-26). Cả 4 run liên quan (2 cặp) đều thực sự không-seed tại thời điểm chạy,
+  đúng như audit ghi nhận — nhưng đây không phải nguyên nhân của trùng khớp.
+- Giải mã field trùng khớp thành phân số rời rạc `k/N` (vì `directional_accuracy` = tỷ lệ đếm, không
+  phải số liên tục): `67.86735277301315% = 3561/5247` (cặp a) và `68.2485229655041% = 3581/5247`
+  (cặp b) — **cùng mẫu số N=5247** ở cả 2 cặp độc lập. N=5247 = kích thước mảng flatten
+  `(num_windows × n_stocks) − 1` của tập test cố định (cùng `data/processed`, cùng temporal split)
+  — việc N giống hệt nhau xác nhận cả 4 run dùng chung 1 test set cố định, không phải trùng hợp
+  ngẫu nhiên về kích thước.
+- Đối chiếu với `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md` (đã viết trước, độc lập với điều tra
+  này): trường `directional_accuracy` ở các script này dùng **công thức (A)** — `np.diff` trên mảng
+  đã flatten theo thứ tự `[window, mã]` — nên (n_stocks−1)/n_stocks phép so sánh trong công thức là
+  so 2 MÃ KHÁC NHAU cùng ngày, không phải cùng mã qua 2 ngày. Giá trị này bị chi phối bởi khác biệt
+  MỨC volatility cấu trúc, ổn định giữa các mã (vd blue-chip vs mã nhỏ) — một pattern mà bất kỳ model
+  nào train trên cùng feature HAR thật cũng học lại gần như giống hệt, bất kể seed/khởi tạo ngẫu
+  nhiên khác nhau, hoặc thậm chí bất kể nhánh news-embedding dùng dữ liệu thật hay dummy (cặp a:
+  1 run `smoke=false` dùng embedding thật, 1 run `smoke=true` dùng embedding dummy — nhưng
+  `data_dir` HAR/giá vẫn trỏ về cùng dữ liệu thật, nên phần chi phối công thức (A) vẫn giống nhau).
+  Điều này giải thích được vì sao `directional_accuracy` (công thức A) trùng khớp gần tuyệt đối
+  trong khi `directional_accuracy_per_stock` (công thức B, đúng nghĩa — so cùng mã qua thời gian)
+  và các metric phụ thuộc-model khác (QLIKE/R²/RMSE) khác biệt rõ giữa các run — đúng như quan sát
+  thực tế ở cả 2 cặp.
+
+**Kết luận root cause:** trùng khớp là **hệ quả của lỗi công thức DirAcc (A)** đã biết (mục
+tham chiếu `DIRACC_ISSUE_NOTE.md`, cùng loại "DirAcc flatten-order bug" trong memory) — KHÔNG phải
+cache/checkpoint bị tái sử dụng, KHÔNG phải bug ghi đè `results.json`. Lỗi công thức (A) đã được
+sửa ở tầng metric dùng chung: `src/common/evaluation.py::evaluate_predictions(..., n_stocks=...)`
+(commit `fccaf6a`, 2026-08-02) — khi truyền `n_stocks`, trường `directional_accuracy` trả về giờ là
+giá trị đúng theo mã (công thức B), giá trị công thức (A) cũ được giữ lại riêng dưới tên
+`directional_accuracy_flat_biased` để đối chiếu. Không cần fix thêm gì ở code hiện hành cho phát
+hiện này.
+
+**Phạm vi code liên quan cặp (a):** cả 2 baseline tạo ra cặp này
+(`baselines/2026-07-07_embedding_baseline`, `baselines/2026-07-08_market_fallback`) đã được archive
+(`archive/baselines/...`) trong 1 lần dọn dẹp không liên quan — không sửa (archive/ đóng băng theo
+quy tắc dự án).
+
+**Quan sát phụ (không phải bug, không hành động):** `train_dual_news.py::validate()` (dòng 93-101)
+tính `directional_accuracy_per_stock` thủ công, trùng lặp với giá trị `directional_accuracy` mà
+`evaluate_predictions(..., n_stocks=...)` đã trả về đúng kể từ commit `fccaf6a` — dư thừa nhưng vô
+hại (2 field cho cùng 1 số), để nguyên vì không phải bug và không nằm trong yêu cầu điều tra.
 
 ### 1.9 [LOW-MEDIUM] Vi phạm cấu trúc baseline bắt buộc (CLAUDE.md §3.F)
 
@@ -231,7 +282,7 @@ trước đó, liệt kê để theo dõi):
 | 07-18 | gated_crossattn_baseline | Gate học cross-attention | null (DirAcc), best R² | QLIKE 0.5567, DA 68.97% | 68.97→48.66% (20.3pp) | review bắt bug HIGH, +1.81pp sau fix |
 | 07-18 | resttext_baseline | Residual-only head | null (DirAcc), best QLIKE | QLIKE 0.5431, DA 68.29% | 68.29→36.20% (**32.1pp**) | **QLIKE record thật của project** |
 | 07-25 | ablation_derived_gate_baseline | Gate list tự suy ra thắng EDA-derived | inconclusive | QLIKE 0.5623, DA 68.23% | — | không seed |
-| 07-25 | dual_group_news_embedding_baseline | Dual-source PCA thắng single-group | null | QLIKE 0.5458-0.565 | ~20.6pp avg | HIGH leakage bug đã fix; 1 run lạ trùng khớp bất thường |
+| 07-25 | dual_group_news_embedding_baseline | Dual-source PCA thắng single-group | null | QLIKE 0.5458-0.565 | ~20.6pp avg | HIGH leakage bug đã fix; 2 run trùng DirAcc-flat — root cause: lỗi công thức (A), xem 1.8 |
 | 07-25 | expand_news_cache_baseline | (data-prep) | hoàn thành | N/A | N/A | — |
 | 07-25 | macro_news_baseline | Macro news mang tín hiệu chung | null | QLIKE 0.5634, DA 68.63% | 68.63→45.71% (22.9pp) | không seed |
 | 07-25 | news_usefulness_ablation | Đo usefulness trên kiến trúc riêng | positive/partial (11/32) | QLIKE_ref 0.5623 | N/A | **thiếu `test/`** |
@@ -260,15 +311,20 @@ trước đó, liệt kê để theo dõi):
 - Mục 1.1: hoàn thành kiểm chứng vòng 2 (5 seed, epoch-matched = 20) — xem chi tiết cập nhật ở
   mục 1.1 phía trên. Kết luận: per-ticker-gate mean 0.5530±0.0115 QLIKE, thua REST-TS (0.5431) trên
   cả 5/5 seed — **không dùng per-ticker-gate làm headline "beats REST-TS"**.
+- Mục 1.8: điều tra root cause xong (không train lại, chỉ đối chiếu artifact có sẵn +
+  `git blame`) — xem chi tiết cập nhật ở mục 1.8 phía trên. Kết luận: trùng khớp là hệ quả lỗi công
+  thức DirAcc (A) đã biết (`DIRACC_ISSUE_NOTE.md`), không phải cache/checkpoint/results-overwrite
+  bug; đã fix ở tầng metric dùng chung (`evaluate_predictions(..., n_stocks=...)`, commit
+  `fccaf6a`, trước phiên này) — không cần fix thêm. Code sinh ra cặp (a) đã archive, không sửa.
 
 ## 6. Chưa xử lý — cần quyết định ưu tiên trước khi viết paper
 
 Còn lại: 1.5 (chốt 1 headline — REST-TS hiện là ứng viên mạnh hơn theo mục 1.1 mới nhưng REST-TS
 CHƯA qua multi-seed verify), 1.4 (phần lớn baseline khác vẫn 1-seed — chấp nhận được cho null
 result, không bắt buộc cho non-headline), 1.6 (giải thích trôi dạt — coi như đã giải thích bởi
-1.1: non-reproducibility), 1.7-1.9 (universe stale, traceability, cấu trúc), mục 3 (limitations,
-significance testing, related work, reproducibility statement, code hygiene 3.10). Khuyến nghị thứ
-tự tiếp theo: (1) multi-seed verify REST-TS (đối trọng cần thiết để chốt headline) → (2) cập nhật
-Limitations + reproducibility statement với số liệu mục 1.1 mới → (3) dọn cấu trúc/traceability
-còn thiếu (1.8, 1.9) → (4) dọn code hygiene nếu công khai repo (3.10, bao gồm archive 2 script rò
-rỉ ở mục 1.2).
+1.1: non-reproducibility), 1.7, 1.9 (universe stale, cấu trúc/traceability — 1.8 đã resolved, xem
+mục 1.8), mục 3 (limitations, significance testing, related work, reproducibility statement, code
+hygiene 3.10). Khuyến nghị thứ tự tiếp theo: (1) multi-seed verify REST-TS (đối trọng cần thiết để
+chốt headline) → (2) cập nhật Limitations + reproducibility statement với số liệu mục 1.1 mới → (3)
+dọn cấu trúc/traceability còn thiếu (1.9) → (4) dọn code hygiene nếu công khai repo (3.10, bao gồm
+archive 2 script rò rỉ ở mục 1.2).
