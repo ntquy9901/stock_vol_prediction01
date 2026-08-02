@@ -86,7 +86,7 @@ def validate(model, loader, criterion, device, dataset):
         else:
             preds_d[i] = preds_n[i]; targs_d[i] = targs_n[i]
 
-    metrics = evaluate_predictions(targs_d, preds_d)
+    metrics = evaluate_predictions(targs_d, preds_d, n_stocks=n_stocks)
     if len(preds_d) == (len(preds_d) // n_stocks) * n_stocks and len(preds_d) >= n_stocks * 2:
         nw = len(preds_d) // n_stocks
         p2 = preds_d.reshape(nw, n_stocks); t2 = targs_d.reshape(nw, n_stocks)
@@ -119,6 +119,8 @@ def main():
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(42)
+    np.random.seed(42)
     print(f"[train] device={device}, smoke={args.smoke}, lambda_align={args.lambda_align}")
 
     config = LSTMGATConfig()

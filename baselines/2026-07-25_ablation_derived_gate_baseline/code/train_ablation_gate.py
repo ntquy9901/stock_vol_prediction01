@@ -111,7 +111,7 @@ def validate(model, loader, criterion, device, dataset):
         else:
             preds_d[i] = preds_n[i]; targs_d[i] = targs_n[i]
 
-    metrics = evaluate_predictions(targs_d, preds_d)
+    metrics = evaluate_predictions(targs_d, preds_d, n_stocks=n_stocks)
     per_ticker, on_avg, off_avg = _per_stock_dir_acc(preds_d, targs_d, dataset.stock_names)
     if on_avg is not None:
         metrics['dir_acc_news_on_avg'] = on_avg
@@ -139,6 +139,8 @@ def main():
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(42)
+    np.random.seed(42)
     print(f"[train] device={device}, smoke={args.smoke}")
 
     config = LSTMGATConfig()

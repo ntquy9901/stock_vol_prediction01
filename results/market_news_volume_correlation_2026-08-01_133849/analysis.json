@@ -1,0 +1,25 @@
+{
+  "n_days": 4987,
+  "pearson_same_day": {
+    "r": 0.01106039083951349,
+    "p": 0.43486222669501845
+  },
+  "pearson_next_day": {
+    "r": -0.03765560349504263,
+    "p": 0.007826460607386674
+  },
+  "pearson_next_day_abs_change": {
+    "r": 0.02678063701240441,
+    "p": 0.05861384219537072
+  },
+  "high_vs_low_volume_next_day_abs_change": {
+    "high_volume_threshold": 1.0,
+    "low_volume_threshold": 0.0,
+    "n_high": 1844,
+    "n_low": 3143,
+    "mean_abs_change_high": 0.0007571357659723562,
+    "mean_abs_change_low": 0.0005825678554223613,
+    "welch_t": 2.0174185347303495,
+    "p_value": 0.04373516146154247
+  }
+}

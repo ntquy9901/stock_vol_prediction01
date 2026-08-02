@@ -446,6 +446,10 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     print("="*80)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
 
+    # Set random seeds for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     # Configuration
     config = LSTMGATConfig()
 

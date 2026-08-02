@@ -100,7 +100,7 @@ def main():
         else:
             preds_d[i] = preds_n[i]; targs_d[i] = targs_n[i]
 
-    overall = evaluate_predictions(targs_d, preds_d)
+    overall = evaluate_predictions(targs_d, preds_d, n_stocks=n_stocks)
     per_ticker = per_stock_metrics(preds_d, targs_d, test_ds.stock_names)
 
     print(f"\n[overall test] DirAcc={overall['directional_accuracy']:.2f}% "

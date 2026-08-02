@@ -217,6 +217,10 @@ def train_lstm_gat_hybrid():
     print("="*80)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
 
+    # Set random seeds for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     # Create configuration
     config = LSTMGATConfig()
     print(f"\nConfiguration:")

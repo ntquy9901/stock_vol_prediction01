@@ -63,6 +63,8 @@ def main():
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(42)
+    np.random.seed(42)
     print(f"[train] device={device}, noise_std={args.noise_std}, smoke={args.smoke}")
 
     config = LSTMGATConfig()

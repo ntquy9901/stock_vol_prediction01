@@ -64,6 +64,10 @@ data/external_news_embeddings/
 # Ad-hoc rollback snapshots of regenerable feature panels (not source, not the current result)
 data/features/*_backup_*.parquet
 
+# Human-readable CSV debug dumps of parquet feature panels (regenerable, large, not source)
+data/features/*_DEBUG.csv
+data/features/DEBUG_by_ticker/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb

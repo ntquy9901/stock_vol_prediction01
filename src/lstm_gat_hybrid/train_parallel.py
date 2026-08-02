@@ -218,6 +218,10 @@ def train_parallel_lstm_gat():
     print("="*80)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
 
+    # Set random seeds for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     # Create configuration with paper's hyperparameters
     config = LSTMGATConfig()
 

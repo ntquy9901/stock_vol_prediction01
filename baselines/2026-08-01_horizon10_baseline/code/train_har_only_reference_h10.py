@@ -107,7 +107,7 @@ def validate(model, loader, criterion, device, dataset):
         else:
             preds_d[i] = preds_n[i]; targs_d[i] = targs_n[i]
 
-    metrics = evaluate_predictions(targs_d, preds_d)
+    metrics = evaluate_predictions(targs_d, preds_d, n_stocks=n_stocks)
     metrics['_per_ticker'] = per_stock_metrics(preds_d, targs_d, dataset.stock_names)
     return avg_loss, metrics
 
@@ -132,6 +132,8 @@ def main():
             "experimental runs without explicit user approval based on 5/10-epoch results.")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch.manual_seed(42)
+    np.random.seed(42)
     print(f"[train] device={device}, forecast_horizon={args.forecast_horizon}")
 
     config = LSTMGATConfig()

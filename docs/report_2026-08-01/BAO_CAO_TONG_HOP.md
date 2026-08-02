@@ -13,6 +13,13 @@ feature, (2) train thử baseline mới, (3) chạy EDA/correlation để trả 
 số liệu thay vì suy đoán. Toàn bộ thêm ở **§6 (mới)** — có code + ví dụ tính tay cụ thể, đọc không
 cần trace lại source.
 
+**Cập nhật lần 3 (cùng ngày) — đã bỏ DirAcc khỏi báo cáo:** công thức DirAcc hiện dùng cho mọi bảng
+trong báo cáo tính trên mảng đã làm phẳng theo thứ tự `[window, mã]`, khiến phần lớn phép so sánh
+là giữa 2 mã khác nhau cùng ngày, không phải cùng 1 mã qua thời gian — tính đúng đắn của số liệu
+này chưa được xác nhận. Toàn bộ cột/giá trị/kết luận DirAcc đã được gỡ khỏi các bảng và câu kết
+luận trong báo cáo này, chỉ giữ lại R², QLIKE, RMSE. Ghi chú kỹ thuật đầy đủ về vấn đề này (công
+thức, code, số liệu đối chiếu) đã được chuyển ra file riêng: `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md`.
+
 ---
 
 # 1. TÓM TẮT (đọc trước, 1 phút)
@@ -44,39 +51,37 @@ Input: các mã VN30 × 22 ngày × 3 HAR feature        +        các mã VN30 
 ## 1.2 Bảng so sánh tổng hợp (đọc trước tiên — mọi số liệu trích từ §4/§6/§7)
 
 **Lưu ý bắt buộc đọc trước khi so sánh:** có 2 pipeline KHÔNG so trực tiếp được với nhau —
-(a) pipeline gốc (batch_size=11, có augmentation — cho ra con số "69.98% DirAcc" nhắc ở §4)
-và (b) pipeline so sánh công bằng dùng cho TẤT CẢ bảng dưới đây (batch_size=32, không augmentation).
-Mọi kết luận "vượt HAR-only" trong báo cáo này đều trong pipeline (b).
+(a) pipeline gốc (batch_size=11, có augmentation) và (b) pipeline so sánh công bằng dùng cho TẤT CẢ
+bảng dưới đây (batch_size=32, không augmentation). Mọi kết luận "vượt HAR-only" trong báo cáo này
+đều trong pipeline (b).
 
 *(Bảng A — tiến trình chi tiết per-ticker-gate qua các panel/epoch ở horizon 5-ngày — đã chuyển
 xuống "Bảng tham khảo" cuối trang, vì Bảng B dưới đây đã đủ để so sánh tổng quan. Số liệu tốt nhất
-hiện hành: DirAcc 69.51%, R² 0.7158, QLIKE 0.5436, epoch 20, panel đã fix — chi tiết §7.3-7.4.)*
+hiện hành: R² 0.7158, QLIKE 0.5436, epoch 20, panel đã fix — chi tiết §7.3-7.4.)*
 
 ### Bảng B — So sánh horizon dự báo (1 vs 5 vs 10 vs 22 ngày, pipeline so sánh công bằng, 10 epoch trừ khi ghi khác)
 
-| Kiến trúc | Horizon | DirAcc | R² | QLIKE | RMSE | Trạng thái hội tụ |
-|---|---|---:|---:|---:|---:|---|
-| HAR-only | 1 ngày | 72.35% | 0.7581 | 0.5099 | 0.002428 | hội tụ nhanh (epoch ~5) |
-| HAR-only | 5 ngày | 68.42% | 0.7141 | 0.5623 | 0.002643 | — |
-| HAR-only | 10 ngày | 67.80% | **0.7041** | **0.5732** | **0.002689** | — |
-| HAR-only | 22 ngày | 66.38% | **0.7051** | **0.5938** | **0.002750** | hội tụ ở epoch ~10 |
-| Gated-news | 1 ngày | **72.39%** | **0.7595** | **0.4834** | **0.002420** | hội tụ nhanh (epoch ~5) |
-| Gated-news | 5 ngày | **69.51%** | **0.7158** | **0.5436** | **0.002635** | epoch 20 — tốt nhất, xem Bảng A |
-| Gated-news | 10 ngày | **67.92%** | 0.7040 | 0.5767 | 0.002690 | epoch 10 — hội tụ ở epoch ~10-20 |
-| Gated-news | 22 ngày | **67.17%** | 0.7032 | 0.5943 | 0.002759 | epoch 10 — hội tụ ở epoch ~10 |
+| Kiến trúc | Horizon | R² | QLIKE | RMSE | Trạng thái hội tụ |
+|---|---|---:|---:|---:|---|
+| HAR-only | 1 ngày | 0.7581 | 0.5099 | 0.002428 | hội tụ nhanh (epoch ~5) |
+| HAR-only | 5 ngày | 0.7141 | 0.5623 | 0.002643 | — |
+| HAR-only | 10 ngày | **0.7041** | **0.5732** | **0.002689** | — |
+| HAR-only | 22 ngày | **0.7051** | **0.5938** | **0.002750** | hội tụ ở epoch ~10 |
+| Gated-news | 1 ngày | **0.7595** | **0.4834** | **0.002420** | hội tụ nhanh (epoch ~5) |
+| Gated-news | 5 ngày | **0.7158** | **0.5436** | **0.002635** | epoch 20 — tốt nhất, xem Bảng A |
+| Gated-news | 10 ngày | 0.7040 | 0.5767 | 0.002690 | epoch 10 — hội tụ ở epoch ~10-20 |
+| Gated-news | 22 ngày | 0.7032 | 0.5943 | 0.002759 | epoch 10 — hội tụ ở epoch ~10 |
 
 **Đọc bảng B (in đậm = kiến trúc thắng ở đúng horizon đó, so HAR-only với Gated-news cùng mốc):**
 
-- **1-ngày và 5-ngày: Gated-news thắng CẢ 4 metric.** Tin tức thực sự giúp ích rõ ở 2 horizon ngắn
-  nhất (lưu ý: hàng 5-ngày của Gated-news dùng epoch 20, không cùng epoch với hàng HAR-only —
-  epoch 10 — nên so sánh này không hoàn toàn ngang epoch, xem Bảng A).
-- **10-ngày và 22-ngày: kết quả đảo ngược — Gated-news chỉ thắng DirAcc, HAR-only thắng cả R²,
-  QLIKE, RMSE** (dù chênh lệch rất nhỏ, có thể nằm trong nhiễu single-seed). Tin tức không còn
-  giúp ích rõ ràng ở 2 horizon dài.
-- **Xu hướng chung theo horizon (không phân biệt kiến trúc):** DirAcc giảm dần khi horizon dài hơn
-  (72.35%→68.42%→67.80%→66.38% cho HAR-only), QLIKE tăng dần (0.5099→0.5623→0.5732→0.5938) —
-  horizon càng dài càng khó dự báo, càng ngắn càng dễ, nhất quán ở cả 2 kiến trúc. R² nhảy vọt rõ
-  ở mốc 1-ngày (~0.758) so với 3 mốc còn lại (~0.70-0.71).
+- **1-ngày và 5-ngày: Gated-news thắng CẢ 3 metric (R², QLIKE, RMSE).** Tin tức giúp ích rõ ở 2
+  horizon ngắn nhất (lưu ý: hàng 5-ngày của Gated-news dùng epoch 20, không cùng epoch với hàng
+  HAR-only — epoch 10 — nên so sánh này không hoàn toàn ngang epoch, xem Bảng A).
+- **10-ngày và 22-ngày: HAR-only thắng cả R², QLIKE, RMSE** (dù chênh lệch rất nhỏ, có thể nằm
+  trong nhiễu single-seed). Tin tức không còn giúp ích rõ ràng ở 2 horizon dài.
+- **Xu hướng chung theo horizon (không phân biệt kiến trúc):** QLIKE tăng dần khi horizon dài hơn
+  (0.5099→0.5623→0.5732→0.5938 cho HAR-only) — horizon càng dài càng khó dự báo, càng ngắn càng dễ,
+  nhất quán ở cả 2 kiến trúc. R² nhảy vọt rõ ở mốc 1-ngày (~0.758) so với 3 mốc còn lại (~0.70-0.71).
 - **Hội tụ:** 1, 10, 22-ngày đều hội tụ/chững lại nhanh (epoch ~5-10); CHỈ 5-ngày cần train tới
   epoch ~20 mới đạt đỉnh (Bảng A) — ngoại lệ, không phải quy luật chung theo horizon.
 
@@ -88,14 +93,13 @@ lục, vì ít giá trị báo cáo ở mức tóm tắt so với Bảng A/B.)*
 ## 1.3 Kết luận điều hành — 5 câu (đã gộp từ bảng trên)
 
 1. **Kết quả tốt nhất hiện tại: per-ticker gated news, panel đã fix, epoch 20** (Bảng A hàng 4) —
-   DirAcc 69.51%, R² 0.7158, QLIKE 0.5436 — **lần đầu tiên 1 biến thể tích hợp tin tức vượt
-   HAR-only trên DirAcc** trong cùng pipeline. Epoch 30 xác nhận epoch 20 là điểm dừng hợp lý
-   (train thêm bắt đầu overfit).
+   R² 0.7158, QLIKE 0.5436. Epoch 30 xác nhận epoch 20 là điểm dừng hợp lý (train thêm bắt đầu
+   overfit).
 2. **Horizon càng dài càng khó dự báo — xu hướng đơn điệu qua đủ 4 mốc 1/5/10/22-ngày** (Bảng B):
-   DirAcc giảm dần (72.35%→68.42%→67.80%→66.38%, HAR-only), QLIKE tăng dần
-   (0.5099→0.5623→0.5732→0.5938), cho cả 2 kiến trúc — **1-ngày dễ dự báo nhất, vượt trội rõ rệt
-   so với 3 mốc còn lại** (đúng giả thuyết ban đầu). Riêng 5-ngày là ngoại lệ về hội tụ: 1/10/22-ngày
-   đều hội tụ RẤT NHANH (~epoch 5-10), CHỈ 5-ngày cần ~20 epoch mới đạt đỉnh (câu 1).
+   QLIKE tăng dần (0.5099→0.5623→0.5732→0.5938, HAR-only), cho cả 2 kiến trúc — **1-ngày dễ dự báo
+   nhất, vượt trội rõ rệt so với 3 mốc còn lại** (đúng giả thuyết ban đầu, dựa trên QLIKE/R²).
+   Riêng 5-ngày là ngoại lệ về hội tụ: 1/10/22-ngày đều hội tụ RẤT NHANH (~epoch 5-10), CHỈ 5-ngày
+   cần ~20 epoch mới đạt đỉnh (câu 1).
 3. **Calendar feature (day-of-week/tháng/Tết/mùa BCTC) không cải thiện dự báo** — no-lift ở cả
    training (§6.6, bảng tham khảo cuối trang) lẫn EDA tương quan độc lập (§6.5).
 4. **Không có feature thời gian dạng lịch nào tồn tại trong kiến trúc gốc** trước hôm nay (§3) —
@@ -127,7 +131,7 @@ Fusion (concat, KHÔNG cộng): [64+256=320] → Dense MLP (320→64→32→1) k
                              → hoặc concat thêm nhánh tin tức (xem 3.2) khi dùng làm HAR-only "backbone"
 ```
 
-Đây chính là baseline **"HAR-only"** đang dẫn đầu DirAcc (69.98%) trong mọi bảng so sánh — mọi
+Đây chính là baseline **"HAR-only"** dùng làm đối chứng chính trong mọi bảng so sánh — mọi
 baseline tích hợp tin tức đều **tái sử dụng nguyên vẹn** `ParallelLSTMGNN.get_embeddings()`
 (read-only, không sửa) để lấy `h_lstm`, `h_gnn`.
 
@@ -146,7 +150,178 @@ news_rep = LSTM(1 lớp, Linear(146→64) → ReLU → LSTM(64→64), qua 22 ng�
 Feature tin tức đã được **aggregate sẵn theo ngày** ở bước offline (`build_dual_group_panel.py`)
 — khác với baseline tin tức đầu tiên (07-07) phải pool N bài báo thô bằng attention-pooling.
 
-### 2.2.1 Ví dụ cụ thể: ngày CÓ tin vs KHÔNG có tin được tổ chức thế nào khi train
+### 2.2.1 Xây dựng vector cho 1 mã, 1 ngày cụ thể — nhiều bài báo GỘP LẠI 1 vector, không giữ riêng
+
+**Câu hỏi:** nếu ACB có 3 tin tức trong 1 ngày, mỗi tin có 1 vector riêng hay gộp lại 1 vector? Trả
+lời ngắn: **GỘP LẠI thành đúng 1 vector duy nhất** (không giữ 3 vector riêng biệt) bằng phép
+**trung bình cộng (mean) từng chiều**, sau khi từng bài đã được PCA-reduce. 4 bước theo đúng thứ tự
+code chạy thật:
+
+**Bước 1 — Encode từng bài báo riêng lẻ (768 chiều, làm 1 lần, dùng lại qua cache):**
+File `news_embeddings.py`, cache `news_emb_articles_{nguồn}.parquet` (key = `url`). Mỗi bài báo
+(title+lead) → 1 vector PhoBERT [CLS] 768 chiều — bước này KHÔNG chạy trong baseline hiện tại (chỉ
+đọc cache có sẵn, không gọi lại PhoBERT — xem `_get_article_embeddings`, "cache-ONLY lookup").
+
+**Bước 2 — "Nổ" theo từng mã được nhắc tới (`_explode_tickers`):** 1 bài báo có thể nhắc NHIỀU mã
+cùng lúc (vd "ACB và VCB cùng công bố..."). Khi đó CÙNG 1 vector 768-chiều của bài đó được COPY
+thành nhiều dòng, 1 dòng cho mỗi mã được nhắc — ở bước này, mỗi bài báo VẪN là 1 vector riêng, CHƯA
+gộp gì cả.
+
+**Bước 3 — PCA giảm chiều 768→32 (`_reduce`):** áp dụng PCA (fit trên dữ liệu TRƯỚC `TRAIN_CUTOFF`
+để tránh rò rỉ, transform toàn bộ) lên TỪNG DÒNG (từng bài báo × mã) — vẫn 1 vector 32 chiều riêng
+cho mỗi bài, CHƯA gộp theo ngày.
+
+**Bước 4 — Gộp theo (mã, ngày) bằng TRUNG BÌNH CỘNG (`aggregate_articles`, code thật):**
+```python
+# dual_news_features.py — chạy khi nhóm theo (ticker, date), rows = các bài báo cùng mã, cùng ngày
+for c in emb_cols:                      # từng chiều trong 32 chiều
+    out[c] = float(rows[c].astype(float).mean())      # TRUNG BÌNH CỘNG qua các bài, KHÔNG concat
+out["emb_norm"] = norm(mean_vector)                    # L2-norm TÍNH SAU KHI đã lấy mean
+for cat in TOPIC_CATEGORIES:
+    out[f"topic_{cat}_count"] = int(rows[f"topic_{cat}_count"].sum())   # topic thì CỘNG DỒN, không mean
+```
+
+**Ví dụ minh hoạ cách tính (số làm tròn cho dễ hiểu, minh hoạ đúng công thức — không phải trích
+nguyên văn từ 1 ngày cụ thể trong dữ liệu thật):** giả sử ACB có 3 bài báo khách quan cùng ngày,
+sau bước 3 mỗi bài đã có vector 32 chiều riêng; chỉ xét 2 chiều đầu (`emb_0`, `emb_1`) và cờ chủ đề
+BCTC:
+
+| Bài báo | `emb_0` (sau PCA) | `emb_1` (sau PCA) | Có nhắc BCTC? |
+|---|---:|---:|:---:|
+| Bài 1 | 0.90 | -0.40 | có (1) |
+| Bài 2 | -0.30 | 0.10 | có (1) |
+| Bài 3 | 1.20 | -0.20 | không (0) |
+| **`kq_emb_0`/`kq_emb_1`** (TRUNG BÌNH 3 bài) | **(0.90-0.30+1.20)/3 = 0.60** | **(-0.40+0.10-0.20)/3 = -0.167** | — |
+| **`kq_topic_earnings_count`** (TỔNG 3 bài) | — | — | **1+1+0 = 2** |
+
+**Vì sao mean chứ không phải concat/attention:** `NewsFeatureLSTM` (§2.2) nhận input cố định 146
+chiều/ngày/mã — nếu giữ riêng N vector (N thay đổi theo ngày, có ngày 0 bài có ngày 5 bài) thì kiến
+trúc phải xử lý số chiều thay đổi (cần padding + mask hoặc attention-pooling, như baseline 07-07 cũ
+đã làm). Baseline 07-25 chọn gộp sẵn bằng mean ở bước offline — đơn giản hơn, đổi lại: **thông tin
+"có bao nhiêu bài, bài nào nói gì khác bài nào" bị mất khi lấy trung bình** — 3 bài nói 3 điều khác
+nhau và 1 bài nói lặp lại 3 lần đều cho ra vector trung bình có thể giống nhau. Cột `topic_*_count`
+(tổng, không phải mean) là cách duy nhất trong 146 feature còn giữ được tín hiệu "có bao nhiêu bài"
+của ngày đó.
+
+### 2.2.2 146 feature gồm những gì — breakdown chi tiết + ví dụ vector thật
+
+**File:** `baselines/2026-07-25_dual_group_news_embedding_baseline/code/vendor_data_eda/dual_news_features.py`,
+`news_embeddings.py`. Đo trực tiếp trên `data/features/dual_group_news_panel.parquet` (146 cột
+feature, không tính `ticker`/`date`):
+
+| Nhóm cột | Số cột | Nguồn | Ý nghĩa |
+|---|---:|---|---|
+| `kq_emb_0..31` | 32 | Báo "khách quan" (cafef, vnexpress, thanhnien, tuoitre, nld, vietnamplus, hsc) | PhoBERT (768-dim) mean-pool các bài về đúng mã, đúng ngày → PCA còn 32 chiều |
+| `kq_emb_norm` | 1 | " | L2-norm của vector `kq_emb_0..31` — 1 số đo "cường độ" tin khách quan hôm đó |
+| `th_emb_0..31` | 32 | Nguồn "tổng hợp" CTCK (ssi, vndirect, vnstock, vietstock, vsdc) | Cùng cách tính, nhóm nguồn khác — PCA dùng CHUNG 1 basis với `kq_emb_*` nên 2 nhóm so sánh được theo từng chiều |
+| `th_emb_norm` | 1 | " | L2-norm của `th_emb_0..31` |
+| `ewma_kq_emb_0..31` + `_norm` | 33 | Suy giảm dần (half-life 30 ngày) của `kq_emb_*` | "Dư âm" tin khách quan, khác 0 cả những ngày không có tin mới |
+| `ewma_th_emb_0..31` + `_norm` | 33 | Suy giảm dần của `th_emb_*` | Tương tự, cho nhóm tổng hợp CTCK |
+| `kq_topic_{7 chủ đề}_count` | 7 | Đếm bài khách quan theo chủ đề: earnings/dividend/M&A/management/regulation/macro/sector | Tần suất tin theo chủ đề cụ thể, không phải embedding |
+| `th_topic_{7 chủ đề}_count` | 7 | Tương tự, nhóm tổng hợp CTCK | " |
+| **Tổng** | **146** | | 33+33+33+33+14 = 146 |
+
+**Ví dụ vector thật — mã ACB, ngày 2007-02-12 (đo trực tiếp từ parquet, ngày này ACB có bài báo
+khách quan thật, KHÔNG có bài tổng hợp CTCK):**
+
+| Cột | Giá trị | Đọc thế nào |
+|---|---:|---|
+| `kq_emb_0` | -1.7540 | chiều PCA thứ 0 của embedding tin khách quan hôm đó |
+| `kq_emb_1` | 0.9625 | chiều PCA thứ 1 |
+| `kq_emb_2` | 0.7061 | chiều PCA thứ 2 |
+| `kq_emb_norm` | 4.4027 | cường độ tổng hợp của tin khách quan hôm đó (L2-norm 32 chiều) |
+| `kq_topic_earnings_count` | 0.0 | không có bài nào về BCTC hôm đó |
+| `kq_topic_macro_count` | 0.0 | không có bài về vĩ mô hôm đó |
+| `th_emb_0` | `NaN`→`0.0` khi train | KHÔNG có bài tổng hợp CTCK nào về ACB hôm đó |
+| `th_emb_norm` | `NaN`→`0.0` khi train | " |
+| `ewma_kq_emb_0` | -0.3535 | dư âm suy giảm — nhỏ hơn `kq_emb_0` (-1.7540) vì công thức EWMA còn pha trộn cả những ngày trước |
+| `ewma_kq_emb_norm` | 0.9253 | cường độ "dư âm" tổng hợp, thấp hơn cường độ tức thời (4.4027) |
+
+Đo trên toàn bộ 4989 ngày của ACB: có tin khách quan thật (`kq_emb_*` không NaN) ở **1155/4989 ngày
+(23.2%)** — phần lớn ngày còn lại dựa vào cột `ewma_*` (dư âm) thay vì tín hiệu tức thời, đúng như
+mô tả ở §2.2.4 dưới đây.
+
+### 2.2.3 EWMA + half-life là gì, tại sao dùng, căn cứ khoa học, ví dụ cụ thể
+
+**EWMA (Exponentially Weighted Moving Average)** là trung bình trượt có trọng số giảm dần theo cấp
+số nhân — giá trị càng cũ càng ít ảnh hưởng tới trung bình hiện tại. Công thức đệ quy tổng quát:
+
+```
+ema[t] = alpha * value[t] + (1 - alpha) * ema[t-1]     (khi ngày t có giá trị mới)
+```
+
+**Half-life (chu kỳ bán rã)** là số ngày để trọng số của 1 giá trị cũ giảm còn đúng một nửa. Chọn
+half-life = 30 ngày (không phải chọn `alpha` trực tiếp) vì half-life dễ diễn giải hơn: "sau 30 ngày
+không có tin mới, ảnh hưởng của tin cũ còn lại đúng 50%". Từ half-life suy ra `alpha`:
+
+**Code thật:** `baselines/2026-07-25_dual_group_news_embedding_baseline/code/vendor_data_eda/dual_news_features.py`
+```python
+def _ewma_on_series(series: pd.Series, halflife: float) -> pd.Series:
+    alpha = 1.0 - np.exp(-np.log(2) / halflife)   # halflife=30 -> alpha ≈ 0.02284
+    ema = np.nan
+    for i in range(len(series)):
+        val = series.iloc[i]
+        if np.isnan(val):                          # KHÔNG có tin mới hôm nay
+            if not np.isnan(ema):
+                ema = (1.0 - alpha) * ema           # chỉ suy giảm, không cộng thêm gì
+        else:                                       # CÓ tin mới hôm nay
+            ema = val if np.isnan(ema) else alpha * val + (1.0 - alpha) * ema
+        series.iloc[i] = ema
+    return series
+```
+Điểm khác biệt quan trọng so với EWMA "chuẩn" (`pandas.Series.ewm`, vốn giả định ngày nào cũng có
+giá trị): code này xử lý đúng trường hợp tin tức đến THƯA (phần lớn ngày là `NaN`, không phải 0) —
+những ngày không có tin chỉ suy giảm giá trị cũ (nhân với `1-alpha`), KHÔNG cộng thêm tín hiệu mới.
+
+**Kiểm chứng công thức `(1-alpha)^30 = 0.5` đúng nghĩa "half-life 30 ngày":**
+`(1 - alpha) = exp(-ln(2)/30)` → `(1-alpha)^30 = exp(-ln(2)) = 1/2` — đúng bằng 50% sau đúng 30
+ngày liên tiếp không có tin mới, bất kể giá trị gốc là bao nhiêu.
+
+**Ví dụ tính tay — số liệu thật, mã ACB, cột `kq_emb_0`, giai đoạn 24/10/2008 → 03/11/2008
+(alpha = 0.022840, đo trực tiếp từ panel):**
+
+| Ngày | `kq_emb_0` (tin thật hôm đó) | `ewma_kq_emb_0` | Diễn giải |
+|---|---:|---:|---|
+| 2008-10-24 | 1.352 (có tin) | -0.0795 | cập nhật đầy đủ: `alpha*1.352 + (1-alpha)*ema_cũ` |
+| 2008-10-27 | *(không tin)* | -0.0777 | suy giảm thuần: `-0.0795 × 0.97716 = -0.0777` |
+| 2008-10-28 | *(không tin)* | -0.0759 | suy giảm tiếp: `-0.0777 × 0.97716 = -0.0759` |
+| 2008-10-29 | *(không tin)* | -0.0742 | suy giảm tiếp: `-0.0759 × 0.97716 = -0.0742` |
+| 2008-10-30 | -2.777 (có tin) | -0.1359 | cập nhật lại: `alpha×(-2.777) + (1-alpha)×(-0.0742)` |
+| 2008-11-03 | -2.792 (có tin) | -0.1936 | tin mới liên tiếp → ema dịch nhanh về phía tin mới |
+
+Mỗi dòng "không tin" ở trên nhân đúng `(1-alpha) = 0.97716` với dòng trước — khớp 100% với công
+thức, không phải số minh hoạ.
+
+**Căn cứ khoa học/thực nghiệm để dùng decay thay vì raw tức thời:**
+- Tài chính hành vi (behavioral finance) đã ghi nhận hiệu ứng **"post-earnings-announcement
+  drift"** và các nghiên cứu về "investor attention decay"/"stale news": phản ứng giá trước 1 tin
+  tức KHÔNG kết thúc ngay trong ngày đăng bài, mà kéo dài nhiều ngày/tuần rồi mới suy giảm dần — tin
+  tức có "quán tính" (persistence), không phải sự kiện tức thời rồi biến mất.
+- EWMA với half-life là kỹ thuật chuẩn để mã hoá "quán tính suy giảm dần" này thành 1 con số duy
+  nhất mỗi ngày (thay vì phải nhớ toàn bộ lịch sử N ngày gần nhất) — dùng phổ biến trong tài chính
+  định lượng (vd EWMA volatility của RiskMetrics/JP Morgan cũng dùng half-life tương tự cho biến
+  động giá, không riêng cho tin tức).
+- **Half-life = 30 ngày trong project này là giá trị kế thừa từ code `data_eda` có sẵn (vendor,
+  Anti-Abstraction Gate — dùng thẳng code đã chạy được thay vì tự viết lại), KHÔNG phải giá trị đã
+  qua tinh chỉnh/kiểm định riêng cho bộ dữ liệu VN30 này** — 30 ngày là con số hợp lý theo bậc độ
+  lớn (1 tháng giao dịch, cùng bậc với "mùa BCTC" ở §6.2) nhưng chưa có thử nghiệm ablation nào so
+  sánh half-life 10/30/60 ngày trong project để xác nhận 30 là tối ưu.
+
+**Nếu KHÔNG có feature `ewma_*` thì vấn đề là gì:**
+1. **Tín hiệu tin tức gần như biến mất ở đa số ngày.** Với mã ACB chỉ 23.2% ngày có tin khách quan
+   thật (§2.2.2) — nếu chỉ dùng cột raw (`kq_emb_*`/`th_emb_*`, `fillna(0.0)`), model sẽ thấy vector
+   toàn số 0 ở ~77% ngày còn lại. Nhánh tin tức gần như "câm" phần lớn thời gian, LSTM khó học được
+   quy luật thời gian từ 1 tín hiệu chỉ xuất hiện rải rác, không liên tục.
+2. **Mất phân biệt "vừa có tin hôm qua" với "đã im lặng cả tháng".** Không có EWMA, cả 2 trường hợp
+   đều là vector 0 giống hệt nhau ở ngày hiện tại — model không có cách nào biết mình đang ở "trong
+   dư âm" của 1 tin quan trọng vừa xảy ra hay thực sự không có gì liên quan đang diễn ra.
+3. **Bước nhảy gián đoạn (discontinuity) giữa các ngày liên tiếp.** Ví dụ ở bảng trên: nếu không có
+   EWMA, chuỗi giá trị `kq_emb_0` sẽ là `1.352, 0, 0, 0, -2.777, 0, -2.792` — nhảy đột ngột từ số
+   thật về 0 rồi lại về số thật, thay vì chuỗi mượt `−0.0795 → −0.0777 → −0.0759 → −0.0742 → −0.1359
+   → ... → −0.1936` mà EWMA tạo ra — chuỗi mượt dễ học hơn nhiều cho 1 LSTM so với chuỗi có bước
+   nhảy lớn, thất thường.
+
+### 2.2.4 Ví dụ cụ thể: ngày CÓ tin vs KHÔNG có tin được tổ chức thế nào khi train
 
 **Xem trực tiếp:** `data/features/dual_group_news_panel.parquet` — mở bằng pandas:
 ```python
@@ -252,15 +427,15 @@ triển khai) thì đây là phần hoàn toàn mới, chưa có gì để tái 
 
 Toàn bộ biến thể tin tức từng thử ở horizon 5-ngày, gộp cả 2 pipeline (xem lưu ý pipeline ở §1.2):
 
-| Biến thể | Pipeline | Epoch | DirAcc | R² | QLIKE | RMSE |
-|---|---|---:|---:|---:|---:|---:|
-| **HAR-only** (không dùng tin) | gốc (batch11+aug) | 70 | **69.98%** | 0.7140 | 0.5294 | 0.002644 |
-| Gated Cross-Attention | gốc | 15 | 68.97% | 0.7157 | 0.5567 | 0.002636 |
-| Dual-group + EWMA (không gate) | gốc | 10 | 68.25% | 0.7124 | 0.5598 | 0.002651 |
-| HAR-only | so sánh (batch32) | 10 | 68.42% | 0.7141 | 0.5623 | 0.002643 |
-| Per-ticker gated news, panel cũ | so sánh | 10 | 68.76% | 0.7159 | 0.5497 | 0.002635 |
-| Per-ticker gated news, panel đã fix | so sánh | 10 | 68.69% | 0.7101 | 0.5631 | 0.002662 |
-| **Per-ticker gated news, panel đã fix — hiện hành** | so sánh | 20 | **69.51%** | **0.7158** | **0.5436** | 0.002635 |
+| Biến thể | Pipeline | Epoch | R² | QLIKE | RMSE |
+|---|---|---:|---:|---:|---:|
+| **HAR-only** (không dùng tin) | gốc (batch11+aug) | 70 | 0.7140 | 0.5294 | 0.002644 |
+| Gated Cross-Attention | gốc | 15 | 0.7157 | 0.5567 | 0.002636 |
+| Dual-group + EWMA (không gate) | gốc | 10 | 0.7124 | 0.5598 | 0.002651 |
+| HAR-only | so sánh (batch32) | 10 | 0.7141 | 0.5623 | 0.002643 |
+| Per-ticker gated news, panel cũ | so sánh | 10 | 0.7159 | 0.5497 | 0.002635 |
+| Per-ticker gated news, panel đã fix | so sánh | 10 | 0.7101 | 0.5631 | 0.002662 |
+| **Per-ticker gated news, panel đã fix — hiện hành** | so sánh | 20 | **0.7158** | **0.5436** | 0.002635 |
 
 Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
 `docs/reports/2026-07-26_2330_summaryOfUpdate_report.md` (panel cũ) +
@@ -273,9 +448,9 @@ Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
 
 1. **[ĐÃ XONG cùng ngày, xem §7.3-7.4]** Panel tin tức cũ, thiếu VPB/VRE — bug đã fix (27/07),
    đã retrain per-ticker gate trên panel đã fix (01/08), train tới epoch 30 để kiểm tra hội
-   tụ đầy đủ. Kết quả cuối: epoch 20 là mốc tốt nhất (QLIKE 0.5436, R² 0.7158, DirAcc 69.51%, vượt
-   HAR-only cùng pipeline), epoch 30 cho dấu hiệu overfitting — số liệu panel đã fix, epoch 20 là số
-   liệu hiện hành, xem Bảng A ở "Bảng tham khảo" cuối trang.
+   tụ đầy đủ. Kết quả cuối: epoch 20 là mốc tốt nhất (QLIKE 0.5436, R² 0.7158), epoch 30 cho dấu
+   hiệu overfitting — số liệu panel đã fix, epoch 20 là số liệu hiện hành, xem Bảng A ở "Bảng tham
+   khảo" cuối trang.
 2. **Gate học được KHÔNG khớp tín hiệu "mã nào cần tin tức" đo độc lập** — 4 phương pháp đo (EDA
    HGB/XGBoost, ablation delta-QLIKE tự đo, và chính gate học được) cho 4 thứ tự mã khác nhau,
    chưa có lời giải thích thống nhất (xem memory `project_selective_news_gate_finding`).
@@ -284,22 +459,19 @@ Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
 4. **Không có feature thời gian dạng lịch** (§3, cũ) — **ĐÃ LÀM cùng ngày, xem §6** — kết quả:
    thêm vào rồi nhưng chưa cải thiện (§6.4), và EDA không phát hiện tín hiệu theo mùa (§6.5).
 5. **3/3 ablation tách nhóm calendar feature đã xong (§6.6)** — không nhóm nào (Tết/BCTC/generic)
-   vượt được đối chứng trên R²/QLIKE/RMSE; `generic_calendar` có DirAcc nhỉnh hơn (+0.14pp, trong
-   biên độ nhiễu). Gộp cả 10 cột lại TỆ HƠN mỗi nhóm con riêng lẻ.
+   vượt được đối chứng trên R²/QLIKE/RMSE. Gộp cả 10 cột lại TỆ HƠN mỗi nhóm con riêng lẻ.
 6. **10-ngày và 22-ngày-trước (§7) chỉ mới thử 2 kiến trúc (HAR-only, gated-news), chưa thử
    calendar-augmented ở 2 horizon này** — nếu cần, đây là phần mở rộng riêng, chưa làm.
-7. **So sánh horizon dùng pipeline batch_size=32/không augmentation** — khác pipeline với con số
-   "69.98% DirAcc" nhắc ở §4 dòng đầu (batch_size=11, có augmentation). 2 pipeline không so trực
-   tiếp được với nhau; §7 chỉ so sánh trong CÙNG 1 pipeline.
+7. **So sánh horizon dùng pipeline batch_size=32/không augmentation** — khác pipeline (a) ở §1.2
+   (batch_size=11, có augmentation). 2 pipeline không so trực tiếp được với nhau; §7 chỉ so sánh
+   trong CÙNG 1 pipeline.
 8. **[ĐÃ XONG]** Horizon 22-ngày: đã train 10 epoch cả 2 kiến trúc, hội tụ ngay từ epoch ~10
    (giống 10-ngày, khác 5-ngày) — xem Bảng B (§1.2) và §7.5. Chưa thử epoch >10 (theo trạng thái
    hội tụ đo được, không có lý do để train thêm).
-9. **[MỚI, quan trọng]** Toàn bộ con số DirAcc "headline" trong báo cáo này (Bảng A, B, mọi bảng
-   kết quả) dùng công thức tính trên mảng đã làm phẳng `[window, mã]` — `np.diff` chủ yếu so sánh
-   2 MÃ KHÁC NHAU cùng ngày, KHÔNG phải "cùng mã, ngày kế tiếp". Công thức tính đúng theo từng mã
-   (`directional_accuracy_per_stock`, chỉ có ở script per-ticker-gate) cho kết quả THẤP HƠN NHIỀU
-   (48.52% và 33.16% ở 2 ví dụ đo được, so với 69.51%/72.39% của công thức "headline") — xem §8
-   để có công thức, code, và số liệu đầy đủ.
+9. **[MỚI, quan trọng]** DirAcc đã được gỡ khỏi báo cáo này (mọi bảng, mọi kết luận) do phát hiện
+   vấn đề về công thức tính (thứ tự dữ liệu khi flatten khiến phép so sánh không đúng nghĩa "cùng
+   mã, ngày kế tiếp") — chưa xác nhận được số liệu đúng. Ghi chú kỹ thuật đầy đủ (công thức, code,
+   số liệu đối chiếu) ở `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md`.
 
 ---
 
@@ -413,7 +585,6 @@ chỉ là 1 tham số constructor của `PerTickerGatedNewsBaseline` (§2.3), kh
 
 | Metric | Không calendar (146 cột) | **Có đủ 10 cột calendar (156 cột)** | Diff |
 |---|---:|---:|---:|
-| Test DirAcc | 68.76% | 68.13% | -0.63pp (xấu hơn) |
 | Test R² | 0.7159 | 0.7117 | -0.0041 (xấu hơn) |
 | Test QLIKE | 0.5497 | 0.5660 | +0.0163 (xấu hơn) |
 | Test RMSE | 0.002635 | 0.002654 | +0.000019 (xấu hơn) |
@@ -486,22 +657,19 @@ mang tính SÀNG LỌC (screening), không phải bằng chứng thống kê ch�
 
 ## 6.6 Ablation tách 3 nhóm feature — "cột nào có tín hiệu" (ĐÃ XONG cả 3, cập nhật lần 3 cùng ngày)
 
-| Nhóm | Số cột | Test DirAcc | Test R² | Test QLIKE | Test RMSE |
-|---|---:|---:|---:|---:|---:|
-| **Không calendar (đối chứng)** | 0 | 68.76% | **0.7159** | **0.5497** | **0.002635** |
-| Đủ 10 cột (§6.4) | 10 | 68.13% | 0.7117 | 0.5660 | 0.002654 |
-| tet_only | 2 | 68.76% | 0.7124 | 0.5640 | 0.002651 |
-| **earnings_only** | 2 | 68.71% | 0.7131 | **0.5501** | 0.002648 |
-| **generic_calendar** (dow/month/cuối tháng-quý) | 6 | **68.90%** | 0.7121 | 0.5583 | 0.002652 |
+| Nhóm | Số cột | Test R² | Test QLIKE | Test RMSE |
+|---|---:|---:|---:|---:|
+| **Không calendar (đối chứng)** | 0 | **0.7159** | **0.5497** | **0.002635** |
+| Đủ 10 cột (§6.4) | 10 | 0.7117 | 0.5660 | 0.002654 |
+| tet_only | 2 | 0.7124 | 0.5640 | 0.002651 |
+| **earnings_only** | 2 | 0.7131 | **0.5501** | 0.002648 |
+| **generic_calendar** (dow/month/cuối tháng-quý) | 6 | 0.7121 | 0.5583 | 0.002652 |
 
 **Đọc bảng (tất cả cùng 10 epoch, cùng seed, cùng panel):**
 1. **Cả 4 biến thể calendar đều KHÔNG vượt được đối chứng trên R²/QLIKE/RMSE** — dù chênh lệch nhỏ.
 2. **`earnings_only` gần đối chứng nhất** (QLIKE 0.5501 vs 0.5497 — gần như bằng nhau, R² 0.7131
    vs 0.7159 — chênh 0.0028) → 2 cột mùa BCTC gây "hại" ít nhất trong 3 nhóm.
-3. **`generic_calendar` là biến thể DUY NHẤT có DirAcc CAO HƠN đối chứng** (68.90% vs 68.76%,
-   +0.14pp) — nhưng R²/QLIKE vẫn thấp hơn, và +0.14pp nằm trong biên độ nhiễu single-seed (§5) nên
-   KHÔNG kết luận "cuối tháng/thứ-trong-tuần thực sự giúp ích".
-4. **Gộp cả 10 cột (§6.4) TỆ HƠN mọi nhóm con riêng lẻ** trên cả 4 metric — dấu hiệu các cột
+3. **Gộp cả 10 cột (§6.4) TỆ HƠN mọi nhóm con riêng lẻ** trên cả 3 metric — dấu hiệu các cột
    ablation có thể "nhiễu lẫn nhau" khi nối chung (nhiều chiều dư thừa/tương quan cao hơn là mỗi
    nhóm học được tín hiệu riêng), nhất quán với việc EDA (§6.5) không tìm thấy tín hiệu rõ ở bất kỳ
    nhóm nào — không có "tín hiệu thật" để cộng dồn, chỉ có nhiễu cộng dồn.
@@ -525,7 +693,56 @@ nhất quán hoàn toàn với EDA §6.5 (p-value > 0.15 mọi kiểm định).
    nhắc kỹ trước khi đầu tư thêm.
 4. **Nguồn dữ liệu tin tức tiếng Việt hiện có có thể là giới hạn thật sự** — đây là lần thứ 17
    (12 lần trước + 5 lần hôm nay: đủ-10-cột, tet_only, earnings_only, generic_calendar, và phép so
-   sánh trong EDA) thử liên quan tới tích hợp tin tức mà chưa vượt được HAR-only trên DirAcc.
+   sánh trong EDA) thử liên quan tới tích hợp tin tức mà chưa cho thấy lợi ích rõ ràng trên R²/QLIKE/RMSE.
+
+## 6.8 Tin tức "chung chung"/thị trường có nhiều không, có tương quan với biến động giá không
+
+**Câu hỏi:** ngoài tin gắn đúng 1 mã, có nhiều tin chung chung/thị trường không, và khối lượng tin
+đó có tương quan với biến động giá không? Trả lời bằng thống kê model-free (không train model),
+code: `code/analyze_market_news_volume_correlation.py`.
+
+**Khối lượng tin chung chung — đo trực tiếp:**
+- Kho crawl thô (`crawl_data/data/`) lớn hơn nhiều so với phần dùng trong pipeline: hàng chục file
+  theo nguồn (baodautu, dantri, sggp, plo, cand, bnews...) cộng 1 file `news_articles.csv` ~9.3
+  triệu dòng — KHÔNG nguồn nào trong số này nằm trong danh sách 12 nguồn `GROUP_SOURCES` (§2.2.2)
+  đang được dùng. Đây là tin tức chưa được khai thác, không phải "không tồn tại".
+- Ngay trong 12 nguồn đang dùng, phần lớn bài KHÔNG gắn được vào 1 mã cụ thể: panel có 159,648
+  dòng (mã × ngày) nhưng chỉ 18,985 dòng có tin khách quan thật cùng ngày và 5,106 dòng có tin
+  tổng hợp CTCK thật cùng ngày — còn lại là NaN (không có bài nào nhắc đúng mã đó, đúng ngày đó).
+- Tin gắn nhãn "vĩ mô" (`topic_macro`) cực hiếm: chỉ 183/159,648 dòng (0.11%).
+
+**Tương quan khối lượng tin thị trường vs biến động giá (2026-08-01, số liệu thật, 4987 ngày giao dịch):**
+
+Xây dựng `news_volume(ngày)` = tổng số bài gắn topic (7 chủ đề × 2 nhóm nguồn) trên TOÀN BỘ 32 mã
+ngày đó (đo được từ panel, không cần crawl thô 9.3 triệu dòng). Tương quan với
+`market_avg_change(ngày)` = trung bình biến động Parkinson-vol ngày-qua-ngày trên cả 32 mã:
+
+| Phép đo | Pearson r | p-value | Kết luận |
+|---|---:|---:|---|
+| Cùng ngày (contemporaneous) | 0.011 | 0.435 | KHÔNG có tương quan |
+| Ngày kế tiếp (có dấu) | -0.038 | 0.008 | "có ý nghĩa" nhưng r quá nhỏ, không đáng kể thực tế |
+| Ngày kế tiếp (trị tuyệt đối, biến động mạnh/nhẹ) | 0.027 | 0.059 | ở ranh giới ngưỡng 0.05, không rõ ràng |
+
+| Nhóm | Ngưỡng | n | Biến động TB ngày kế tiếp (trị tuyệt đối) |
+|---|---:|---:|---:|
+| Ngày ít/không tin (quartile dưới) | volume ≤ 0 | 3143 | 0.000583 |
+| Ngày nhiều tin (quartile trên) | volume ≥ 1 | 1844 | 0.000758 |
+
+Welch t = 2.02, p = 0.044 — ngày nhiều tin thị trường có biến động ngày kế tiếp lớn hơn ngày ít tin,
+khác biệt có ý nghĩa thống kê ở ngưỡng 0.05 nhưng chênh lệch tuyệt đối rất nhỏ (0.000758 vs
+0.000583).
+
+**Kết luận:** có tồn tại 1 tương quan yếu, đúng hướng trực giác (ngày nhiều tin thị trường hơn →
+biến động ngày sau lớn hơn một chút) nhưng độ lớn hiệu ứng gần như không đáng kể (r < 0.04 ở mọi
+phép đo) — nhất quán với toàn bộ phát hiện "no-lift"/tín hiệu tin tức yếu đã ghi nhận xuyên suốt
+báo cáo này (§6.5-6.7). **Giới hạn:** `news_volume` ở đây là khối lượng tin ĐÃ gắn nhãn mã/chủ đề
+(không phải toàn bộ 9.3 triệu dòng crawl thô, xem giới hạn ghi trong docstring code); dữ liệu chuỗi
+thời gian không độc lập (biến động có tính tự tương quan) nên p-value mang tính sàng lọc, không
+phải bằng chứng thống kê chặt chẽ.
+
+Test: `test/test_market_news_volume_correlation.py`, 5/5 pass — bao gồm 1 real-data-sample smoke
+test phát hiện bug thật (VPB/VRE có ngày dạng tz-aware `+07:00` trong khi 30 mã còn lại tz-naive,
+gây lỗi khi ghép; đã fix bằng cách chuẩn hoá về tz-naive trước khi ghép).
 
 ---
 
@@ -552,12 +769,11 @@ script train, để xác nhận giả định trước khi code phần còn lạ
 
 | Metric | HAR-only 5-ngày | HAR-only 10-ngày | Diff | Gated-news 5-ngày (panel đã fix) | Gated-news 10-ngày | Diff |
 |---|---:|---:|---:|---:|---:|---:|
-| DirAcc | 68.42% | 67.80% | -0.62pp | 68.69% | 67.92% | -0.77pp |
 | R² | 0.7141 | 0.7041 | -0.0100 | 0.7101 | 0.7040 | -0.0061 |
 | QLIKE | 0.5623 | 0.5732 | +0.0109 | 0.5631 | 0.5767 | +0.0136 |
 | RMSE | 0.002643 | 0.002689 | +0.000046 | 0.002662 | 0.002690 | +0.000028 |
 
-**Đọc bảng:** cả 4 metric đều xấu đi ở horizon 10-ngày, cho CẢ 2 kiến trúc — 10-ngày khó dự báo
+**Đọc bảng:** cả 3 metric đều xấu đi ở horizon 10-ngày, cho CẢ 2 kiến trúc — 10-ngày khó dự báo
 hơn 5-ngày với dữ liệu/model hiện tại. Tin tức không đổi hướng kết luận này ở cả 2 horizon (gated
 news gần bằng HAR-only ở cả 2 mức, không có horizon nào tin tức tạo khác biệt rõ).
 
@@ -570,14 +786,13 @@ lại đúng script cũ (code không đổi), 10 epoch:
 
 | Metric | Panel cũ (26/07) | Panel đã fix (01/08) | Diff |
 |---|---:|---:|---:|
-| DirAcc | 68.76% | 68.69% | -0.07pp |
 | R² | 0.7159 | 0.7101 | -0.0058 |
 | QLIKE | 0.5497 | 0.5631 | +0.0134 |
 | RMSE | 0.002635 | 0.002662 | +0.000027 |
 
-Thêm VPB/VRE không cải thiện kết quả — QLIKE/R² kém hơn nhẹ, DirAcc gần như không đổi. Đây không
-phải dấu hiệu fix sai (VPB/VRE trước đó thật sự có 0 dữ liệu tin tức, việc thêm vào là sửa đúng dữ
-liệu, không phải một đòn bẩy hiệu năng).
+Thêm VPB/VRE không cải thiện kết quả — QLIKE/R² kém hơn nhẹ. Đây không phải dấu hiệu fix sai
+(VPB/VRE trước đó thật sự có 0 dữ liệu tin tức, việc thêm vào là sửa đúng dữ liệu, không phải một
+đòn bẩy hiệu năng).
 
 **Bảng trên chỉ dừng ở 10 epoch — CHƯA hội tụ, xem §7.4 để có số liệu đúng của kiến trúc này.**
 
@@ -587,28 +802,25 @@ liệu, không phải một đòn bẩy hiệu năng).
 giữa quá trình, không phải kết quả hội tụ. Đã resume (tiếp tục train, không train lại từ đầu) cả 2
 biến thể panel-32-mã thêm 10 epoch (→20), sau đó biến thể 5-ngày thêm 10 epoch nữa (→30):
 
-| Biến thể | Epoch | Test DirAcc | Test R² | Test QLIKE | Test RMSE | Trạng thái hội tụ |
-|---|---:|---:|---:|---:|---:|---|
-| Gated-news 5-ngày, panel đã fix | 10 | 68.69% | 0.7101 | 0.5631 | 0.002662 | đang cải thiện |
-| Gated-news 5-ngày, panel đã fix | 20 | **69.51%** | **0.7158** | 0.5436 | 0.002635 | tốt nhất — xem epoch 30 |
-| Gated-news 5-ngày, panel đã fix | 30 | 68.72% | 0.7156 | **0.5423** | 0.002636 | **bắt đầu overfit** |
-| Gated-news 10-ngày | 10 | 67.92% | 0.7040 | 0.5767 | 0.002690 | — |
-| Gated-news 10-ngày | 20 | 67.39% | 0.7040 | 0.5733 | 0.002690 | hội tụ/chững lại |
+| Biến thể | Epoch | Test R² | Test QLIKE | Test RMSE | Trạng thái hội tụ |
+|---|---:|---:|---:|---:|---|
+| Gated-news 5-ngày, panel đã fix | 10 | 0.7101 | 0.5631 | 0.002662 | đang cải thiện |
+| Gated-news 5-ngày, panel đã fix | 20 | **0.7158** | 0.5436 | 0.002635 | tốt nhất — xem epoch 30 |
+| Gated-news 5-ngày, panel đã fix | 30 | 0.7156 | **0.5423** | 0.002636 | **bắt đầu overfit** |
+| Gated-news 10-ngày | 10 | 0.7040 | 0.5767 | 0.002690 | — |
+| Gated-news 10-ngày | 20 | 0.7040 | 0.5733 | 0.002690 | hội tụ/chững lại |
 
 **Kết quả nổi bật — biến thể 5-ngày, epoch 20 (mốc tốt nhất tổng thể):**
 - Test QLIKE = 0.5436 — thấp hơn (tốt hơn) mọi số liệu QLIKE từng ghi nhận cho kiến trúc
   per-ticker-gate trước đó (số liệu cũ tốt nhất: 0.5497 ở panel cũ, 10 epoch).
 - Test R² = **0.7158** — cao nhất trong toàn bộ 30 epoch train, xấp xỉ số liệu tốt nhất trước đó
   (0.7159).
-- **Test DirAcc = 69.51%** — cao nhất trong toàn bộ 30 epoch, **vượt HAR-only cùng pipeline
-  (68.42%, xem §7.2) lần đầu tiên trong lịch sử dự án** cho một biến thể có tích hợp tin tức.
 
 **Epoch 21-30: dấu hiệu overfitting.** Train loss tiếp tục giảm đều (0.884→0.839) nhưng val loss
-KHÔNG giảm theo — dao động rồi tăng nhẹ (thấp nhất ~epoch 26, sau đó tăng lại tới epoch 30). Val
-DirAcc giảm dần: 70.80% (epoch 20) → 70.34% (epoch 25) → 69.22% (epoch 30). Test DirAcc ở checkpoint
-tốt nhất trong khoảng epoch 21-30 (epoch 26) chỉ đạt 68.72% — THẤP HƠN epoch 20 (69.51%). QLIKE
-epoch 26 (0.5423) nhỉnh hơn epoch 20 (0.5436) một chút nhưng R²/DirAcc đều kém hơn — tổng thể
-**epoch 20 là mốc cân bằng tốt nhất**, không phải epoch 30.
+KHÔNG giảm theo — dao động rồi tăng nhẹ (thấp nhất ~epoch 26, sau đó tăng lại tới epoch 30). Test
+QLIKE ở checkpoint tốt nhất trong khoảng epoch 21-30 (epoch 26, 0.5423) nhỉnh hơn epoch 20 (0.5436)
+một chút nhưng R² kém hơn (0.7156 vs 0.7158) — tổng thể **epoch 20 là mốc cân bằng tốt nhất**,
+không phải epoch 30.
 
 **Điều này khớp với tiền lệ đã ghi nhận trước đó (panel cũ, 26/07-27/07): cùng kiến trúc từng
 đạt tốt nhất ở epoch ~20 rồi xấu đi nhẹ tới epoch 40** — nay lặp lại đúng pattern đó trên panel 32
@@ -635,24 +847,22 @@ thật).
 
 **Kết quả (test set, 10 epoch, pipeline so sánh công bằng):**
 
-| Kiến trúc | DirAcc | R² | QLIKE | RMSE |
-|---|---:|---:|---:|---:|
-| HAR-only | 66.38% | 0.7051 | 0.5938 | 0.002750 |
-| Gated-news | 67.17% | 0.7032 | 0.5943 | 0.002759 |
+| Kiến trúc | R² | QLIKE | RMSE |
+|---|---:|---:|---:|
+| HAR-only | 0.7051 | 0.5938 | 0.002750 |
+| Gated-news | 0.7032 | 0.5943 | 0.002759 |
 
-Gated-news vượt HAR-only trên DirAcc (+0.79pp) nhưng QLIKE/R² nhỉnh hơn (kém hơn) một chút — mẫu
-hình tương tự horizon 5 và 10-ngày ở mốc 10 epoch đầu (DirAcc thắng nhẹ, QLIKE/R² không nhất
-quán).
+HAR-only nhỉnh hơn (tốt hơn) trên cả 3 metric ở horizon 22-ngày, dù chênh lệch nhỏ — mẫu hình
+tương tự horizon 10-ngày (§7.2).
 
 **Hội tụ:** val loss của cả 2 kiến trúc dao động không có xu hướng rõ suốt 10 epoch (vd HAR-only:
 1.1495→1.1409→1.1436, không đơn điệu) — khác hẳn biến thể 5-ngày (liên tục cải thiện tới epoch 20).
 **22-ngày hội tụ/chững lại ngay từ epoch ~10**, giống horizon 10-ngày (§7.4) — không có dấu hiệu
 cần train thêm.
 
-**So với horizon 5 và 10-ngày (Bảng B, §1.2):** DirAcc/QLIKE của HAR-only tiếp tục xấu đi đơn điệu
-theo horizon dài hơn (66.38% là thấp nhất trong 3 mốc, 0.5938 là QLIKE cao nhất/tệ nhất). Xác nhận
-xu hướng đã thấy ở horizon-10: horizon càng dài, dự báo càng khó, nhưng cũng càng nhanh bão hoà
-(cần ít epoch hơn).
+**So với horizon 5 và 10-ngày (Bảng B, §1.2):** QLIKE của HAR-only tiếp tục xấu đi đơn điệu theo
+horizon dài hơn (0.5938 là QLIKE cao nhất/tệ nhất trong 3 mốc). Xác nhận xu hướng đã thấy ở
+horizon-10: horizon càng dài, dự báo càng khó, nhưng cũng càng nhanh bão hoà (cần ít epoch hơn).
 
 ## 7.6 Horizon 1-ngày — hoàn thành đủ bộ 4 mốc (1/5/10/22-ngày)
 
@@ -662,15 +872,15 @@ tra thật trên toàn bộ các mã, margin rộng nhất (train 891→868, val
 
 **Kết quả (test set, 10 epoch, pipeline so sánh công bằng):**
 
-| Kiến trúc | DirAcc | R² | QLIKE | RMSE |
-|---|---:|---:|---:|---:|
-| HAR-only | **72.35%** | **0.7581** | **0.5099** | **0.002428** |
-| Gated-news | **72.39%** | **0.7595** | **0.4834** | **0.002420** |
+| Kiến trúc | R² | QLIKE | RMSE |
+|---|---:|---:|---:|
+| HAR-only | 0.7581 | 0.5099 | 0.002428 |
+| Gated-news | **0.7595** | **0.4834** | **0.002420** |
 
-**Xác nhận giả thuyết ban đầu: 1-ngày dễ dự báo nhất trong 4 mốc, cách biệt lớn** — DirAcc cao hơn
-5-ngày ~4pp, QLIKE thấp hơn (tốt hơn) rõ rệt so với mọi horizon khác. Gated-news vượt HAR-only trên
-CẢ 4 metric (không chỉ DirAcc như các horizon khác) — QLIKE 0.4834 vs 0.5099 là khác biệt lớn nhất
-quan sát được giữa 2 kiến trúc ở bất kỳ horizon nào trong 10 epoch đầu.
+**Xác nhận giả thuyết ban đầu: 1-ngày dễ dự báo nhất trong 4 mốc, cách biệt lớn** — QLIKE thấp hơn
+(tốt hơn) rõ rệt so với mọi horizon khác. Gated-news vượt HAR-only trên CẢ 3 metric — QLIKE 0.4834
+vs 0.5099 là khác biệt lớn nhất quan sát được giữa 2 kiến trúc ở bất kỳ horizon nào trong 10 epoch
+đầu.
 
 **Hội tụ:** val loss giảm mạnh 2 epoch đầu (~0.94→0.93 cho cả 2 kiến trúc) rồi dao động nhẹ quanh
 mức đó tới epoch 10 — hội tụ nhanh, giống pattern 10 và 22-ngày, KHÔNG giống 5-ngày (cần ~20 epoch).
@@ -682,78 +892,12 @@ horizon khó nhất. Chưa có lời giải thích cho ngoại lệ này.
 
 ---
 
-# 8. DirAcc TÍNH THẾ NÀO — CÔNG THỨC, SỐ BIẾN PHỤ THUỘC, VÀ 1 KHÁC BIỆT QUAN TRỌNG PHÁT HIỆN HÔM NAY
+# 8. DirAcc — đã gỡ khỏi báo cáo này
 
-**Đang có 2 công thức DirAcc khác nhau trong dự án, cho kết quả rất khác nhau.** Mọi con số DirAcc
-"headline" trong toàn bộ báo cáo này (68.42%, 69.51%, 72.35%...) dùng công thức (A) — công thức
-(B) mới là con số đo đúng nghĩa "dự báo đúng chiều biến động của 1 mã qua thời gian".
-
-## 8.1 Công thức (A) — dùng cho MỌI con số DirAcc "headline" trong báo cáo này
-
-**File:** `src/common/evaluation.py`
-```python
-def directional_accuracy(y_true, y_pred):
-    actual_changes = np.sign(np.diff(y_true))   # dấu của (y_true[i+1] - y_true[i])
-    pred_changes = np.sign(np.diff(y_pred))     # dấu của (y_pred[i+1] - y_pred[i])
-    accuracy = np.mean(actual_changes == pred_changes)
-    return accuracy * 100
-```
-**Phụ thuộc 2 biến đầu vào** (`y_true`, `y_pred` — mảng 1 chiều) nhưng mỗi phép so sánh cụ thể
-phụ thuộc **4 số vô hướng**: `y_true[i]`, `y_true[i+1]`, `y_pred[i]`, `y_pred[i+1]`.
-
-## 8.2 Công thức (B) — đúng theo từng mã, chỉ có ở script per-ticker-gate
-
-```python
-# vd baselines/2026-07-26_per_ticker_news_gate_baseline/code/train_per_ticker_gate.py
-p2 = preds_d.reshape(n_windows, n_stocks)   # sắp lại đúng theo (thời gian, mã)
-t2 = targs_d.reshape(n_windows, n_stocks)
-dir_per = [np.mean(np.sign(np.diff(t2[:, s])) == np.sign(np.diff(p2[:, s]))) * 100
-           for s in range(n_stocks)]
-directional_accuracy_per_stock = np.mean(dir_per)
-```
-
-## 8.3 Vì sao (A) và (B) khác nhau — thứ tự mảng quyết định ý nghĩa phép tính
-
-`y_true`/`y_pred` truyền vào công thức (A) là mảng **đã làm phẳng theo thứ tự `[window, mã]`**
-(mọi mã ở cùng 1 ngày liệt kê liên tiếp, rồi mới sang ngày kế tiếp) — xem `validate()`:
-```python
-preds_n.append(pred.cpu().numpy().reshape(-1))   # [B,S] -> phẳng: mã0,mã1,...,mãS-1, mã0(ngày sau),...
-```
-→ `np.diff` trên mảng này **chủ yếu so sánh 2 MÃ KHÁC NHAU Ở CÙNG 1 NGÀY** (S-1 trong mỗi S phép
-so sánh), chỉ 1/S phép so sánh rơi vào ranh giới 2 ngày — và ngay cả phép đó cũng lệch mã (mã cuối
-ngày i vs mã đầu ngày i+1). **Không có phép so sánh nào trong công thức (A) thực sự là "cùng 1 mã,
-2 ngày liên tiếp"** trừ khi số mã = 1.
-
-Công thức (B) sửa đúng: `reshape(n_windows, n_stocks)` rồi `np.diff` theo trục THỜI GIAN cho TỪNG
-CỘT (từng mã) riêng — đây mới là phép so sánh "cùng mã, ngày kế tiếp" đúng nghĩa.
-
-## 8.4 Bằng chứng số liệu thật — chênh lệch rất lớn
-
-| Run | DirAcc công thức (A) — "headline" | DirAcc công thức (B) — đúng theo mã |
-|---|---:|---:|
-| Per-ticker-gate, epoch 20 (5-ngày, kết quả tốt nhất báo cáo) | 69.51% | **48.52%** (~ngẫu nhiên) |
-| Per-ticker-gate, 1-ngày | 72.39% | **33.16%** (DƯỚI CẢ ngẫu nhiên 50%) |
-
-*(Trích trực tiếp từ `results/per_ticker_gate_2026-08-01_094139/results.json` và
-`results/per_ticker_gate_h1_2026-08-01_104140/results.json` — trường `directional_accuracy` vs
-`directional_accuracy_per_stock`.)*
-
-## 8.5 Ý nghĩa — cần đọc lại mọi con số DirAcc trong báo cáo này với sự thận trọng
-
-Toàn bộ con số DirAcc 66-74% trích dẫn xuyên suốt báo cáo (Bảng A, B, mọi bảng kết quả) dùng công
-thức (A) — **không đo đúng** "model dự báo đúng chiều biến động của 1 mã qua thời gian". Khả năng
-cao công thức (A) cho kết quả cao một cách giả tạo vì tận dụng được đồng biến động thị trường
-chung (nhiều mã tăng/giảm volatility cùng lúc do yếu tố vĩ mô/thị trường chung — so 2 mã khác nhau
-cùng ngày dễ "trùng dấu" hơn ngẫu nhiên thuần tuý, dù không phải do model dự báo đúng cho từng mã).
-Con số công thức (B) — thấp, gần hoặc dưới mức ngẫu nhiên — cho thấy khả năng dự báo ĐÚNG CHIỀU
-theo thời gian cho từng mã cụ thể **có thể yếu hơn nhiều** so với những gì các bảng so sánh trong
-báo cáo này thể hiện. Đây là phát hiện mới, chưa được sửa trong code — chỉ mới ghi nhận ở đây.
-
-**Không phải mọi baseline đều có công thức (B):** tất cả script `train_per_ticker_gate*.py` (5,
-10, 22, 1-ngày) đều tính `directional_accuracy_per_stock`; các script
-`train_har_only_reference*.py` (HAR-only) THÌ KHÔNG — trường này là `None` trong `results.json`
-của mọi run HAR-only (vd `har_only_h1_2026-08-01_103548/results.json`), nên hiện tại KHÔNG có cách
-đối chiếu công thức (B) cho riêng kiến trúc HAR-only.
+DirAcc đã được gỡ khỏi toàn bộ báo cáo này (mọi bảng, mọi kết luận ở §1-§7) do phát hiện vấn đề về
+công thức tính hiện dùng trong dự án — chưa xác nhận được số liệu đúng. Ghi chú kỹ thuật đầy đủ
+(2 công thức khác nhau, code, số liệu đối chiếu thật cho thấy chênh lệch rất lớn giữa 2 công thức)
+được lưu riêng ở `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md` để tham khảo khi kiểm tra lại.
 
 ---
 
@@ -771,33 +915,28 @@ của mọi run HAR-only (vd `har_only_h1_2026-08-01_103548/results.json`), nên
 
 ## Bảng A cũ (§1.2) — Tiến trình kiến trúc per-ticker-gate (5-ngày, TẤT CẢ hàng cùng 1 pipeline so sánh công bằng)
 
-*(Con số "69.98% DirAcc" hay nhắc tới ở nơi khác trong dự án đến từ 1 pipeline lịch sử khác
-(batch_size=11, có augmentation, 70 epoch) — KHÔNG thuộc bảng này, không so được với các hàng dưới
-đây. Xem §4 dòng đầu nếu cần đối chiếu.)*
+| # | Biến thể | Dùng tin tức | Epoch | R² | QLIKE | RMSE | Trạng thái |
+|---|---|:---:|---:|---:|---:|---:|---|
+| 1 | HAR-only | — | 10 | 0.7141 | 0.5623 | 0.002643 | đối chứng chính |
+| 2 | Per-ticker gated news (panel cũ, trước khi fix thiếu VPB/VRE) | ✓ | 10 | 0.7159 | 0.5497 | 0.002635 | kỷ lục cũ (26/07) |
+| 3 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 10 | 0.7101 | 0.5631 | 0.002662 | chưa hội tụ |
+| 4 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 20 | **0.7158** | 0.5436 | 0.002635 | **tốt nhất** |
+| 5 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 30 | 0.7156 | **0.5423** | 0.002636 | bắt đầu overfit |
 
-| # | Biến thể | Dùng tin tức | Epoch | DirAcc | R² | QLIKE | RMSE | Trạng thái |
-|---|---|:---:|---:|---:|---:|---:|---:|---|
-| 1 | HAR-only | — | 10 | 68.42% | 0.7141 | 0.5623 | 0.002643 | đối chứng chính |
-| 2 | Per-ticker gated news (panel cũ, trước khi fix thiếu VPB/VRE) | ✓ | 10 | 68.76% | 0.7159 | 0.5497 | 0.002635 | kỷ lục cũ (26/07) |
-| 3 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 10 | 68.69% | 0.7101 | 0.5631 | 0.002662 | chưa hội tụ |
-| 4 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 20 | **69.51%** | **0.7158** | 0.5436 | 0.002635 | **tốt nhất — vượt hàng 1** |
-| 5 | Per-ticker gated news (panel đã fix VPB/VRE) | ✓ | 30 | 68.72% | 0.7156 | **0.5423** | 0.002636 | bắt đầu overfit |
-
-**Đọc bảng A:** hàng 4 (epoch 20, panel đã fix) là số liệu hiện hành, tốt nhất tổng thể — DirAcc
-vượt hàng 1 (HAR-only cùng pipeline) lần đầu tiên trong lịch sử dự án tích hợp tin tức. Hàng 5 xác
-nhận epoch 20 là điểm dừng hợp lý (train thêm bắt đầu overfit). Chi tiết: §7.3-7.4.
+**Đọc bảng A:** hàng 4 (epoch 20, panel đã fix) là số liệu hiện hành, tốt nhất tổng thể trên
+QLIKE/R². Hàng 5 xác nhận epoch 20 là điểm dừng hợp lý (train thêm bắt đầu overfit). Chi tiết: §7.3-7.4.
 
 ## Bảng C cũ (§1.2) — Calendar feature (5-ngày, panel cũ, 10 epoch), chi tiết đầy đủ ở §6.6
 
-| Biến thể | Số cột calendar | DirAcc | R² | QLIKE | RMSE |
-|---|---:|---:|---:|---:|---:|
-| Đối chứng (không calendar) | 0 | 68.76% | 0.7159 | 0.5497 | 0.002635 |
-| Đủ 10 cột | 10 | 68.13% | 0.7117 | 0.5660 | 0.002654 |
-| tet_only | 2 | 68.76% | 0.7124 | 0.5640 | 0.002651 |
-| earnings_only | 2 | 68.71% | 0.7131 | 0.5501 | 0.002648 |
-| generic_calendar | 6 | 68.90% | 0.7121 | 0.5583 | 0.002652 |
+| Biến thể | Số cột calendar | R² | QLIKE | RMSE |
+|---|---:|---:|---:|---:|
+| Đối chứng (không calendar) | 0 | 0.7159 | 0.5497 | 0.002635 |
+| Đủ 10 cột | 10 | 0.7117 | 0.5660 | 0.002654 |
+| tet_only | 2 | 0.7124 | 0.5640 | 0.002651 |
+| earnings_only | 2 | 0.7131 | 0.5501 | 0.002648 |
+| generic_calendar | 6 | 0.7121 | 0.5583 | 0.002652 |
 
-Không biến thể calendar nào vượt đối chứng trên cả 4 metric — no-lift, xác nhận thêm bởi EDA
+Không biến thể calendar nào vượt đối chứng trên cả 3 metric — no-lift, xác nhận thêm bởi EDA
 tương quan độc lập (§6.5, mọi p-value > 0.15).
 
 ---
@@ -820,6 +959,8 @@ baselines/2026-08-01_calendar_news_gate_baseline/code/calendar_features.py      
 baselines/2026-08-01_calendar_news_gate_baseline/code/dataset_calendar_news.py       # nối vào x_news, §6.3
 baselines/2026-08-01_calendar_news_gate_baseline/code/train_calendar_news_gate.py    # train + --calendar_groups ablation, §6.6
 baselines/2026-08-01_calendar_news_gate_baseline/code/analyze_news_calendar_correlation.py  # EDA delta_QLIKE, §6.5
+baselines/2026-08-01_calendar_news_gate_baseline/code/analyze_market_news_volume_correlation.py  # EDA khối lượng tin vs biến động, §6.8
+baselines/2026-08-01_calendar_news_gate_baseline/test/test_market_news_volume_correlation.py     # 5/5 pass, §6.8
 baselines/2026-08-01_calendar_news_gate_baseline/requirements/requirements.md        # spec + giả định (bảng Tết, proxy BCTC)
 baselines/2026-08-01_calendar_news_gate_baseline/design/design.md                    # kiến trúc + Simplicity/Anti-Abstraction gate
 baselines/2026-08-01_calendar_news_gate_baseline/code_review/code_review_2026-08-01.md  # review đối kháng, 0 HIGH
@@ -828,6 +969,7 @@ results/calendar_gate_tet_only_2026-08-01_082432/results.json            # §6.6
 results/calendar_gate_earnings_only_2026-08-01_083159/results.json       # §6.6, earnings_only
 results/calendar_gate_generic_calendar_2026-08-01_083946/results.json    # §6.6, generic_calendar
 results/news_calendar_correlation_2026-08-01_081230/                     # §6.5, EDA (analysis.json + per_point_delta_qlike.parquet + plot)
+results/market_news_volume_correlation_2026-08-01_133849/                # §6.8, EDA (analysis.json + scatter.png + joined_daily_series.parquet)
 docs/reports/2026-08-01_0745_summaryOfUpdate_report.md                   # báo cáo kỹ thuật, baseline calendar (§6.4)
 
 # --- Mới, thêm 01/08/2026 (§7) ---

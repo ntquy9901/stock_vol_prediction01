@@ -607,6 +607,9 @@ def main():
     print("   [OK] Memory-efficient gradient tracking (deque, not list)")
     print("="*70)
 
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     # Find data file
     data_dir = project_root / "data" / "processed"
     data_files = list(data_dir.glob("*.csv"))

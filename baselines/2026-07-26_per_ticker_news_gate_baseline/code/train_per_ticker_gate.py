@@ -109,7 +109,7 @@ def validate(model, loader, criterion, device, dataset):
         else:
             preds_d[i] = preds_n[i]; targs_d[i] = targs_n[i]
 
-    metrics = evaluate_predictions(targs_d, preds_d)
+    metrics = evaluate_predictions(targs_d, preds_d, n_stocks=n_stocks)
     if len(preds_d) == (len(preds_d) // n_stocks) * n_stocks and len(preds_d) >= n_stocks * 2:
         nw = len(preds_d) // n_stocks
         p2 = preds_d.reshape(nw, n_stocks); t2 = targs_d.reshape(nw, n_stocks)
@@ -215,6 +215,8 @@ def main():
     ap.add_argument("--resume_results_dir", default=None,
                     help="path to a previous run's results/ dir (gate_history.json + "
                          "loss_history.json) to continue epoch numbering/history from")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="torch/numpy RNG seed (reproducibility check, 2026-08-02 code review)")
     args = ap.parse_args()
 
     if args.epochs > MAX_EPOCHS:
@@ -228,6 +230,10 @@ def main():
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[train] device={device}, smoke={args.smoke}, gate_lr={args.gate_lr}, lr={args.lr}")
+
+    # Set random seeds for reproducibility
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
 
     config = LSTMGATConfig()
     config.num_features_per_stock = 3   # HAR only
@@ -361,7 +367,7 @@ def main():
     results = {
         "model": "PerTickerGatedNewsBaseline",
         "n_feat": int(n_feat), "d_news": args.d_news, "smoke": bool(args.smoke),
-        "gate_lr": args.gate_lr, "lr": args.lr,
+        "gate_lr": args.gate_lr, "lr": args.lr, "seed": args.seed,
         "final_gate_values": {sn: float(g) for sn, g in zip(stock_names, final_gate)},
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),

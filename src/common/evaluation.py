@@ -37,10 +37,16 @@ def qlike_loss(y_true, y_pred, epsilon=1e-8):
 
 def directional_accuracy(y_true, y_pred):
     """
-    Calculate directional accuracy.
+    Calculate directional accuracy on a single chronological sequence.
 
     Returns percentage of times the model correctly predicts
     the direction of volatility change.
+
+    CAUTION: y_true/y_pred must already be a single ticker's values ordered by
+    time. Passing a flattened multi-ticker array (e.g. day-then-all-stocks
+    order) silently mixes different tickers' same-day values into np.diff and
+    inflates the result — use directional_accuracy_per_ticker() for that case
+    (see docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md).
 
     Args:
         y_true: Actual volatility values
@@ -49,47 +55,51 @@ def directional_accuracy(y_true, y_pred):
     Returns:
         float: Directional accuracy (0-100)
     """
-    # DEBUG: Check input statistics
-    print(f"\n[DEBUG directional_accuracy]")
-    print(f"  y_true shape: {y_true.shape}")
-    print(f"  y_pred shape: {y_pred.shape}")
-    print(f"  y_true range: [{y_true.min():.6f}, {y_true.max():.6f}]")
-    print(f"  y_pred range: [{y_pred.min():.6f}, {y_pred.max():.6f}]")
-    print(f"  y_true mean: {y_true.mean():.6f}, std: {y_true.std():.6f}")
-    print(f"  y_pred mean: {y_pred.mean():.6f}, std: {y_pred.std():.6f}")
-    print(f"  Unique y_true values: {len(np.unique(y_true))}")
-    print(f"  Unique y_pred values: {len(np.unique(y_pred))}")
-
-    # Check if all predictions are identical (CRITICAL BUG)
-    pred_variance = np.var(y_pred)
-    print(f"  Prediction variance: {pred_variance:.10f}")
-    if pred_variance < 1e-10:
-        print(f"  [X] ERROR: All predictions are identical! variance = {pred_variance}")
-        print(f"  [X] This will cause Dir Acc to be 0% or undefined!")
-
-    # Calculate actual changes
     actual_changes = np.sign(np.diff(y_true))
     pred_changes = np.sign(np.diff(y_pred))
-
-    print(f"  Actual changes (first 10): {actual_changes[:10]}")
-    print(f"  Pred changes (first 10): {pred_changes[:10]}")
-    print(f"  Change agreement: {np.sum(actual_changes == pred_changes)}/{len(actual_changes)}")
-
-    # Calculate accuracy
     accuracy = np.mean(actual_changes == pred_changes)
-
-    print(f"  Calculated Dir Acc: {accuracy * 100:.2f}%")
-
     return accuracy * 100
 
 
-def evaluate_predictions(y_true, y_pred) -> Dict[str, float]:
+def directional_accuracy_per_ticker(y_true, y_pred, n_stocks):
+    """
+    Calculate directional accuracy correctly for multi-ticker flattened arrays.
+
+    Args:
+        y_true, y_pred: flattened arrays in (num_windows, n_stocks) day-major
+            order, i.e. index i belongs to ticker (i % n_stocks) on window (i // n_stocks) —
+            the layout produced by every multi-stock DataLoader in this project.
+        n_stocks: number of tickers interleaved in the flattened array.
+
+    Returns:
+        float or None: mean per-ticker directional accuracy (0-100), or None
+        if there are fewer than 2 windows per ticker to diff.
+    """
+    if len(y_true) < n_stocks * 2 or len(y_true) % n_stocks != 0:
+        return None
+    num_windows = len(y_true) // n_stocks
+    t2 = np.asarray(y_true).reshape(num_windows, n_stocks)
+    p2 = np.asarray(y_pred).reshape(num_windows, n_stocks)
+    per_ticker = [
+        np.mean(np.sign(np.diff(t2[:, s])) == np.sign(np.diff(p2[:, s]))) * 100
+        for s in range(n_stocks)
+    ]
+    return float(np.mean(per_ticker))
+
+
+def evaluate_predictions(y_true, y_pred, n_stocks=None) -> Dict[str, float]:
     """
     Calculate all evaluation metrics.
 
     Args:
         y_true: Actual volatility values
         y_pred: Predicted volatility values
+        n_stocks: if given, y_true/y_pred are treated as a flattened
+            multi-ticker array (day-major order, see directional_accuracy_per_ticker),
+            and 'directional_accuracy' is computed per-ticker (the correct,
+            headline value). The old flattened calculation is still reported
+            under 'directional_accuracy_flat_biased' for audit-trail comparison.
+            If omitted, behavior is unchanged (single-ticker sequence).
 
     Returns:
         Dict[str, float]: Dictionary of metric names and values
@@ -100,13 +110,20 @@ def evaluate_predictions(y_true, y_pred) -> Dict[str, float]:
     r2 = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0
 
     mse = mean_squared_error(y_true, y_pred)
+    flat_dir_acc = directional_accuracy(y_true, y_pred)
     metrics = {
         'mse': mse,
         'rmse': np.sqrt(mse),
         'mae': mean_absolute_error(y_true, y_pred),
         'r2': r2,
         'qlike': qlike_loss(y_true, y_pred),
-        'directional_accuracy': directional_accuracy(y_true, y_pred)
+        'directional_accuracy': flat_dir_acc
     }
+
+    if n_stocks is not None:
+        per_ticker = directional_accuracy_per_ticker(y_true, y_pred, n_stocks)
+        metrics['directional_accuracy_flat_biased'] = flat_dir_acc
+        if per_ticker is not None:
+            metrics['directional_accuracy'] = per_ticker
 
     return metrics

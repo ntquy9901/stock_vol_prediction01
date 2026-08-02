@@ -55,11 +55,18 @@ STANDARD_HYPERPARAMETERS = {
 # - src/lstm_baseline/train.py
 ```
 
-### Loss Function Priority
+### Loss Function (Training) vs. Evaluation Metric Priority
+Per CLAUDE.md §6 "Loss Functions": **training** uses MSE (convex, stable, differentiable
+near zero volatility, where QLIKE is undefined/unstable); QLIKE is the **evaluation**-only
+academic-standard metric for volatility. All training scripts (`nn.MSELoss()`) implement this
+correctly — this section previously stated QLIKE as the training-loss priority, which
+contradicted both CLAUDE.md and the actual code.
 ```python
-LOSS_FUNCTION_PRIORITY = {
-    'primary': 'QLIKE',  # "Stylized favorite of volatility literature"
-    'secondary': 'MSE',  # Comparison standard (training + evaluation)
+TRAINING_LOSS = 'MSE'  # convex, stable, used in all train_epoch()/optimizer.step() calls
+
+EVALUATION_METRIC_PRIORITY = {
+    'primary': 'QLIKE',   # "Stylized favorite of volatility literature" — reported, not trained on
+    'secondary': 'MSE',   # Comparison standard
     'tertiary': 'MAE'     # Robustness check
 }
 ```
@@ -88,7 +95,7 @@ SINGLE_HORIZON_CONFIG = {
     'horizon': '5-day ahead',
     'target_column': 'target_5d',
     'features': ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol'],
-    'loss': 'QLIKE'
+    'loss': 'MSE'  # training loss; QLIKE is evaluation-only, see Loss Function section above
 }
 ```
 
