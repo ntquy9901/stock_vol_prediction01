@@ -16,7 +16,12 @@
       "Bash(git commit -m ' *)",
       "Bash(python \"baselines/2026-08-01_lstm_gnn_sp500_baseline/code/train_sp500_lstm_gnn.py\" --forecast_horizon 22 --epochs 5 --seed 42)",
       "Bash(git push *)",
-      "Bash(git ls-tree *)"
+      "Bash(git ls-tree *)",
+      "Bash(python -m pytest --collect-only -q)",
+      "Bash(ruff check *)",
+      "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/test_dataset_leakage_and_alignment.py -v)",
+      "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/test_dataset_leakage_and_alignment.py::TestNormalizerLeakage -v)",
+      "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/ tests/test_sp500/ -v)"
     ]
   }
 }

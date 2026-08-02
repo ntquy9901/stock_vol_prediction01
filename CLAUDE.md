@@ -146,6 +146,189 @@ Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial rev
 setup). Gate `diff-cover --fail-under=100` giờ PHẢI chạy thật cho mọi thay đổi (không còn lý do ghi
 `Not run` vì "chưa cài" — nếu skip, phải ghi lý do khác cụ thể, vd file không có test tương ứng).
 
+## Verification Gates (Evidence-Based) ⭐
+
+> Nguồn: `docs/reports/2026-08-02_152758_summaryOfUpdate_report.md` (VN30 master project, đề xuất
+> `verify-audit-fixes` skill), áp dụng nguyên bản đầy đủ theo yêu cầu user 2026-08-02. Siết thêm
+> "Testing quality rules (ENFORCED)" ở trên: coverage % / lời khai "đã chạy pass" KHÔNG đủ — bằng
+> chứng phải là **raw command output gắn với đúng git SHA/data/config đang được đánh giá**, không
+> phải tóm tắt văn xuôi.
+
+**Nguyên tắc cốt lõi:** một summary report là bản tóm tắt + kết luận, KHÔNG phải bằng chứng gốc.
+Bằng chứng gốc = raw log, hash, structured test report, coverage artifact, result manifest — phải
+tồn tại dưới dạng file, không phải câu chữ mô tả lại. Một finding chỉ được đánh dấu "đã fix" khi có
+test + command đã chạy thật VÀ file bằng chứng tương ứng tồn tại.
+
+### Gap trong quy trình cũ (VER-001..VER-009)
+
+- **VER-001** — chưa bắt buộc giữ lại raw stdout/stderr/exit code/thời gian chạy của command; lời
+  khai "đã pass" không tự verify được.
+- **VER-002** — bằng chứng không bắt buộc gắn với git SHA/branch/working-tree state/diff hash; dễ
+  nhầm bằng chứng cũ với code hiện tại.
+- **VER-003** — bằng chứng ML không bắt buộc gắn với data snapshot hash, ticker-order manifest,
+  split boundary, seed list, config hash, checkpoint hash, metric-schema version.
+- **VER-004** — lệnh `pytest` mặc định không đại diện cho toàn repo (xem thực tế đã verify: root
+  `tests/` + `src/` + `baselines/` cùng lúc từng fail collection do trùng tên module giữa 3
+  baseline cũ — `2026-07-08_market_fallback`, `2026-07-18_alignment_loss_baseline`,
+  `2026-07-18_gated_crossattn_baseline`).
+- **VER-005** — branch coverage (C1 ≥80%) hiện dựa vào soi thủ công, chưa có lệnh + ngưỡng tự động
+  + artifact machine-readable giữ lại.
+- **VER-006** — chưa bắt buộc 1 bảng ánh xạ finding → fix → test → command → evidence → quyết định
+  reviewer → trạng thái cuối.
+- **VER-007** — chưa bắt buộc reproduce trên clean checkout/environment cô lập trước khi chấp nhận
+  claim publication-relevant (cached module/package/data/checkpoint có thể khiến check pass giả).
+- **VER-008** — code-review report chưa bắt buộc ghi rõ commit/diff hash/danh sách file/scope đã
+  review — dễ nhầm review cũ với review của code hiện tại.
+- **VER-009** — summary report có thể bị nhầm là bằng chứng chính, trong khi nó chỉ là index +
+  kết luận.
+
+### Thư mục bằng chứng bắt buộc
+
+Mỗi lần verify tạo 1 thư mục timestamp, **append-only sau khi hoàn tất** (fix đổi sau khi đã capture
+evidence → bắt buộc chạy verify run mới, không sửa evidence cũ):
+
+```text
+docs/reports/evidence/YYYY-MM-DD_HHMMSS/
+├── manifest.json
+├── git_status.txt
+├── git_diff_stat.txt
+├── environment.txt
+├── pytest_collection.txt
+├── pytest_full.txt
+├── pytest_smoke.txt
+├── coverage_summary.txt
+├── coverage.xml
+├── diff_cover.txt
+├── branch_coverage.json
+├── ruff.txt
+├── code_review.md
+├── acceptance_traceability.csv
+└── result_validation.json
+```
+
+### Schema `manifest.json` (tối thiểu)
+
+```json
+{
+  "verification_timestamp": "ISO-8601 timestamp with timezone",
+  "git": {
+    "sha": "full commit SHA",
+    "branch": "branch name",
+    "working_tree_clean": true,
+    "diff_hash": "hash of reviewed diff"
+  },
+  "environment": {
+    "python_version": "...",
+    "platform": "...",
+    "dependency_lock_hash": "..."
+  },
+  "data": {
+    "snapshot_hash": "...",
+    "ticker_manifest_hash": "...",
+    "ticker_order": ["..."],
+    "train_end": "YYYY-MM-DD",
+    "validation_end": "YYYY-MM-DD",
+    "test_end": "YYYY-MM-DD"
+  },
+  "experiment": {
+    "config_hash": "...",
+    "checkpoint_hashes": ["..."],
+    "seeds": [42, 123, 2026],
+    "metric_schema_version": "..."
+  },
+  "commands": [
+    {
+      "command": "python -m pytest -q",
+      "started_at": "ISO-8601 timestamp",
+      "duration_seconds": 0.0,
+      "exit_code": 0,
+      "stdout_file": "pytest_full.txt",
+      "stderr_file": "pytest_full.txt"
+    }
+  ]
+}
+```
+
+Mọi file được reference trong manifest phải tồn tại thật. Hash phải được tính bằng lệnh, không
+được chép tay từ prose report.
+
+### Schema `acceptance_traceability.csv`
+
+1 dòng / 1 finding hoặc acceptance criterion:
+
+```text
+finding_id,severity,requirement,status,changed_files,test_ids,commands,evidence_files,review_disposition,notes
+```
+
+Giá trị `status` hợp lệ: `Verified fixed` | `Partially fixed` | `Not fixed` | `Not verifiable` |
+`Not applicable` (bắt buộc kèm lý do). Chỉ đánh dấu `Verified fixed` khi test + command trích dẫn
+đều đã pass VÀ file bằng chứng tương ứng tồn tại.
+
+### 11 gate bắt buộc sau khi fix
+
+1. **Repository identity** — ghi full git SHA/branch/working-tree status/diff hash đã review;
+   working tree bẩn phải bị từ chối hoặc mọi thay đổi phải được đưa rõ vào scope verify.
+2. **Static repository checks** — `git diff --check` pass; `ruff` pass trên scope đã cấu hình
+   (`ruff.toml` extend-exclude hiện có); giữ lại evidence quét hardcoded path/bare-except/random-split/
+   duplicate-module-name.
+3. **Test discovery** — `python -m pytest --collect-only -q` exit thành công, bao phủ cả root
+   `tests/`, `src/`, `baselines/`; ghi lại số test collect + phân bố theo thư mục.
+4. **Full tests** — `python -m pytest -q` exit thành công; không giấu collection error/failed
+   test/skip bất thường/xfail; giữ raw output + JUnit XML machine-readable.
+5. **Smoke tests** — `python -m pytest -m smoke -q` exit thành công; ít nhất 1 smoke test chạy
+   happy-path cho mỗi model lineage/canonical runner liên quan tới publication; gate phải fail nếu
+   0 smoke test được chọn.
+6. **Coverage** — C0 = 100% trên changed lines, C1 ≥80% trên changed branches bằng ngưỡng tự động
+   (khớp "Testing quality rules (ENFORCED)" ở trên); giữ coverage XML/JSON + diff-cover output +
+   danh sách branch chưa cover.
+7. **Regression evidence cho audit finding** — leakage test chứng minh scaler chỉ fit trên
+   train; date-alignment test dùng khóa ticker/date, xác nhận 1 sample chung = đúng 1 ngày giao
+   dịch cho mọi mã; directional-accuracy test dùng fixture panel tính tay, từ chối flatten
+   cross-ticker; temporal-split test xác nhận biên chronological, từ chối random partition;
+   import-isolation test collect baseline theo thứ tự khác nhau, chứng minh module identity không
+   đổi; JSON test từ chối NaN/Infinity.
+8. **ML result provenance** — mỗi canonical run ghi git SHA, data/ticker-manifest hash, split
+   date, seed, config, checkpoint hash, command, metric-schema version; kết quả smoke và kết quả
+   full-training dùng schema khác biệt rõ hoặc có flag tường minh; đủ 6 metric bắt buộc + DirAcc
+   panel-aware (không flatten).
+9. **Statistical verification cho paper claim** — model chính dùng cùng data snapshot/split/seed
+   list/epoch policy/metric implementation; ≥3-5 seed cho model headline + control; tính
+   mean/std/CI + paired hoặc block-bootstrap comparison định trước; ghi rõ chính sách chọn model +
+   multiple-comparison trước khi chốt bảng cuối.
+10. **Adversarial review** — Blind Hunter + Edge Case Hunter + Acceptance Auditor review đúng diff
+    cuối; artifact review ghi commit SHA/diff hash/danh sách file/finding/quyết định xử lý; không
+    còn finding critical/major mở trước khi coi verify hoàn tất.
+11. **Clean reproduction** — publication artifact được tạo lại từ clean checkout + environment cô
+    lập; bảng so sánh canonical phải khớp kết quả đã duyệt trong sai số cho phép; mọi phụ thuộc vào
+    external data/GPU behavior/infra không sẵn có phải được ghi rõ.
+
+### Công cụ compose cho gate (điều chỉnh theo tooling THẬT có ở project này)
+
+Báo cáo gốc liệt kê skill `bmad-*` (`bmad-code-review`, `bmad-testarch-trace`,
+`bmad-testarch-test-review`, `bmad-testarch-nfr`, `bmad-check-implementation-readiness`,
+`scientific-critical-thinking`) — **các skill này KHÔNG có trong environment của project này**
+(khác BMad plugin bên VN30 master). Compose bằng tooling thật đang có:
+
+- Gate 2/3/4/5/6 → `pytest-cov`/`diff-cover`/`ruff` (đã install, xem §Per-project setup) +
+  `pytest.ini` marker `smoke`.
+- Gate 7 → skill `systematic-debugging` (`.claude/skills/systematic-debugging/`, root-cause trước
+  khi viết fix) + `test-driven-development` (`.claude/skills/test-driven-development/`, RED trước
+  khi GREEN).
+- Gate 10 → `/code-review` (chỉ gọi được qua user gõ trực tiếp, xem hạn chế đã ghi ở §Per-project
+  setup) hoặc adversarial review thủ công qua `ReportFindings`.
+- Gate 1/8/9/11 → chưa có tooling tự động; hiện phải làm thủ công (ghi git SHA/seed/config vào
+  `results.json`, chạy nhiều seed bằng tay) cho tới khi có script/skill riêng.
+
+### Skill `verify-audit-fixes` (đề xuất, CHƯA build)
+
+Mục tiêu, input, required behavior, non-goals, completion criteria: xem nguyên bản
+`docs/reports/2026-08-02_152758_summaryOfUpdate_report.md` §"Proposed project-specific skill:
+verify-audit-fixes" (VN30 master project). Explicit non-goals đáng chú ý: KHÔNG tự implement fix,
+KHÔNG sửa test để che failing behavior, KHÔNG tự ý train dài hơn Training policy cho phép, KHÔNG
+coi coverage/result JSON/prose report cũ là bằng chứng cho commit hiện tại, KHÔNG đánh dấu fixed chỉ
+bằng đọc code khi cần verify thực thi được. Build skill này là việc riêng, chưa làm trong lần cập
+nhật CLAUDE.md này — 11 gate ở trên áp dụng thủ công cho tới khi skill tồn tại.
+
 ## Summary report (per change)
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
 - Fit THIS change: bỏ phần không relevant — **trừ code review, luôn required + tóm tắt.**
