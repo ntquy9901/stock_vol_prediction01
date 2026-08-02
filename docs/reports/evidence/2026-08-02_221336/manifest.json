@@ -1,0 +1,260 @@
+{
+  "verification_timestamp": "2026-08-02T22:17:36.487176+07:00",
+  "audit_report_path": "docs/reports/2026-08-02_1056_paper_readiness_audit_report.md",
+  "target_scope": "HEAD (6672ffa)",
+  "git": {
+    "sha": "6672ffa716cd87f0daa2e0dceded92828cd53217",
+    "branch": "master",
+    "working_tree_clean": false,
+    "diff_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "environment": {
+    "python_version": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependency_lock_hash": "61da0b3789c13a79cdd5884ae5687554c5830d416994d61cb4697c9929efd28e"
+  },
+  "data": null,
+  "experiment": null,
+  "gates": {
+    "gate_1_repository_identity": {
+      "status": "dirty",
+      "note": "Working tree is dirty. Per Gate 1, this run's scope must explicitly cover every uncommitted modification listed in git_status.txt \u2014 a dirty tree is not automatically rejected by this runner; scope acknowledgement is the caller's (skill/orchestrator's) responsibility."
+    },
+    "gate_2_static_repository_checks": {
+      "status": "fail"
+    },
+    "gate_3_test_discovery": {
+      "status": "fail"
+    },
+    "gate_4_full_tests": {
+      "status": "not_run"
+    },
+    "gate_5_smoke_tests": {
+      "status": "not_run"
+    },
+    "gate_6_coverage": {
+      "status": "not_run"
+    }
+  },
+  "gate_details": {
+    "gate_2_static_repository_checks": {
+      "status": "fail",
+      "git_diff_check": {
+        "status": "pass",
+        "exit_code": 0
+      },
+      "ruff": {
+        "status": "fail",
+        "exit_code": 1,
+        "tool_available": true
+      },
+      "scans": {
+        "files_scanned": 13372,
+        "hardcoded_paths_count": 107,
+        "bare_except_count": 91,
+        "random_split_count": 181,
+        "duplicate_module_names_count": 1115,
+        "evidence_file": "static_scans.txt"
+      },
+      "commands": [
+        {
+          "command": "git diff --check",
+          "started_at": "2026-08-02T15:13:37.617438+00:00",
+          "duration_seconds": 0.069,
+          "exit_code": 0,
+          "stdout_file": "static_checks.txt",
+          "stderr_file": "static_checks.txt"
+        },
+        {
+          "command": "ruff check . --exclude .agents --exclude .claude --exclude _bmad --exclude archive --exclude data",
+          "started_at": "2026-08-02T15:13:37.692323+00:00",
+          "duration_seconds": 0.39,
+          "exit_code": 1,
+          "stdout_file": "ruff.txt",
+          "stderr_file": "ruff.txt"
+        }
+      ]
+    },
+    "gate_3_test_discovery": {
+      "status": "fail",
+      "exit_code": 2,
+      "collected_total": 369,
+      "collection_errors": 9,
+      "per_directory": {
+        "src": {
+          "exists": true,
+          "exit_code": 0,
+          "collected": 6,
+          "collection_errors": 0
+        },
+        "baselines": {
+          "exists": true,
+          "exit_code": 0,
+          "collected": 222,
+          "collection_errors": 0
+        },
+        "tests": {
+          "exists": true,
+          "exit_code": 2,
+          "collected": 141,
+          "collection_errors": 9
+        }
+      },
+      "commands": [
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q",
+          "started_at": "2026-08-02T15:17:09.053671+00:00",
+          "duration_seconds": 10.817,
+          "exit_code": 2,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q src",
+          "started_at": "2026-08-02T15:17:19.871921+00:00",
+          "duration_seconds": 1.887,
+          "exit_code": 0,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q baselines",
+          "started_at": "2026-08-02T15:17:21.759885+00:00",
+          "duration_seconds": 7.175,
+          "exit_code": 0,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q tests",
+          "started_at": "2026-08-02T15:17:28.937634+00:00",
+          "duration_seconds": 7.544,
+          "exit_code": 2,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        }
+      ]
+    },
+    "gate_4_full_tests": {
+      "status": "not_run",
+      "reason": "Skipped by caller (--skip-gate4).",
+      "commands": []
+    },
+    "gate_5_smoke_tests": {
+      "status": "not_run",
+      "reason": "Skipped by caller (--skip-gate5).",
+      "commands": []
+    },
+    "gate_6_coverage": {
+      "status": "not_run",
+      "reason": "Skipped by caller (--skip-gate6).",
+      "commands": []
+    }
+  },
+  "gates_7_11": {
+    "gate_7_regression_evidence": "Not verifiable \u2014 no per-finding regression test suite exists yet (leakage/date-alignment/DirAcc-panel/temporal-split/import-isolation/JSON NaN-Infinity tests). Requires writing those tests against named audit findings first; this runner does not author tests.",
+    "gate_8_ml_result_provenance": "Not verifiable \u2014 no canonical run-record schema exists that binds a metrics result to git SHA + data/ticker-manifest hash + split dates + seed + config hash + checkpoint hash + metric-schema version. Requires an ML experiment-tracking component this project does not have.",
+    "gate_9_statistical_verification": "Not verifiable \u2014 no multi-seed (3-5 seed) run framework, paired/block-bootstrap comparison, or documented model-selection/multiple-comparison policy exists yet for this project's models.",
+    "gate_10_adversarial_review": "Not run by this runner \u2014 requires invoking the project's adversarial code-review skill (Blind Hunter + Edge Case Hunter + Acceptance Auditor, e.g. bmad-code-review) against the exact target diff and retaining its structured disposition. This is an orchestration step for the verify-audit-fixes SKILL.md, not a mechanical command.",
+    "gate_11_clean_reproduction": "Not verifiable \u2014 no isolated/clean-checkout reproduction environment (e.g. fresh venv + fresh clone) is wired up for this project, and no canonical comparison table with numerical tolerances is defined yet."
+  },
+  "commands": [
+    {
+      "command": "git rev-parse HEAD",
+      "started_at": "2026-08-02T15:13:36.418798+00:00",
+      "duration_seconds": 0.046,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git rev-parse --abbrev-ref HEAD",
+      "started_at": "2026-08-02T15:13:36.465023+00:00",
+      "duration_seconds": 0.036,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git status --porcelain",
+      "started_at": "2026-08-02T15:13:36.501190+00:00",
+      "duration_seconds": 0.079,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git diff --stat",
+      "started_at": "2026-08-02T15:13:36.580149+00:00",
+      "duration_seconds": 0.049,
+      "exit_code": 0,
+      "stdout_file": "git_diff_stat.txt",
+      "stderr_file": "git_diff_stat.txt"
+    },
+    {
+      "command": "git diff",
+      "started_at": "2026-08-02T15:13:36.629243+00:00",
+      "duration_seconds": 0.045,
+      "exit_code": 0,
+      "stdout_file": "git_diff_stat.txt",
+      "stderr_file": "git_diff_stat.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pip freeze",
+      "started_at": "2026-08-02T15:13:36.680051+00:00",
+      "duration_seconds": 0.825,
+      "exit_code": 0,
+      "stdout_file": "environment.txt",
+      "stderr_file": "environment.txt"
+    },
+    {
+      "command": "git diff --check",
+      "started_at": "2026-08-02T15:13:37.617438+00:00",
+      "duration_seconds": 0.069,
+      "exit_code": 0,
+      "stdout_file": "static_checks.txt",
+      "stderr_file": "static_checks.txt"
+    },
+    {
+      "command": "ruff check . --exclude .agents --exclude .claude --exclude _bmad --exclude archive --exclude data",
+      "started_at": "2026-08-02T15:13:37.692323+00:00",
+      "duration_seconds": 0.39,
+      "exit_code": 1,
+      "stdout_file": "ruff.txt",
+      "stderr_file": "ruff.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q",
+      "started_at": "2026-08-02T15:17:09.053671+00:00",
+      "duration_seconds": 10.817,
+      "exit_code": 2,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q src",
+      "started_at": "2026-08-02T15:17:19.871921+00:00",
+      "duration_seconds": 1.887,
+      "exit_code": 0,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q baselines",
+      "started_at": "2026-08-02T15:17:21.759885+00:00",
+      "duration_seconds": 7.175,
+      "exit_code": 0,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q tests",
+      "started_at": "2026-08-02T15:17:28.937634+00:00",
+      "duration_seconds": 7.544,
+      "exit_code": 2,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    }
+  ],
+  "manifest_validation_problems": []
+}

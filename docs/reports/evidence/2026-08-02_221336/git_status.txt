@@ -1,0 +1,42 @@
+$ git rev-parse HEAD
+started_at: 2026-08-02T15:13:36.418798+00:00
+duration_seconds: 0.046
+exit_code: 0
+--- stdout ---
+6672ffa716cd87f0daa2e0dceded92828cd53217
+
+--- stderr ---
+
+
+$ git rev-parse --abbrev-ref HEAD
+started_at: 2026-08-02T15:13:36.465023+00:00
+duration_seconds: 0.036
+exit_code: 0
+--- stdout ---
+master
+
+--- stderr ---
+
+
+$ git status --porcelain
+started_at: 2026-08-02T15:13:36.501190+00:00
+duration_seconds: 0.079
+exit_code: 0
+--- stdout ---
+?? AGENTS.md
+?? docs/reports/2026-08-02_1547_consolidated_fix_plan.md
+?? docs/reports/evidence/
+?? results/cryptomamba_enhanced_2026-08-02_172008/
+?? results/cryptomamba_enhanced_2026-08-02_172009/
+?? results/cryptomamba_enhanced_2026-08-02_172012/
+?? results/cryptomamba_enhanced_2026-08-02_172014/
+?? results/cryptomamba_enhanced_2026-08-02_172844/
+?? results/cryptomamba_enhanced_2026-08-02_172846/
+?? results/cryptomamba_enhanced_2026-08-02_172851/
+?? results/cryptomamba_enhanced_2026-08-02_172854/
+?? results/per_ticker_gate_2026-08-02_172219/
+?? scripts/
+?? tests/verify_audit_fixes/
+
+--- stderr ---
+
