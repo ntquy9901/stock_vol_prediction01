@@ -21,7 +21,10 @@
       "Bash(ruff check *)",
       "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/test_dataset_leakage_and_alignment.py -v)",
       "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/test_dataset_leakage_and_alignment.py::TestNormalizerLeakage -v)",
-      "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/ tests/test_sp500/ -v)"
+      "Bash(python -m pytest baselines/2026-08-01_lstm_gnn_sp500_baseline/test/ tests/test_sp500/ -v)",
+      "Bash(git fetch *)",
+      "Bash(git config *)",
+      "Bash(echo \"exit code: $?\")"
     ]
   }
 }

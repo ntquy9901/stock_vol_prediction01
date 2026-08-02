@@ -1022,6 +1022,32 @@ git worktree add ../stock_vol_sp500 global-benchmark
 - **Branch experiment:** Luôn tạo branch riêng cho experiment (vd `global-benchmark`, `experiment-sentiment`)
 - **Không commit experiment code vào master** — chỉ merge khi experiment thành công và đã review
 
+### **Đồng bộ thường xuyên với master** ⭐
+
+> Áp dụng theo yêu cầu user 2026-08-02, sau khi phát hiện `src/lstm_gat_hybrid/dataset.py` (dùng
+> chung, read-only, §3.F.3) có 2 bug (leakage + cross-stock misalignment) đang được fix trên
+> `master` trong lúc branch experiment (`global-benchmark`) vẫn chạy trên bản chưa fix — tests
+> tương ứng bị để `xfail(strict=True)` chờ merge (xem `baselines/2026-08-01_lstm_gnn_sp500_baseline/
+> test/test_dataset_leakage_and_alignment.py`).
+
+**Bắt buộc:** trước khi bắt đầu 1 phiên làm việc mới trên branch experiment (và định kỳ trong lúc
+làm việc dài, không chỉ 1 lần đầu phiên), pull/fetch + xem xét merge từ `master` để không làm việc
+trên code dùng-chung đã lỗi thời:
+
+```bash
+git fetch origin
+git log --oneline HEAD..origin/master              # xem master có gì mới chưa merge vào branch này
+git merge origin/master                             # hoặc rebase, tuỳ mức độ diverge — hỏi user nếu không chắc
+```
+
+- **Vì sao:** code dùng chung (`src/`) có thể được fix trên `master` bất kỳ lúc nào (khác session/
+  người khác đang làm song song) — không đồng bộ thường xuyên → tiếp tục sinh số liệu trên bug đã
+  biết, hoặc conflict lớn dồn lại tới lúc merge cuối.
+- **Khi nào:** đầu phiên làm việc; sau khi phát hiện có xfail test đang chờ 1 fix cụ thể từ
+  `master` (kiểm tra xem đã merge chưa trước khi báo cáo kết quả mới); khi user yêu cầu.
+- **Nếu có conflict hoặc thay đổi lớn từ master:** dừng lại, báo cho user trước khi tự ý resolve —
+  không tự `merge --strategy=theirs`/`git checkout --ours` để né conflict.
+
 ### **Code Review Process**
 
 **Before Committing:**
