@@ -21,6 +21,22 @@ archive/
 │                                         news-fusion lineage. Not a bug archive — moved here
 │                                         only to shrink `baselines/`'s active scope.
 │
+├── data_raw/                 ← Raw price folders confirmed unused by any live script
+│   │                            (verified via repo-wide grep before moving, 2026-08-02)
+│   ├── hnx/, hnx_enhanced/   ← HNX exchange data, unrelated to the VN30 project scope.
+│   │                            Was gitignored in its old location (data/raw/hnx/) — .gitignore
+│   │                            updated to the new path, so these stay untracked here too.
+│   ├── vn30_enhanced/        ← Duplicate ticker list of data/raw/vn30/ (the one actually used),
+│   │                            referenced by nothing except a one-off comparison script
+│   │                            (src/experiment/compare_crawl_results.py).
+│   └── test/, test_combined/ ← Only referenced by an already-archived script
+│                                 (archive/data_scripts/quick_test_crawl.py).
+│
+│   NOT archived despite looking similar: data/raw/vn100/, vn100_enhanced/, all_available/ —
+│   these ARE actively used by a live (non-archived) VN100 experiment track
+│   (train_and_test_vn100.py, process_vn100_data.py, evaluate_vn100*.py). Likewise
+│   data/processed/vn100_only/, vn30_sentiment/ are live (sentiment pipeline, VN100 track).
+│
 └── [future archives]
 ```
 

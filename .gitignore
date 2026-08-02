@@ -13,8 +13,8 @@ _bmad-output/
 data/raw/all_available/
 data/raw/vn100/
 data/raw/vn100_enhanced/
-data/raw/hnx/
-data/raw/hnx_enhanced/
+archive/data_raw/hnx/
+archive/data_raw/hnx_enhanced/
 data/processed_all/
 # Intermediate sentiment/news datasets (regenerable; exclude from VCS)
 data/raw/news/
