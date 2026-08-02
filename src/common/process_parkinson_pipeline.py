@@ -27,9 +27,16 @@ sys.path.insert(0, project_root)
 from src.common.parkinson_utils import process_single_stock
 
 
-def process_all_stocks(raw_dir: str, output_dir: str):
+def process_all_stocks(raw_dir: str, output_dir: str, tickers: list = None):
     """
-    Process all stocks from raw OHLCV to Parkinson volatility.
+    Process stocks from raw OHLCV to Parkinson volatility.
+
+    Args:
+        raw_dir: Directory with raw per-ticker OHLCV CSVs.
+        output_dir: Directory to save processed CSVs.
+        tickers: Optional list of ticker symbols to restrict processing to
+            (matched against the raw filename stem, e.g. "AAPL.csv" -> "AAPL").
+            Default: process every CSV found in raw_dir.
     """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
@@ -37,6 +44,10 @@ def process_all_stocks(raw_dir: str, output_dir: str):
     # Get all raw OHLCV files
     raw_files = [f for f in os.listdir(raw_dir)
                  if f.endswith('_ohlcv.csv') or f.endswith('.csv')]
+
+    if tickers:
+        ticker_set = set(tickers)
+        raw_files = [f for f in raw_files if os.path.splitext(f)[0] in ticker_set]
 
     print(f"Found {len(raw_files)} raw files in {raw_dir}")
     print("=" * 80)
@@ -101,6 +112,8 @@ def main():
     )
     parser.add_argument("--raw_dir", default=None, help="Override raw data directory")
     parser.add_argument("--output_dir", default=None, help="Override output directory")
+    parser.add_argument("--tickers", nargs="+", default=None,
+                         help="Restrict processing to these tickers (default: all files in raw_dir)")
     args = parser.parse_args()
 
     paths = MARKET_PATHS[args.market]
@@ -117,8 +130,8 @@ def main():
         print(f"Please ensure raw OHLCV files are in {raw_dir}/")
         return
 
-    # Process all stocks
-    process_all_stocks(raw_dir, output_dir)
+    # Process stocks (all, or restricted to --tickers)
+    process_all_stocks(raw_dir, output_dir, tickers=args.tickers)
 
 
 if __name__ == "__main__":

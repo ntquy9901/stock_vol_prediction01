@@ -1,0 +1,23 @@
+{
+  "architecture": "ParallelLSTMGNN (src/lstm_gat_hybrid, unmodified)",
+  "market": "sp500",
+  "num_stocks": 30,
+  "forecast_horizon": 5,
+  "epochs_trained": 2,
+  "test_metrics": {
+    "mse": 6.528623543999856e-06,
+    "rmse": 0.0025551171292134255,
+    "mae": 0.0025411690585315228,
+    "r2": -103.62705993652344,
+    "qlike": 19620.86328125,
+    "directional_accuracy": 50.210970464135016
+  },
+  "train_losses": [
+    0.0014673653732407493,
+    0.00016045153272527927
+  ],
+  "val_losses": [
+    1.777272114446128e-05,
+    6.388171641447116e-06
+  ]
+}

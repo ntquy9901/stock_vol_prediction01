@@ -13,7 +13,10 @@
       "Bash(curl *)",
       "Bash(git check-ignore *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(python \"baselines/2026-08-01_lstm_gnn_sp500_baseline/code/train_sp500_lstm_gnn.py\" --forecast_horizon 22 --epochs 5 --seed 42)",
+      "Bash(git push *)",
+      "Bash(git ls-tree *)"
     ]
   }
 }
