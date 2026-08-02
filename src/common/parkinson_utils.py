@@ -99,9 +99,15 @@ def process_single_stock(raw_file: str, output_dir: str) -> Tuple[str, int]:
         # Calculate Parkinson volatility
         parkinson_vol = calculate_parkinson_volatility(df)
 
+        # Normalize date to plain YYYY-MM-DD: most raw sources already store this, but
+        # VPB/VRE store "YYYY-MM-DD HH:MM:SS+07:00" (mixed format across raw sources) —
+        # taking the token before the first space keeps the calendar date as originally
+        # written, with no tz-conversion arithmetic that could shift it across midnight.
+        date_str = df['date'].astype(str).str.split(' ').str[0]
+
         # Create processed DataFrame
         processed_df = pd.DataFrame({
-            'date': df['date'],
+            'date': date_str,
             'parkinson_volatility': parkinson_vol
         })
 
