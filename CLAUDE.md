@@ -122,6 +122,12 @@ Task chỉ "done" khi TẤT CẢ đúng:
   carries the same notice for anyone who lands there directly.
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
+- **Push remote ngay sau mỗi task done:** khi 1 task đã verify xong (có evidence — test pass,
+  smoke pass, hoặc kết quả đo được cụ thể), commit VÀ `git push origin master` ngay, không đợi
+  user nhắc, không gộp nhiều task rồi push 1 lần cuối session. Áp dụng cho AI/session bất kỳ làm
+  việc trên repo này — không chỉ push khi được hỏi (khác Git Safety Protocol mặc định, override
+  có chủ đích theo yêu cầu user 2026-08-02). Nếu push thất bại (remote đã đổi khác) — dừng lại,
+  hỏi user, KHÔNG force-push.
 - **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.
 - **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
 - **Similar check:** sau fix/pattern change, grep cùng idiom/duplicate trong repo + sibling repos. Apply cùng change nơi hợp lệ, hoặc list remaining as follow-up. Đừng fix 1/N copy silent.
