@@ -37,20 +37,24 @@ output_dir = Path('results/simple_lstm_vn30_2026-06-20')
 output_dir.mkdir(exist_ok=True, parents=True)
 print(f'Results will be saved to: {output_dir}')
 
-# Create dataset
-print('\n1. Creating VN30 dataset...')
-dataset = PooledVolatilityDataset(data_dir, seq_length=seq_length, forecast_horizon=forecast_horizon)
-print(f'  Dataset size: {len(dataset)}')
-
-# Temporal split (70/15/15)
-train_size = int(0.7 * len(dataset))
-val_size = int(0.15 * len(dataset))
-test_size = len(dataset) - train_size - val_size
-
-train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
-    dataset, [train_size, val_size, test_size],
-    generator=torch.Generator().manual_seed(42)
-)
+# Create dataset — per-ticker temporal split (70/15/15), scaler fit on train only.
+# NOT torch.utils.data.random_split: sequences are stock-blocked (all of ticker A's
+# windows, then all of ticker B's, ...), so a random shuffle-split leaks future
+# windows of every ticker into train. See PooledVolatilityDataset's split= param.
+print('\n1. Creating VN30 dataset (temporal split)...')
+torch.manual_seed(42)
+np.random.seed(42)
+train_dataset = PooledVolatilityDataset(data_dir, seq_length=seq_length,
+                                        forecast_horizon=forecast_horizon, split='train')
+val_dataset = PooledVolatilityDataset(data_dir, seq_length=seq_length,
+                                      forecast_horizon=forecast_horizon, split='val',
+                                      feature_scaler=train_dataset.feature_scaler,
+                                      target_scaler=train_dataset.target_scaler)
+test_dataset = PooledVolatilityDataset(data_dir, seq_length=seq_length,
+                                       forecast_horizon=forecast_horizon, split='test',
+                                       feature_scaler=train_dataset.feature_scaler,
+                                       target_scaler=train_dataset.target_scaler)
+dataset = train_dataset  # kept for the target_scaler.inverse_transform() call below
 
 print(f'  Train: {len(train_dataset)}, Val: {len(val_dataset)}, Test: {len(test_dataset)}')
 

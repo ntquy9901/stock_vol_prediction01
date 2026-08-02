@@ -29,13 +29,25 @@ class PooledVolatilityDataset(Dataset):
         seq_length: Window size (default: 22)
         forecast_horizon: Days ahead to predict (default: 5)
         scaler: Optional pre-fitted scaler
+        split: None keeps the original pooled/unsplit behavior (all callers that
+            predate the temporal-split fix). 'train'/'val'/'test' restricts each
+            ticker's windows to its chronological fraction (per-ticker temporal
+            split, since sequences are stock-blocked, not date-interleaved) —
+            use this with train_ratio/val_ratio/test_ratio, and pass the
+            already-fitted train feature_scaler/target_scaler into the val/test
+            instances so scalers are never fit on val/test data.
     """
 
     def __init__(self, data_dir: str, seq_length: int = 22,
-                 forecast_horizon: int = 5, feature_scaler=None, target_scaler=None):
+                 forecast_horizon: int = 5, feature_scaler=None, target_scaler=None,
+                 split=None, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
         self.data_dir = data_dir
         self.seq_length = seq_length
         self.forecast_horizon = forecast_horizon
+        self.split = split
+        self.train_ratio = train_ratio
+        self.val_ratio = val_ratio
+        self.test_ratio = test_ratio
 
         # Load all processed data
         self.sequences = []
@@ -89,7 +101,8 @@ class PooledVolatilityDataset(Dataset):
             if len(parkinson) < self.seq_length + self.forecast_horizon:
                 continue
 
-            # Create sliding windows
+            # Create sliding windows (chronological: i increases with time)
+            ticker_sequences, ticker_targets, ticker_metadata = [], [], []
             for i in range(len(parkinson) - self.seq_length - self.forecast_horizon + 1):
                 # Input sequence: past 22 days
                 X_seq = parkinson[i:i + self.seq_length]
@@ -101,9 +114,32 @@ class PooledVolatilityDataset(Dataset):
                 if np.isnan(y_target) or y_target == 0:
                     continue
 
-                self.sequences.append(X_seq)
-                self.targets.append(y_target)
-                self.metadata.append((ticker, i))
+                ticker_sequences.append(X_seq)
+                ticker_targets.append(y_target)
+                ticker_metadata.append((ticker, i))
+
+            if self.split is not None:
+                # Per-ticker temporal split: windows are already chronological
+                # within this ticker (increasing i), so a positional cut here
+                # is a true chronological cut, unlike a global random_split.
+                n = len(ticker_sequences)
+                train_end = int(n * self.train_ratio)
+                val_end = int(n * (self.train_ratio + self.val_ratio))
+                if self.split == 'train':
+                    lo, hi = 0, train_end
+                elif self.split == 'val':
+                    lo, hi = train_end, val_end
+                elif self.split == 'test':
+                    lo, hi = val_end, n
+                else:
+                    raise ValueError(f"Unknown split={self.split!r}, expected 'train'/'val'/'test'")
+                ticker_sequences = ticker_sequences[lo:hi]
+                ticker_targets = ticker_targets[lo:hi]
+                ticker_metadata = ticker_metadata[lo:hi]
+
+            self.sequences.extend(ticker_sequences)
+            self.targets.extend(ticker_targets)
+            self.metadata.extend(ticker_metadata)
 
         print(f"Created {len(self.sequences)} total sequences")
 

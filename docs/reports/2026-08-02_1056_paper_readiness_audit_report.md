@@ -17,31 +17,51 @@ trước khi đưa vào báo cáo này.
 
 ## 1. Vấn đề chưa giải quyết (xếp theo mức độ ảnh hưởng tới tính hợp lệ khoa học)
 
-### 1.1 [CRITICAL] Kết quả "tốt nhất project" (QLIKE 0.5473) không tái lập được
+### 1.1 [RESOLVED — số liệu, không phải kết luận] Kết quả "tốt nhất project" (QLIKE 0.5473) không tái lập được
 
 `baselines/2026-07-26_per_ticker_news_gate_baseline` — con số QLIKE=0.5473 (test, epoch 20) được
 nhiều báo cáo dẫn làm "breakthrough"/kỷ lục project — được train **không set seed nào**
-(`torch.manual_seed`/`np.random.seed` không tồn tại trong code tại thời điểm chạy). Kiểm chứng
-thực nghiệm trong phiên này (thêm `--seed`, chạy lại 3 lần, 10 epoch, cùng hyperparameter, data
-thật):
+(`torch.manual_seed`/`np.random.seed` không tồn tại trong code tại thời điểm chạy).
 
-| seed | test QLIKE |
+**Kiểm chứng vòng 1** (phiên trước, 3 seed, 10 epoch, không epoch-matched với con số gốc):
+
+| seed | test QLIKE (10 epoch) |
 |---|---|
 | 42 | 0.5704 |
 | 123 | 0.5488 |
 | 2026 | 0.5503 |
 | **mean ± std** | **0.5565 ± 0.010** |
-| gốc (không seed, epoch 20) | 0.5473 |
 
-Số gốc thấp hơn cả 3 lần chạy lại (dù chỉ chạy 10 epoch, không phải 20) — tức là một lần chạy
-may mắn, không phải mức hiệu năng ổn định. Ở seed=42, QLIKE (0.5704) còn **tệ hơn** cấu hình
-no-gate control (0.5598, theo báo cáo `2026-07-26_2330_summaryOfUpdate_report.md`). Kết luận
-"per-ticker gate cải thiện QLIKE so với HAR-only" hiện **không có cơ sở thống kê vững** — cần
-chạy multi-seed đầy đủ (khuyến nghị ≥5 seed, mỗi seed đủ epoch để so epoch-matched) trước khi
-đưa vào paper.
+**Kiểm chứng vòng 2 (phiên này, epoch-matched đúng epoch 20 như con số gốc, resume từ checkpoint
+vòng 1 +10 epoch, cộng 2 seed mới 1 và 7 chạy fresh 20 epoch — 5 seed tổng, code đã có fix DirAcc
+per-ticker):**
 
-Seed-fixing đã thêm vào `train.py`, `train_parallel.py`, `train_parallel_enhanced.py`,
-`train_per_ticker_gate.py` trong phiên này nhưng **chưa commit** (`git status` vẫn hiện `M`).
+| seed | test QLIKE (epoch 20) | test DirAcc per-ticker (%) |
+|---|---|---|
+| 1 | 0.5396 | 47.70 |
+| 123 | 0.5476 | 47.47 |
+| 2026 | 0.5475 | 48.54 |
+| 42 | 0.5640 | 47.05 |
+| 7 | 0.5661 | 47.80 |
+| **mean ± std (n=5)** | **0.5530 ± 0.0115** | **47.71 ± 0.55** |
+| gốc (không seed, epoch 20) | 0.5473 | — (chỉ có bản flatten-biased) |
+
+Kết luận cập nhật: con số gốc 0.5473 nằm **trong khoảng 1 std của mean** (0.5415–0.5645) — không
+phải một lần chạy may mắn bất thường như nghi ngờ ban đầu ở vòng 1, nhưng **cũng không phải mức
+hiệu năng ổn định/tốt nhất** — nó là 1 trong 5 draw, thấp hơn mean một chút, cao hơn seed tốt nhất
+(1: 0.5396). Mean thật của per-ticker-gate ở epoch 20 là **0.5530 ± 0.0115**, **tệ hơn** REST-TS
+(0.5431, single-seed, chưa verify — xem mục 1.5) trên toàn bộ 5/5 seed. DirAcc per-ticker
+(47.71 ± 0.55%) xác nhận lại phát hiện mục 1.3 — gần random, ổn định qua seed (std thấp) nhưng
+không có tín hiệu dự báo đúng chiều thật sự.
+
+**Hệ quả cho headline result (mục 1.5, 3.2):** per-ticker-gate KHÔNG thể dùng làm headline
+"beats REST-TS on QLIKE" — trung bình 5 seed thua REST-TS. REST-TS bản thân chưa qua multi-seed
+verify (ngoài phạm vi đã thống nhất cho phiên này) — cần làm trước khi chốt headline cuối cùng
+cho paper.
+
+Kết quả training đầy đủ: `results/per_ticker_gate_2026-08-02_150559` (seed 42),
+`_150913` (123), `_151224` (2026), `_151827` (1), `_152448` (7). Seed-fixing đã commit
+(`fccaf6a`).
 
 ### 1.2 [CRITICAL] Data leakage thật (không phải nghi ngờ) ở 2 script gốc
 
@@ -73,18 +93,17 @@ Gap thực đo trên toàn bộ 23 baseline (bảng đầy đủ ở mục 5): t
 trong tài liệu. **Mọi con số DirAcc dùng cho paper phải lấy bản per-ticker, không phải bản đã
 báo cáo trong hầu hết `results.json` hiện có.**
 
-### 1.4 [HIGH] Seeding mới thêm cho 4/~25+ training script — phần còn lại vẫn unseeded
+### 1.4 [RESOLVED — seeding; kiểm chứng multi-seed vẫn còn thiếu] Toàn bộ ~23 training script nay đã seed, nhưng chỉ per-ticker-gate được multi-seed verify
 
-Ngoài 4 file đã fix, toàn bộ dòng baseline news (`train_embedding_baseline.py`,
-`train_market_fallback.py`, `train_latent_noise.py`, `train_pure_market.py`,
-`train_alignment.py`, `train_gated_crossattn.py`, `train_resttext.py`, `train_ablation_gate.py`,
-`train_dual_news.py`, `train_macro_news.py`, `train_har_only_reference.py`,
-`train_selective_gate.py`, `train_top3_gate.py`, `train_spillover_qlike.py`,
-`train_calendar_news_gate.py`, và 3 bản sao horizon h1/h10/h22 của
-`train_per_ticker_gate_h*.py`) đều không set seed. `src/lstm_har_gat_hybrid/train_hybrid.py` và
-`src/cryptomamba_baseline/train_enhanced.py` cũng có `DataLoader(shuffle=True)` không seed. Tức
-là **21/23 baseline** hiện tại có model-weight-init và data-shuffling không tái lập được — mọi
-con số "tốt nhất" trong số này có cùng rủi ro như mục 1.1, chưa được kiểm chứng multi-seed.
+Đã fix trong phiên tiếp nối: `torch.manual_seed(42)`/`np.random.seed(42)` (mặc định) thêm vào
+toàn bộ ~23 training script còn lại (danh sách gốc từng liệt kê ở đây), kể cả
+`src/lstm_har_gat_hybrid/train_hybrid.py` và `src/cryptomamba_baseline/train_enhanced.py` — đã
+**commit** (`fccaf6a`). Việc này giải quyết vấn đề "chạy lại ra kết quả khác" cho các lần chạy
+tương lai, nhưng **không tự động làm hợp lệ các con số ĐÃ báo cáo trước đây** (chúng vẫn được train
+từ 1 lần chạy không seed) — muốn dùng số nào cho paper vẫn cần multi-seed verify riêng số đó (như
+đã làm cho per-ticker-gate ở mục 1.1). 22/23 baseline khác hiện vẫn chỉ có 1 lần chạy — chấp nhận
+được cho kết luận null result, nhưng bất kỳ claim "beat baseline"/positive result nào từ nhóm này
+đều cần multi-seed verify trước khi đưa vào paper, theo đúng quy trình đã áp dụng ở mục 1.1.
 
 ### 1.5 [HIGH] "Kết quả tốt nhất hiện tại" trong báo cáo mới nhất thực ra tệ hơn kỷ lục đã ghi nhận trước đó, không so sánh/không disclose
 
@@ -227,20 +246,29 @@ trước đó, liệt kê để theo dõi):
 
 ---
 
-## 5. Đã xử lý trong phiên này
+## 5. Đã xử lý trong phiên này (bao gồm cả phiên tiếp nối 2026-08-02 buổi chiều)
 
-- Thêm seed fixing (`torch.manual_seed`/`np.random.seed`) vào `train.py`, `train_parallel.py`,
-  `train_parallel_enhanced.py`, `train_per_ticker_gate.py` — **chưa commit**.
-- Thêm `--seed` CLI arg cho `train_per_ticker_gate.py`, chạy kiểm chứng 3 seed thật (kết quả ở
-  mục 1.1).
-- `project-context.md`: tách rõ training-loss (MSE) vs evaluation-metric-priority (QLIKE), sửa
-  cả 2 chỗ (mục "Loss Function Priority" và `SINGLE_HORIZON_CONFIG`).
+- Seed fixing (`torch.manual_seed`/`np.random.seed`) mở rộng ra **toàn bộ ~23 training script**
+  (không chỉ 4 file như bản nháp trước), đã **commit** (`fccaf6a`).
+- DirAcc per-ticker fix (`evaluate_predictions(..., n_stocks=...)`) áp dụng cho **toàn bộ 15+7=22
+  file** gọi hàm này trên mảng flatten đa-ticker (trước đó chỉ 15/22), đã **commit**.
+- `project-context.md`: tách rõ training-loss (MSE) vs evaluation-metric-priority (QLIKE) — đã
+  commit.
+- Mục 1.2 (leakage 2 script gốc): điều tra xong — số liệu từ 2 script này **không được trích dẫn**
+  ở báo cáo hiện hành (`BAO_CAO_TONG_HOP.md`, `project-context.md`); mọi nơi từng trích đều đã gắn
+  cờ "⚠️ Potential leakage". Không chặn paper, vẫn còn nợ code-hygiene (script sống, chưa archive).
+- Mục 1.1: hoàn thành kiểm chứng vòng 2 (5 seed, epoch-matched = 20) — xem chi tiết cập nhật ở
+  mục 1.1 phía trên. Kết luận: per-ticker-gate mean 0.5530±0.0115 QLIKE, thua REST-TS (0.5431) trên
+  cả 5/5 seed — **không dùng per-ticker-gate làm headline "beats REST-TS"**.
 
 ## 6. Chưa xử lý — cần quyết định ưu tiên trước khi viết paper
 
-Toàn bộ mục 1 (trừ 1.10 phần đã fix) và mục 3 vẫn ở trạng thái phát hiện, chưa fix. Khuyến nghị
-thứ tự xử lý nếu mục tiêu là nộp paper tháng tới: (1) chọn/khóa 1 headline result + multi-seed
-verify (1.1, 1.4, 1.5, 1.6) → (2) sửa DirAcc thành per-ticker làm số chính thức toàn bộ bảng kết
-quả (1.3) → (3) audit + fix leakage nếu 2 script gốc có đóng góp số liệu (1.2) → (4) cập nhật
-Limitations + related-work + reproducibility statement (mục 3.7-3.9) → (5) dọn cấu trúc/traceability
-còn thiếu (1.8, 1.9) → (6) dọn code hygiene nếu công khai repo (3.10).
+Còn lại: 1.5 (chốt 1 headline — REST-TS hiện là ứng viên mạnh hơn theo mục 1.1 mới nhưng REST-TS
+CHƯA qua multi-seed verify), 1.4 (phần lớn baseline khác vẫn 1-seed — chấp nhận được cho null
+result, không bắt buộc cho non-headline), 1.6 (giải thích trôi dạt — coi như đã giải thích bởi
+1.1: non-reproducibility), 1.7-1.9 (universe stale, traceability, cấu trúc), mục 3 (limitations,
+significance testing, related work, reproducibility statement, code hygiene 3.10). Khuyến nghị thứ
+tự tiếp theo: (1) multi-seed verify REST-TS (đối trọng cần thiết để chốt headline) → (2) cập nhật
+Limitations + reproducibility statement với số liệu mục 1.1 mới → (3) dọn cấu trúc/traceability
+còn thiếu (1.8, 1.9) → (4) dọn code hygiene nếu công khai repo (3.10, bao gồm archive 2 script rò
+rỉ ở mục 1.2).
