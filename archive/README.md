@@ -34,9 +34,29 @@ archive/
 │   ├── hnx/, hnx_enhanced/   ← HNX exchange data, unrelated to the VN30 project scope.
 │   │                            Was gitignored in its old location (data/raw/hnx/) — .gitignore
 │   │                            updated to the new path, so these stay untracked here too.
-│   ├── vn30_enhanced/        ← Duplicate ticker list of data/raw/vn30/ (the one actually used),
-│   │                            referenced by nothing except a one-off comparison script
-│   │                            (src/experiment/compare_crawl_results.py).
+│   ├── vn30_enhanced/        ← Duplicate ticker list of data/raw/vn30/ — now itself merged away
+│   │                            (see `vn30/` entry below), referenced by nothing except a one-off
+│   │                            comparison script (src/experiment/compare_crawl_results.py).
+│   ├── vn30/                 ← **[2026-08-02]** data/raw/vn30/ merged into data/raw/prices/ (the
+│   │                            folder process_parkinson_pipeline.py actually reads by default):
+│   │                            VPB/VRE (the only 2 tickers actually used from here) `git mv`'d
+│   │                            directly into `data/raw/prices/`; the other 26 tickers were exact
+│   │                            duplicates of files already in `prices/` and read by nothing;
+│   │                            BSR/VPL (crawled 2026-08-02, excluded from the training universe —
+│   │                            see the VN30 data source audit report) came along too. `prices/`
+│   │                            is now the single canonical raw source for all 32 live tickers.
+│   ├── vn30_sentiment/       ← **[2026-08-02]** Not the sentiment data actually in use — the live
+│   │                            sentiment pipeline (src/sentiment/processing/sentiment_integration.py)
+│   │                            reads `data/processed/vn30_sentiment/` (still live, NOT archived —
+│   │                            different path, do not confuse the two). This raw/ counterpart had
+│   │                            12 files under `news/` read only by 2 scripts
+│   │                            (`data_scripts/generate_realistic_news.py`,
+│   │                            `data_scripts/process_realistic_news_with_finbert.py`, both moved
+│   │                            alongside it) — both scripts also hardcoded a stale
+│   │                            `D:/bmad-projects/...` path (same bug class as commit `e434b1a`,
+│   │                            never fixed since not worth fixing unused code). 3 subfolders
+│   │                            (`analyst_reports/`, `press_releases/`, `social_media/`) were
+│   │                            already empty and removed, not archived.
 │   ├── vn100/, vn100_enhanced/ ← VN100 track dropped from project scope entirely, 2026-08-02
 │   │                            (user decision — "không xử lý vn100"). Was gitignored in its old
 │   │                            location; .gitignore updated to the new path.

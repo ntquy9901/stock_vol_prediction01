@@ -90,8 +90,9 @@ VNM, VPB, VRE.
    Nếu bắt buộc dùng chung khung ngày (intersection) cho cả 30 mã chính thức, khung chung chỉ còn
    **~84 ngày lịch (~58 ngày giao dịch)** do VPL — quá ít để train LSTM+GNN (chỉ ~31 window trước
    khi chia train/val/test). **Quyết định (2026-08-02): loại BSR và VPL khỏi universe** do dữ liệu
-   quá ít. File raw đã crawl (`data/raw/vn30/BSR_ohlcv.csv`, `VPL_ohlcv.csv`) **giữ lại, không xoá**
-   — không dùng trong pipeline hiện tại, nhưng có sẵn nếu sau này đủ lịch sử để cân nhắc lại.
+   quá ít. File raw đã crawl (`BSR_ohlcv.csv`, `VPL_ohlcv.csv`) **giữ lại, không xoá** — chuyển vào
+   `archive/data_raw/vn30/` (2026-08-02, cùng đợt gộp `data/raw/vn30/` → `data/raw/prices/`, xem
+   mục 8) — không dùng trong pipeline hiện tại, nhưng có sẵn nếu sau này đủ lịch sử để cân nhắc lại.
 3. **5 mã dư (BCM, BVH, NVL, PDR, POW) — CHƯA quyết định**, vẫn còn trong `data/processed/`.
    Universe hiện tại (sau khi thêm LPB, chưa loại 5 mã dư): 33 mã = 28/30 mã chính thức (thiếu
    đúng BSR, VPL đã loại có chủ đích) + 5 mã dư nói trên.
@@ -138,8 +139,8 @@ Chốt ngày 2026-08-02. 33 mã, nguồn từng mã như sau:
 | VIC | `data/raw/prices/` | 4666 | 2007-09-19 → 2026-06-09 | ✅ |
 | VJC | `data/raw/prices/` | 2318 | 2017-02-28 → 2026-06-09 | ✅ |
 | VNM | `data/raw/prices/` | 4887 | 2006-10-27 → 2026-06-09 | ✅ |
-| VPB | `data/raw/vn30/` | 2294 | 2017-08-17 → 2026-06-19 | ✅ |
-| VRE | `data/raw/vn30/` | 2237 | 2017-11-06 → 2026-06-19 | ✅ |
+| VPB | `data/raw/prices/` (moved from `vn30/`, 2026-08-02) | 2294 | 2017-08-17 → 2026-06-19 | ✅ |
+| VRE | `data/raw/prices/` (moved from `vn30/`, 2026-08-02) | 2237 | 2017-11-06 → 2026-06-19 | ✅ |
 
 **Tổng hợp:** 28/30 mã VN30 chính thức (hiệu lực đến 2026-08-02) + 5 mã ngoài danh sách hiện tại
 (giữ lại vì đủ dữ liệu lịch sử, không phải sai sót). Tất cả đã qua `src/common/parkinson_utils.py`
@@ -159,7 +160,23 @@ hỏi mọi mã phải có dữ liệu tại cùng ngày).
   đủ dài hơn VPL nhiều, nhưng vẫn là mã có lịch sử ngắn thứ nhì trong toàn bộ universe, thu hẹp
   đáng kể khung ngày nếu đưa vào cùng VPL.
 
-Dữ liệu 2 mã này (`data/raw/vn30/BSR_ohlcv.csv`, `VPL_ohlcv.csv`) đã crawl và lưu lại (không xoá)
-— có thể tái xét khi có đủ lịch sử giao dịch trong tương lai. Tại thời điểm hiện tại, việc loại
-trừ này là quyết định có chủ đích, có định lượng cụ thể, không phải một thiếu sót — nên nêu rõ
-trong phần Limitations/Dataset Description của paper, kèm 2 con số ở trên.
+Dữ liệu 2 mã này (`BSR_ohlcv.csv`, `VPL_ohlcv.csv`) đã crawl và lưu lại (không xoá, chuyển vào
+`archive/data_raw/vn30/` — xem mục 8) — có thể tái xét khi có đủ lịch sử giao dịch trong tương
+lai. Tại thời điểm hiện tại, việc loại trừ này là quyết định có chủ đích, có định lượng cụ thể,
+không phải một thiếu sót — nên nêu rõ trong phần Limitations/Dataset Description của paper, kèm 2
+con số ở trên.
+
+## 8. Gộp `data/raw/vn30/` vào `data/raw/prices/` (2026-08-02)
+
+`data/raw/vn30/` (30 mã, tạo ra để lấy riêng VPB/VRE — mục 2) có 26/30 mã trùng hoàn toàn với
+`data/raw/prices/` (nguồn `process_parkinson_pipeline.py` đọc mặc định) — xác nhận không script
+nào đọc bản trùng đó qua grep. Chỉ 4 mã thật sự cần: BSR, VPB, VPL, VRE.
+
+- VPB, VRE (2 mã đang dùng thật) → `git mv` thẳng vào `data/raw/prices/` — giờ `prices/` là nguồn
+  raw duy nhất cho toàn bộ 32 mã live (33 mã universe trừ LPB, nguồn LPB là `vn100/`, đã archive).
+- BSR, VPL (đã loại khỏi universe, mục 1) + 26 mã trùng + `stock_summary.csv` →
+  `archive/data_raw/vn30/`.
+- `data/raw/vn30/` (thư mục rỗng sau khi gộp) đã xoá.
+
+Không cần sửa `process_parkinson_pipeline.py` — script đã glob `*.csv` theo thư mục, không
+hardcode danh sách mã, nên tự động nhận file mới trong `prices/` mà không cần đổi code.
