@@ -546,7 +546,9 @@ Quy tắc: trong snapshot kết thúc ngày T (input days [i, T]),
 ---
 
 **Tài liệu liên quan:**
-- Báo cáo model hiện tại: `docs/report_2026-06-27/BAO_CAO_CHO_THAY.md`
+- Báo cáo model hiện tại: `docs/report_2026-08-01/BAO_CAO_TONG_HOP.md` (báo cáo model cũ
+  `docs/report_2026-06-27/BAO_CAO_CHO_THAY.md` đã archive 2026-08-02, xem
+  `archive/docs_reports_legacy/report_2026-06-27/`)
 - Kiến trúc LSTM-GNN: `docs/project/LSTM_GAT_ARCHITECTURE.md`
 - Nghiên cứu SOTA fusion: `_bmad-output/planning-artifacts/research/technical-sentiment-volatility-fusion-sota-2026-06-29.md`
 - Project context: `project-context.md` (mục Sentiment Analysis Integration)

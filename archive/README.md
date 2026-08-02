@@ -10,6 +10,12 @@
 
 This directory contains deprecated and archived code from the stock volatility prediction project.
 
+> **Restoration log:** every batch move in this directory is also recorded, with old→new paths
+> and the reason for each, in a dedicated log file for easy reversal — see
+> `2026-08-02_2200_archive_batch_log.md` for the largest batch (12 baselines + `src/sentiment_baseline/`
+> + 3 historical report folders + 3 cascading-orphan `data/` folders, all cross-referenced against
+> 5 project reports). Git history (`git log --follow`) also works for any single file.
+
 ---
 
 ## 📁 Archive Structure
@@ -125,6 +131,23 @@ archive/
 │   was the only file referencing `all_available` anywhere, and nothing imports that script.
 │   `data/processed_all/` (the script's output) was left in place pending a separate downstream
 │   usage check — see the data/ subfolder classification pass, same date.
+│
+├── baselines/ (continued) — **[2026-08-02, large batch]** 12 more null/rejected/inconclusive
+│   baselines, cross-referenced against docs/report_2026-{06-27,07-11,07-18,07-25,08-01}/ (5
+│   parallel investigation passes, one per report). Full list + reasons + what was deliberately
+│   NOT archived (dual_group_news_embedding_baseline, expand_news_cache_baseline, macro_news_baseline,
+│   objective_news_baseline): see `2026-08-02_2200_archive_batch_log.md` in this directory.
+│
+├── src_legacy/
+│   └── sentiment_baseline/   ← src/sentiment_baseline module, only importers archived same batch.
+│
+├── docs_reports_legacy/
+│   ├── report_2026-06-27/    ← historical snapshot, zero live references, 04_code/ confirmed
+│   │                            stale duplicate of live src/lstm_gat_hybrid/ modules.
+│   ├── report_2026-07-11/    ← historical snapshot, zero live references.
+│   └── report_2026-07-18/    ← historical snapshot, zero live references.
+│       NOT archived: docs/report_2026-07-25/ (still cited by the current main report) or
+│       docs/report_2026-08-01/ (the current main report).
 │
 └── [future archives]
 ```
