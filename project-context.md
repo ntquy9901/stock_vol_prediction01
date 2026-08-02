@@ -3,7 +3,8 @@
 **Project:** Multi-horizon volatility forecasting for VN30 stocks
 **Focus:** 5-day ahead forecasts (Phase 1)
 **Methodology:** HAR-R with Parkinson volatility, enhanced with LSTM, GNN, TimesFM
-**Last Updated:** 2026-06-29 (Added: SOTA sentiment-volatility fusion architectures)
+**Last Updated:** 2026-08-02 (Corrected stale Feature Categories/MODELS_TO_COMPARE claims per
+`docs/report_2026-08-01/BAO_CAO_TONG_HOP.md`'s code audit — see paper-readiness audit report)
 
 ---
 
@@ -181,7 +182,10 @@ MODELS_TO_COMPARE = [
     'LSTM',                        # Deep learning temporal
     'LSTM + GNN',                  # Graph neural network enhancement
     'HAR-X + GNN',                 # Hybrid approach
-    'TimesFM'                      # Foundation model
+    'TimesFM',                     # Foundation model
+    'News-fusion (per-ticker gate)',  # Parallel LSTM-GNN + per-ticker-gated news branch,
+                                       # baselines/2026-07-26_per_ticker_news_gate_baseline —
+                                       # current primary result lineage, see BAO_CAO_TONG_HOP.md
 ]
 ```
 
@@ -325,12 +329,21 @@ def create_forecast_targets(volatility_series):
 ```
 
 ### Feature Categories
-- **HAR features (3):** Daily, weekly (5d), monthly (22d) volatility
-- **Lagged returns (4):** Return lags at 1, 5, 10, 20 days
-- **Volume indicators (2):** Volume MA, volume ratio
-- **Technical indicators (6):** RSI, MACD, Bollinger Bands
-- **Temporal features (5):** Day of week, month, quarter, month-end flag
-- **Total:** 51+ engineered features from 5 raw OHLCV columns
+
+**As actually implemented (verified by full `src/` code audit,
+`docs/report_2026-08-01/BAO_CAO_TONG_HOP.md` §3):**
+- **HAR features (3):** Daily, weekly (5d), monthly (22d) volatility — the only features the
+  principal model families (HAR-R, LSTM-HAR, LSTM-GAT hybrid, news-fusion) actually consume.
+- News-fusion lineage additionally uses per-ticker news embeddings (see
+  `baselines/2026-07-25_dual_group_news_embedding_baseline` onward).
+
+**Planned in early Phase-1 design, never implemented — do NOT cite as existing:**
+- Lagged returns (4), volume indicators (2), technical indicators (RSI/MACD/Bollinger),
+  calendar/temporal features (day-of-week, month, quarter, VN holiday flags). A one-off
+  calendar-feature experiment was tried 2026-08-01
+  (`baselines/2026-08-01_calendar_news_gate_baseline`) and found null — not adopted.
+- The original "51+ engineered features from 5 raw OHLCV columns" total below reflected this
+  planned-but-unbuilt set; the shipped models use only the 3 HAR features (+ news, where used).
 
 ---
 

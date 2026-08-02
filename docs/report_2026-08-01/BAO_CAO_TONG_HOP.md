@@ -92,9 +92,16 @@ lục, vì ít giá trị báo cáo ở mức tóm tắt so với Bảng A/B.)*
 
 ## 1.3 Kết luận điều hành — 5 câu (đã gộp từ bảng trên)
 
-1. **Kết quả tốt nhất hiện tại: per-ticker gated news, panel đã fix, epoch 20** (Bảng A hàng 4) —
+1. **Kết quả tốt nhất trong nhánh per-ticker gated news, panel đã fix, epoch 20** (Bảng A hàng 4) —
    R² 0.7158, QLIKE 0.5436. Epoch 30 xác nhận epoch 20 là điểm dừng hợp lý (train thêm bắt đầu
-   overfit).
+   overfit). **Không phải kết quả tốt nhất toàn project trên QLIKE**: `2026-07-18_resttext_baseline`
+   (REST-TS, không dùng gate) ghi nhận QLIKE 0.5431 — thấp hơn (tốt hơn) con số ở đây, xác nhận
+   lần đầu tại `docs/reports/2026-07-25_0712_all_baselines_comparison_report.md`. Kiểm chứng
+   multi-seed (5 seed, epoch-matched=20, chạy 2026-08-02) cho per-ticker-gate: QLIKE trung bình
+   0.5530±0.0115 — **tệ hơn REST-TS trên cả 5/5 seed**. REST-TS bản thân chưa qua multi-seed
+   verify. Kết luận: chưa có cơ sở chọn per-ticker-gate làm headline "best result" của paper;
+   cần multi-seed verify REST-TS và đối chiếu trên cùng 1 bảng trước khi chốt. Chi tiết:
+   `docs/reports/2026-08-02_1056_paper_readiness_audit_report.md` mục 1.1, 1.5.
 2. **Horizon càng dài càng khó dự báo — xu hướng đơn điệu qua đủ 4 mốc 1/5/10/22-ngày** (Bảng B):
    QLIKE tăng dần (0.5099→0.5623→0.5732→0.5938, HAR-only), cho cả 2 kiến trúc — **1-ngày dễ dự báo
    nhất, vượt trội rõ rệt so với 3 mốc còn lại** (đúng giả thuyết ban đầu, dựa trên QLIKE/R²).
@@ -456,6 +463,10 @@ Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
    chưa có lời giải thích thống nhất (xem memory `project_selective_news_gate_finding`).
 3. **Single-seed** — mọi kết quả trên chỉ train 1 lần (1 seed); chênh lệch nhỏ giữa các biến thể
    (vd 68.25% vs 68.76%) nằm trong biên độ có thể là nhiễu, chưa multi-seed để kiểm chứng.
+   **[CẬP NHẬT 02/08]** Toàn bộ pipeline train trước đó (kể cả per-ticker-gate) chạy KHÔNG set
+   seed — số QLIKE 0.5436/0.5473 không tái lập được. Seed-fixing đã thêm (chưa commit); kiểm
+   chứng 5-seed cho riêng per-ticker-gate cho mean QLIKE 0.5530±0.0115 (epoch 20) — xem mục 1.3
+   câu 1. 22/23 baseline khác trong project vẫn chưa qua multi-seed verify.
 4. **Không có feature thời gian dạng lịch** (§3, cũ) — **ĐÃ LÀM cùng ngày, xem §6** — kết quả:
    thêm vào rồi nhưng chưa cải thiện (§6.4), và EDA không phát hiện tín hiệu theo mùa (§6.5).
 5. **3/3 ablation tách nhóm calendar feature đã xong (§6.6)** — không nhóm nào (Tết/BCTC/generic)
@@ -472,6 +483,11 @@ Nguồn: `docs/report_2026-07-25/BAO_CAO_CHO_THAY.md` §1.1 (3 dòng "gốc") +
    vấn đề về công thức tính (thứ tự dữ liệu khi flatten khiến phép so sánh không đúng nghĩa "cùng
    mã, ngày kế tiếp") — chưa xác nhận được số liệu đúng. Ghi chú kỹ thuật đầy đủ (công thức, code,
    số liệu đối chiếu) ở `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md`.
+10. **[MỚI]** Universe 32 mã dùng xuyên suốt project lệch so với thành phần VN30 thật (dư/thiếu
+    một số mã so với danh sách chính thức) — biết từ 26/07 (memory `project_vn30_ticker_universe_mismatch`),
+    **chưa fix**. Tên gọi "VN30" trong toàn bộ báo cáo/paper cần caveat rõ hoặc đóng băng lại
+    thành 1 universe cố định, có định nghĩa point-in-time, trước khi dùng làm tên tập dữ liệu
+    chính thức trong paper.
 
 ---
 
