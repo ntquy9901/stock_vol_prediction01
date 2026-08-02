@@ -12,7 +12,8 @@
       "Bash(python -c \"import json,sys; [print\\(d['type'],d['path']\\) for d in json.load\\(sys.stdin\\)]\")",
       "Bash(curl *)",
       "Bash(git check-ignore *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
