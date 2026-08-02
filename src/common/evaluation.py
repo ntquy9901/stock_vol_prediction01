@@ -13,6 +13,32 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from typing import Dict
 
 
+def assert_finite_metrics(metrics: Dict[str, float]) -> None:
+    """
+    Raise if any metric value is NaN or Infinity.
+
+    Rationale (AUD-016): QLIKE (and, for extreme-magnitude inputs, MSE/RMSE/R^2)
+    can become non-finite even past the epsilon guard in qlike_loss(). Python's
+    json.dump()/json.dumps() default to allow_nan=True, so a non-finite metric
+    would otherwise be silently written into a results.json as invalid JSON
+    (NaN/Infinity tokens) instead of surfacing the underlying bug. This check
+    fails loudly at the source instead of silently clipping/replacing values.
+
+    Args:
+        metrics: Dict of metric name -> value, as returned by evaluate_predictions().
+
+    Raises:
+        ValueError: naming the first non-finite metric key found.
+    """
+    for key, value in metrics.items():
+        if not np.isfinite(value):
+            raise ValueError(
+                f"Metric '{key}' is non-finite ({value!r}). Refusing to return "
+                "metrics that would silently produce NaN/Infinity in a results.json "
+                "(json.dump's default allow_nan=True does not reject this)."
+            )
+
+
 def qlike_loss(y_true, y_pred, epsilon=1e-8):
     """
     QLIKE Loss - Primary metric for volatility forecasting.
@@ -126,4 +152,5 @@ def evaluate_predictions(y_true, y_pred, n_stocks=None) -> Dict[str, float]:
         if per_ticker is not None:
             metrics['directional_accuracy'] = per_ticker
 
+    assert_finite_metrics(metrics)
     return metrics
