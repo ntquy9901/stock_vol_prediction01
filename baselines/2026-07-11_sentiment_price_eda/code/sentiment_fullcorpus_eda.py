@@ -39,7 +39,7 @@ import phobert_scorer  # noqa: E402  (project's XLM-R scorer, cached)
 
 OUT_DIR = eda.OUT_DIR / "fullcorpus"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
-UNIFIED = Path("D:/bmad-projects/crawl_data/aggregated/unified_articles.csv")
+UNIFIED = Path(__file__).resolve().parents[3].parent / "crawl_data" / "aggregated" / "unified_articles.csv"
 SCORED_CACHE = OUT_DIR / "scored_articles.csv"
 
 REAL_NEWS_SOURCES = {"cafef", "ssi", "vndirect"}   # exact (lowercase) = journalism w/ body

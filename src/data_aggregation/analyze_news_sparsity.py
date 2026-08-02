@@ -24,10 +24,11 @@ from collections import Counter, defaultdict
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-UNIFIED = Path(r"D:/bmad-projects/crawl_data/aggregated/unified_articles.csv")
+CRAWL_AGGREGATED = ROOT.parent / "crawl_data" / "aggregated"  # sibling repo, per aggregate_news_sources.py
+UNIFIED = CRAWL_AGGREGATED / "unified_articles.csv"
 STOCK_DIR = ROOT / "data" / "processed"
 SUMMARY = STOCK_DIR / "processing_summary.csv"
-OUT = Path(r"D:/bmad-projects/crawl_data/aggregated/sparsity_report.txt")
+OUT = CRAWL_AGGREGATED / "sparsity_report.txt"
 
 
 def load_tickers():
