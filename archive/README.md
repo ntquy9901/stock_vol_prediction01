@@ -66,6 +66,24 @@ archive/
 ├── data_processed/
 │   └── vn100_only/           ← Processed output of the now-archived VN100 raw data, 2026-08-02.
 │
+├── data/                     ← **[2026-08-02]** Root-level data/ subfolders confirmed unread by
+│   │                            any live script (repo-wide grep, per a dedicated classification
+│   │                            pass — see docs/reports/ for that agent's full findings):
+│   ├── sentiment_decay_0.7/, _0.95/, _0.99/  ← One-off decay-parameter sweep outputs; only
+│   │                            decay=0.9 (data/sentiment_decay/, NOT archived, still live) is
+│   │                            actually referenced by design.md/reports.
+│   ├── sentiment_baseline_new/ ← Stale one-off run, 0 code references (only a 2026-07-04 log).
+│   ├── sentiment_baseline_phobert/, sentiment_embedding_body/ ← Empty (0 bytes), no data lost.
+│   ├── sentiment_embedding_body_pilot/ ← Real embedding data, but 0 code references anywhere.
+│   └── processed_all/        ← Orphaned: both its producer (process_all_available.py) and only
+│                                 consumer (train_all_baselines.py) were already archived earlier
+│                                 the same day.
+│   NOT archived from this pass: `objective_embedding/` (422K, write-only — produced by
+│   extract_objective_embeddings.py but never read by anything, since
+│   2026-07-15_objective_news_baseline never got a training script). Left alone pending a
+│   decision on that baseline's own status (finish vs. formally close) — archiving the data
+│   without that decision would be premature.
+│
 ├── vn100_scripts/            ← 5 VN100-exclusive root-level scripts, 2026-08-02 (user decision):
 │                                 train_and_test_vn100.py, process_vn100_data.py, evaluate_vn100.py,
 │                                 evaluate_vn100_simple.py, evaluate_vn100_train_only.py.

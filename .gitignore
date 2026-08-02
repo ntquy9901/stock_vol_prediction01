@@ -16,9 +16,11 @@ archive/data_raw/vn100_enhanced/
 archive/data_raw/hnx/
 archive/data_raw/hnx_enhanced/
 data/processed_all/
+archive/data/processed_all/
 # Intermediate sentiment/news datasets (regenerable; exclude from VCS)
 data/raw/news/
 data/sentiment_*/
+archive/data/sentiment_*/
 
 # External resources (copyrighted material)
 docs/paper/
