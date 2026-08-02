@@ -56,9 +56,12 @@ archive/
 │                                 multi-universe utilities also used for VN30/other scopes, not
 │                                 VN100-exclusive, so archiving them would remove VN30 functionality.
 │
-│   NOT archived: data/raw/all_available/ + process_all_available.py + data/processed_all/ — a
-│   distinct, broader "generalization test" universe (210 stocks), not literally "VN100". Flagged
-│   but left alone pending explicit instruction, per the same scope-matching principle above.
+│   `data_raw/all_available/` + `data_scripts/process_all_available.py` — **[ARCHIVED 2026-08-02,
+│   user decision]** distinct, broader "generalization test" universe (210 stocks), not literally
+│   "VN100", but confirmed out of paper scope too. Verified via grep: `process_all_available.py`
+│   was the only file referencing `all_available` anywhere, and nothing imports that script.
+│   `data/processed_all/` (the script's output) was left in place pending a separate downstream
+│   usage check — see the data/ subfolder classification pass, same date.
 │
 └── [future archives]
 ```
