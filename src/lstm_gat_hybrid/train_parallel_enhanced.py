@@ -374,16 +374,23 @@ def validate(model, dataloader, criterion, device, dataset=None):
         )
         avg_loss = loss_tensor_norm.item()
 
+        # ------------------------------------------------------------------
+        # Flattening order: element i → stock_idx = i % n_stocks (row-major y.reshape),
+        # i.e. day-major, ticker-interleaved (see dataset_presplit.py _create_sequences).
+        # n_stocks is needed BEFORE evaluate_predictions() so its headline
+        # 'directional_accuracy' is computed per-ticker instead of on the flattened
+        # array (see docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md).
+        # ------------------------------------------------------------------
+        n_stocks = len(actual_dataset.stock_names)
+
         # Business metrics on denormalized (raw volatility) scale
-        metrics = evaluate_predictions(all_targets_denorm, all_predictions_denorm)
+        metrics = evaluate_predictions(all_targets_denorm, all_predictions_denorm, n_stocks=n_stocks)
 
         # ------------------------------------------------------------------
         # Per-stock metrics: reshape [n_windows * n_stocks] → [n_windows, n_stocks]
-        # Flattening order: element i → stock_idx = i % n_stocks (row-major y.reshape)
         # R² and directional accuracy are computed along the TIME (window) axis
         # per stock and then averaged, giving honest temporal-skill estimates.
         # ------------------------------------------------------------------
-        n_stocks = len(actual_dataset.stock_names)
         n_windows = len(all_predictions_denorm) // n_stocks
         if n_windows > 0 and len(all_predictions_denorm) == n_windows * n_stocks:
             preds_2d = all_predictions_denorm.reshape(n_windows, n_stocks)
@@ -418,8 +425,10 @@ def validate(model, dataloader, criterion, device, dataset=None):
         )
         avg_loss = loss_tensor.item()
 
-        # Compute metrics on normalized scale (best available)
-        metrics = evaluate_predictions(all_targets_norm, all_predictions_norm)
+        # Compute metrics on normalized scale (best available). n_stocks=num_stocks
+        # (from the dataloader loop above, day-major/ticker-interleaved order) so
+        # 'directional_accuracy' is per-ticker even without normalizers available.
+        metrics = evaluate_predictions(all_targets_norm, all_predictions_norm, n_stocks=num_stocks)
 
         print(f"[DEBUG validate] Loss computed on NORMALIZED scale: {avg_loss:.6f}")
 

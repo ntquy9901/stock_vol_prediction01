@@ -192,7 +192,11 @@ def validate(model, dataloader, criterion, device):
     all_targets = np.array(all_targets).flatten()
 
     # Calculate 6 mandatory metrics (using raw predictions - no denormalization for multi-stock)
-    metrics = evaluate_predictions(all_targets, all_predictions)
+    # n_stocks=num_stocks: all_targets/all_predictions are flattened in day-major,
+    # ticker-interleaved order (see dataset.py MultiStockDataset._create_sequences),
+    # so directional_accuracy must be computed per-ticker, not on the flattened array
+    # (see docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md).
+    metrics = evaluate_predictions(all_targets, all_predictions, n_stocks=num_stocks)
 
     return avg_loss, metrics
 
