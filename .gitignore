@@ -22,8 +22,9 @@ data/raw/news/
 data/sentiment_*/
 archive/data/sentiment_*/
 
-# External resources (copyrighted material)
-docs/paper/
+# External resources (copyrighted material) - reference PDFs only, not the draft itself
+docs/paper/*.pdf
+docs/paper/project_context.md
 
 # Python
 __pycache__/
