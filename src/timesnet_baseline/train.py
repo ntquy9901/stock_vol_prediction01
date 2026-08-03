@@ -270,6 +270,10 @@ def train_timesnet_baseline():
     print("="*80)
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
+    # Set random seeds for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     # Create configuration
     config = TimesNetConfig()
     print(f"\nConfiguration:")
