@@ -22,6 +22,10 @@ from pathlib import Path
 import json
 import os
 
+pytest.importorskip(
+    "src.pipeline",
+    reason="Prototype src.pipeline retired to src/archive/; out of paper scope",
+)
 from src.pipeline import (
     load_ohlcv_data,
     process_single_stock,

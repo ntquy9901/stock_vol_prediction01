@@ -22,6 +22,10 @@ import joblib
 import os
 from sklearn.linear_model import LinearRegression
 
+pytest.importorskip(
+    "src.model_training",
+    reason="Prototype src.model_training retired to src/archive/; out of paper scope",
+)
 from src.model_training import (
     set_random_seeds,
     temporal_train_test_split,

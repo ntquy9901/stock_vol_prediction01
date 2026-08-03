@@ -21,6 +21,10 @@ import numpy as np
 import os
 import tempfile
 
+pytest.importorskip(
+    "src.evaluation",
+    reason="Prototype src.evaluation retired to src/archive/; out of paper scope",
+)
 from src.evaluation import (
     qlike_loss,
     directional_accuracy,
