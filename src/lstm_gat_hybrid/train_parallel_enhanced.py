@@ -436,7 +436,7 @@ def validate(model, dataloader, criterion, device, dataset=None):
 
 
 # ========================================================================
-def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False):
+def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False, seed=42):
     """
     Main training function for Parallel LSTM-GNN with enhanced anti-overfitting
 
@@ -448,6 +448,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     Args:
         graph_method: 'correlation' (paper) or 'knn' (current)
         quick_test: If True, train for only 5 epochs to verify setup
+        seed: torch/numpy RNG seed (multi-seed reproducibility check, 2026-08-03)
     """
     print("="*80)
     print("PARALLEL LSTM-GNN TRAINING - WITH ENHANCED ANTI-OVERFITTING")
@@ -456,8 +457,8 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     print(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", flush=True)
 
     # Set random seeds for reproducibility
-    torch.manual_seed(42)
-    np.random.seed(42)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
     # Configuration
     config = LSTMGATConfig()
@@ -571,7 +572,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
 
     # Create results directory
     timestamp = datetime.now().strftime('%Y-%m-%d_%H%M%S')
-    results_dir = Path(f'results/parallel_lstm_gnn_{graph_method}_{timestamp}')
+    results_dir = Path(f'results/parallel_lstm_gnn_{graph_method}_seed{seed}_{timestamp}')
     results_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\nResults directory: {results_dir}")
@@ -663,6 +664,7 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     results = {
         'model': f'Parallel LSTM-GNN ({graph_method} graph)',
         'timestamp': timestamp,
+        'seed': seed,
         'architecture': 'Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion',
         'graph_method': graph_method,
         'config': {
@@ -729,6 +731,8 @@ if __name__ == '__main__':
                         help='Graph construction method (default: correlation from paper)')
     parser.add_argument('--quick_test', action='store_true',
                         help='Run quick test (5 epochs) to verify setup')
+    parser.add_argument('--seed', type=int, default=42,
+                        help='torch/numpy RNG seed (multi-seed reproducibility check, 2026-08-03)')
 
     args = parser.parse_args()
 
@@ -739,4 +743,5 @@ if __name__ == '__main__':
     if args.quick_test:
         print(f"\n[QUICK TEST MODE] Enabled - Training for 5 epochs only")
 
-    results = train_parallel_lstm_gat_enhanced(graph_method=args.graph_method, quick_test=args.quick_test)
+    results = train_parallel_lstm_gat_enhanced(
+        graph_method=args.graph_method, quick_test=args.quick_test, seed=args.seed)
