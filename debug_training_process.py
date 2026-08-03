@@ -47,7 +47,7 @@ print(f"y_train range: [{y_train.min():.8f}, {y_train.max():.8f}]")
 model = create_cryptomamba_model_enhanced()
 
 # Test BEFORE training
-print(f"\n=== BEFORE TRAINING ===")
+print("\n=== BEFORE TRAINING ===")
 model.eval()
 with torch.no_grad():
     pred_before = model(X_train[:10])
@@ -60,7 +60,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.01, weight_decay=0.0005)
 criterion = nn.MSELoss()
 
 # Train for 5 epochs
-print(f"\n=== TRAINING FOR 5 EPOCHS ===")
+print("\n=== TRAINING FOR 5 EPOCHS ===")
 for epoch in range(5):
     model.train()
 
@@ -99,7 +99,7 @@ for epoch in range(5):
 
     model.train()
 
-print(f"\n=== AFTER 5 EPOCHS ===")
+print("\n=== AFTER 5 EPOCHS ===")
 model.eval()
 with torch.no_grad():
     final_pred = model(X_train[:100])

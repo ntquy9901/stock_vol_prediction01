@@ -18,8 +18,6 @@ Test Coverage:
 import pytest
 import pandas as pd
 import numpy as np
-import joblib
-import os
 from sklearn.linear_model import LinearRegression
 
 pytest.importorskip(
@@ -36,9 +34,7 @@ from src.model_training import (
     complete_har_r_training_pipeline,
     get_feature_coefficients,
     RANDOM_SEED,
-    DEFAULT_TEST_SIZE,
-    HAR_FEATURE_COLUMNS,
-    TARGET_COLUMN
+    HAR_FEATURE_COLUMNS
 )
 from src.feature_engineering import create_featureset
 

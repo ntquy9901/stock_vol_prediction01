@@ -2,11 +2,8 @@
 import sys
 sys.path.insert(0, '.')
 
-import torch
 import numpy as np
-from torch.utils.data import DataLoader
 from src.lstm_baseline.dataset import PooledVolatilityDataset
-from src.lstm_baseline.model import SimpleVolatilityLSTM
 from src.common.evaluation import evaluate_predictions
 
 # Load dataset

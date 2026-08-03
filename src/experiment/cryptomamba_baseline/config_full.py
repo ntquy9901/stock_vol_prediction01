@@ -76,4 +76,4 @@ print(f"  LR scheduling: StepLR (step={CRYPTOMAMBA_CONFIG_FULL['lr_step_size']},
 print(f"  Sequence length: {CRYPTOMAMBA_CONFIG_FULL['seq_length']}")
 print(f"  Use volume: {CRYPTOMAMBA_CONFIG_FULL['use_volume']}")
 print(f"  Num features: {MODEL_CONFIG_FULL['num_features']} (HAR features only)")
-print(f"  Expected parameters: ~136K (full selective scan)")
+print("  Expected parameters: ~136K (full selective scan)")

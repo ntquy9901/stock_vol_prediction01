@@ -10,10 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.pipeline import (
     list_available_data,
-    validate_data_directory,
-    run_complete_pipeline,
-    DEFAULT_DATA_DIR,
-    DEFAULT_RESULTS_DIR
+    run_complete_pipeline
 )
 
 
@@ -46,7 +43,7 @@ def main():
     print(f"\nStep 3: Running complete pipeline on {len(available_tickers)} stocks...")
     print(f"   Data directory: {data_dir}")
     print(f"   Results directory: {results_dir}")
-    print(f"   Processing... (this may take several minutes)")
+    print("   Processing... (this may take several minutes)")
 
     try:
         # Run pipeline on all available stocks
@@ -76,9 +73,9 @@ def main():
         print(f"   Stocks with Dir Acc >= 55%: {summary_stats['stocks_with_dir_acc_55']}/{len(all_tickers)}")
 
         print(f"\nResults saved to: {results_dir}")
-        print(f"   - Summary report: summary_report.csv")
-        print(f"   - Aggregate results: aggregate_results.json")
-        print(f"   - Individual stock results: results/<TICKER>/")
+        print("   - Summary report: summary_report.csv")
+        print("   - Aggregate results: aggregate_results.json")
+        print("   - Individual stock results: results/<TICKER>/")
 
         print("\n" + "=" * 80)
         print("SUCCESS! Check the results directory for detailed outputs")

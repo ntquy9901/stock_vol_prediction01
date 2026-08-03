@@ -37,7 +37,7 @@ for name, url in feeds:
         print(f"\nStock-related articles: {len(stock_related)}/{len(feed.entries)} ({len(stock_related)/len(feed.entries)*100:.1f}%)")
 
         if len(stock_related) > 0:
-            print(f"\n--- Sample Stock Articles ---")
+            print("\n--- Sample Stock Articles ---")
             for i, entry in enumerate(stock_related[:5], 1):
                 print(f"\n{i}. {entry.title}")
                 if hasattr(entry, 'published'):
@@ -46,11 +46,11 @@ for name, url in feeds:
 
         # Viability check
         if len(stock_related) >= 10:
-            print(f"\n✓ VIABLE: Good stock news coverage")
+            print("\n✓ VIABLE: Good stock news coverage")
         elif len(stock_related) >= 5:
-            print(f"\n~ MARGINAL: Some stock news, may need filtering")
+            print("\n~ MARGINAL: Some stock news, may need filtering")
         else:
-            print(f"\n✗ NOT VIABLE: Insufficient stock coverage")
+            print("\n✗ NOT VIABLE: Insufficient stock coverage")
 
     except Exception as e:
         print(f"Error: {e}")

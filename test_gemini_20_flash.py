@@ -2,7 +2,6 @@
 """Test with Gemini 2.0 Flash (correct model name)"""
 
 import os
-import sys
 import asyncio
 
 # Set API key
@@ -45,7 +44,7 @@ Code:
 ```"""
 
     response = model.generate_content(prompt)
-    print(f"    OK - Review completed")
+    print("    OK - Review completed")
     print(f"    Response:\n{response.text[:500]}...")
 
     print("\n[3] Testing with MCP server class...")

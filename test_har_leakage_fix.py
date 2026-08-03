@@ -74,7 +74,7 @@ if 'date' in train_raw[sample_stock].columns:
     if len(train_val_overlap) == 0 and len(val_test_overlap) == 0 and len(train_test_overlap) == 0:
         print("  [PASS] No date overlap between splits")
     else:
-        print(f"  [FAIL] Found date overlaps:")
+        print("  [FAIL] Found date overlaps:")
         if train_val_overlap:
             print(f"    Train-Val: {len(train_val_overlap)} dates")
         if val_test_overlap:

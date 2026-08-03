@@ -11,7 +11,6 @@ import pytest
 import pandas as pd
 import numpy as np
 import logging
-from datetime import datetime
 
 # Prototype module retired to src/archive/data_processing.py (out of paper scope).
 # Guard collection so this legacy test skips (not errors) instead of importing archived code.

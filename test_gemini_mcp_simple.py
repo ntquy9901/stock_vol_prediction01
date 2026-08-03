@@ -30,7 +30,7 @@ try:
 
     # Simple test call
     response = model.generate_content("Test message - say 'OK' if you receive this")
-    print(f"    OK - Gemini API responding")
+    print("    OK - Gemini API responding")
     print(f"    Response: {response.text[:100]}...")
 except Exception as e:
     print(f"    FAILED - {e}")
@@ -70,7 +70,7 @@ try:
                 desc = finding.get("description", finding.get("issue", "No description"))
                 print(f"    {i}. [{severity}] {desc[:80]}...")
     else:
-        print(f"    FAILED - No findings in response")
+        print("    FAILED - No findings in response")
         print(f"    Response: {result}")
 
 except Exception as e:
@@ -115,7 +115,7 @@ index 123..abc 100644
                 issue = finding.get("issue", "No description")
                 print(f"    {i}. [{layer}] {severity} - {issue[:80]}...")
     else:
-        print(f"    FAILED - No findings in response")
+        print("    FAILED - No findings in response")
 
 except Exception as e:
     print(f"    FAILED - {e}")

@@ -5,8 +5,6 @@ Volatility data has very small scale (0.0001-0.01) which causes training instabi
 This module provides normalization to standard scale (mean=0, std=1) for training.
 """
 import numpy as np
-import pandas as pd
-import torch
 from typing import Tuple, Dict
 
 
@@ -145,7 +143,6 @@ def denormalize_predictions(
 
 # CLI for testing
 if __name__ == "__main__":
-    import pandas as pd
 
     # Test with sample data
     print("Testing volatility normalization...")

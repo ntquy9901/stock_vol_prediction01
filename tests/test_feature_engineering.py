@@ -15,7 +15,6 @@ Test Coverage:
 import pytest
 import pandas as pd
 import numpy as np
-import warnings
 
 from src.common.feature_engineering import (
     create_har_features,
@@ -23,7 +22,6 @@ from src.common.feature_engineering import (
     validate_har_features,
     create_featureset,
     get_har_feature_importance,
-    HAR_WINDOWS,
     FORECAST_HORIZON_DAYS
 )
 

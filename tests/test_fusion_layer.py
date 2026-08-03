@@ -81,7 +81,7 @@ edge_index, edge_weight, graph_info = build_correlation_graph(
 print(f"  Graph: {graph_info['num_nodes']} nodes, {graph_info['num_edges']} edges")
 
 # Test FusionLayer
-print(f"\n[2] Testing FusionLayer...")
+print("\n[2] Testing FusionLayer...")
 
 batch_size = 4
 num_stocks = len(stock_names)
@@ -110,10 +110,10 @@ print(f"  Expected: ({batch_size}, {num_stocks}, 1)")
 
 assert predictions.shape == (batch_size, num_stocks, 1), f"Shape mismatch: {predictions.shape}"
 
-print(f"  [OK] FusionLayer test passed!")
+print("  [OK] FusionLayer test passed!")
 
 # Test AttentionFusionLayer
-print(f"\n[3] Testing AttentionFusionLayer...")
+print("\n[3] Testing AttentionFusionLayer...")
 
 attention_fusion = AttentionFusionLayer(
     temporal_dim=hidden_dim,
@@ -129,15 +129,15 @@ print(f"  Expected: ({batch_size}, {num_stocks}, 1)")
 
 assert attention_predictions.shape == (batch_size, num_stocks, 1), f"Shape mismatch: {attention_predictions.shape}"
 
-print(f"  [OK] AttentionFusionLayer test passed!")
+print("  [OK] AttentionFusionLayer test passed!")
 
 # Test output statistics
-print(f"\n[4] Output Statistics:")
+print("\n[4] Output Statistics:")
 print(f"  Fusion Layer - Mean: {predictions.mean().item():.6f}, Std: {predictions.std().item():.6f}")
 print(f"  Attention Fusion - Mean: {attention_predictions.mean().item():.6f}, Std: {attention_predictions.std().item():.6f}")
 
 # Memory check
-print(f"\n[5] Memory Check:")
+print("\n[5] Memory Check:")
 param_count_fusion = sum(p.numel() for p in fusion.parameters())
 param_count_attention = sum(p.numel() for p in attention_fusion.parameters())
 print(f"  Fusion Layer Parameters: {param_count_fusion:,}")
@@ -145,7 +145,7 @@ print(f"  Attention Fusion Parameters: {param_count_attention:,}")
 print(f"  Total Memory (approx): {(param_count_fusion + param_count_attention) * 4 / 1024 / 1024:.2f} MB")
 
 # Test complete pipeline
-print(f"\n[6] Testing Complete Pipeline (Temporal + Spatial + Fusion)...")
+print("\n[6] Testing Complete Pipeline (Temporal + Spatial + Fusion)...")
 
 # Process sequences
 sequences = np.array(sequences)
@@ -171,7 +171,7 @@ print(f"  Expected: ({batch_size}, {num_stocks}, 1)")
 
 assert final_predictions.shape == (batch_size, num_stocks, 1), f"Shape mismatch: {final_predictions.shape}"
 
-print(f"  [OK] Complete pipeline test passed!")
+print("  [OK] Complete pipeline test passed!")
 
 print("\n" + "="*60)
 print("FUSION LAYER TEST PASSED!")

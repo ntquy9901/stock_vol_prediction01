@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 from src.cryptomamba_baseline.model_enhanced import create_cryptomamba_model_enhanced
 from src.common.har_features import generate_har_features
-from src.common.data_normalization import normalize_for_training, denormalize_predictions
+from src.common.data_normalization import normalize_for_training
 
 # Load data
 data_dir = Path('data/processed')
@@ -48,13 +48,13 @@ print(f'y_train norm range: [{y_train.min():.3f}, {y_train.max():.3f}]')
 
 # Create model
 model = create_cryptomamba_model_enhanced()
-print(f'\\nModel created with 116,161 parameters')
+print('\\nModel created with 116,161 parameters')
 
 # Training setup
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
 criterion = nn.MSELoss()
 
-print(f'\\n=== DETAILED TRAINING DEBUG ===')
+print('\\n=== DETAILED TRAINING DEBUG ===')
 
 for epoch in range(5):
     model.train()
@@ -103,7 +103,7 @@ for epoch in range(5):
 
     model.train()
 
-print(f'\\n=== FINAL CHECK ===')
+print('\\n=== FINAL CHECK ===')
 model.eval()
 with torch.no_grad():
     final_train_pred = model(X_train[:100])
@@ -115,7 +115,7 @@ print(f'Final train %Zeros: {(final_train_pred==0).float().mean()*100:.0f}%')
 print(f'Final val %Zeros: {(final_val_pred==0).float().mean()*100:.0f}%')
 
 if final_train_pred.max().item() > 0.1 and final_train_pred.min().item() > -0.1:
-    print(f'\\n[POSSIBLE SUCCESS] Predictions have reasonable variance')
-    print(f'But may need more training to converge to correct values')
+    print('\\n[POSSIBLE SUCCESS] Predictions have reasonable variance')
+    print('But may need more training to converge to correct values')
 else:
-    print(f'\\n[STILL FAILING] Model predictions still problematic')
+    print('\\n[STILL FAILING] Model predictions still problematic')

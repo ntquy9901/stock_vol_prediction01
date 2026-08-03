@@ -5,7 +5,6 @@ Example: How to use Gemini Review Wrapper for BMad tasks
 """
 
 import os
-import json
 from gemini_review_wrapper import GeminiReviewer
 
 # Example 1: Adversarial review cho code file

@@ -22,7 +22,6 @@ for _p in (str(_ROOT), str(_CODE)):
 from analyze_market_news_volume_correlation import (  # noqa: E402
     build_joined_frame,
     correlate,
-    load_market_volatility,
     load_news_volume,
     market_avg_change,
     run,

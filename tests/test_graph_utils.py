@@ -10,7 +10,6 @@ Date: 2026-06-20
 
 import pytest
 import numpy as np
-import pandas as pd
 import torch
 import os
 import sys
@@ -21,7 +20,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from src.common.graph_utils import (
     build_correlation_graph,
     build_spillover_graph,
-    visualize_graph,
     compute_graph_statistics
 )
 
@@ -72,7 +70,7 @@ class TestCorrelationGraph:
         assert graph_info['num_nodes'] == len(stock_names)
         assert 'num_edges' in graph_info
 
-        print(f"[OK] Correlation graph basic test passed")
+        print("[OK] Correlation graph basic test passed")
 
     def test_correlation_graph_connectivity(self, sample_data):
         """Test that graph maintains minimum connectivity."""
@@ -118,7 +116,7 @@ class TestCorrelationGraph:
 
             assert abs(expected_corr - actual_weight) < 1e-6
 
-        print(f"[OK] Correlation graph edge weights test passed")
+        print("[OK] Correlation graph edge weights test passed")
 
 
 class TestSpilloverGraph:
@@ -167,7 +165,7 @@ class TestSpilloverGraph:
         assert 'spillover_matrix' in graph_info
         assert 'spillover_index' in graph_info
 
-        print(f"[OK] Spillover graph basic test passed")
+        print("[OK] Spillover graph basic test passed")
 
     def test_spillover_graph_directed(self, sample_volatility):
         """Test that spillover graph is directed."""
@@ -203,7 +201,7 @@ class TestSpilloverGraph:
 
         # We expect at least some asymmetry in spillover graphs
         print(f"  Graph has asymmetric edges: {found_asymmetric}")
-        print(f"[OK] Spillover graph directed test passed")
+        print("[OK] Spillover graph directed test passed")
 
     def test_spillover_graph_threshold(self, sample_volatility):
         """Test that threshold filtering works correctly."""
@@ -269,7 +267,7 @@ class TestGraphVisualization:
         assert stats['avg_degree'] > 0
         assert len(stats['top_connected']) == 5
 
-        print(f"[OK] Graph statistics test passed")
+        print("[OK] Graph statistics test passed")
 
 
 class TestGraphIntegration:
@@ -304,7 +302,7 @@ class TestGraphIntegration:
         assert corr_info['num_edges'] > 0
         assert spill_info['num_edges'] > 0
 
-        print(f"[OK] Graph construction pipeline test passed")
+        print("[OK] Graph construction pipeline test passed")
         print(f"  Correlation edges: {corr_info['num_edges']}")
         print(f"  Spillover edges: {spill_info['num_edges']}")
 
@@ -324,7 +322,7 @@ class TestGraphIntegration:
         assert graph_info['num_nodes'] == num_stocks
         assert graph_info['num_edges'] > 0  # Should maintain min_edges
 
-        print(f"[OK] Edge cases test passed")
+        print("[OK] Edge cases test passed")
 
 
 def run_manual_tests():

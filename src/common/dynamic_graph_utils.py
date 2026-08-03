@@ -16,7 +16,6 @@ Date: 2026-06-20
 
 import numpy as np
 import pandas as pd
-import torch
 from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 
@@ -75,7 +74,7 @@ class DynamicGraphBuilder:
         """
         num_stocks, total_time_steps = returns_matrix.shape
 
-        print(f"\n[Building Dynamic Graphs]")
+        print("\n[Building Dynamic Graphs]")
         print(f"  Time steps: {total_time_steps}")
         print(f"  Window size: {self.window_size} days")
         print(f"  Update frequency: Every {self.update_frequency} days")
@@ -142,7 +141,7 @@ class DynamicGraphBuilder:
         Returns:
             Dictionary with evolution statistics
         """
-        print(f"\n[Tracking Graph Evolution]")
+        print("\n[Tracking Graph Evolution]")
 
         evolution = {
             'time_indices': [],
@@ -187,7 +186,7 @@ class DynamicGraphBuilder:
         Returns:
             Dictionary with stable edges and their frequencies
         """
-        print(f"\n[Finding Most Stable Edges]")
+        print("\n[Finding Most Stable Edges]")
 
         edge_counts = defaultdict(int)
 
@@ -290,7 +289,7 @@ def build_dynamic_ensemble_graph(
     """
     num_stocks, total_time_steps = returns_matrix.shape
 
-    print(f"\n[Building Ensemble Graphs]")
+    print("\n[Building Ensemble Graphs]")
     print(f"  Method: {method}")
     print(f"  Windows: {num_windows}")
 
@@ -325,7 +324,7 @@ def build_dynamic_ensemble_graph(
         'avg_degree': np.mean([g['avg_degree'] for g in graphs])
     }
 
-    print(f"\n  Ensemble Statistics:")
+    print("\n  Ensemble Statistics:")
     print(f"    Avg Edges: {ensemble_stats['avg_num_edges']:.2f}")
     print(f"    Avg Density: {ensemble_stats['avg_density']:.4f}")
     print(f"    Avg Degree: {ensemble_stats['avg_degree']:.2f}")
@@ -335,7 +334,6 @@ def build_dynamic_ensemble_graph(
 
 # CLI interface for testing
 if __name__ == "__main__":
-    import sys
     import os
 
     print("\n" + "="*60)

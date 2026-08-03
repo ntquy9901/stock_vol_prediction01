@@ -24,9 +24,6 @@ Date: 2026-06-19
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import Callable, Any
-import math
 
 
 class MambaBlockEnhanced(nn.Module):
@@ -427,7 +424,7 @@ def test_model():
         hierarchical=False,
     )
 
-    print(f"Model created successfully")
+    print("Model created successfully")
     num_params = sum(p.numel() for p in model.parameters())
     print(f"Parameters: {num_params:,}")
 
@@ -454,16 +451,16 @@ def test_model():
     print("All predictions are non-negative - ReLU constraint working!")
 
     # Compare with V2
-    print(f"\nCapacity comparison:")
-    print(f"  V2:         2,787 parameters")
+    print("\nCapacity comparison:")
+    print("  V2:         2,787 parameters")
     print(f"  Enhanced:  {num_params:,} parameters ({num_params/2787:.1f}× increase)")
 
     if num_params < 50000:
-        print(f"  [WARNING] Low parameter count (expected 50-100K)")
+        print("  [WARNING] Low parameter count (expected 50-100K)")
     elif num_params > 150000:
-        print(f"  [WARNING] Very high parameter count (expected 50-100K)")
+        print("  [WARNING] Very high parameter count (expected 50-100K)")
     else:
-        print(f"  [OK] Parameter count in target range (50-100K)")
+        print("  [OK] Parameter count in target range (50-100K)")
 
     print("Model test passed!")
 

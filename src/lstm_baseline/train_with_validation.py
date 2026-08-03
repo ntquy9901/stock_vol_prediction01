@@ -20,7 +20,6 @@ import sys
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from datetime import datetime
 import time
@@ -76,8 +75,8 @@ def train_simple_lstm_with_val(data_dir: str, output_dir: str = None):
     print(f"  Seq Length: {config['seq_length']}")
     print(f"  Dropout: {config['dropout']}")
     print(f"  Num Layers: {config['num_layers']}")
-    print(f"  Features: 1 (raw parkinson volatility)")
-    print(f"  Train/Val/Test Split: 70% / 15% / 15%")
+    print("  Features: 1 (raw parkinson volatility)")
+    print("  Train/Val/Test Split: 70% / 15% / 15%")
 
     # Create dataset
     print("\n1. Creating pooled dataset...")
@@ -92,7 +91,7 @@ def train_simple_lstm_with_val(data_dir: str, output_dir: str = None):
     splitter = TemporalSplitter(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
     split_info = splitter.get_info(len(dataset))
 
-    print(f"Split plan:")
+    print("Split plan:")
     print(f"  Train: {split_info['train_size']} sequences (70%)")
     print(f"  Val:   {split_info['val_size']} sequences (15%)")
     print(f"  Test:  {split_info['test_size']} sequences (15%)")
@@ -122,7 +121,7 @@ def train_simple_lstm_with_val(data_dir: str, output_dir: str = None):
     model = model.to(device)
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"Architecture: 1-layer LSTM with raw parkinson volatility")
+    print("Architecture: 1-layer LSTM with raw parkinson volatility")
 
     # Training configuration
     criterion = nn.MSELoss()

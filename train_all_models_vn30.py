@@ -13,7 +13,6 @@ Models to train:
 Output: Comprehensive VN30-only performance report
 """
 
-import os
 import sys
 import pandas as pd
 import json
@@ -54,7 +53,7 @@ def prepare_vn30_data(vn30_symbols):
     # Create output directory
     vn30_dir.mkdir(exist_ok=True)
 
-    print(f"\nPreparing VN30-only dataset...")
+    print("\nPreparing VN30-only dataset...")
     print(f"Source: {processed_dir}")
     print(f"Target: {vn30_dir}")
 
@@ -109,7 +108,6 @@ def train_simple_lstm_vn30(vn30_data_dir):
     print("="*80)
 
     # Import Simple LSTM training
-    from src.lstm_baseline.train_with_validation import main as train_simple_lstm
 
     # Need to modify training script to accept custom data directory
     # For now, use existing training with symlink
@@ -125,7 +123,6 @@ def train_lstm_har_vn30(vn30_data_dir):
     print("="*80)
 
     # Import LSTM-HAR training
-    from src.lstm_har_baseline.train_with_validation import main as train_lstm_har
 
     print("  [TODO] Implement LSTM-HAR training for VN30")
 
@@ -139,7 +136,6 @@ def train_enhanced_lstm_har_vn30(vn30_data_dir):
     print("="*80)
 
     # Import Enhanced LSTM-HAR training
-    from src.lstm_har_enhanced.train_with_validation import main as train_enhanced
 
     print("  [TODO] Implement Enhanced LSTM-HAR training for VN30")
 
@@ -362,7 +358,7 @@ def main():
         print("\n" + "="*80)
         print("VN30-ONLY TRAINING COMPLETE")
         print("="*80)
-        print(f"\nResults:")
+        print("\nResults:")
         for model_name, result in results.items():
             print(f"  ✓ {result['model']}")
             print(f"    Output: {result['output_dir']}")

@@ -17,7 +17,6 @@ import sys
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from datetime import datetime
 import time
@@ -28,7 +27,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from lstm_har_enhanced.model_enhanced import EnhancedHARVolatilityLSTM
 from lstm_har_enhanced.dataset_enhanced import EnhancedHARDataset
-from common.temporal_split import TemporalSplitter, print_split_summary
+from common.temporal_split import TemporalSplitter
 from common.evaluation import evaluate_predictions
 
 
@@ -112,29 +111,29 @@ def train_enhanced_lstm_har_with_overfitting_prevention(data_dir: str, output_di
 
     print("\n[CONFIGURATION - WITH OVERFITTING PREVENTION]")
     print("=" * 80)
-    print(f"Architecture:")
+    print("Architecture:")
     print(f"  Hidden Size: {config['hidden_size']}")
     print(f"  Num Layers: {config['num_layers']}")
     print(f"  LSTM Dropout: {config['dropout']} (PRIORITY 2 - MANDATORY)")
     print(f"  FC Dropout: {config['fc_dropout']} (PRIORITY 2 - MANDATORY)")
     print(f"  Layer Norm: {config['use_layer_norm']} (PRIORITY 3)")
-    print(f"\nRegularization (PRIORITY 2 - MANDATORY):")
+    print("\nRegularization (PRIORITY 2 - MANDATORY):")
     print(f"  Weight Decay (L2): {config['weight_decay']} (MANDATORY for LSTM)")
     print(f"  Gradient Clipping: {config['gradient_clip']} (MANDATORY for RNN)")
-    print(f"\nTraining (ml-ds-common-rules standards):")
+    print("\nTraining (ml-ds-common-rules standards):")
     print(f"  Learning Rate: {config['learning_rate']}")
     print(f"  Batch Size: {config['batch_size']}")
     print(f"  Max Epochs: {config['num_epochs']} (STANDARD)")
     print(f"  Patience: {config['patience']} (STANDARD)")
-    print(f"\nLearning Rate Scheduling (PRIORITY 2 - MANDATORY):")
+    print("\nLearning Rate Scheduling (PRIORITY 2 - MANDATORY):")
     print(f"  ReduceLROnPlateau (factor={config['lr_scheduler_factor']}, patience={config['lr_scheduler_patience']})")
-    print(f"\nData Augmentation (PRIORITY 1):")
+    print("\nData Augmentation (PRIORITY 1):")
     print(f"  Enabled: {config['apply_augmentation']}")
     print(f"  Factor: {config['augment_factor']}x")
-    print(f"\nMonitoring (MANDATORY):")
+    print("\nMonitoring (MANDATORY):")
     print(f"  Plot Interval: Every {config['plot_interval']} epochs")
-    print(f"  Features: 3 (raw + weekly + monthly)")
-    print(f"  Train/Val/Test Split: 70% / 15% / 15% (TEMPORAL - NO DATA LEAKAGE)")
+    print("  Features: 3 (raw + weekly + monthly)")
+    print("  Train/Val/Test Split: 70% / 15% / 15% (TEMPORAL - NO DATA LEAKAGE)")
     print("=" * 80)
 
     # Create dataset
@@ -148,7 +147,7 @@ def train_enhanced_lstm_har_with_overfitting_prevention(data_dir: str, output_di
 
     # Check if dataset needs augmentation (PRIORITY 1)
     if config['apply_augmentation'] and dataset_size < 5000:
-        print(f"  ⚠️  Dataset < 5000 samples - ENABLING DATA AUGMENTATION")
+        print("  ⚠️  Dataset < 5000 samples - ENABLING DATA AUGMENTATION")
         print(f"  → Applying {config['augment_factor']}x augmentation")
         # Note: Data augmentation would be applied here if needed
         # For now, we'll rely on regularization techniques
@@ -191,7 +190,7 @@ def train_enhanced_lstm_har_with_overfitting_prevention(data_dir: str, output_di
     model = model.to(device)
     total_params = sum(p.numel() for p in model.parameters())
     print(f"  ✓ Model parameters: {total_params:,}")
-    print(f"  ✓ Architecture: LSTM with Layer Norm + Dropout")
+    print("  ✓ Architecture: LSTM with Layer Norm + Dropout")
 
     # Training setup with MANDATORY regularization
     print("\n[5/6] Setting up training with overfitting prevention...")
@@ -549,9 +548,9 @@ def train_enhanced_lstm_har_with_overfitting_prevention(data_dir: str, output_di
     print("✅ TRAINING COMPLETE - RESULTS SAVED")
     print(f"{'='*80}")
     print(f"Results saved to: {output_dir}")
-    print(f"  - Model: best_model.pth")
-    print(f"  - Results: training_results.json")
-    print(f"  - Learning curves: learning_curves_*.png")
+    print("  - Model: best_model.pth")
+    print("  - Results: training_results.json")
+    print("  - Learning curves: learning_curves_*.png")
     print(f"\nTraining time: {sum(epoch_times)/60:.1f} minutes")
     print(f"{'='*80}")
 

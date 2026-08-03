@@ -9,14 +9,9 @@ This script loads a trained LSTM model and analyzes:
 """
 
 import sys
-import os
 sys.path.insert(0, '.')
 
-import torch
-import numpy as np
 import json
-import matplotlib.pyplot as plt
-from pathlib import Path
 
 print("="*80)
 print("DETAILED LSTM MODEL PREDICTION ANALYSIS")

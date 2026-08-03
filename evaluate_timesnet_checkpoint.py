@@ -3,7 +3,6 @@ Evaluate TimesNet checkpoint and compare with baselines
 """
 import torch
 import numpy as np
-import pandas as pd
 from pathlib import Path
 import json
 from datetime import datetime
@@ -87,7 +86,7 @@ def evaluate_checkpoint(checkpoint_path):
     print("TIMESNET TEST RESULTS")
     print("="*80)
 
-    print(f"\nTest Metrics:")
+    print("\nTest Metrics:")
     print(f"  MSE:  {metrics['mse']:.6f}")
     print(f"  RMSE: {metrics['rmse']:.6f}")
     print(f"  MAE:  {metrics['mae']:.6f}")
@@ -124,21 +123,21 @@ def evaluate_checkpoint(checkpoint_path):
     dir_acc = metrics['directional_accuracy']
 
     if dir_acc >= 67.90:
-        print(f"\n[SUCCESS] TimesNet beats LSTM-HAR Enhanced!")
+        print("\n[SUCCESS] TimesNet beats LSTM-HAR Enhanced!")
         print(f"   Improvement: {dir_acc - 67.90:.2f}%")
-        print(f"   Recommendation: Proceed to hyperparameter tuning")
+        print("   Recommendation: Proceed to hyperparameter tuning")
     elif dir_acc >= 65.0:
-        print(f"\n[GOOD] Competitive with LSTM-HAR Enhanced")
+        print("\n[GOOD] Competitive with LSTM-HAR Enhanced")
         print(f"   Gap: {67.90 - dir_acc:.2f}%")
-        print(f"   Recommendation: Try feature engineering or ensemble")
+        print("   Recommendation: Try feature engineering or ensemble")
     elif dir_acc >= 55.0:
-        print(f"\n[MODERATE] Better than random but below target")
+        print("\n[MODERATE] Better than random but below target")
         print(f"   Gap to LSTM-HAR: {67.90 - dir_acc:.2f}%")
-        print(f"   Recommendation: Investigate hyperparameters or data issues")
+        print("   Recommendation: Investigate hyperparameters or data issues")
     else:
-        print(f"\n[POOR] Below acceptable threshold")
+        print("\n[POOR] Below acceptable threshold")
         print(f"   Dir Acc: {dir_acc:.2f}% (worse than random guessing: 50%)")
-        print(f"   Recommendation: Debug model architecture or training process")
+        print("   Recommendation: Debug model architecture or training process")
 
     # Save results
     results = {

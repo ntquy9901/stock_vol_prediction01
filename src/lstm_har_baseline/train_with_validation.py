@@ -77,8 +77,8 @@ def train_lstm_har_with_val(data_dir: str, output_dir: str = None):
     print(f"  Seq Length: {config['seq_length']}")
     print(f"  Dropout: {config['dropout']}")
     print(f"  Num Layers: {config['num_layers']}")
-    print(f"  Features: 3 (HAR: daily, weekly, monthly)")
-    print(f"  Train/Val/Test Split: 70% / 15% / 15%")
+    print("  Features: 3 (HAR: daily, weekly, monthly)")
+    print("  Train/Val/Test Split: 70% / 15% / 15%")
 
     # Create HAR dataset
     print("\n1. Creating HAR dataset...")
@@ -93,7 +93,7 @@ def train_lstm_har_with_val(data_dir: str, output_dir: str = None):
     splitter = TemporalSplitter(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
     split_info = splitter.get_info(len(dataset))
 
-    print(f"Split plan:")
+    print("Split plan:")
     print(f"  Train: {split_info['train_size']} sequences (70%)")
     print(f"  Val:   {split_info['val_size']} sequences (15%)")
     print(f"  Test:  {split_info['test_size']} sequences (15%)")
@@ -126,7 +126,7 @@ def train_lstm_har_with_val(data_dir: str, output_dir: str = None):
         X_sample, y_sample = sample_batch
 
         print(f"  Input shape: {X_sample.shape}")  # Should be (batch, seq_len, 3)
-        print(f"  HAR features: 3 (daily, weekly, monthly)")
+        print("  HAR features: 3 (daily, weekly, monthly)")
         print(f"  Target mean: {y_sample.mean():.4f}, std: {y_sample.std():.4f}")
 
         # Check data quality
@@ -149,7 +149,7 @@ def train_lstm_har_with_val(data_dir: str, output_dir: str = None):
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
     print(f"Device: {device}")
-    print(f"Architecture: LSTM with HAR features (daily, weekly, monthly)")
+    print("Architecture: LSTM with HAR features (daily, weekly, monthly)")
 
     # Training configuration
     criterion = nn.MSELoss()

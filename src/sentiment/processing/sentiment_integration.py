@@ -10,9 +10,8 @@ Output format aligned with data/processed/{ticker}_processed.csv
 """
 
 import pandas as pd
-import numpy as np
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,7 +44,7 @@ class SentimentIntegration:
         # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"[SentimentIntegration] Initialized:")
+        logger.info("[SentimentIntegration] Initialized:")
         logger.info(f"  - Sentiment dir: {self.sentiment_dir}")
         logger.info(f"  - Output dir: {self.output_dir}")
         logger.info(f"  - HAR dir: {self.har_dir}")

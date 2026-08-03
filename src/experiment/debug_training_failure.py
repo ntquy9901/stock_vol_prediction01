@@ -13,7 +13,6 @@ import sys
 import torch
 import numpy as np
 import pandas as pd
-from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -60,26 +59,26 @@ def check_data_quality(data_dir: str):
     targets_scaled = np.array(targets_scaled)
     targets_original = np.array(targets_original)
 
-    print(f"\n[1.2] Input Statistics (Scaled):")
+    print("\n[1.2] Input Statistics (Scaled):")
     print(f"   Mean: {np.mean(inputs_scaled):.6f}")
     print(f"   Std: {np.std(inputs_scaled):.6f}")
     print(f"   Min: {np.min(inputs_scaled):.6f}")
     print(f"   Max: {np.max(inputs_scaled):.6f}")
 
-    print(f"\n[1.3] Target Statistics (Scaled):")
+    print("\n[1.3] Target Statistics (Scaled):")
     print(f"   Mean: {np.mean(targets_scaled):.6f}")
     print(f"   Std: {np.std(targets_scaled):.6f}")
     print(f"   Min: {np.min(targets_scaled):.6f}")
     print(f"   Max: {np.max(targets_scaled):.6f}")
 
-    print(f"\n[1.4] Target Statistics (Original Scale):")
+    print("\n[1.4] Target Statistics (Original Scale):")
     print(f"   Mean: {np.mean(targets_original):.6f}")
     print(f"   Std: {np.std(targets_original):.6f}")
     print(f"   Min: {np.min(targets_original):.6f}")
     print(f"   Max: {np.max(targets_original):.6f}")
 
     # Check for data issues
-    print(f"\n[1.5] Data Quality Checks:")
+    print("\n[1.5] Data Quality Checks:")
 
     issues = []
 
@@ -95,14 +94,14 @@ def check_data_quality(data_dir: str):
         issues.append("WARNING: Parkinson vol outside [0,1] range")
         print(f"   ⚠️  {issues[-1]}")
     else:
-        print(f"   ✅ Parkinson vol in reasonable range")
+        print("   ✅ Parkinson vol in reasonable range")
 
     # Check for NaN/Inf
     if np.isnan(targets_scaled).any() or np.isinf(targets_scaled).any():
         issues.append("CRITICAL: Scaled targets contain NaN/Inf!")
         print(f"   ❌ {issues[-1]}")
     else:
-        print(f"   ✅ No NaN/Inf in scaled targets")
+        print("   ✅ No NaN/Inf in scaled targets")
 
     return dataset, issues
 
@@ -117,22 +116,22 @@ def check_model_architecture():
 
     model = SimpleVolatilityLSTM(hidden_size=32)
 
-    print(f"\n[2.1] Model Configuration:")
-    print(f"   Input size: 1 (Parkinson volatility)")
-    print(f"   Hidden size: 32")
-    print(f"   Num layers: 1")
-    print(f"   Output size: 1")
+    print("\n[2.1] Model Configuration:")
+    print("   Input size: 1 (Parkinson volatility)")
+    print("   Hidden size: 32")
+    print("   Num layers: 1")
+    print("   Output size: 1")
 
-    print(f"\n[2.2] Parameter Count:")
+    print("\n[2.2] Parameter Count:")
     total_params = sum(p.numel() for p in model.parameters())
     print(f"   Total: {total_params:,}")
 
-    print(f"\n[2.3] Layer-by-Layer Breakdown:")
+    print("\n[2.3] Layer-by-Layer Breakdown:")
     for name, param in model.named_parameters():
         print(f"   {name}: {param.shape}")
 
     # Test forward pass
-    print(f"\n[2.4] Forward Pass Test:")
+    print("\n[2.4] Forward Pass Test:")
     test_input = torch.randn(64, 22, 1)
     test_output = model(test_input)
     print(f"   Input shape: {test_input.shape}")
@@ -141,9 +140,9 @@ def check_model_architecture():
 
     # Check if output is reasonable
     if torch.any(test_output < 0):
-        print(f"   ❌ WARNING: Model outputs negative values (ReLU should prevent this)")
+        print("   ❌ WARNING: Model outputs negative values (ReLU should prevent this)")
     else:
-        print(f"   ✅ Model outputs are non-negative")
+        print("   ✅ Model outputs are non-negative")
 
     issues = []
     if total_params < 10000:
@@ -160,14 +159,14 @@ def check_training_setup():
     print("CHECK 3: TRAINING CONFIGURATION")
     print("=" * 80)
 
-    print(f"\n[3.1] Current Configuration:")
-    print(f"   Loss: MSE")
-    print(f"   Optimizer: Adam")
-    print(f"   Learning Rate: 0.001")
-    print(f"   Batch Size: 64")
-    print(f"   Epochs: 30")
+    print("\n[3.1] Current Configuration:")
+    print("   Loss: MSE")
+    print("   Optimizer: Adam")
+    print("   Learning Rate: 0.001")
+    print("   Batch Size: 64")
+    print("   Epochs: 30")
 
-    print(f"\n[3.2] Potential Issues:")
+    print("\n[3.2] Potential Issues:")
 
     issues = []
 
@@ -176,14 +175,14 @@ def check_training_setup():
     if lr < 0.005:
         issues.append("Learning rate 0.001 may be too low for scaled data")
         print(f"   ⚠️  {issues[-1]}")
-        print(f"      Recommendation: Try 0.01 or 0.005")
+        print("      Recommendation: Try 0.01 or 0.005")
 
     # Model capacity check
     hidden_size = 32
     if hidden_size < 64:
         issues.append("Hidden size 32 may be insufficient")
         print(f"   ⚠️  {issues[-1]}")
-        print(f"      Recommendation: Try 128 or 256")
+        print("      Recommendation: Try 128 or 256")
 
     # Batch size check
     batch_size = 64
@@ -257,10 +256,10 @@ def simulate_one_epoch(dataset, model):
         issues.append("Loss is very low - possible data leakage")
         print(f"   ❌ {issues[-1]}")
     else:
-        print(f"   ✅ Loss is in reasonable range")
+        print("   ✅ Loss is in reasonable range")
 
     # Check gradient flow
-    print(f"\n[4.3] Gradient Check:")
+    print("\n[4.3] Gradient Check:")
     model.train()
     X_batch, y_batch = next(iter(train_loader))
     X_batch, y_batch = X_batch.to(device), y_batch.to(device)
@@ -287,7 +286,7 @@ def simulate_one_epoch(dataset, model):
             issues.append("Gradients are very small - vanishing gradient problem")
             print(f"   ⚠️  {issues[-1]}")
         else:
-            print(f"   ✅ Gradients are flowing")
+            print("   ✅ Gradients are flowing")
 
     return issues
 
@@ -330,22 +329,22 @@ def check_evaluation_metrics(dataset, model):
     predictions = dataset.target_scaler.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
     actuals = dataset.target_scaler.inverse_transform(actuals_scaled.reshape(-1, 1)).flatten()
 
-    print(f"\n[5.1] Scaled Predictions:")
+    print("\n[5.1] Scaled Predictions:")
     print(f"   Mean: {predictions_scaled.mean():.6f}")
     print(f"   Std: {predictions_scaled.std():.6f}")
     print(f"   Range: [{predictions_scaled.min():.6f}, {predictions_scaled.max():.6f}]")
 
-    print(f"\n[5.2] Scaled Actuals:")
+    print("\n[5.2] Scaled Actuals:")
     print(f"   Mean: {actuals_scaled.mean():.6f}")
     print(f"   Std: {actuals_scaled.std():.6f}")
     print(f"   Range: [{actuals_scaled.min():.6f}, {actuals_scaled.max():.6f}]")
 
-    print(f"\n[5.3] Inverse-Transformed Predictions:")
+    print("\n[5.3] Inverse-Transformed Predictions:")
     print(f"   Mean: {predictions.mean():.6f}")
     print(f"   Std: {predictions.std():.6f}")
     print(f"   Range: [{predictions.min():.6f}, {predictions.max():.6f}]")
 
-    print(f"\n[5.4] Inverse-Transformed Actuals:")
+    print("\n[5.4] Inverse-Transformed Actuals:")
     print(f"   Mean: {actuals.mean():.6f}")
     print(f"   Std: {actuals.std():.6f}")
     print(f"   Range: [{actuals.min():.6f}, {actuals.max():.6f}]")
@@ -354,7 +353,7 @@ def check_evaluation_metrics(dataset, model):
     qlike = qlike_loss(actuals, predictions)
     dir_acc = directional_accuracy(actuals, predictions)
 
-    print(f"\n[5.5] Metrics:")
+    print("\n[5.5] Metrics:")
     print(f"   QLIKE: {qlike:.6f}")
     print(f"   Directional Accuracy: {dir_acc:.2%}")
 

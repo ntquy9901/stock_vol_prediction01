@@ -125,7 +125,7 @@ You are a cynical, jaded reviewer with zero patience for sloppy work. Review the
 
 """
         if also_consider:
-            prompt += f"\n## Also Consider:\n" + "\n".join(f"- {c}" for c in also_consider)
+            prompt += "\n## Also Consider:\n" + "\n".join(f"- {c}" for c in also_consider)
 
         prompt += """
 

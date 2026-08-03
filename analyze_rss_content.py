@@ -1,7 +1,6 @@
 import feedparser
 import sys
 import io
-import re
 
 # Fix UTF-8 encoding
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -11,7 +10,7 @@ url = 'https://cafef.vn/home.rss'
 feed = feedparser.parse(url)
 
 print(f"Total entries: {len(feed.entries)}")
-print(f"\nAnalyzing content...")
+print("\nAnalyzing content...")
 
 # Analyze entries for stock-related keywords
 stock_keywords = ['VCB', 'VNM', 'VIC', 'VN30', 'VN-Index', 'chung khoan', 'co phieu', 'tu san', 'ngan hang']
@@ -34,19 +33,19 @@ print(f"\nStock-related articles: {len(stock_related)}")
 print(f"General news articles: {len(general_news)}")
 
 if len(stock_related) > 0:
-    print(f"\n--- Stock-Related Articles ---")
+    print("\n--- Stock-Related Articles ---")
     for i, entry in enumerate(stock_related[:5], 1):
         print(f"\n{i}. {entry.title}")
         print(f"   Date: {entry.published}")
         print(f"   Link: {entry.link}")
 
-print(f"\n--- General News Samples ---")
+print("\n--- General News Samples ---")
 for i, entry in enumerate(general_news[:3], 1):
     print(f"\n{i}. {entry.title}")
     print(f"   Date: {entry.published}")
 
 # Check if RSS feed is sufficient
-print(f"\n--- RSS Feed Viability Assessment ---")
+print("\n--- RSS Feed Viability Assessment ---")
 print(f"Total entries: {len(feed.entries)}")
 print(f"Stock-related ratio: {len(stock_related) / len(feed.entries) * 100:.1f}%")
 

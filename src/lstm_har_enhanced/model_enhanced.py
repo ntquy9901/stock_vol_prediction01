@@ -101,7 +101,7 @@ if __name__ == "__main__":
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Check output statistics
-    print(f"\nOutput statistics:")
+    print("\nOutput statistics:")
     print(f"  Mean: {output.mean().item():.6f}")
     print(f"  Std: {output.std().item():.6f}")
     print(f"  Min: {output.min().item():.6f}")

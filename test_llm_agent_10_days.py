@@ -356,7 +356,7 @@ def run_llm_agent_test(test_articles: list, output_dir: str):
     finbert_accuracy = 12.90
     improvement = overall_accuracy - finbert_accuracy
 
-    print(f"\n" + "=" * 70)
+    print("\n" + "=" * 70)
     print("COMPARISON: LLM Agent vs FinBERT")
     print("=" * 70)
     print(f"FinBERT Accuracy: {finbert_accuracy:.2f}%")
@@ -394,7 +394,7 @@ def run_llm_agent_test(test_articles: list, output_dir: str):
         f.write("LLM AGENT vs FinBERT COMPARISON REPORT\n")
         f.write("=" * 70 + "\n\n")
         f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"Test Period: 2026-06-15 to 2026-06-26 (10 trading days)\n")
+        f.write("Test Period: 2026-06-15 to 2026-06-26 (10 trading days)\n")
         f.write(f"Total Articles: {total_tests}\n\n")
 
         f.write("=" * 70 + "\n")
@@ -430,7 +430,7 @@ def run_llm_agent_test(test_articles: list, output_dir: str):
             f.write("-" * 70 + "\n\n")
 
     print(f"[OK] Human-readable report: {report_file}")
-    print(f"\n[SUCCESS] LLM Agent test completed!")
+    print("\n[SUCCESS] LLM Agent test completed!")
     print(f"[DIRECTORY] {output_dir}")
 
     return df, summary_df, overall_accuracy
@@ -457,14 +457,14 @@ def main():
         print("\n" + "=" * 70)
         print("TEST COMPLETED SUCCESSFULLY!")
         print("=" * 70)
-        print(f"\n[RESULTS]")
+        print("\n[RESULTS]")
         print(f"  LLM Agent Accuracy: {accuracy:.2f}%")
-        print(f"  FinBERT Accuracy: 12.90%")
+        print("  FinBERT Accuracy: 12.90%")
         print(f"  Improvement: {accuracy - 12.90:+.2f}%")
-        print(f"\n[FILES]")
-        print(f"  - Detailed: llm_agent_detailed_results.csv")
-        print(f"  - Summary: llm_agent_daily_summary.csv")
-        print(f"  - Report: llm_agent_test_report.txt")
+        print("\n[FILES]")
+        print("  - Detailed: llm_agent_detailed_results.csv")
+        print("  - Summary: llm_agent_daily_summary.csv")
+        print("  - Report: llm_agent_test_report.txt")
         print("=" * 70)
 
 

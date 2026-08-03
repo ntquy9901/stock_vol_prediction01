@@ -39,7 +39,6 @@ from src.timesfm_baseline.volatility_dataset import (
     create_volatility_datasets,
     create_multi_stock_volatility_datasets,
 )
-from src.common.evaluation import evaluate_predictions
 
 logger = logging.getLogger(__name__)
 

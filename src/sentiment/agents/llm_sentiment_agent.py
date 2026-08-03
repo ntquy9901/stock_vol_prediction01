@@ -105,7 +105,7 @@ class LLMSentimentAgent:
         3. Chain-of-thought template
         4. Current news to analyze
         """
-        prompt = f"""You are a financial sentiment analysis expert specializing in Vietnamese stock market news.
+        prompt = """You are a financial sentiment analysis expert specializing in Vietnamese stock market news.
 
 Your task is to analyze financial news and determine if the sentiment is Positive, Negative, or Neutral.
 
@@ -197,7 +197,7 @@ Analyze now:"""
         Returns:
             SentimentResult with label, score, reasoning, confidence
         """
-        print(f"[LLM Agent] Analyzing news...")
+        print("[LLM Agent] Analyzing news...")
 
         # Step 1: Try rule-based first (fast, accurate for obvious cases)
         if use_rules:

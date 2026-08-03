@@ -128,7 +128,7 @@ def print_comparison(har_metrics, lstm_metrics, har_dir, lstm_dir):
     elif har_wins > lstm_wins:
         print(f"\n  [WINNER] Overall: HAR (better on {har_wins}/{har_wins + lstm_wins} metrics)")
     else:
-        print(f"\n  [TIE] Both models perform equally")
+        print("\n  [TIE] Both models perform equally")
 
     print("\n" + "=" * 100)
 

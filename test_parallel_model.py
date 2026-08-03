@@ -43,7 +43,7 @@ print(f"Predictions: {predictions}")
 pred_std = predictions.std().item()
 pred_range = (predictions.max() - predictions.min()).item()
 
-print(f"\nPrediction statistics:")
+print("\nPrediction statistics:")
 print(f"  Std: {pred_std:.6f}")
 print(f"  Range: {pred_range:.6f}")
 

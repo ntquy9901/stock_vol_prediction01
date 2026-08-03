@@ -82,7 +82,7 @@ def test_finbert_on_stocks() -> dict:
     print("QUICK FINBERT TEST - VN30 STOCKS")
     print("=" * 60)
     print(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"Stocks: ACB, VCB, VHM, VNM, VIC (5 major VN30 stocks)")
+    print("Stocks: ACB, VCB, VHM, VNM, VIC (5 major VN30 stocks)")
     print("=" * 60)
 
     # Initialize FinBERT

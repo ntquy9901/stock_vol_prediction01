@@ -5,15 +5,12 @@ Provides common functionality for all news source crawlers.
 """
 
 import requests
-from bs4 import BeautifulSoup
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional
 from pathlib import Path
 import pandas as pd
 import time
 import logging
-from datetime import datetime, timedelta
-import re
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +100,7 @@ class BaseNewsCrawler(ABC):
                 if year_month not in articles_by_month:
                     articles_by_month[year_month] = []
                 articles_by_month[year_month].append(article)
-            except Exception as e:
+            except Exception:
                 logger.warning(f"Invalid date format for article: {article.date}")
 
         # Save each month separately

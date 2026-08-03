@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from scripts.verify_audit_fixes.manifest import (
     GATES_7_TO_11_NOT_VERIFIABLE,

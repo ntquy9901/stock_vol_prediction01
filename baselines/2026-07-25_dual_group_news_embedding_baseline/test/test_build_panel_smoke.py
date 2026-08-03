@@ -73,7 +73,6 @@ def test_load_group_tong_hop_real_slice(monkeypatch):
 
 
 if __name__ == "__main__":
-    import types
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_") and callable(v)]
     for fn in tests:
         fn(pytest.MonkeyPatch())

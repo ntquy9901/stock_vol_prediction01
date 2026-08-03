@@ -74,8 +74,8 @@ print(f"  LR scheduling: StepLR (step={CRYPTOMAMBA_CONFIG_ENHANCED['lr_step_size
 print(f"  Sequence length: {CRYPTOMAMBA_CONFIG_ENHANCED['seq_length']}")
 print(f"  Use volume: {CRYPTOMAMBA_CONFIG_ENHANCED['use_volume']}")
 print(f"  Num features: {MODEL_CONFIG_ENHANCED['num_features']} (HAR features only)")
-print(f"  Expected parameters: 50-100K (vs 2,787 in V2)")
-print(f"  Hypothesized Dir Acc: 50-52% (vs 47.78% in V2, requires validation)")
+print("  Expected parameters: 50-100K (vs 2,787 in V2)")
+print("  Hypothesized Dir Acc: 50-52% (vs 47.78% in V2, requires validation)")
 
 print("\n[!] CRITICAL FIXES APPLIED:")
 print("  [+] Model includes ReLU output (ensures non-negative predictions)")

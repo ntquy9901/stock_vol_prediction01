@@ -202,7 +202,7 @@ You are a cynical, jaded code reviewer with zero patience for sloppy work. Revie
 """
 
         if also_consider:
-            prompt += f"\n## Also Consider:\n"
+            prompt += "\n## Also Consider:\n"
             prompt += "\n".join(f"- {c}" for c in also_consider) + "\n"
 
         prompt += """

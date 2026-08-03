@@ -50,7 +50,7 @@ for i, vol in enumerate(volatility_list):
 print(f"  Volatility matrix shape: {volatility_matrix.shape}")
 
 # Build graph using correlation method (more reliable)
-print(f"\n[2] Building correlation graph...")
+print("\n[2] Building correlation graph...")
 edge_index, edge_weight, graph_info = build_correlation_graph(
     volatility_matrix, stock_names, threshold=0.5
 )
@@ -58,7 +58,7 @@ edge_index, edge_weight, graph_info = build_correlation_graph(
 print(f"  Graph: {graph_info['num_nodes']} nodes, {graph_info['num_edges']} edges")
 
 # Test SpatialGAT (single sample)
-print(f"\n[3] Testing SpatialGAT (single sample)...")
+print("\n[3] Testing SpatialGAT (single sample)...")
 
 num_stocks = len(stock_names)
 in_channels = 64
@@ -84,10 +84,10 @@ print(f"  Expected: ({num_stocks}, {out_channels})")
 
 assert output_single.shape == (num_stocks, out_channels), f"Shape mismatch: {output_single.shape}"
 
-print(f"  [OK] SpatialGAT single sample test passed!")
+print("  [OK] SpatialGAT single sample test passed!")
 
 # Test BatchSpatialGAT (multiple samples)
-print(f"\n[4] Testing BatchSpatialGAT (batch processing)...")
+print("\n[4] Testing BatchSpatialGAT (batch processing)...")
 
 batch_encoder = BatchSpatialGAT(
     in_channels=in_channels,
@@ -108,17 +108,17 @@ print(f"  Expected: ({batch_size}, {num_stocks}, {out_channels})")
 
 assert output_batch.shape == (batch_size, num_stocks, out_channels), f"Shape mismatch: {output_batch.shape}"
 
-print(f"  [OK] BatchSpatialGAT test passed!")
+print("  [OK] BatchSpatialGAT test passed!")
 
 # Test output statistics
-print(f"\n[5] Output Statistics:")
+print("\n[5] Output Statistics:")
 print(f"  Mean: {output_batch.mean().item():.6f}")
 print(f"  Std: {output_batch.std().item():.6f}")
 print(f"  Min: {output_batch.min().item():.6f}")
 print(f"  Max: {output_batch.max().item():.6f}")
 
 # Test with different graph configurations
-print(f"\n[6] Testing with spillover graph...")
+print("\n[6] Testing with spillover graph...")
 
 try:
     spill_edge_index, spill_edge_weight, spill_info = build_spillover_graph(
@@ -128,12 +128,12 @@ try:
     output_spill = batch_encoder(x_batch, spill_edge_index, spill_edge_weight)
 
     print(f"  Spillover graph output shape: {output_spill.shape}")
-    print(f"  [OK] Spillover graph test passed!")
+    print("  [OK] Spillover graph test passed!")
 except Exception as e:
     print(f"  [!] Spillover graph test skipped: {e}")
 
 # Memory check
-print(f"\n[7] Memory Check:")
+print("\n[7] Memory Check:")
 param_count = sum(p.numel() for p in batch_encoder.parameters())
 print(f"  Parameters: {param_count:,}")
 print(f"  Memory (approx): {param_count * 4 / 1024 / 1024:.2f} MB (float32)")

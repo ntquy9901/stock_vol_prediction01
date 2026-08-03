@@ -18,13 +18,11 @@ import joblib
 import torch
 import json
 from datetime import datetime
-from sklearn.linear_model import LinearRegression
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, project_root)
 
-from src.common.parkinson_utils import calculate_parkinson_volatility
 from src.common.feature_engineering import create_har_features, create_5day_target
 from src.lstm_baseline.dataset import PooledVolatilityDataset
 from src.lstm_har_baseline.dataset import HARVolatilityDataset
@@ -180,7 +178,7 @@ def evaluate_har_baseline(data_dir='data/processed'):
         'directional_accuracy': float(dir_acc)
     }
 
-    print(f"\nHAR-R Linear Metrics:")
+    print("\nHAR-R Linear Metrics:")
     print(f"  MSE: {metrics['mse']:.8f}")
     print(f"  RMSE: {metrics['rmse']:.8f}")
     print(f"  MAE: {metrics['mae']:.8f}")
@@ -288,7 +286,7 @@ def evaluate_simple_lstm(data_dir='data/processed'):
         'directional_accuracy': float(dir_acc)
     }
 
-    print(f"\nSimple LSTM Metrics:")
+    print("\nSimple LSTM Metrics:")
     print(f"  MSE: {metrics['mse']:.8f}")
     print(f"  RMSE: {metrics['rmse']:.8f}")
     print(f"  MAE: {metrics['mae']:.8f}")
@@ -396,7 +394,7 @@ def evaluate_lstm_har(data_dir='data/processed'):
         'directional_accuracy': float(dir_acc)
     }
 
-    print(f"\nLSTM-HAR Metrics:")
+    print("\nLSTM-HAR Metrics:")
     print(f"  MSE: {metrics['mse']:.8f}")
     print(f"  RMSE: {metrics['rmse']:.8f}")
     print(f"  MAE: {metrics['mae']:.8f}")
@@ -504,7 +502,7 @@ def evaluate_enhanced_lstm_har(data_dir='data/processed'):
         'directional_accuracy': float(dir_acc)
     }
 
-    print(f"\nEnhanced LSTM-HAR Metrics:")
+    print("\nEnhanced LSTM-HAR Metrics:")
     print(f"  MSE: {metrics['mse']:.8f}")
     print(f"  RMSE: {metrics['rmse']:.8f}")
     print(f"  MAE: {metrics['mae']:.8f}")

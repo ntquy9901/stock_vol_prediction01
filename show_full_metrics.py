@@ -2,7 +2,6 @@
 Show full metrics comparison for all models
 """
 import json
-from pathlib import Path
 
 def show_full_comparison():
     """Display comprehensive metrics comparison"""
@@ -46,37 +45,37 @@ def show_full_comparison():
     print("="*110)
 
     # Comparison
-    print(f"\n[RMSE Analysis - Lower is Better]")
+    print("\n[RMSE Analysis - Lower is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['rmse']:.8f}  ✅ BEST")
-    print(f"  2. HAR-R Linear:       0.00150000")
-    print(f"  3. LSTM Baseline:      0.00180000")
+    print("  2. HAR-R Linear:       0.00150000")
+    print("  3. LSTM Baseline:      0.00180000")
     print(f"  4. TimesNet:           {timesnet['rmse']:.8f}  ❌")
 
     rmse_diff = timesnet['rmse'] - lstm_har['rmse']
     print(f"\n  TimesNet vs LSTM-HAR: {rmse_diff:+.8f} ({'WORSE' if rmse_diff > 0 else 'BETTER'})")
 
-    print(f"\n[MAE Analysis - Lower is Better]")
+    print("\n[MAE Analysis - Lower is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['mae']:.8f}  ✅ BEST")
     print(f"  2. TimesNet:           {timesnet['mae']:.8f}  ❌")
 
     mae_diff = timesnet['mae'] - lstm_har['mae']
     print(f"\n  TimesNet vs LSTM-HAR: {mae_diff:+.8f} ({'WORSE' if mae_diff > 0 else 'BETTER'})")
 
-    print(f"\n[R² Analysis - Higher is Better (measures variance explained)]")
+    print("\n[R² Analysis - Higher is Better (measures variance explained)]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['r2']:.4f}  ✅ POSITIVE (explains variance)")
     print(f"  2. TimesNet:           {timesnet['r2']:.4f}  ❌ NEGATIVE (worse than mean)")
 
     r2_diff = timesnet['r2'] - lstm_har['r2']
     print(f"\n  TimesNet vs LSTM-HAR: {r2_diff:+.4f} ({'WORSE' if r2_diff < 0 else 'BETTER'})")
 
-    print(f"\n[QLIKE Analysis - Lower is Better (academic standard for volatility)]")
+    print("\n[QLIKE Analysis - Lower is Better (academic standard for volatility)]")
     print(f"  1. TimesNet:           {timesnet['qlike']:.4f}  ⚠️  No comparison")
-    print(f"  Note: LSTM-HAR QLIKE not available in original results")
+    print("  Note: LSTM-HAR QLIKE not available in original results")
 
-    print(f"\n[Directional Accuracy - Higher is Better]")
+    print("\n[Directional Accuracy - Higher is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['directional_accuracy']:.2f}%  ✅ BEST")
-    print(f"  2. HAR-R Linear:       51.53%")
-    print(f"  3. LSTM Baseline:      48.32%")
+    print("  2. HAR-R Linear:       51.53%")
+    print("  3. LSTM Baseline:      48.32%")
     print(f"  4. TimesNet:           {timesnet['directional_accuracy']:.2f}%  ❌ WORST THAN RANDOM (50%)")
 
     dir_acc_diff = timesnet['directional_accuracy'] - lstm_har['directional_accuracy']
@@ -103,30 +102,30 @@ def show_full_comparison():
     print("CRITICAL ANALYSIS")
     print("="*110)
 
-    print(f"\n[1. PREDICTION ACCURACY]")
-    print(f"   ✅ LSTM-HAR Enhanced leads with 67.90% Dir Acc")
-    print(f"   ❌ TimesNet trails at 47.52% (20.38% gap)")
-    print(f"   ❌ TimesNet worse than random guessing (50%)")
+    print("\n[1. PREDICTION ACCURACY]")
+    print("   ✅ LSTM-HAR Enhanced leads with 67.90% Dir Acc")
+    print("   ❌ TimesNet trails at 47.52% (20.38% gap)")
+    print("   ❌ TimesNet worse than random guessing (50%)")
 
-    print(f"\n[2. ERROR METRICS]")
+    print("\n[2. ERROR METRICS]")
     print(f"   ✅ LSTM-HAR has LOWER RMSE: {lstm_har['rmse']:.8f}")
     print(f"   ❌ TimesNet has HIGHER RMSE: {timesnet['rmse']:.8f}")
     print(f"   ✅ LSTM-HAR has LOWER MAE: {lstm_har['mae']:.8f}")
     print(f"   ❌ TimesNet has HIGHER MAE: {timesnet['mae']:.8f}")
 
-    print(f"\n[3. VARIANCE EXPLAINED]")
-    print(f"   ✅ LSTM-HAR R² = 0.136 (POSITIVE - explains 13.6% of variance)")
+    print("\n[3. VARIANCE EXPLAINED]")
+    print("   ✅ LSTM-HAR R² = 0.136 (POSITIVE - explains 13.6% of variance)")
     print(f"   ❌ TimesNet R² = {timesnet['r2']:.4f} (NEGATIVE - worse than predicting mean)")
-    print(f"   → TimesNet predictions are actually harmful!")
+    print("   → TimesNet predictions are actually harmful!")
 
-    print(f"\n[4. COMPUTATIONAL EFFICIENCY]")
-    print(f"   ✅ LSTM-HAR: 65K params, ~30 min training")
-    print(f"   ❌ TimesNet: 28M params (431x larger), 2-4 hours training")
-    print(f"   → TimesNet is 431x more expensive but 20% worse!")
+    print("\n[4. COMPUTATIONAL EFFICIENCY]")
+    print("   ✅ LSTM-HAR: 65K params, ~30 min training")
+    print("   ❌ TimesNet: 28M params (431x larger), 2-4 hours training")
+    print("   → TimesNet is 431x more expensive but 20% worse!")
 
-    print(f"\n[5. PREDICTION STABILITY]")
-    print(f"   ✅ LSTM-HAR: Stable across runs")
-    print(f"   ❌ TimesNet: Low prediction variance (model collapse)")
+    print("\n[5. PREDICTION STABILITY]")
+    print("   ✅ LSTM-HAR: Stable across runs")
+    print("   ❌ TimesNet: Low prediction variance (model collapse)")
 
     print("\n" + "="*110)
     print("FINAL VERDICT & RECOMMENDATION")

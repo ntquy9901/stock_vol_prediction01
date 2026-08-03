@@ -88,7 +88,7 @@ def test_phase1_implementation():
             augmentation_factor=0.1,
             train_mode=False  # No augmentation during testing
         )
-        print(f"   Dataset created successfully")
+        print("   Dataset created successfully")
         print(f"   Number of sequences: {len(dataset)}")
         print("   [PASS] Dataset initialization working")
 
@@ -139,7 +139,7 @@ def test_phase1_implementation():
             print(f"   Batch input shape: {x.shape}")
             print(f"   Batch adjacency shape: {adj_matrix.shape}")
             print(f"   Batch target shape: {y.shape}")
-            print(f"   Data augmentation should be applied to training set")
+            print("   Data augmentation should be applied to training set")
             print("   [PASS] Train loader working")
             break  # Only test first batch
 

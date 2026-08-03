@@ -60,34 +60,34 @@ try:
 
     # List models
     models = ollama.list()
-    print(f"  ✓ Ollama is running")
+    print("  ✓ Ollama is running")
     print(f"  ✓ Found {len(models['models'])} models")
 
     # Check if qwen2.5-coder is available
     qwen_models = [m for m in models['models'] if 'qwen' in m['name'].lower() and 'coder' in m['name'].lower()]
     if qwen_models:
-        print(f"  ✓ Found Qwen Coder models:")
+        print("  ✓ Found Qwen Coder models:")
         for m in qwen_models:
             size_gb = m.get('size', 0) / (1024**3)
             print(f"    - {m['name']} ({size_gb:.1f}GB)")
         DEFAULT_MODEL = qwen_models[0]['name']
     else:
-        print(f"  ⚠ Qwen Coder not found")
-        print(f"    Available models:")
+        print("  ⚠ Qwen Coder not found")
+        print("    Available models:")
         for m in models['models'][:5]:
             print(f"    - {m['name']}")
-        print(f"\n  Pull Qwen Coder with:")
-        print(f"    ollama pull qwen2.5-coder:32b")
-        print(f"    # Or for smaller hardware:")
-        print(f"    ollama pull qwen2.5-coder:7b")
+        print("\n  Pull Qwen Coder with:")
+        print("    ollama pull qwen2.5-coder:32b")
+        print("    # Or for smaller hardware:")
+        print("    ollama pull qwen2.5-coder:7b")
         DEFAULT_MODEL = "qwen2.5-coder:32b"  # Assume anyway
 
 except Exception as e:
     print(f"  ✗ Ollama connection failed: {e}")
-    print(f"\n  Troubleshooting:")
-    print(f"    1. Start Ollama: ollama serve")
-    print(f"    2. Pull model: ollama pull qwen2.5-coder:32b")
-    print(f"    3. Check Ollama is running: ollama list")
+    print("\n  Troubleshooting:")
+    print("    1. Start Ollama: ollama serve")
+    print("    2. Pull model: ollama pull qwen2.5-coder:32b")
+    print("    3. Check Ollama is running: ollama list")
     sys.exit(1)
 
 # ============================================================================
@@ -106,11 +106,11 @@ def divide(a, b):
     return a / b  # No error handling!
 """
 
-print(f"  Test code:")
-print(f"  ─" * 50)
+print("  Test code:")
+print("  ─" * 50)
 for line in test_code.split('\n')[:5]:
     print(f"  {line}")
-print(f"  ─" * 50)
+print("  ─" * 50)
 
 try:
     prompt = f"""Review this code for security issues and bugs. Return JSON:
@@ -130,7 +130,7 @@ Code:
         messages=[{"role": "user", "content": prompt}]
     )
 
-    print(f"  ✓ Ollama response received")
+    print("  ✓ Ollama response received")
     print(f"  Response preview: {response['message']['content'][:150]}...")
 
     # Try to parse JSON
@@ -142,9 +142,9 @@ Code:
             findings_count = len(data.get('findings', []))
             print(f"  ✓ Parsed {findings_count} findings")
         else:
-            print(f"  ⚠ No JSON found in response")
+            print("  ⚠ No JSON found in response")
     except:
-        print(f"  ⚠ JSON parsing failed (model may need better prompt)")
+        print("  ⚠ JSON parsing failed (model may need better prompt)")
 
 except Exception as e:
     print(f"  ✗ Ollama call failed: {e}")
@@ -184,7 +184,7 @@ try:
     from local_coder_mcp_server import LocalLLMReviewer
 
     reviewer = LocalLLMReviewer(model=DEFAULT_MODEL)
-    print(f"  ✓ LocalLLMReviewer initialized")
+    print("  ✓ LocalLLMReviewer initialized")
     print(f"    Model: {reviewer.model_name}")
     print(f"    Runtime: {reviewer.runtime}")
 
@@ -216,13 +216,13 @@ try:
 
     if result.get("success"):
         findings = result.get("findings", [])
-        print(f"  ✓ Adversarial review completed")
+        print("  ✓ Adversarial review completed")
         print(f"    Model: {result.get('model')}")
         print(f"    Runtime: {result.get('runtime')}")
         print(f"    Findings: {len(findings)} issues found")
 
         if findings:
-            print(f"\n    Sample findings:")
+            print("\n    Sample findings:")
             for i, finding in enumerate(findings[:3], 1):
                 severity = finding.get("severity", "MEDIUM")
                 category = finding.get("category", "General")
@@ -269,14 +269,14 @@ try:
 
     if result.get("success"):
         findings = result.get("findings", [])
-        print(f"  ✓ Code review completed")
+        print("  ✓ Code review completed")
         print(f"    Model: {result.get('model')}")
         print(f"    Review mode: {result.get('review_mode')}")
         print(f"    Findings: {len(findings)} issues found")
 
         summary = result.get("summary", {})
         if summary:
-            print(f"\n    Summary:")
+            print("\n    Summary:")
             print(f"    HIGH:   {summary.get('high_count', 0)}")
             print(f"    MEDIUM: {summary.get('medium_count', 0)}")
             print(f"    LOW:    {summary.get('low_count', 0)}")
@@ -297,26 +297,26 @@ print("TEST SUMMARY")
 print("=" * 70)
 
 print("\n✓ MCP Server is ready!")
-print(f"\nConfiguration:")
-print(f"  Runtime: ollama")
+print("\nConfiguration:")
+print("  Runtime: ollama")
 print(f"  Model: {DEFAULT_MODEL}")
-print(f"  Base URL: http://localhost:11434")
+print("  Base URL: http://localhost:11434")
 
-print(f"\nNext steps:")
-print(f"  1. Restart Claude Code")
-print(f"  2. Tools will be available:")
-print(f"     - local_review_adversarial")
-print(f"     - local_review_code")
-print(f"  3. Use in conversation:")
-print(f"     'Review this code using local LLM: [paste code]'")
-print(f"     'Call local_review_adversarial with this content: ...'")
+print("\nNext steps:")
+print("  1. Restart Claude Code")
+print("  2. Tools will be available:")
+print("     - local_review_adversarial")
+print("     - local_review_code")
+print("  3. Use in conversation:")
+print("     'Review this code using local LLM: [paste code]'")
+print("     'Call local_review_adversarial with this content: ...'")
 
-print(f"\nExample usage:")
-print(f"  Please review this Python code using local_review_adversarial:")
-print(f"  [paste your code]")
+print("\nExample usage:")
+print("  Please review this Python code using local_review_adversarial:")
+print("  [paste your code]")
 
-print(f"\nOr integrate into BMad skills:")
-print(f"  Update skill step files to call local_review_adversarial")
-print(f"  instead of built-in Claude analysis")
+print("\nOr integrate into BMad skills:")
+print("  Update skill step files to call local_review_adversarial")
+print("  instead of built-in Claude analysis")
 
-print(f"\n" + "=" * 70)
+print("\n" + "=" * 70)

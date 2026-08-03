@@ -134,7 +134,7 @@ def print_comparison_table():
         timesnet = results['TimesNet']
         lstm_har = results['LSTM-HAR Enhanced']
 
-        print(f"\n[TimesNet vs LSTM-HAR Enhanced]")
+        print("\n[TimesNet vs LSTM-HAR Enhanced]")
         print(f"  MSE:     {timesnet['mse']:.10f} vs {lstm_har['mse']:.10f}  (Diff: {timesnet['mse'] - lstm_har['mse']:.10f})")
         print(f"  RMSE:    {timesnet['rmse']:.8f} vs {lstm_har['rmse']:.8f}  (Diff: {timesnet['rmse'] - lstm_har['rmse']:.8f})")
         print(f"  MAE:     {timesnet['mae']:.8f} vs {lstm_har['mae']:.8f}  (Diff: {timesnet['mae'] - lstm_har['mae']:.8f})")
@@ -142,7 +142,7 @@ def print_comparison_table():
         print(f"  QLIKE:   {timesnet['qlike']:.4f} vs {lstm_har['qlike']}  (N/A for LSTM-HAR)")
         print(f"  Dir Acc: {timesnet['directional_accuracy']:.2f}% vs {lstm_har['directional_accuracy']:.2f}%  (Diff: {timesnet['directional_accuracy'] - lstm_har['directional_accuracy']:.2f}%)")
 
-        print(f"\n[Verdict]")
+        print("\n[Verdict]")
         if timesnet['rmse'] < lstm_har['rmse']:
             print(f"  ✅ TimesNet wins RMSE by {(lstm_har['rmse'] - timesnet['rmse']):.8f}")
         else:

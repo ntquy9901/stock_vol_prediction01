@@ -8,7 +8,6 @@ import os
 import sys
 import asyncio
 import json
-from typing import Any
 
 # Check API key first
 if not os.getenv("GOOGLE_GEMINI_API_KEY"):
@@ -134,7 +133,7 @@ def divide(a, b):
                 if hasattr(content, 'text'):
                     response = json.loads(content.text)
 
-                    print(f"\n✅ Review completed!")
+                    print("\n✅ Review completed!")
                     print(f"   Model: {response.get('model', 'unknown')}")
 
                     findings = response.get('findings', [])
@@ -154,17 +153,17 @@ def divide(a, b):
 
                     summary = response.get('summary', {})
                     if summary:
-                        print(f"\n   Summary:")
+                        print("\n   Summary:")
                         print(f"   HIGH:   {summary.get('high_count', 0)}")
                         print(f"   MEDIUM: {summary.get('medium_count', 0)}")
                         print(f"   LOW:    {summary.get('low_count', 0)}")
 
                     return True, response
                 else:
-                    print(f"\n❌ Unexpected response format")
+                    print("\n❌ Unexpected response format")
                     return False, None
             else:
-                print(f"\n❌ Empty response")
+                print("\n❌ Empty response")
                 return False, None
 
     except Exception as e:
@@ -232,7 +231,7 @@ new file mode 100644
                 if hasattr(content, 'text'):
                     response = json.loads(content.text)
 
-                    print(f"\n✅ Code review completed!")
+                    print("\n✅ Code review completed!")
                     print(f"   Model: {response.get('model', 'unknown')}")
                     print(f"   Mode: {response.get('review_mode', 'unknown')}")
 
@@ -255,7 +254,7 @@ new file mode 100644
 
                     summary = response.get('summary', {})
                     if summary:
-                        print(f"\n   Summary:")
+                        print("\n   Summary:")
                         print(f"   HIGH:   {summary.get('high_count', 0)}")
                         print(f"   MEDIUM: {summary.get('medium_count', 0)}")
                         print(f"   LOW:    {summary.get('low_count', 0)}")
@@ -263,16 +262,16 @@ new file mode 100644
 
                         layers = summary.get('layers', {})
                         if layers:
-                            print(f"\n   By layer:")
+                            print("\n   By layer:")
                             for layer_name, count in layers.items():
                                 print(f"   {layer_name}: {count}")
 
                     return True, response
                 else:
-                    print(f"\n❌ Unexpected response format")
+                    print("\n❌ Unexpected response format")
                     return False, None
             else:
-                print(f"\n❌ Empty response")
+                print("\n❌ Empty response")
                 return False, None
 
     except Exception as e:
@@ -330,7 +329,7 @@ async def test_model_switching(server_params):
                         print(f"   ✅ {len(findings)} findings")
                 else:
                     results[model] = 0
-                    print(f"   ❌ No response")
+                    print("   ❌ No response")
 
         except Exception as e:
             results[model] = 0

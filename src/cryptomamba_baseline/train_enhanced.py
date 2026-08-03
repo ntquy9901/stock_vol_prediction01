@@ -47,7 +47,7 @@ from src.cryptomamba_baseline.config_enhanced import (
 )
 from src.common.har_features import generate_har_features, validate_har_features
 from src.common.evaluation import evaluate_predictions
-from src.common.data_normalization import normalize_for_training, denormalize_predictions, VolatilityNormalizer
+from src.common.data_normalization import normalize_for_training, VolatilityNormalizer
 
 warnings.filterwarnings('ignore')
 
@@ -126,7 +126,7 @@ class CryptoMambaEnhancedTrainer:
 
         # Validate HAR features
         validate_har_features(df)
-        print(f"   [OK] HAR features validated")
+        print("   [OK] HAR features validated")
 
         # Edge case: Check data length
         seq_length = self.config['seq_length']
@@ -222,7 +222,7 @@ class CryptoMambaEnhancedTrainer:
 
     def create_model(self):
         """Create Enhanced V2 model."""
-        print(f"\n[BUILD]  Creating CryptoMamba Enhanced V2 model...")
+        print("\n[BUILD]  Creating CryptoMamba Enhanced V2 model...")
 
         self.model = create_cryptomamba_model_enhanced(
             num_features=self.model_config['num_features'],
@@ -314,7 +314,7 @@ class CryptoMambaEnhancedTrainer:
             if (predictions < 0).any():
                 print(f"   [!]  Negative predictions detected at batch {batch_idx}, epoch {epoch}")
                 print(f"      Min prediction: {predictions.min().item():.6f}")
-                print(f"      ReLU constraint may not be working correctly")
+                print("      ReLU constraint may not be working correctly")
 
             loss = self.criterion(predictions, y_batch)
 
@@ -324,10 +324,10 @@ class CryptoMambaEnhancedTrainer:
             # Edge case: Check for exploding gradients
             grad_norm = self.track_parameter_updates()
             if grad_norm > 100:
-                print(f"\n   [!]  EXPLODING GRADIENTS DETECTED")
+                print("\n   [!]  EXPLODING GRADIENTS DETECTED")
                 print(f"      Epoch: {epoch}, Batch: {batch_idx}")
                 print(f"      Gradient norm: {grad_norm:.2f}")
-                print(f"      Stopping training to prevent instability")
+                print("      Stopping training to prevent instability")
                 raise ValueError(f"Exploding gradients (norm={grad_norm:.2f}) - training halted")
 
             self.optimizer.step()
@@ -406,7 +406,7 @@ class CryptoMambaEnhancedTrainer:
 
     def train(self, train_loader, val_loader):
         """Train model with early stopping and learning curves."""
-        print(f"\n[RUN] Starting training...")
+        print("\n[RUN] Starting training...")
         print(f"   Max epochs: {self.training_config['num_epochs']}")
         print(f"   Patience: {self.training_config['patience']}")
         print(f"   Min epochs: {self.training_config['min_epochs']}")
@@ -463,8 +463,8 @@ class CryptoMambaEnhancedTrainer:
                 no_update_epochs += 1
                 if no_update_epochs >= 50:
                     print(f"\n   [!]  WARNING: Parameters not updating for {no_update_epochs} epochs")
-                    print(f"      Check learning rate or model architecture")
-                    print(f"      Continuing training...")
+                    print("      Check learning rate or model architecture")
+                    print("      Continuing training...")
             else:
                 no_update_epochs = 0
 
@@ -486,7 +486,7 @@ class CryptoMambaEnhancedTrainer:
 
     def evaluate_test_set(self, test_loader):
         """Evaluate on test set and compute all 6 metrics."""
-        print(f"\n[TEST] Evaluating on test set...")
+        print("\n[TEST] Evaluating on test set...")
 
         # Load best model
         self.model.load_state_dict(
@@ -508,7 +508,7 @@ class CryptoMambaEnhancedTrainer:
 
     def save_results(self):
         """Save training results with all 6 metrics."""
-        print(f"\n[SAVE] Saving results...")
+        print("\n[SAVE] Saving results...")
 
         # Get best validation metrics
         best_idx = np.argmin(self.val_losses)
@@ -567,7 +567,7 @@ class CryptoMambaEnhancedTrainer:
         print(f"   [OK] Results saved: {results_path}")
 
         # Print comparison table
-        print(f"\n[DATA] Final Results:")
+        print("\n[DATA] Final Results:")
         print(f"   {'Metric':<15} {'Validation':<15} {'Test':<15} {'Difference':<15}")
         print(f"   {'-'*60}")
         print(f"   {'MSE':<15} {best_val_metrics['mse']:.6f}        {self.test_metrics['mse']:.6f}        {val_test_diff['mse_diff']:+.6f}")
@@ -578,7 +578,7 @@ class CryptoMambaEnhancedTrainer:
         print(f"   {'Dir Acc':<15} {best_val_metrics['directional_accuracy']:.2f}%        {self.test_metrics['directional_accuracy']:.2f}%        {val_test_diff['dir_acc_diff']:+.2f}%")
 
         # Print interpretation
-        print(f"\n[INFO] Interpretation:")
+        print("\n[INFO] Interpretation:")
         if self.test_metrics['directional_accuracy'] > 48.32:
             print(f"   [OK] Test Dir Acc ({self.test_metrics['directional_accuracy']:.2f}%) BEATS LSTM baseline (48.32%)")
         else:
@@ -639,12 +639,12 @@ def main():
     # Save results
     trainer.save_results()
 
-    print(f"\n[OK] Training complete!")
+    print("\n[OK] Training complete!")
     print(f"[DIR] Results saved to: {trainer.output_dir}")
-    print(f"\n[SEARCH] Next steps:")
+    print("\n[SEARCH] Next steps:")
     print(f"   1. Review learning curves: {trainer.output_dir / 'learning_curves.png'}")
     print(f"   2. Check metrics JSON: {trainer.output_dir / 'cryptomamba_enhanced_results.json'}")
-    print(f"   3. Compare with baselines (LSTM: 48.32%, HAR-R: 51.53%)")
+    print("   3. Compare with baselines (LSTM: 48.32%, HAR-R: 51.53%)")
 
 
 if __name__ == "__main__":

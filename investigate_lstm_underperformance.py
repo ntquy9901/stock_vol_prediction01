@@ -18,9 +18,7 @@ sys.path.insert(0, '.')
 
 import pandas as pd
 import numpy as np
-import torch
 import json
-from pathlib import Path
 
 # Load data
 print("="*80)
@@ -50,7 +48,7 @@ print(f"Range: [{all_volatility.min():.6f}, {all_volatility.max():.6f}]")
 print(f"Mean: {all_volatility.mean():.6f}")
 print(f"Std: {all_volatility.std():.6f}")
 print(f"Median: {np.median(all_volatility):.6f}")
-print(f"Percentiles:")
+print("Percentiles:")
 print(f"  25%: {np.percentile(all_volatility, 25):.6f}")
 print(f"  50%: {np.percentile(all_volatility, 50):.6f}")
 print(f"  75%: {np.percentile(all_volatility, 75):.6f}")
@@ -60,7 +58,7 @@ print(f"  99%: {np.percentile(all_volatility, 99):.6f}")
 print()
 print("KEY OBSERVATION:")
 print(f"  Volatility values are VERY SMALL (mean ~ {all_volatility.mean():.6f})")
-print(f"  This suggests data is already normalized or scaled!")
+print("  This suggests data is already normalized or scaled!")
 print()
 
 # Check 2: Load and analyze LSTM model results
@@ -91,7 +89,7 @@ try:
 
     print("KEY ISSUE:")
     print(f"  Dir Acc = {test_metrics['directional_accuracy']:.2f}% < 50%")
-    print(f"  This is WORSE than random guessing!")
+    print("  This is WORSE than random guessing!")
     print()
 
 except Exception as e:

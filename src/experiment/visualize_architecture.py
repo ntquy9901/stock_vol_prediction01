@@ -9,12 +9,8 @@ Date: 2026-06-17
 
 import os
 import sys
-import torch
-import torch.nn as nn
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import numpy as np
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -166,9 +162,9 @@ def print_model_summary(model):
     print("=" * 80)
 
     print("\n[Model Configuration]")
-    print(f"  Input: (batch_size, seq_length=22, 1)")
-    print(f"  LSTM: 1 layer, 32 hidden units")
-    print(f"  Output: (batch_size, 1)")
+    print("  Input: (batch_size, seq_length=22, 1)")
+    print("  LSTM: 1 layer, 32 hidden units")
+    print("  Output: (batch_size, 1)")
 
     print("\n[Layer Details]")
     for name, param in model.named_parameters():

@@ -13,7 +13,6 @@ Author: Stock Volatility Prediction Team
 Date: 2026-06-17
 """
 
-import torch
 import torch.nn as nn
 
 

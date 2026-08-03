@@ -39,7 +39,7 @@ train_end = int(0.70 * n)
 
 X_train, y_train = X[:train_end], y[:train_end]
 
-print(f"Testing FIXED learning rate: 0.001 (vs original 0.01)")
+print("Testing FIXED learning rate: 0.001 (vs original 0.01)")
 
 # Create model
 model = create_cryptomamba_model_enhanced()
@@ -49,7 +49,7 @@ optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0005)
 criterion = nn.MSELoss()
 
 # Train for 10 epochs
-print(f"\n=== TRAINING WITH FIXED LR = 0.001 ===")
+print("\n=== TRAINING WITH FIXED LR = 0.001 ===")
 for epoch in range(10):
     model.train()
 
@@ -89,7 +89,7 @@ for epoch in range(10):
 
     model.train()
 
-print(f"\n=== FINAL CHECK ===")
+print("\n=== FINAL CHECK ===")
 model.eval()
 with torch.no_grad():
     final_pred = model(X_train[:100])
@@ -98,6 +98,6 @@ print(f"Final predictions mean: {final_pred.mean():.8f}")
 print(f"Final % Zeros: {(final_pred == 0).float().mean().item() * 100:.1f}%")
 
 if final_pred.max().item() > 1e-6:
-    print(f"\n[SUCCESS] Model is learning! Predictions are non-zero.")
+    print("\n[SUCCESS] Model is learning! Predictions are non-zero.")
 else:
-    print(f"\n[FAILED] Model still predicting zeros.")
+    print("\n[FAILED] Model still predicting zeros.")
