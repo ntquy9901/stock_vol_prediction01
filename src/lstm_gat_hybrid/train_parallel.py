@@ -151,8 +151,14 @@ def train_epoch(model, dataloader, criterion, optimizer, device, config):
     return avg_loss
 
 
-def validate(model, dataloader, criterion, device):
-    """Validate model"""
+def validate(model, dataloader, criterion, device, dataset=None):
+    """Validate model.
+
+    avg_loss is on the NORMALIZED scale (matches train_epoch, so the learning
+    curve and early-stopping monitor share a consistent axis). The 6 business
+    metrics are computed on the DENORMALIZED (raw volatility) scale when a
+    dataset with fitted target_normalizers is provided.
+    """
     model.eval()
     total_loss = 0.0
     n_batches = 0
@@ -175,13 +181,13 @@ def validate(model, dataloader, criterion, device):
             predictions = model(x, adj_matrix)
             predictions_flat = predictions.reshape(batch_size * num_stocks)
 
-            # Compute loss
+            # Compute loss (normalized scale)
             loss = criterion(predictions_flat, y_flat)
 
             total_loss += loss.item()
             n_batches += 1
 
-            # Store predictions and targets
+            # Store predictions and targets (normalized scale)
             all_predictions.extend(predictions_flat.cpu().numpy())
             all_targets.extend(y_flat.cpu().numpy())
 
@@ -191,12 +197,34 @@ def validate(model, dataloader, criterion, device):
     all_predictions = np.array(all_predictions).flatten()
     all_targets = np.array(all_targets).flatten()
 
-    # Calculate 6 mandatory metrics (using raw predictions - no denormalization for multi-stock)
-    # n_stocks=num_stocks: all_targets/all_predictions are flattened in day-major,
-    # ticker-interleaved order (see dataset.py MultiStockDataset._create_sequences),
-    # so directional_accuracy must be computed per-ticker, not on the flattened array
-    # (see docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md).
-    metrics = evaluate_predictions(all_targets, all_predictions, n_stocks=num_stocks)
+    # Denormalize per-stock back to raw volatility scale before computing metrics.
+    # Flatten order: element i -> stock_idx = i % n_stocks (row-major y.reshape,
+    # day-major/ticker-interleaved; see dataset.py MultiStockDataset._create_sequences).
+    actual_dataset = dataset
+    if dataset is not None and hasattr(dataset, 'dataset'):
+        actual_dataset = dataset.dataset  # unwrap Subset if present
+
+    if actual_dataset is not None and getattr(actual_dataset, 'target_normalizers', None):
+        n_stocks = len(actual_dataset.stock_names)
+        preds_denorm = np.zeros_like(all_predictions)
+        targets_denorm = np.zeros_like(all_targets)
+        for i in range(len(all_predictions)):
+            stock_name = actual_dataset.stock_names[i % n_stocks]
+            if stock_name in actual_dataset.target_normalizers:
+                normalizer = actual_dataset.target_normalizers[stock_name]
+                preds_denorm[i] = normalizer.inverse_transform(
+                    all_predictions[i:i+1].reshape(1, -1)).flatten()[0]
+                targets_denorm[i] = normalizer.inverse_transform(
+                    all_targets[i:i+1].reshape(1, -1)).flatten()[0]
+            else:
+                preds_denorm[i] = all_predictions[i]
+                targets_denorm[i] = all_targets[i]
+        # n_stocks so directional_accuracy is computed per-ticker, not on the
+        # flattened array (see docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md).
+        metrics = evaluate_predictions(targets_denorm, preds_denorm, n_stocks=n_stocks)
+    else:
+        # No normalizers available: metrics on normalized scale (best available).
+        metrics = evaluate_predictions(all_targets, all_predictions, n_stocks=num_stocks)
 
     return avg_loss, metrics
 
@@ -324,7 +352,7 @@ def train_parallel_lstm_gat():
 
         # Validate
         print(f"  Validating...", flush=True)
-        val_loss, val_metrics = validate(model, val_loader, criterion, device)
+        val_loss, val_metrics = validate(model, val_loader, criterion, device, dataset=datasets[1])
         val_losses.append(val_loss)
 
         # Print progress
@@ -363,7 +391,7 @@ def train_parallel_lstm_gat():
 
     # Test evaluation
     print(f"\nTest set evaluation:")
-    test_loss, test_metrics = validate(model, test_loader, criterion, device)
+    test_loss, test_metrics = validate(model, test_loader, criterion, device, dataset=datasets[2])
 
     print(f"\nTest Results:")
     print(f"  - MSE: {test_metrics['mse']:.6f}")
