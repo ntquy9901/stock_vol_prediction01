@@ -70,15 +70,44 @@ python -m py_compile src/lstm_gat_hybrid/train.py src/lstm_gat_hybrid/train_para
 python -m pytest tests/lstm_gat_hybrid/ -v        # 15 passed
 ```
 
-## End-to-end smoke run
+## End-to-end smoke run (COMPLETED)
 
 `src/lstm_gat_hybrid/train_parallel_enhanced.py` has a built-in `--quick_test` flag (5 epochs,
-within CLAUDE.md's 5-10 epoch experimentation cap) — launched as a real run against
+within CLAUDE.md's 5-10 epoch experimentation cap) — ran as a real training run against
 `data/processed` (`python src/lstm_gat_hybrid/train_parallel_enhanced.py --quick_test
---graph_method knn`) to get a live before/after (`directional_accuracy` vs
-`directional_accuracy_flat_biased`) comparison from `training_results.json`. Result recorded
-separately once the run completes (see follow-up note / next report if it lands after this one is
-written).
+--graph_method knn`, ~4.5 minutes, CPU, 33 stocks, knn graph). Completed successfully (exit 0),
+5 epochs, best epoch 4, results saved to
+`results/parallel_lstm_gnn_knn_2026-08-03_002158/training_results.json`.
+
+`training_results.json`'s `test_metrics.directional_accuracy` = **48.14%** (the corrected,
+per-ticker value — this is what's now reported as headline DirAcc in console + JSON, confirmed
+identical to `directional_accuracy_per_stock`).
+
+`directional_accuracy_flat_biased` (the pre-fix formula's value) is computed internally by
+`evaluate_predictions()` once `n_stocks` is passed, but this training script only prints/saves
+`directional_accuracy` to console/JSON (not the biased companion value) — so, to get an explicit
+before/after number from this exact run rather than relying only on the synthetic-data proof, the
+saved checkpoint (`best_parallel_model.pth`) and the same test dataloader were reloaded in a
+throwaway script (not committed) that called `validate()` again and printed the full metrics dict:
+
+```
+mse: 8.682940460857935e-06
+rmse: 0.002946682958999481
+mae: 0.0008301305933855474
+r2: 0.771415114402771
+qlike: 0.46505415439605713
+directional_accuracy: 48.14008346942479          <- corrected headline (per-ticker), AFTER fix
+directional_accuracy_flat_biased: 71.56774309940465  <- old formula, BEFORE fix (what would have
+                                                        been reported as headline previously)
+r2_per_stock: -0.10455963760614395
+directional_accuracy_per_stock: 48.14008346942479    <- matches directional_accuracy exactly, confirms fix wiring
+```
+
+**Real-run confirmation: 48.14% (corrected) vs 71.57% (old, inflated) — a 23.4 percentage-point
+gap**, consistent with the project's previously documented 20-40pp inflation pattern
+(`docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md`). Note the corrected 48.14% is close to/below random
+chance (50%), matching the pattern already seen in the news-fusion baselines once the same fix was
+applied there.
 
 `train.py` and `train_parallel.py` have **no quick/smoke CLI flag** — their `if __name__ ==
 '__main__':` blocks call the full training function directly with `config.num_epochs` = 70 / 50
@@ -118,6 +147,8 @@ the regression-tested integration tests.
       environment (documented pre-existing tooling gap in CLAUDE.md).
 - [ ] Lint (`ruff`) — **Not run**: not installed (documented pre-existing tooling gap).
 - [x] Smoke test (pytest `smoke` marker) — pass (`tests/lstm_gat_hybrid/test_diracc_per_ticker_fix.py`).
+- [x] Live end-to-end run for `train_parallel_enhanced.py` — **done**, 5-epoch `--quick_test`,
+      confirmed real-run DirAcc changed from 71.57% (old formula) to 48.14% (corrected).
 - [ ] Live end-to-end run for `train.py`/`train_parallel.py` — **Not run**, no quick-test mode
       exists for these 2 files and adding one is out of this fix's scope (see above).
 - [x] Impact analysis — grepped for other `evaluate_predictions(` callers outside `baselines/`
