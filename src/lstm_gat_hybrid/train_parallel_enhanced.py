@@ -34,6 +34,7 @@ from src.lstm_gat_hybrid.model_parallel import create_parallel_lstm_gat_model
 from src.lstm_gat_hybrid.config import LSTMGATConfig
 from src.lstm_gat_hybrid.dataset_with_graph_method import create_multi_stock_dataloaders_with_graph_method_fixed  # CRITICAL FIX #4
 from src.common.evaluation import evaluate_predictions
+from src.common.provenance import get_provenance
 
 
 class EarlyStopping:
@@ -700,7 +701,8 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
             'r2': float(test_metrics['r2']),
             'qlike': float(test_metrics['qlike']),
             'directional_accuracy': float(test_metrics['directional_accuracy'])
-        }
+        },
+        'provenance': get_provenance()
     }
 
     results_path = results_dir / 'training_results.json'
