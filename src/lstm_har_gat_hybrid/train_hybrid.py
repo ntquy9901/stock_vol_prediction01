@@ -247,11 +247,19 @@ class HybridModelTrainer:
         avg_loss = total_loss / max(batches_processed, 1)
 
         # Calculate metrics
-        # Flatten to 2D: concatenate all batches and stocks
-        all_preds = np.concatenate(all_preds).reshape(-1, 1)
-        all_targets = np.concatenate(all_targets).reshape(-1, 1)
+        # Concatenate all batches: shape (total_windows, num_stocks, 1)
+        all_preds = np.concatenate(all_preds)
+        all_targets = np.concatenate(all_targets)
+        num_stocks = all_targets.shape[1]
 
-        metrics = evaluate_predictions(all_targets, all_preds)
+        # Flatten to 1D: day-major, ticker-interleaved (index i -> ticker i % num_stocks).
+        # Must be 1D (not reshape(-1, 1)) so directional_accuracy's np.diff runs along
+        # the window axis instead of the size-1 feature axis (which produced an
+        # empty diff -> NaN -> assert_finite_metrics crash).
+        all_preds = all_preds.flatten()
+        all_targets = all_targets.flatten()
+
+        metrics = evaluate_predictions(all_targets, all_preds, n_stocks=num_stocks)
 
         return avg_loss, metrics
 
