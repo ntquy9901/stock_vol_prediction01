@@ -177,9 +177,15 @@ CLAUDE.md khi chưa cài tool.
    kiểm định ý nghĩa thống kê) cho số liệu post-fix. Kết luận "QLIKE/RMSE/MAE/R² tốt hơn" nên được
    diễn đạt là kết quả 1 lần chạy, không phải kết luận đã kiểm định thống kê, trừ khi chạy thêm
    multi-seed trước khi nộp.
-2. **VN30 universe staleness** (32 mã dự án dùng vs danh sách VN30 chính thức, lệch 5 mã dư/3 mã
-   thiếu — memory `project_vn30_ticker_universe_mismatch`) — vẫn chưa đóng băng chính thức, cần ghi
-   vào phần Limitations của paper.
+2. ~~VN30 universe staleness — vẫn chưa đóng băng chính thức~~ — **[SỬA LẠI, 2026-08-03]**: kiểm tra
+   lại thấy quyết định này ĐàXONG từ 2026-08-02, không phải còn treo như ghi nhầm ở bản trước của
+   report này. Xem `docs/reports/2026-08-02_1634_vn30_data_source_audit.md` §5-7: universe đã chốt
+   **33 mã** (28/30 mã VN30 chính thức hiệu lực đến 2026-08-02 + 5 mã ngoài danh sách giữ lại vì đủ
+   dữ liệu lịch sử — BCM, BVH, NVL, PDR, POW; loại BSR/VPL vì lịch sử giao dịch quá ngắn, có định
+   lượng cụ thể). Xác nhận lại 2026-08-03: `data/processed/` hiện có đúng 33 file ticker (`ls
+   data/processed/*_processed.csv | wc -l` → 33), khớp chính xác bảng đã chốt. Đoạn văn dùng cho
+   Limitations/Dataset Description của paper đã có sẵn ở §7 của báo cáo đó (BSR/VPL: số phiên giao
+   dịch cụ thể, lý do loại). Không cần làm gì thêm — chỉ cần paper trích dẫn đúng file đó.
 3. **947 lỗi ruff + 9 lỗi pytest collection** — nợ kỹ thuật toàn repo, không chặn số liệu paper
    nhưng nên biết nếu công khai repo cùng paper.
 4. **`sanity_constant_baseline.py`, `check_vhm_normalizer.py`, `debug_corrupted_val_batches.py`**
