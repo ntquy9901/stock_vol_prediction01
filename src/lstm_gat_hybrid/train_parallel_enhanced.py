@@ -436,7 +436,7 @@ def validate(model, dataloader, criterion, device, dataset=None):
 
 
 # ========================================================================
-def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False, seed=42):
+def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False, seed=42, epochs=None):
     """
     Main training function for Parallel LSTM-GNN with enhanced anti-overfitting
 
@@ -447,8 +447,14 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
 
     Args:
         graph_method: 'correlation' (paper) or 'knn' (current)
-        quick_test: If True, train for only 5 epochs to verify setup
+        quick_test: If True, train for only 5 epochs to verify setup (ignored if epochs is given)
         seed: torch/numpy RNG seed (multi-seed reproducibility check, 2026-08-03)
+        epochs: explicit epoch count override (e.g. 20, to match the news-fusion
+            headline comparison's epoch count for an apples-to-apples multi-seed
+            rerun). Sets patience=min_epochs=epochs so the run completes exactly
+            `epochs` epochs without early stopping cutting it short, matching the
+            same one-shot-no-early-stop convention used for the 2026-08-03 20-epoch
+            comparison. Takes precedence over quick_test.
     """
     print("="*80)
     print("PARALLEL LSTM-GNN TRAINING - WITH ENHANCED ANTI-OVERFITTING")
@@ -467,8 +473,13 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     config.learning_rate = 0.001  # ✅ FIX: Restored from 0.0001 — original was masking a different bug
     config.batch_size = 11  # Paper: best among 11, 21
 
-    # Quick test mode or full training
-    if quick_test:
+    # Quick test / explicit epoch count / full training
+    if epochs is not None:
+        config.num_epochs = epochs
+        config.patience = epochs
+        config.min_epochs = epochs
+        print(f"\n[FIXED-EPOCH MODE] Training for exactly {epochs} epochs (no early stopping)...")
+    elif quick_test:
         config.num_epochs = 5
         config.patience = 3
         config.min_epochs = 3
@@ -722,6 +733,10 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     return results
 
 
+MAX_EPOCHS = 20  # CLAUDE.md Training policy: >10 epochs needs explicit user approval based on
+                 # 5/10-epoch results; 20 was explicitly authorized 2026-08-03 for the
+                 # HAR-only-vs-news-fusion headline comparison (matched epoch count both sides).
+
 if __name__ == '__main__':
     import argparse
 
@@ -733,15 +748,24 @@ if __name__ == '__main__':
                         help='Run quick test (5 epochs) to verify setup')
     parser.add_argument('--seed', type=int, default=42,
                         help='torch/numpy RNG seed (multi-seed reproducibility check, 2026-08-03)')
+    parser.add_argument('--epochs', type=int, default=None,
+                        help=f'explicit epoch count override, capped at {MAX_EPOCHS} per CLAUDE.md '
+                             'Training policy (e.g. --epochs 20 to match the news-fusion comparison)')
 
     args = parser.parse_args()
+
+    if args.epochs is not None and args.epochs > MAX_EPOCHS:
+        raise ValueError(
+            f"--epochs={args.epochs} exceeds CLAUDE.md Training policy cap ({MAX_EPOCHS}) for "
+            "this file without further explicit user approval.")
 
     print(f"\nGraph method: {args.graph_method}")
     print(f"  - 'correlation': Pearson correlation threshold (|corr| > 0.7) - from paper")
     print(f"  - 'knn': k-NN sparse graph (k=8) - current method")
 
-    if args.quick_test:
+    if args.quick_test and args.epochs is None:
         print(f"\n[QUICK TEST MODE] Enabled - Training for 5 epochs only")
 
     results = train_parallel_lstm_gat_enhanced(
-        graph_method=args.graph_method, quick_test=args.quick_test, seed=args.seed)
+        graph_method=args.graph_method, quick_test=args.quick_test, seed=args.seed,
+        epochs=args.epochs)
