@@ -69,7 +69,15 @@ class LSTMGATConfig:
 
     # ===== Early Stopping Parameters =====
     min_epochs = 20              # Minimum epochs before early stopping
-    min_delta = 1e-6            # Minimum change to qualify as improvement
+    # Minimum change to qualify as improvement. Calibrated for val_loss on the
+    # NORMALIZED (mean-0/std-1) target scale used by train.py/train_parallel.py/
+    # train_parallel_enhanced.py (O(0.1-1) loss magnitude) since the P1.1 fix made
+    # normalization actually apply — 1e-6 was tuned for the old raw ~1e-3-scale
+    # volatility MSE (~1e-6 magnitude) and is now ~0 relative improvement, making
+    # early stopping nearly a no-op (best-val-loss checkpointing is unaffected,
+    # but runs no longer benefit from stopping early). best_val_loss values from
+    # runs before this change are on a different scale and not directly comparable.
+    min_delta = 1e-4
 
     # ===== Graph-specific Parameters =====
     # Dynamic graph update frequency

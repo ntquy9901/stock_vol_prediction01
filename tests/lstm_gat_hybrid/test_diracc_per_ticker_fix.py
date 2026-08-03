@@ -115,12 +115,28 @@ def _make_dummy_batches(t2, p2, n_stocks):
     return batches, predictions
 
 
+class _IdentityNormalizer:
+    """Stand-in for VolatilityNormalizer that leaves values unchanged, so the
+    denormalized array equals the known-diverging array we constructed."""
+
+    def inverse_transform(self, arr):
+        return np.asarray(arr)
+
+
+class _FakeDatasetNoSubset:
+    def __init__(self, stock_names):
+        self.stock_names = stock_names
+        self.target_normalizers = {name: _IdentityNormalizer() for name in stock_names}
+
+
 class TestTrainPyValidateIntegration:
     """I/O-level test of src/lstm_gat_hybrid/train.py's validate(), per CLAUDE.md's
     rule that run_*()-style functions need an integration test, not just a pure
     helper test of evaluate_predictions."""
 
     def test_validate_reports_per_ticker_diracc_as_headline(self):
+        """No dataset= given: exercises the no-normalizer path (metrics computed
+        directly on the normalized-scale arrays coming out of the dataloader)."""
         y_true, y_pred, n_stocks, t2, p2 = _make_known_diverging_arrays()
         batches, predictions = _make_dummy_batches(t2, p2, n_stocks)
         model = _QueueModel(predictions)
@@ -132,6 +148,26 @@ class TestTrainPyValidateIntegration:
         assert metrics['directional_accuracy'] == pytest.approx(0.0), (
             "validate() must report the per-ticker DirAcc as the headline value, "
             "not the flattened/inflated one"
+        )
+        assert metrics['directional_accuracy_flat_biased'] == pytest.approx(100.0)
+
+    def test_validate_with_dataset_denormalizes_before_diracc(self):
+        """dataset= given (the real-run path via create_multi_stock_dataloaders'
+        post-P1.1-fix normalized targets): exercises the per-stock inverse_transform
+        loop (train.py ~line 195-219) that must map i % n_stocks back to the same
+        stock_names order used when sequences were built, BEFORE computing DirAcc."""
+        y_true, y_pred, n_stocks, t2, p2 = _make_known_diverging_arrays()
+        batches, predictions = _make_dummy_batches(t2, p2, n_stocks)
+        model = _QueueModel(predictions)
+        criterion = nn.MSELoss()
+        device = torch.device('cpu')
+        fake_dataset = _FakeDatasetNoSubset(['A', 'B'])
+
+        _, metrics = train_module.validate(model, batches, criterion, device, dataset=fake_dataset)
+
+        assert metrics['directional_accuracy'] == pytest.approx(0.0), (
+            "the denormalization branch must report per-ticker DirAcc as the "
+            "headline value on the denormalized (identity here) scale"
         )
         assert metrics['directional_accuracy_flat_biased'] == pytest.approx(100.0)
 
@@ -151,20 +187,21 @@ class TestTrainParallelPyValidateIntegration:
         assert metrics['directional_accuracy'] == pytest.approx(0.0)
         assert metrics['directional_accuracy_flat_biased'] == pytest.approx(100.0)
 
+    def test_validate_with_dataset_denormalizes_before_diracc(self):
+        """Same denorm-branch coverage as train.py's equivalent test above."""
+        y_true, y_pred, n_stocks, t2, p2 = _make_known_diverging_arrays()
+        batches, predictions = _make_dummy_batches(t2, p2, n_stocks)
+        model = _QueueModel(predictions)
+        criterion = nn.MSELoss()
+        device = torch.device('cpu')
+        fake_dataset = _FakeDatasetNoSubset(['A', 'B'])
 
-class _IdentityNormalizer:
-    """Stand-in for VolatilityNormalizer that leaves values unchanged, so the
-    denormalized array in train_parallel_enhanced.py's validate() equals the
-    known-diverging array we constructed."""
+        _, metrics = train_parallel_module.validate(
+            model, batches, criterion, device, dataset=fake_dataset
+        )
 
-    def inverse_transform(self, arr):
-        return np.asarray(arr)
-
-
-class _FakeDatasetWithNormalizers:
-    def __init__(self, stock_names):
-        self.stock_names = stock_names
-        self.target_normalizers = {name: _IdentityNormalizer() for name in stock_names}
+        assert metrics['directional_accuracy'] == pytest.approx(0.0)
+        assert metrics['directional_accuracy_flat_biased'] == pytest.approx(100.0)
 
 
 class TestTrainParallelEnhancedPyValidateIntegration:
@@ -179,7 +216,7 @@ class TestTrainParallelEnhancedPyValidateIntegration:
         model = _QueueModel(predictions)
         criterion = nn.MSELoss()
         device = torch.device('cpu')
-        fake_dataset = _FakeDatasetWithNormalizers(['A', 'B'])
+        fake_dataset = _FakeDatasetNoSubset(['A', 'B'])
 
         _, metrics = train_parallel_enhanced_module.validate(
             model, batches, criterion, device, dataset=fake_dataset
