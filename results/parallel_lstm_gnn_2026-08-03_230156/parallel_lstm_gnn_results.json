@@ -1,0 +1,30 @@
+{
+  "model": "Parallel LSTM-GNN (based on Sonani et al. 2025)",
+  "timestamp": "2026-08-03_230156",
+  "architecture": "Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion",
+  "config": {
+    "num_stocks": 30,
+    "learning_rate": 0.005,
+    "batch_size": 11,
+    "num_epochs_trained": 2,
+    "best_epoch": 2,
+    "lstm_hidden_dim": 64,
+    "gat_hidden_dim": 64,
+    "lstm_dropout": 0.5,
+    "fusion_dropout": 0.5,
+    "patience": 1
+  },
+  "training_summary": {
+    "num_epochs_trained": 2,
+    "best_epoch": 2,
+    "best_val_loss": 1.0041507491841912
+  },
+  "test_metrics": {
+    "mse": 1.0107810339832213e-05,
+    "rmse": 0.0031792782734187037,
+    "mae": 0.0008795142639428377,
+    "r2": 0.7339043617248535,
+    "qlike": 0.513758659362793,
+    "directional_accuracy": 46.34367628379604
+  }
+}

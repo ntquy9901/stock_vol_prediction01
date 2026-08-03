@@ -20,6 +20,18 @@ này chưa được xác nhận. Toàn bộ cột/giá trị/kết luận DirAcc
 luận trong báo cáo này, chỉ giữ lại R², QLIKE, RMSE. Ghi chú kỹ thuật đầy đủ về vấn đề này (công
 thức, code, số liệu đối chiếu) đã được chuyển ra file riêng: `docs/report_2026-08-01/DIRACC_ISSUE_NOTE.md`.
 
+**Cập nhật lần 4 (2026-08-03) — DirAcc đã được sửa và xác minh, số liệu cuối cùng ở báo cáo riêng:**
+công thức per-ticker DirAcc (`src/common/evaluation.py::directional_accuracy_per_ticker`, tham số
+`n_stocks=`) đã được áp dụng và xác minh trên toàn bộ pipeline HAR-only lẫn news-fusion (test I/O
+thật, không chỉ unit test thuần). Đồng thời phát hiện và sửa thêm 2 bug ảnh hưởng trực tiếp tới
+pipeline HAR-only backbone (`src/lstm_gat_hybrid/dataset.py`): (1) normalizer fit trên toàn bộ dữ
+liệu trước khi split (leakage), (2) normalizer được fit nhưng chưa từng thực sự áp dụng
+(`.transform()`) — model trước đó train trên dữ liệu HAR/volatility thô, chưa chuẩn hóa. Toàn bộ
+số liệu, quy trình sửa lỗi, và bảng so sánh cuối cùng (HAR-only vs news-fusion, cùng 20 epoch,
+cùng seed) nằm ở `docs/reports/2026-08-03_final_paper_readiness_report.md` — không cập nhật lại
+toàn bộ bảng trong file này để tránh làm việc trùng lặp; xem file đó để lấy số liệu DirAcc dùng
+cho paper.
+
 ---
 
 # 1. TÓM TẮT (đọc trước, 1 phút)
