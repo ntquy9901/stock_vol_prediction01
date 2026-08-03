@@ -118,3 +118,29 @@ bản fallback bị revert).
 - Không sửa `src/`, không sửa baseline khác (hard isolation §3.F.3).
 - Không dùng `macro/raw/*.csv` (dxy, sbv_policy_rates) — đó là numeric macro series, không phải text
   để "convert sang vector", ngoài phạm vi yêu cầu này.
+
+## 7. Closure decision (2026-08-03)
+
+**Status: đóng (closed), không tiếp tục sang bước train.** Quyết định trong phiên audit toàn diện
+trước khi viết paper, dựa trên các điểm sau:
+
+- Extraction đã hoàn tất và đạt go-criterion riêng của baseline này (§4: "≥ vài chục stock-days có
+  tin"): 341 record, 113 stock-day trong test-period (2021-2026) — không phải "no-go" theo nghĩa dữ
+  liệu quá thưa, khác với các baseline khác đã archive vì lý do "null/rejected result".
+- Tuy nhiên: chưa có bước train (không có `train_*.py`/`model_*.py`/`results.json` nào trong
+  `code/`) — baseline dừng lại ở bước extraction, chưa từng thực sự so sánh DirAcc/QLIKE với 3
+  baseline tham chiếu nêu ở §1.
+- Bối cảnh quyết định: dự án đã có ~10 kết quả null từ các news-baseline khác cùng lớp vấn đề (macro
+  news, sentiment decay, dual-group embedding, v.v. — xem memory
+  `project_null_result_pattern_and_sota_pivot`), và 341 record/113 stock-day là volume rất nhỏ so
+  với ~5200 test-window points của pipeline chính — tiên nghiệm rủi ro null cao, giống pattern đã
+  thấy lặp lại nhiều lần.
+- Deadline nộp paper trong tháng tới; ưu tiên hiện tại đã chuyển sang: (a) đảm bảo tính đúng đắn của
+  các bug đã audit trên pipeline chính (P1.1/P1.2/P1.3/DirAcc), và (b) train lại đúng 1 lần cuối
+  cùng pipeline headline (per-ticker news-gate) 20 epoch so với HAR-only để có bảng kết quả cuối
+  cùng cho paper — không còn ngân sách thời gian để mở thêm 1 baseline thử nghiệm mới trước hạn nộp.
+
+**Không archive folder này** (khác với các baseline "null/rejected" đã archive) — giữ nguyên tại chỗ
+vì đây là "chưa hoàn thành do ưu tiên thời gian", không phải "đã kết luận và bị bác bỏ". Extraction
+code (`extract_objective_embeddings.py`) và test đã pass vẫn có giá trị tham khảo nếu muốn tiếp tục
+sau khi nộp paper. Không có claim nào từ baseline này được đưa vào paper.
