@@ -1,0 +1,114 @@
+$ C:\Users\QUY\AppData\Local\Programs\Python\Python314\python.exe -m pytest -q --junitxml=C:\luanvan\stock_vol_prediction01\docs\reports\evidence\2026-08-03_0100\junit_full.xml
+started_at: 2026-08-03T15:55:49.274346+00:00
+duration_seconds: 4.202
+exit_code: 2
+--- stdout ---
+
+=================================== ERRORS ====================================
+______________ ERROR collecting tests/test_complete_prototype.py ______________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_complete_prototype.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in <module>
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_complete_prototype.py:22: in <module>
+    from src.lstm_har_gat_hybrid.hybrid_model import LSTMHAR_GAT_Hybrid
+src\lstm_har_gat_hybrid\__init__.py:14: in <module>
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in <module>
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric
+_______________ ERROR collecting tests/test_data_processing.py ________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_data_processing.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_data_processing.py:17: in <module>
+    from src.data_processing import (
+E   ModuleNotFoundError: No module named 'src.data_processing'
+__________________ ERROR collecting tests/test_evaluation.py __________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_evaluation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_evaluation.py:24: in <module>
+    from src.evaluation import (
+E   ModuleNotFoundError: No module named 'src.evaluation'
+_____________ ERROR collecting tests/test_feature_engineering.py ______________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_feature_engineering.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_feature_engineering.py:20: in <module>
+    from src.feature_engineering import (
+E   ModuleNotFoundError: No module named 'src.feature_engineering'
+_________________ ERROR collecting tests/test_fusion_layer.py _________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_fusion_layer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in <module>
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_fusion_layer.py:17: in <module>
+    from src.lstm_har_gat_hybrid.fusion_layer import FusionLayer, AttentionFusionLayer
+src\lstm_har_gat_hybrid\__init__.py:14: in <module>
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in <module>
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric
+________________ ERROR collecting tests/test_model_training.py ________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_model_training.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_model_training.py:25: in <module>
+    from src.model_training import (
+E   ModuleNotFoundError: No module named 'src.model_training'
+___________________ ERROR collecting tests/test_pipeline.py ___________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_pipeline.py:25: in <module>
+    from src.pipeline import (
+E   ModuleNotFoundError: No module named 'src.pipeline'
+_______________ ERROR collecting tests/test_spatial_encoder.py ________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_spatial_encoder.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in <module>
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_spatial_encoder.py:17: in <module>
+    from src.lstm_har_gat_hybrid.spatial_encoder import SpatialGAT, BatchSpatialGAT
+src\lstm_har_gat_hybrid\__init__.py:14: in <module>
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in <module>
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric
+_________________ ERROR collecting tests/test_timesfm_lora.py _________________
+ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_timesfm_lora.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_timesfm_lora.py:28: in <module>
+    from src.timesfm_baseline.timesfm_lora_finetuning import TimesFMLoRAFineTuner
+src\timesfm_baseline\timesfm_lora_finetuning.py:30: in <module>
+    import mlflow
+E   ModuleNotFoundError: No module named 'mlflow'
+=========================== short test summary info ===========================
+ERROR tests/test_complete_prototype.py
+ERROR tests/test_data_processing.py
+ERROR tests/test_evaluation.py
+ERROR tests/test_feature_engineering.py
+ERROR tests/test_fusion_layer.py
+ERROR tests/test_model_training.py
+ERROR tests/test_pipeline.py
+ERROR tests/test_spatial_encoder.py
+ERROR tests/test_timesfm_lora.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 9 errors during collection !!!!!!!!!!!!!!!!!!!
+9 errors in 2.94s
+
+--- stderr ---
+

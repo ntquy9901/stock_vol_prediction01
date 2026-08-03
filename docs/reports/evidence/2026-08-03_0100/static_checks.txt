@@ -1,0 +1,9 @@
+$ git diff --check
+started_at: 2026-08-03T15:51:30.402098+00:00
+duration_seconds: 0.022
+exit_code: 0
+--- stdout ---
+
+--- stderr ---
+warning: in the working copy of 'src/lstm_gat_hybrid/dataset.py', LF will be replaced by CRLF the next time Git touches it
+

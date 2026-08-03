@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="9" failures="0" skipped="0" tests="9" time="3.025" timestamp="2026-08-03T22:55:54.165221+07:00" hostname="LAPTOP-4PRM1TVB"><testcase classname="" name="tests.test_complete_prototype" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_complete_prototype.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in &lt;module&gt;
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_complete_prototype.py:22: in &lt;module&gt;
+    from src.lstm_har_gat_hybrid.hybrid_model import LSTMHAR_GAT_Hybrid
+src\lstm_har_gat_hybrid\__init__.py:14: in &lt;module&gt;
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in &lt;module&gt;
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric</error></testcase><testcase classname="" name="tests.test_data_processing" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_data_processing.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_data_processing.py:17: in &lt;module&gt;
+    from src.data_processing import (
+E   ModuleNotFoundError: No module named 'src.data_processing'</error></testcase><testcase classname="" name="tests.test_evaluation" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_evaluation.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_evaluation.py:24: in &lt;module&gt;
+    from src.evaluation import (
+E   ModuleNotFoundError: No module named 'src.evaluation'</error></testcase><testcase classname="" name="tests.test_feature_engineering" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_feature_engineering.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_feature_engineering.py:20: in &lt;module&gt;
+    from src.feature_engineering import (
+E   ModuleNotFoundError: No module named 'src.feature_engineering'</error></testcase><testcase classname="" name="tests.test_fusion_layer" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_fusion_layer.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in &lt;module&gt;
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_fusion_layer.py:17: in &lt;module&gt;
+    from src.lstm_har_gat_hybrid.fusion_layer import FusionLayer, AttentionFusionLayer
+src\lstm_har_gat_hybrid\__init__.py:14: in &lt;module&gt;
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in &lt;module&gt;
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric</error></testcase><testcase classname="" name="tests.test_model_training" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_model_training.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_model_training.py:25: in &lt;module&gt;
+    from src.model_training import (
+E   ModuleNotFoundError: No module named 'src.model_training'</error></testcase><testcase classname="" name="tests.test_pipeline" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_pipeline.py:25: in &lt;module&gt;
+    from src.pipeline import (
+E   ModuleNotFoundError: No module named 'src.pipeline'</error></testcase><testcase classname="" name="tests.test_spatial_encoder" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_spatial_encoder.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+src\lstm_har_gat_hybrid\spatial_encoder.py:23: in &lt;module&gt;
+    from torch_geometric.nn import GATConv, GCNConv
+E   ModuleNotFoundError: No module named 'torch_geometric'
+
+During handling of the above exception, another exception occurred:
+tests\test_spatial_encoder.py:17: in &lt;module&gt;
+    from src.lstm_har_gat_hybrid.spatial_encoder import SpatialGAT, BatchSpatialGAT
+src\lstm_har_gat_hybrid\__init__.py:14: in &lt;module&gt;
+    from .spatial_encoder import SpatialGAT
+src\lstm_har_gat_hybrid\spatial_encoder.py:25: in &lt;module&gt;
+    raise ImportError(
+E   ImportError: PyTorch Geometric required for spatial encoder. Install with: pip install torch-geometric</error></testcase><testcase classname="" name="tests.test_timesfm_lora" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\luanvan\stock_vol_prediction01\tests\test_timesfm_lora.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+tests\test_timesfm_lora.py:28: in &lt;module&gt;
+    from src.timesfm_baseline.timesfm_lora_finetuning import TimesFMLoRAFineTuner
+src\timesfm_baseline\timesfm_lora_finetuning.py:30: in &lt;module&gt;
+    import mlflow
+E   ModuleNotFoundError: No module named 'mlflow'</error></testcase></testsuite></testsuites>

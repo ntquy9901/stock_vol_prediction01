@@ -1,0 +1,156 @@
+$ git diff --stat
+started_at: 2026-08-03T15:51:26.673936+00:00
+duration_seconds: 0.024
+exit_code: 0
+--- stdout ---
+ src/lstm_gat_hybrid/dataset.py | 87 ++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 71 insertions(+), 16 deletions(-)
+
+--- stderr ---
+warning: in the working copy of 'src/lstm_gat_hybrid/dataset.py', LF will be replaced by CRLF the next time Git touches it
+
+
+$ git diff
+started_at: 2026-08-03T15:51:26.697840+00:00
+duration_seconds: 0.022
+exit_code: 0
+--- stdout ---
+diff --git a/src/lstm_gat_hybrid/dataset.py b/src/lstm_gat_hybrid/dataset.py
+index c9ceec2..bb9d85a 100644
+--- a/src/lstm_gat_hybrid/dataset.py
++++ b/src/lstm_gat_hybrid/dataset.py
+@@ -108,7 +108,7 @@ class MultiStockDataset(Dataset):
+ 
+     def __init__(
+         self,
+-        data_dir: str,
++        data_dir: Optional[str] = None,
+         seq_length: int = 22,
+         forecast_horizon: int = 5,
+         graph_method: str = 'hybrid',
+@@ -118,13 +118,16 @@ class MultiStockDataset(Dataset):
+         data_augmentation: bool = True,
+         augmentation_prob: float = 0.3,
+         augmentation_factor: float = 0.1,
+-        train_mode: bool = False
++        train_mode: bool = False,
++        precomputed_raw_data: Optional[Dict] = None,
++        precomputed_har_data: Optional[Dict] = None
+     ):
+         """
+         Initialize multi-stock dataset with anti-overfitting techniques
+ 
+         Args:
+-            data_dir: Directory containing processed CSV files
++            data_dir: Directory containing processed CSV files (legacy direct-load
++                path). Ignored when precomputed_raw_data/precomputed_har_data given.
+             seq_length: Input sequence length
+             forecast_horizon: Forecast horizon (5-day ahead)
+             graph_method: Graph construction method ('correlation', 'spillover', 'hybrid')
+@@ -135,6 +138,13 @@ class MultiStockDataset(Dataset):
+             augmentation_prob: Probability of applying augmentation (0.3 = 30%)
+             augmentation_factor: Strength of augmentation (default: 0.1)
+             train_mode: If True, apply data augmentation during training
++            precomputed_raw_data: Pre-split raw stock data dict (ticker -> DataFrame).
++                When both precomputed_* args are given, disk loading and full-series
++                HAR/normalizer computation are skipped (split-first pipeline path);
++                the caller (create_multi_stock_dataloaders) fits normalizers on the
++                train split only. Prevents the HAR/normalizer leakage of the legacy
++                full-series construction path.
++            precomputed_har_data: Pre-split HAR feature data dict (ticker -> DataFrame).
+         """
+         self.seq_length = seq_length
+         self.forecast_horizon = forecast_horizon
+@@ -153,23 +163,33 @@ class MultiStockDataset(Dataset):
+         print(f"  - Data Augmentation: {data_augmentation} (prob={augmentation_prob}, factor={augmentation_factor})")
+         print(f"  - Train Mode: {train_mode}")
+ 
+-        # Load and process data
+-        self.stock_data = self._load_multi_stock_data(data_dir)
+-        self.stock_names = sorted(self.stock_data.keys())
+-
+-        print(f"[MultiStockDataset] Loaded {len(self.stock_names)} stocks: {self.stock_names[:5]}...")
+-
+-        # Generate HAR features for each stock
+-        self.stock_data_with_har = self._generate_features_for_all_stocks()
+-
+-        # Initialize graph builder
++        # Initialize graph builder (needed by _create_sequences in both paths)
+         self.graph_builder = DynamicGraphBuilder(self.config)
+ 
+-        # Initialize normalizers
++        # Initialize normalizers (populated below or by the caller in the pre-split path)
+         self.feature_normalizers = {}
+         self.target_normalizers = {}
+-        if normalize:
+-            self._initialize_normalizers()
++
++        if precomputed_raw_data is not None and precomputed_har_data is not None:
++            # Pre-split path: raw + HAR already computed per split by the caller.
++            # Skip disk load, full-series HAR generation, and normalizer fitting —
++            # the caller fits normalizers on the train split only (no leakage).
++            self.stock_data = precomputed_raw_data
++            self.stock_data_with_har = precomputed_har_data
++            self.stock_names = sorted(precomputed_har_data.keys())
++        else:
++            # Legacy direct-load path (still used by test_phase1_implementation.py):
++            # load full series, generate HAR over full series, fit normalizers.
++            self.stock_data = self._load_multi_stock_data(data_dir)
++            self.stock_names = sorted(self.stock_data.keys())
++
++            print(f"[MultiStockDataset] Loaded {len(self.stock_names)} stocks: {self.stock_names[:5]}...")
++
++            # Generate HAR features for each stock
++            self.stock_data_with_har = self._generate_features_for_all_stocks()
++
++            if normalize:
++                self._initialize_normalizers()
+ 
+         # Create sequences
+         self.sequences = self._create_sequences()
+@@ -352,6 +372,41 @@ class MultiStockDataset(Dataset):
+         if self.data_augmentation and self.train_mode and np.random.random() < self.augmentation_prob:
+             x, y = augment_sequence(x, y, self.augmentation_factor)
+ 
++        # Apply per-stock normalization (mirrors MultiStockDatasetWithPreSplitData.
++        # __getitem__ in dataset_presplit.py). Previously the fitted normalizers were
++        # never applied here, so training/eval ran on raw ~1e-3 volatility values —
++        # the exact "fit a scaler then forget to use it" failure documented in
++        # CLAUDE.md (LSTM-GNN Normalization Failure). Falls back to raw (with a
++        # warning) for any stock missing from the normalizer dict.
++        if self.normalize:
++            x_normalized = np.zeros_like(x)
++            for stock_idx in range(x.shape[1]):
++                stock_name = self.stock_names[stock_idx]
++                if stock_name in self.feature_normalizers:
++                    for feat_idx in range(x.shape[2]):
++                        x_normalized[:, stock_idx, feat_idx] = \
++                            self.feature_normalizers[stock_name].transform(
++                                x[:, stock_idx, feat_idx:feat_idx+1]
++                            ).flatten()
++                else:
++                    x_normalized[:, stock_idx, :] = x[:, stock_idx, :]
++                    print(f"[MultiStockDataset __getitem__] WARNING: {stock_name} not in feature_normalizers!")
++            x = x_normalized
++
++            y_normalized = np.zeros_like(y)
++            for stock_idx, stock_name in enumerate(self.stock_names):
++                if stock_name in self.target_normalizers:
++                    y_normalized[stock_idx] = \
++                        self.target_normalizers[stock_name].transform(
++                            y[stock_idx:stock_idx+1].reshape(1, -1)
++                        ).flatten()[0]
++                else:
++                    y_normalized[stock_idx] = y[stock_idx]
++                    print(f"[MultiStockDataset __getitem__] WARNING: {stock_name} not in target_normalizers!")
++            # Clip normalized targets to guard against distribution-shift outliers
++            # (val/test volatility far outside the training range → huge z-scores).
++            y = np.clip(y_normalized, -10.0, 10.0)
++
+         # Convert to tensors
+         x = torch.FloatTensor(x)
+         adj_matrix = torch.FloatTensor(adj_matrix)
+
+--- stderr ---
+warning: in the working copy of 'src/lstm_gat_hybrid/dataset.py', LF will be replaced by CRLF the next time Git touches it
+
