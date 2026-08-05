@@ -50,7 +50,7 @@ The one change needed: the script hardcoded `torch.manual_seed(42)` / `np.random
 preserving prior behavior), wired into both RNG seeds, and recorded in `results.json`, mirroring the
 exact pattern already in `train_per_ticker_gate.py`. This is the only edit to the file.
 
-Commit: `__COMMIT_SHA__` (filled in on commit).
+Commit: `79e2d17`.
 
 ## Results — test set, 3 seeds (42, 123, 2026), 20 epochs
 
