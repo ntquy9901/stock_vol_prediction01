@@ -11,7 +11,7 @@ Date: 2026-06-19
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader, Subset, random_split
+from torch.utils.data import Dataset, Subset, random_split
 from datetime import datetime
 
 
@@ -53,7 +53,7 @@ def demonstrate_random_split_leakage(dataset):
         generator=torch.Generator().manual_seed(42)
     )
 
-    print(f"\nSplit method: RANDOM (torch.utils.data.random_split)")
+    print("\nSplit method: RANDOM (torch.utils.data.random_split)")
     print(f"Train size: {len(train_dataset)} (80%)")
     print(f"Test size: {len(test_dataset)} (20%)")
 
@@ -73,11 +73,11 @@ def demonstrate_random_split_leakage(dataset):
     test_min_date = min(test_dates)
 
     if train_max_date >= test_min_date:
-        print(f"\n[X] DATA LEAKAGE DETECTED!")
+        print("\n[X] DATA LEAKAGE DETECTED!")
         print(f"   Train data goes up to: {train_max_date}")
         print(f"   Test data starts from: {test_min_date}")
         print(f"   OVERLAP: Test data contains dates from {train_min_date} to {train_max_date}")
-        print(f"   Model sees future patterns during training!")
+        print("   Model sees future patterns during training!")
 
         # Count how many test samples are from training period
         leaked_samples = sum(1 for d in test_dates if d <= train_max_date)
@@ -108,7 +108,7 @@ def demonstrate_temporal_split_no_leakage(dataset):
     train_dataset = Subset(dataset, train_indices)
     test_dataset = Subset(dataset, test_indices)
 
-    print(f"\nSplit method: TEMPORAL (chronological)")
+    print("\nSplit method: TEMPORAL (chronological)")
     print(f"Train size: {len(train_dataset)} (80%)")
     print(f"Test size: {len(test_dataset)} (20%)")
 
@@ -124,11 +124,11 @@ def demonstrate_temporal_split_no_leakage(dataset):
     test_min_date = min(test_dates)
 
     if train_max_date < test_min_date:
-        print(f"\n[OK] NO DATA LEAKAGE!")
+        print("\n[OK] NO DATA LEAKAGE!")
         print(f"   Train data ends: {train_max_date}")
         print(f"   Test data starts: {test_min_date}")
         print(f"   GAP: {(test_min_date - train_max_date).days} calendar days")
-        print(f"   Model sees only past data, test on completely unseen future data")
+        print("   Model sees only past data, test on completely unseen future data")
 
     return train_dataset, test_dataset
 
@@ -157,7 +157,7 @@ def demonstrate_3_way_temporal_split(dataset):
     val_dataset = Subset(dataset, val_indices)
     test_dataset = Subset(dataset, test_indices)
 
-    print(f"\nSplit method: TEMPORAL (chronological 70/15/15)")
+    print("\nSplit method: TEMPORAL (chronological 70/15/15)")
     print(f"Train size: {len(train_dataset)} (70%)")
     print(f"Val size:   {len(val_dataset)} (15%)")
     print(f"Test size:  {len(test_dataset)} (15%)")
@@ -176,22 +176,22 @@ def demonstrate_3_way_temporal_split(dataset):
     val_max_date = max(val_dates)
     test_min_date = min(test_dates)
 
-    print(f"\nData leakage check:")
+    print("\nData leakage check:")
     if train_max_date < min(val_dates):
-        print(f"  [OK] Train -> Val: No gap (OK, val follows train)")
+        print("  [OK] Train -> Val: No gap (OK, val follows train)")
     else:
-        print(f"  [X] Train -> Val: OVERLAP!")
+        print("  [X] Train -> Val: OVERLAP!")
 
     if val_max_date < test_min_date:
-        print(f"  [OK] Val -> Test: No gap (OK, test follows val)")
+        print("  [OK] Val -> Test: No gap (OK, test follows val)")
     else:
-        print(f"  [X] Val -> Test: OVERLAP!")
+        print("  [X] Val -> Test: OVERLAP!")
 
-    print(f"\nBenefits:")
-    print(f"  • Train: Learn patterns from past data")
-    print(f"  • Val:   Tune hyperparameters (early stopping)")
-    print(f"  • Test:  Final evaluation on unseen data")
-    print(f"  • No data leakage: Strict chronological order")
+    print("\nBenefits:")
+    print("  • Train: Learn patterns from past data")
+    print("  • Val:   Tune hyperparameters (early stopping)")
+    print("  • Test:  Final evaluation on unseen data")
+    print("  • No data leakage: Strict chronological order")
 
     return train_dataset, val_dataset, test_dataset
 
@@ -206,7 +206,7 @@ def main():
     # Create sample dataset
     dataset = SimpleTimeSeriesDataset(n_samples=1000, start_date='2006-01-01')
 
-    print(f"\nDataset info:")
+    print("\nDataset info:")
     print(f"  Total samples: {len(dataset)}")
     print(f"  Date range: {dataset.dates[0]} to {dataset.dates[-1]}")
     print(f"  Duration: {(dataset.dates[-1] - dataset.dates[0]).days / 365:.1f} years")

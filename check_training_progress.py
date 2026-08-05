@@ -27,7 +27,7 @@ if simple_dir.exists():
     if results_file.exists():
         with open(results_file, 'r') as f:
             results = json.load(f)
-        print(f"[OK] Training complete!")
+        print("[OK] Training complete!")
         print(f"  Best Epoch: {results.get('best_epoch', 'N/A')}")
         print(f"  Total Epochs: {results.get('total_epochs', 'N/A')}")
         if 'test_metrics' in results:
@@ -60,7 +60,7 @@ if lstm_har_dir.exists():
     if results_file.exists():
         with open(results_file, 'r') as f:
             results = json.load(f)
-        print(f"[OK] Training complete!")
+        print("[OK] Training complete!")
         print(f"  Best Epoch: {results.get('best_epoch', 'N/A')}")
         print(f"  Total Epochs: {results.get('total_epochs', 'N/A')}")
         if 'test_metrics' in results:

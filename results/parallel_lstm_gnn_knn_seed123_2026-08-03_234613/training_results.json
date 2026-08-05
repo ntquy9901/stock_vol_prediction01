@@ -1,0 +1,30 @@
+{
+  "model": "Parallel LSTM-GNN (knn graph)",
+  "timestamp": "2026-08-03_234613",
+  "seed": 123,
+  "architecture": "Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion",
+  "graph_method": "knn",
+  "config": {
+    "num_stocks": 30,
+    "learning_rate": 0.001,
+    "batch_size": 11,
+    "num_epochs_trained": 20,
+    "best_epoch": 20,
+    "patience": 20,
+    "weight_decay": 1e-05
+  },
+  "training_summary": {
+    "num_epochs_trained": 20,
+    "best_epoch": 20,
+    "best_val_loss": 0.885678768157959,
+    "total_time_minutes": 16.458702301979066
+  },
+  "test_metrics": {
+    "mse": 8.357818842341658e-06,
+    "rmse": 0.0028909892497796766,
+    "mae": 0.0008100189734250307,
+    "r2": 0.7799742221832275,
+    "qlike": 0.44984760880470276,
+    "directional_accuracy": 48.55743059335874
+  }
+}

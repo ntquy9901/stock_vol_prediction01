@@ -44,31 +44,31 @@ def show_full_comparison():
     print("="*110)
 
     # RMSE
-    print(f"\n[RMSE Analysis - Lower is Better]")
+    print("\n[RMSE Analysis - Lower is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['rmse']:.8f}  [BEST]")
     print(f"  2. TimesNet:           {timesnet['rmse']:.8f}")
     rmse_diff = timesnet['rmse'] - lstm_har['rmse']
     print(f"  TimesNet vs LSTM-HAR: {rmse_diff:+.8f} ({'WORSE' if rmse_diff > 0 else 'BETTER'})")
 
     # MAE
-    print(f"\n[MAE Analysis - Lower is Better]")
+    print("\n[MAE Analysis - Lower is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['mae']:.8f}  [BEST]")
     print(f"  2. TimesNet:           {timesnet['mae']:.8f}")
     mae_diff = timesnet['mae'] - lstm_har['mae']
     print(f"  TimesNet vs LSTM-HAR: {mae_diff:+.8f} ({'WORSE' if mae_diff > 0 else 'BETTER'})")
 
     # R2
-    print(f"\n[R2 Analysis - Higher is Better (measures variance explained)]")
+    print("\n[R2 Analysis - Higher is Better (measures variance explained)]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['r2']:.4f}  [POSITIVE - explains variance]")
     print(f"  2. TimesNet:           {timesnet['r2']:.4f}  [NEGATIVE - worse than mean]")
     r2_diff = timesnet['r2'] - lstm_har['r2']
     print(f"  TimesNet vs LSTM-HAR: {r2_diff:+.4f} ({'WORSE' if r2_diff < 0 else 'BETTER'})")
 
     # Dir Acc
-    print(f"\n[Directional Accuracy - Higher is Better]")
+    print("\n[Directional Accuracy - Higher is Better]")
     print(f"  1. LSTM-HAR Enhanced:  {lstm_har['directional_accuracy']:.2f}%  [BEST]")
-    print(f"  2. HAR-R Linear:       51.53%")
-    print(f"  3. LSTM Baseline:      48.32%")
+    print("  2. HAR-R Linear:       51.53%")
+    print("  3. LSTM Baseline:      48.32%")
     print(f"  4. TimesNet:           {timesnet['directional_accuracy']:.2f}%  [WORST THAN RANDOM]")
     dir_acc_diff = timesnet['directional_accuracy'] - lstm_har['directional_accuracy']
     print(f"  TimesNet vs LSTM-HAR: {dir_acc_diff:+.2f}% ({'WORSE' if dir_acc_diff < 0 else 'BETTER'})")
@@ -89,27 +89,27 @@ def show_full_comparison():
     print("CRITICAL ANALYSIS")
     print("="*110)
 
-    print(f"\n[1. PREDICTION ACCURACY]")
-    print(f"   [BEST] LSTM-HAR Enhanced: 67.90% Dir Acc")
-    print(f"   [WORST] TimesNet: 47.52% Dir Acc (20.38% gap)")
-    print(f"   TimesNet is worse than random guessing (50%)")
+    print("\n[1. PREDICTION ACCURACY]")
+    print("   [BEST] LSTM-HAR Enhanced: 67.90% Dir Acc")
+    print("   [WORST] TimesNet: 47.52% Dir Acc (20.38% gap)")
+    print("   TimesNet is worse than random guessing (50%)")
 
-    print(f"\n[2. ERROR METRICS]")
+    print("\n[2. ERROR METRICS]")
     print(f"   RMSE: LSTM-HAR {lstm_har['rmse']:.8f} vs TimesNet {timesnet['rmse']:.8f}")
     print(f"   MAE:  LSTM-HAR {lstm_har['mae']:.8f} vs TimesNet {timesnet['mae']:.8f}")
-    print(f"   TimesNet has HIGHER error in both metrics")
+    print("   TimesNet has HIGHER error in both metrics")
 
-    print(f"\n[3. VARIANCE EXPLAINED]")
-    print(f"   LSTM-HAR R2 = 0.136 (POSITIVE - explains 13.6% of variance)")
+    print("\n[3. VARIANCE EXPLAINED]")
+    print("   LSTM-HAR R2 = 0.136 (POSITIVE - explains 13.6% of variance)")
     print(f"   TimesNet R2 = {timesnet['r2']:.4f} (NEGATIVE - worse than predicting mean)")
-    print(f"   TimesNet predictions are actually harmful!")
+    print("   TimesNet predictions are actually harmful!")
 
-    print(f"\n[4. COMPUTATIONAL EFFICIENCY]")
-    print(f"   LSTM-HAR: 65K params, ~30 min training")
-    print(f"   TimesNet: 28M params (431x larger), 2-4 hours training")
-    print(f"   TimesNet is 431x more expensive but 20% worse!")
+    print("\n[4. COMPUTATIONAL EFFICIENCY]")
+    print("   LSTM-HAR: 65K params, ~30 min training")
+    print("   TimesNet: 28M params (431x larger), 2-4 hours training")
+    print("   TimesNet is 431x more expensive but 20% worse!")
 
-    print(f"\n[5. KEY FINDING]")
+    print("\n[5. KEY FINDING]")
     print(f"   TimesNet WINS in RMSE ({timesnet['rmse']:.8f} < {lstm_har['rmse']:.8f})")
     print(f"   But LOSES in Dir Acc ({timesnet['directional_accuracy']:.2f}% < {lstm_har['directional_accuracy']:.2f}%)")
     print(f"   And has NEGATIVE R2 ({timesnet['r2']:.4f} vs {lstm_har['r2']:.4f})")

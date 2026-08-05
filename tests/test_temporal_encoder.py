@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import torch
 import numpy as np
 import pandas as pd
-from src.lstm_har_gat_hybrid.temporal_encoder import TemporalLSTM, EnhancedTemporalLSTM
+from src.lstm_har_gat_hybrid.temporal_encoder import EnhancedTemporalLSTM
 
 print("\n" + "="*60)
 print("TEMPORAL ENCODER - COMPONENT TEST")
@@ -68,7 +68,7 @@ X = torch.FloatTensor(sequences)
 print(f"  Input shape: {X.shape} (num_samples, seq_len, num_features)")
 
 # Test EnhancedTemporalLSTM
-print(f"\n[2] Testing EnhancedTemporalLSTM...")
+print("\n[2] Testing EnhancedTemporalLSTM...")
 
 encoder = EnhancedTemporalLSTM(
     seq_length=22,
@@ -96,16 +96,16 @@ print(f"  Expected: ({batch_size}, {num_stocks}, 64)")
 
 assert output.shape == (batch_size, num_stocks, 64), f"Shape mismatch: {output.shape}"
 
-print(f"  [OK] EnhancedTemporalLSTM test passed!")
+print("  [OK] EnhancedTemporalLSTM test passed!")
 
 # Test output statistics
-print(f"\n[3] Output Statistics:")
+print("\n[3] Output Statistics:")
 print(f"  Mean: {output.mean().item():.6f}")
 print(f"  Std: {output.std().item():.6f}")
 print(f"  Min: {output.min().item():.6f}")
 print(f"  Max: {output.max().item():.6f}")
 
-print(f"\n[4] Memory Check:")
+print("\n[4] Memory Check:")
 param_count = sum(p.numel() for p in encoder.parameters())
 print(f"  Parameters: {param_count:,}")
 print(f"  Memory (approx): {param_count * 4 / 1024 / 1024:.2f} MB (float32)")

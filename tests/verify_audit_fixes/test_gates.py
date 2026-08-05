@@ -1,5 +1,4 @@
 import subprocess
-import sys
 from pathlib import Path
 
 from scripts.verify_audit_fixes import gates

@@ -31,17 +31,17 @@ def apply_fix():
     backup_file = source_file.with_suffix('.py.backup')
     print(f"[Step 1] Creating backup: {backup_file}")
     shutil.copy2(source_file, backup_file)
-    print(f"  [OK] Backup created")
+    print("  [OK] Backup created")
 
     # Read source file
-    print(f"\n[Step 2] Reading source file...")
+    print("\n[Step 2] Reading source file...")
     with open(source_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
     print(f"  [OK] Read {len(lines)} lines")
 
     # Find validate() function (Line 199-281)
-    print(f"\n[Step 3] Locating validate() function...")
+    print("\n[Step 3] Locating validate() function...")
     start_line = None
     end_line = None
 
@@ -52,7 +52,7 @@ def apply_fix():
             break
 
     if start_line is None:
-        print(f"  [ERROR] validate() function not found!")
+        print("  [ERROR] validate() function not found!")
         return False
 
     # Find end of function (next function definition or end of file)
@@ -69,7 +69,7 @@ def apply_fix():
     print(f"  Function spans lines {start_line+1} to {end_line}")
 
     # Read fixed function
-    print(f"\n[Step 4] Reading fixed function...")
+    print("\n[Step 4] Reading fixed function...")
     with open(fixed_file, 'r', encoding='utf-8') as f:
         fixed_lines = f.readlines()
 
@@ -94,7 +94,7 @@ def apply_fix():
     print(f"  [OK] Extracted {len(fixed_function_lines)} lines")
 
     # Replace function
-    print(f"\n[Step 5] Replacing validate() function...")
+    print("\n[Step 5] Replacing validate() function...")
     new_lines = lines[:start_line] + fixed_function_lines + lines[end_line:]
 
     print(f"  Original: {len(lines)} lines")
@@ -102,41 +102,41 @@ def apply_fix():
     print(f"  Diff:     {len(new_lines) - len(lines)} lines")
 
     # Write new file
-    print(f"\n[Step 6] Writing new file...")
+    print("\n[Step 6] Writing new file...")
     with open(source_file, 'w', encoding='utf-8') as f:
         f.writelines(new_lines)
 
-    print(f"  [OK] File updated")
+    print("  [OK] File updated")
 
     # Verify
-    print(f"\n[Step 7] Verifying changes...")
+    print("\n[Step 7] Verifying changes...")
     with open(source_file, 'r', encoding='utf-8') as f:
         new_content = f.read()
 
     if 'Compute loss on ORIGINAL scale (consistent with test)' in new_content:
-        print(f"  [OK] Fix verified: Loss now computed on ORIGINAL scale")
+        print("  [OK] Fix verified: Loss now computed on ORIGINAL scale")
     else:
-        print(f"  [WARNING] Could not verify fix")
+        print("  [WARNING] Could not verify fix")
 
     if 'all_targets_denorm = np.zeros_like(all_targets_norm)' in new_content:
-        print(f"  [OK] Bug fix verified: zeros_like now uses all_targets_norm")
+        print("  [OK] Bug fix verified: zeros_like now uses all_targets_norm")
     else:
-        print(f"  [WARNING] Bug fix not found")
+        print("  [WARNING] Bug fix not found")
 
     print(f"\n{'='*80}")
-    print(f"FIX APPLIED SUCCESSFULLY")
+    print("FIX APPLIED SUCCESSFULLY")
     print(f"{'='*80}")
-    print(f"\nChanges:")
-    print(f"  1. Val Loss now computed on ORIGINAL scale (like Test MSE)")
-    print(f"  2. Added debugging prints to verify normalization")
-    print(f"  3. Fixed bug: zeros_like now uses all_targets_norm")
-    print(f"\nExpected results:")
-    print(f"  - Val Loss: ~1e-4 to ~1e-3 (original scale)")
-    print(f"  - Test MSE: ~1e-6 to ~1e-5 (original scale)")
-    print(f"  - Both now comparable!")
+    print("\nChanges:")
+    print("  1. Val Loss now computed on ORIGINAL scale (like Test MSE)")
+    print("  2. Added debugging prints to verify normalization")
+    print("  3. Fixed bug: zeros_like now uses all_targets_norm")
+    print("\nExpected results:")
+    print("  - Val Loss: ~1e-4 to ~1e-3 (original scale)")
+    print("  - Test MSE: ~1e-6 to ~1e-5 (original scale)")
+    print("  - Both now comparable!")
     print(f"\nBackup saved at: {backup_file}")
-    print(f"\nTo test:")
-    print(f"  python -m src.lstm_gat_hybrid.train_parallel_enhanced --graph_method knn --quick_test")
+    print("\nTo test:")
+    print("  python -m src.lstm_gat_hybrid.train_parallel_enhanced --graph_method knn --quick_test")
 
     return True
 

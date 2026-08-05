@@ -19,9 +19,11 @@ import numpy as np
 import tempfile
 import shutil
 from pathlib import Path
-import json
-import os
 
+pytest.importorskip(
+    "src.pipeline",
+    reason="Prototype src.pipeline retired to src/archive/; out of paper scope",
+)
 from src.pipeline import (
     load_ohlcv_data,
     process_single_stock,
@@ -29,10 +31,7 @@ from src.pipeline import (
     generate_summary_report,
     run_complete_pipeline,
     list_available_data,
-    validate_data_directory,
-    DEFAULT_DATA_DIR,
-    DEFAULT_RESULTS_DIR,
-    RANDOM_SEED
+    validate_data_directory
 )
 
 

@@ -144,7 +144,7 @@ print(f"Difference: {abs(val_loss_after - val_loss_initial):.8f}")
 if abs(val_loss_after - val_loss_initial) < 1e-8:
     print("[X] ERROR: Val loss didn't change after training!")
 else:
-    print(f"[OK] Val loss changed after training.")
+    print("[OK] Val loss changed after training.")
 
 print("\n" + "=" * 80)
 print("DEBUG COMPLETE")

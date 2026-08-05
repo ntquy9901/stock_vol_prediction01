@@ -11,8 +11,6 @@ Usage:
 
 import argparse
 import logging
-from datetime import datetime
-from pathlib import Path
 
 from src.sentiment.data_collection.crawlers import CafefCrawler, get_vn30_tickers
 
@@ -34,9 +32,9 @@ def crawl_single_ticker(ticker: str, start_date: str, end_date: str,
         end_date: End date (YYYY-MM-DD)
         base_dir: Base directory for saving data
     """
-    logger.info(f"=" * 60)
+    logger.info("=" * 60)
     logger.info(f"Crawling {ticker} news from {start_date} to {end_date}")
-    logger.info(f"=" * 60)
+    logger.info("=" * 60)
 
     crawler = CafefCrawler(base_dir=base_dir)
 
@@ -72,10 +70,10 @@ def crawl_all_tickers(start_date: str, end_date: str,
     if tickers is None:
         tickers = get_vn30_tickers()
 
-    logger.info(f"=" * 60)
+    logger.info("=" * 60)
     logger.info(f"CRAWLING ALL {len(tickers)} VN30 TICKERS")
     logger.info(f"Date range: {start_date} to {end_date}")
-    logger.info(f"=" * 60)
+    logger.info("=" * 60)
 
     total_articles = 0
     successful_tickers = 0
@@ -93,9 +91,9 @@ def crawl_all_tickers(start_date: str, end_date: str,
         import time
         time.sleep(3)
 
-    logger.info(f"\n" + "=" * 60)
-    logger.info(f"CRAWL COMPLETE")
-    logger.info(f"=" * 60)
+    logger.info("\n" + "=" * 60)
+    logger.info("CRAWL COMPLETE")
+    logger.info("=" * 60)
     logger.info(f"Successful tickers: {successful_tickers}/{len(tickers)}")
     logger.info(f"Total articles: {total_articles}")
     logger.info(f"Data location: {base_dir}/")

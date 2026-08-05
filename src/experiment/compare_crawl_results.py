@@ -6,7 +6,6 @@ Date: 2026-06-19
 """
 
 import pandas as pd
-from pathlib import Path
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -97,7 +96,7 @@ def print_comparison_report(dataset: str, results: dict, quality: dict):
     print(f"{dataset.upper()} COMPARISON")
     print(f"{'=' * 60}")
 
-    print(f"\n[STOCK COUNT]")
+    print("\n[STOCK COUNT]")
     print(f"Original: {results['original_count']}")
     print(f"Enhanced: {results['enhanced_count']}")
     print(f"Improvement: {results['improvement']:+d}")
@@ -113,7 +112,7 @@ def print_comparison_report(dataset: str, results: dict, quality: dict):
             print(f"  - {stock}")
 
     if quality:
-        print(f"\n[DATA QUALITY]")
+        print("\n[DATA QUALITY]")
         print(f"Total stocks: {quality['total_stocks']}")
         print(f"Avg days: {quality['avg_days']:.0f}")
         print(f"Min days: {quality['min_days']}")
@@ -158,19 +157,19 @@ def main():
     print(f"\n{'=' * 60}")
     print("OVERALL SUMMARY")
     print(f"{'=' * 60}")
-    print(f"\n[TOTAL STOCKS]")
+    print("\n[TOTAL STOCKS]")
     print(f"Original: {overall_results['original_total']}")
     print(f"Enhanced: {overall_results['enhanced_total']}")
     print(f"Improvement: {overall_results['total_improvement']:+d}")
 
-    print(f"\n[SUCCESS RATE]")
+    print("\n[SUCCESS RATE]")
     original_rate = (overall_results['original_total'] / 230) * 100  # Assuming 230 total target
     enhanced_rate = (overall_results['enhanced_total'] / 230) * 100
     print(f"Original: {original_rate:.1f}%")
     print(f"Enhanced: {enhanced_rate:.1f}%")
     print(f"Improvement: {enhanced_rate - original_rate:+.1f}%")
 
-    print(f"\n[CONCLUSION]")
+    print("\n[CONCLUSION]")
     if overall_results['total_improvement'] > 0:
         print("[SUCCESS] Enhanced crawler improved results!")
         print(f"[+] Gained {overall_results['total_improvement']} additional stocks")
@@ -181,7 +180,7 @@ def main():
         print("[WARNING] Enhanced crawler performed worse")
         print(f"[-] Lost {abs(overall_results['total_improvement'])} stocks")
 
-    print(f"\n[RECOMMENDATIONS]")
+    print("\n[RECOMMENDATIONS]")
     if overall_results['enhanced_total'] >= 200:
         print("[OK] Current data is sufficient for training")
         print("[+] Proceed with model training")

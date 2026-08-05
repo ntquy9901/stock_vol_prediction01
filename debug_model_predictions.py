@@ -7,7 +7,7 @@ import pandas as pd
 from pathlib import Path
 from src.cryptomamba_baseline.model_enhanced import create_cryptomamba_model_enhanced
 from src.common.har_features import generate_har_features
-from src.common.data_normalization import normalize_for_training, denormalize_predictions, VolatilityNormalizer
+from src.common.data_normalization import normalize_for_training
 
 # Load trained model
 model_path = Path('results/cryptomamba_enhanced_2026-06-20_002016/best_cryptomamba_enhanced_model.pth')
@@ -56,19 +56,19 @@ with torch.no_grad():
 predictions = target_normalizer.inverse_transform(predictions_norm.numpy().flatten())
 targets = target_normalizer.inverse_transform(y_test.numpy().flatten())
 
-print(f'\nPrediction statistics:')
+print('\nPrediction statistics:')
 print(f'  Predictions range: [{predictions.min():.8f}, {predictions.max():.8f}]')
 print(f'  Predictions mean: {predictions.mean():.8f}')
 print(f'  Predictions std: {predictions.std():.8f}')
 print(f'  Unique prediction values: {len(np.unique(predictions))}')
 
-print(f'\nTarget statistics:')
+print('\nTarget statistics:')
 print(f'  Targets range: [{targets.min():.8f}, {targets.max():.8f}]')
 print(f'  Targets mean: {targets.mean():.8f}')
 print(f'  Targets std: {targets.std():.8f}')
 print(f'  Unique target values: {len(np.unique(targets))}')
 
-print(f'\nPrediction variance analysis:')
+print('\nPrediction variance analysis:')
 pred_variance = np.var(predictions)
 target_variance = np.var(targets)
 print(f'  Prediction variance: {pred_variance:.10f}')
@@ -76,15 +76,15 @@ print(f'  Target variance: {target_variance:.10f}')
 print(f'  Variance ratio: {pred_variance/target_variance:.4f}')
 
 if pred_variance < 1e-10:
-    print(f'  [CRITICAL] Model is predicting constant values!')
+    print('  [CRITICAL] Model is predicting constant values!')
 elif pred_variance < target_variance * 0.1:
-    print(f'  [WARNING] Model predictions have very low variance')
+    print('  [WARNING] Model predictions have very low variance')
 else:
-    print(f'  [OK] Model predictions have reasonable variance')
+    print('  [OK] Model predictions have reasonable variance')
 
 # Check first 20 predictions
-print(f'\nFirst 20 predictions vs targets:')
-print(f'  Pred      Target    Diff')
+print('\nFirst 20 predictions vs targets:')
+print('  Pred      Target    Diff')
 print('-' * 35)
 for i in range(20):
     print(f'  {predictions[i]:.6f}  {targets[i]:.6f}  {predictions[i]-targets[i]:.6f}')

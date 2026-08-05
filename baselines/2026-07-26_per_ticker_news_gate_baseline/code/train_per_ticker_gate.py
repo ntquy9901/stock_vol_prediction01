@@ -50,6 +50,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.common.evaluation import evaluate_predictions
+from src.common.provenance import get_provenance
 from src.lstm_gat_hybrid.config import LSTMGATConfig
 from src.lstm_gat_hybrid.train_parallel_enhanced import (
     EarlyStopping, plot_learning_curves_with_analysis,
@@ -372,6 +373,7 @@ def main():
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),
         "val_test_diff": val_test_diff,
+        "provenance": get_provenance(),
     }
     (out_dir / "results.json").write_text(
         json.dumps(results, indent=2, ensure_ascii=False, allow_nan=False),

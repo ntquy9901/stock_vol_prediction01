@@ -2,8 +2,6 @@
 """Test with Gemini 2.0 Flash (better free tier)"""
 
 import os
-import sys
-import asyncio
 
 # Set API key
 os.environ["GOOGLE_GEMINI_API_KEY"] = os.getenv("GOOGLE_GEMINI_API_KEY", "YOUR_API_KEY_HERE")
@@ -42,7 +40,7 @@ Return JSON format:
 }}"""
 
     response = model.generate_content(prompt)
-    print(f"    OK - Review completed")
+    print("    OK - Review completed")
     print(f"    Response preview: {response.text[:200]}...")
 
     print("\n" + "=" * 60)

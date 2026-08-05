@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 
 from scripts.verify_audit_fixes.commands import (
     append_command_output,

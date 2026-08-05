@@ -85,7 +85,7 @@ def train_all_models_with_validation(data_dir='data/processed'):
             }
         }
 
-        print(f"[OK] Simple LSTM trained successfully")
+        print("[OK] Simple LSTM trained successfully")
         print(f"  Val RMSE: {val_metrics['rmse']:.6f}")
         print(f"  Test RMSE: {test_metrics['rmse']:.6f}")
         print(f"  RMSE Diff: {test_metrics['rmse'] - val_metrics['rmse']:+.6f}")
@@ -115,7 +115,7 @@ def train_all_models_with_validation(data_dir='data/processed'):
             }
         }
 
-        print(f"[OK] LSTM-HAR trained successfully")
+        print("[OK] LSTM-HAR trained successfully")
         print(f"  Val RMSE: {val_metrics['rmse']:.6f}")
         print(f"  Test RMSE: {test_metrics['rmse']:.6f}")
         print(f"  RMSE Diff: {test_metrics['rmse'] - val_metrics['rmse']:+.6f}")
@@ -145,7 +145,7 @@ def train_all_models_with_validation(data_dir='data/processed'):
             }
         }
 
-        print(f"[OK] Enhanced LSTM-HAR trained successfully")
+        print("[OK] Enhanced LSTM-HAR trained successfully")
         print(f"  Val RMSE: {val_metrics['rmse']:.6f}")
         print(f"  Test RMSE: {test_metrics['rmse']:.6f}")
         print(f"  RMSE Diff: {test_metrics['rmse'] - val_metrics['rmse']:+.6f}")
@@ -191,10 +191,10 @@ def train_all_models_with_validation(data_dir='data/processed'):
     print("SUMMARY")
     print("="*80)
     print(f"Total models trained: {len(results)}")
-    print(f"Split method: 3-way temporal (70/15/15)")
-    print(f"Data leakage: FIXED (no random split)")
-    print(f"Validation: ENABLED (early stopping)")
-    print(f"Metrics: Val + Test + Comparison")
+    print("Split method: 3-way temporal (70/15/15)")
+    print("Data leakage: FIXED (no random split)")
+    print("Validation: ENABLED (early stopping)")
+    print("Metrics: Val + Test + Comparison")
     print("="*80)
 
     return results

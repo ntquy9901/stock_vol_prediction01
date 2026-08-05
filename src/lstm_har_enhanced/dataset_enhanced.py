@@ -179,11 +179,11 @@ if __name__ == "__main__":
 
     # Get a sample
     X, y = dataset[0]
-    print(f"\nSample shape:")
+    print("\nSample shape:")
     print(f"  X: {X.shape} (seq_length, n_features)")
     print(f"  y: {y.shape}")
 
-    print(f"\nFeature breakdown (3 features - NO REDUNDANCY):")
+    print("\nFeature breakdown (3 features - NO REDUNDANCY):")
     print(f"  Feature 0 (raw): mean={X[:, 0].mean():.6f}, std={X[:, 0].std():.6f}")
     print(f"  Feature 1 (weekly): mean={X[:, 1].mean():.6f}, std={X[:, 1].std():.6f}")
     print(f"  Feature 2 (monthly): mean={X[:, 2].mean():.6f}, std={X[:, 2].std():.6f}")

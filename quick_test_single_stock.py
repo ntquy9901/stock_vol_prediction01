@@ -1,7 +1,6 @@
 """
 Quick test - Train LSTM-GAT with single stock first
 """
-import torch
 import sys
 sys.path.append('.')
 

@@ -32,7 +32,7 @@ print('=' * 120)
 # Load aggregate statistics
 agg_stats = json.load(open('results/aggregate_results.json'))['summary_stats']
 
-print(f'\nTONG HET HE THONG (30 co phieu):')
+print('\nTONG HET HE THONG (30 co phieu):')
 print('=' * 120)
 print(f"QLIKE Loss trung binh:     {agg_stats['mean_qlike_loss']:.6f}")
 print(f"Do chinh xac huong TB:     {agg_stats['mean_directional_accuracy']*100:.1f}%")
@@ -47,7 +47,7 @@ std_mse = df['test_mse'].std()
 min_mse = df['test_mse'].min()
 max_mse = df['test_mse'].max()
 
-print(f"\nTHONG KE MSE (30 stocks):")
+print("\nTHONG KE MSE (30 stocks):")
 print('=' * 120)
 print(f"Mean MSE:     {mean_mse:.8e}")
 print(f"Std Dev MSE:   {std_mse:.8e}")

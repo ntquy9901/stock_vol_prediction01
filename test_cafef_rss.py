@@ -1,5 +1,4 @@
 import feedparser
-import pprint
 import sys
 import io
 
@@ -20,14 +19,14 @@ for url in rss_urls:
 
     try:
         feed = feedparser.parse(url)
-        print(f"[OK] Feed loaded successfully")
+        print("[OK] Feed loaded successfully")
         print(f"Total entries: {len(feed.entries)}")
 
         if hasattr(feed.feed, 'title'):
             print(f"Feed title: {feed.feed.title}")
 
         if len(feed.entries) > 0:
-            print(f"\nFirst 3 entries:")
+            print("\nFirst 3 entries:")
             for i, entry in enumerate(feed.entries[:3], 1):
                 print(f"\nEntry {i}:")
                 print(f"  Title: {entry.title[:80]}...")

@@ -25,7 +25,6 @@ import sys
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import DataLoader
 from datetime import datetime
 import time
 import json
@@ -76,9 +75,9 @@ def train_cryptomamba_full(data_dir: str, output_dir: str = None, hierarchical: 
     print("CRYPTOMAMBA TRAINING FULL - FULL ARCHITECTURE WITH MAMBA_SSM (70/15/15)")
     print("=" * 80)
     print("\nPhase 1 Proof-of-Concept: Test if CryptoMamba beats LSTM")
-    print(f"LSTM Baseline: 48.01-48.32% Dir Acc")
-    print(f"HAR-R Baseline: 51.53% Dir Acc")
-    print(f"CryptoMamba Full Target: Beat LSTM (>48%), approach HAR-R (>51%)")
+    print("LSTM Baseline: 48.01-48.32% Dir Acc")
+    print("HAR-R Baseline: 51.53% Dir Acc")
+    print("CryptoMamba Full Target: Beat LSTM (>48%), approach HAR-R (>51%)")
     print("\nFull Architecture Features:")
     print("  - Full selective state space (via mamba_ssm)")
     print("  - Hierarchical structure: hidden_dims=[14, 1]")
@@ -102,9 +101,9 @@ def train_cryptomamba_full(data_dir: str, output_dir: str = None, hierarchical: 
     print(f"  Sequence Length: {CRYPTOMAMBA_CONFIG_FULL['seq_length']}")
     print(f"  Use Volume: {CRYPTOMAMBA_CONFIG_FULL['use_volume']}")
     print(f"  Features: {MODEL_CONFIG_FULL['num_features']}")
-    print(f"  Train/Val/Test Split: 70% / 15% / 15%")
-    print(f"  Selective Scan: Full (mamba_ssm)")
-    print(f"  Expected Parameters: ~136K")
+    print("  Train/Val/Test Split: 70% / 15% / 15%")
+    print("  Selective Scan: Full (mamba_ssm)")
+    print("  Expected Parameters: ~136K")
 
     # Create dataset
     print("\n1. Creating CryptoMamba dataset...")
@@ -122,7 +121,7 @@ def train_cryptomamba_full(data_dir: str, output_dir: str = None, hierarchical: 
     splitter = TemporalSplitter(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
     split_info = splitter.get_info(len(dataset))
 
-    print(f"Split plan:")
+    print("Split plan:")
     print(f"  Train: {split_info['train_size']} sequences (70%)")
     print(f"  Val:   {split_info['val_size']} sequences (15%)")
     print(f"  Test:  {split_info['test_size']} sequences (15%)")
@@ -169,7 +168,7 @@ def train_cryptomamba_full(data_dir: str, output_dir: str = None, hierarchical: 
         print("   This might be simplified architecture")
 
     print(f"Architecture: {'Hierarchical [14, 1]' if hierarchical else 'Simplified [14]'}")
-    print(f"Selective Scan: Full (via mamba_ssm)")
+    print("Selective Scan: Full (via mamba_ssm)")
 
     # Training configuration (original hyperparameters)
     criterion = nn.MSELoss()
@@ -359,20 +358,20 @@ def train_cryptomamba_full(data_dir: str, output_dir: str = None, hierarchical: 
     print(f"\n{'='*80}")
     print("BASELINE COMPARISON")
     print(f"{'='*80}")
-    print(f"LSTM Baseline: 48.01-48.32% Dir Acc")
-    print(f"HAR-R Baseline: 51.53% Dir Acc")
-    print(f"CryptoMamba V2 (Simplified): 47.78% Dir Acc")
+    print("LSTM Baseline: 48.01-48.32% Dir Acc")
+    print("HAR-R Baseline: 51.53% Dir Acc")
+    print("CryptoMamba V2 (Simplified): 47.78% Dir Acc")
     print(f"CryptoMamba Full: {test_metrics['directional_accuracy']:.2f}% Dir Acc")
 
     if test_metrics['directional_accuracy'] > 48.32:
-        print(f"✅ CryptoMamba Full BEATS LSTM baseline!")
+        print("✅ CryptoMamba Full BEATS LSTM baseline!")
     else:
-        print(f"❌ CryptoMamba Full does NOT beat LSTM baseline")
+        print("❌ CryptoMamba Full does NOT beat LSTM baseline")
 
     if test_metrics['directional_accuracy'] > 51.53:
-        print(f"🎉 CryptoMamba Full BEATS HAR-R baseline!")
+        print("🎉 CryptoMamba Full BEATS HAR-R baseline!")
     else:
-        print(f"⚠️  CryptoMamba Full approaches HAR-R baseline")
+        print("⚠️  CryptoMamba Full approaches HAR-R baseline")
 
     # Save comprehensive results
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -492,8 +491,8 @@ if __name__ == "__main__":
     print("PHASE 1 COMPLETE - FULL")
     print("="*80)
     print(f"Final Test Dir Acc: {test_metrics['directional_accuracy']:.2f}%")
-    print(f"Target: >48% (beat LSTM)")
-    print(f"Stretch: >51% (beat HAR-R)")
+    print("Target: >48% (beat LSTM)")
+    print("Stretch: >51% (beat HAR-R)")
 
     if test_metrics['directional_accuracy'] > 48.32:
         print("Status: ✅ SUCCESS - Beats LSTM baseline!")

@@ -165,7 +165,7 @@ def main():
         print("[RECOMMENDATION] Use Enhanced LSTM-HAR for production:")
         print(f"  - Best RMSE: {enh_results['test_metrics']['rmse']:.6f}")
         print(f"  - Good R2: {enh_results['test_metrics']['r2']:.6f}")
-        print(f"  - Balanced performance across all metrics")
+        print("  - Balanced performance across all metrics")
 
 if __name__ == "__main__":
     main()

@@ -1,33 +1,52 @@
-# Báo cáo tổng hợp cuối cùng — Paper Readiness (2026-08-03)
+# Báo cáo tổng hợp cuối cùng — Paper Readiness (2026-08-03 → 2026-08-04)
 
 Phạm vi: toàn bộ công việc audit/fix/verify thực hiện tự động trong phiên 2026-08-02 đêm →
-2026-08-03, tiếp nối `docs/reports/2026-08-02_1056_paper_readiness_audit_report.md` và
+2026-08-04, tiếp nối `docs/reports/2026-08-02_1056_paper_readiness_audit_report.md` và
 `docs/reports/2026-08-02_1547_consolidated_fix_plan.md`. File này là điểm tham chiếu chính để
 viết paper — các báo cáo trung gian khác (`2026-08-02_1527`, `2026-08-02_152253`,
 `2026-08-02_152758`) giữ nguyên làm lịch sử, không cần đọc lại.
 
-## 1. Tóm tắt kết quả cuối cùng
+## 1. Tóm tắt kết quả cuối cùng (đã xác nhận đa-seed, 2026-08-04)
 
 Sau khi sửa toàn bộ bug ảnh hưởng tới độ chính xác số liệu (mục 3), pipeline headline và pipeline
-đối chứng HAR-only được train lại 1 lần, cùng 20 epoch, cùng seed=42, cùng ngày, trên cùng dữ liệu
-đã sửa lỗi căn chỉnh ngày (P1.2):
+đối chứng HAR-only được train lại **3 seed độc lập (42, 123, 2026)**, cùng 20 epoch mỗi seed, trên
+cùng dữ liệu đã sửa lỗi căn chỉnh ngày (P1.2):
 
-| Metric | HAR-only backbone (ParallelLSTMGNN) | News-fusion (per-ticker gate) | Chênh lệch |
+| Metric | HAR-only backbone (mean±std, n=3) | News-fusion, per-ticker gate (mean±std, n=3) | Paired t (n=3) |
 |---|---|---|---|
-| QLIKE (test) | 0.4839 | **0.4641** | news-fusion tốt hơn 4.1% |
-| RMSE (test) | 0.003025 | **0.002843** | news-fusion tốt hơn 6.0% |
-| MAE (test) | 0.000826 | **0.000807** | news-fusion tốt hơn 2.3% |
-| R² (test) | 0.7590 | **0.7873** | news-fusion tốt hơn |
-| DirAcc — per-ticker, đúng (test) | **48.09%** | 47.56% | HAR-only nhỉnh hơn ~0.5pp (nhiễu) |
-| DirAcc — flatten-biased, SAI, chỉ để đối chiếu | — | 71.64% | không dùng để kết luận |
+| QLIKE (test) | 0.4603±0.0205 | **0.4430±0.0185** | t=-6.22 (có ý nghĩa) |
+| RMSE (test) | 0.002923±0.0000904 | **0.002734±0.0000958** | t=-9.38 (có ý nghĩa) |
+| MAE (test) | 0.0008113±0.0000137 | **0.0007930±0.0000123** | — |
+| R² (test) | 0.7749±0.0140 | **0.8031±0.0139** | — |
+| DirAcc — per-ticker, đúng (test) | **48.47%±0.35** | 47.77%±0.52 | t=-2.97 (KHÔNG ý nghĩa) |
+| DirAcc — flatten-biased, SAI, chỉ để đối chiếu | — | ~71-72% (single-seed, xem §3.3) | không dùng để kết luận |
 
-Nguồn số liệu: `results/parallel_lstm_gnn_knn_2026-08-03_230722/training_results.json` (HAR-only),
-`results/per_ticker_gate_2026-08-03_230821/results.json` (news-fusion).
+Per-seed (nguồn: `results/parallel_lstm_gnn_knn_2026-08-03_230722` seed42,
+`results/parallel_lstm_gnn_knn_seed123_2026-08-03_234613` seed123,
+`results/parallel_lstm_gnn_knn_seed2026_2026-08-04_000327` seed2026 cho HAR-only;
+`results/per_ticker_gate_2026-08-03_230821` seed42, `results/per_ticker_gate_2026-08-04_000448`
+seed123, `results/per_ticker_gate_2026-08-04_002252` seed2026 cho news-fusion — mỗi seed news-fusion
+là chuỗi resume 10+10 epoch, `--seed` khớp HAR-only):
 
-**Kết luận có thể dùng cho paper:** tin tức (news-fusion, per-ticker gate) cải thiện các metric đo
-sai số liên tục (QLIKE, RMSE, MAE, R²) so với HAR-only ở cùng điều kiện train, nhưng KHÔNG cải
-thiện directional accuracy (chênh lệch ~0.5 điểm phần trăm, trong biên độ nhiễu 1 lần chạy, không
-có ý nghĩa thống kê). Đây là **1 lần chạy** (seed=42), chưa phải xác nhận đa-seed — xem mục 6
+- QLIKE (news − HAR-only): seed42 = -0.0198, seed123 = -0.0204, seed2026 = -0.0118 — **cùng chiều
+  cải thiện ở cả 3 seed**, không phải ngẫu nhiên 1 lần chạy.
+- RMSE (news − HAR-only): seed42 = -0.000183, seed123 = -0.000228, seed2026 = -0.000159 — cùng
+  chiều cải thiện ở cả 3 seed.
+- DirAcc (news − HAR-only): seed42 = -0.53, seed123 = -1.18, seed2026 = -0.42 (điểm phần trăm) —
+  HAR-only nhỉnh hơn ở cả 3 seed nhưng biên độ nhỏ, paired t-test (n=3, df=2) **không đạt ngưỡng ý
+  nghĩa** (|t|=2.97 < t-critical≈4.30 ở alpha=0.05) — khác với QLIKE/RMSE (|t|=6.22 và 9.38, đều
+  vượt ngưỡng).
+
+**Kết luận có thể dùng cho paper (đã kiểm định thống kê, không còn là "1 lần chạy"):** tin tức
+(news-fusion, per-ticker gate) cải thiện có ý nghĩa thống kê (paired t-test, n=3 seed) các metric
+đo sai số liên tục — QLIKE và RMSE — so với HAR-only ở cùng điều kiện train/epoch. Directional
+accuracy KHÔNG cải thiện; chênh lệch (~0.7 điểm phần trăm nghiêng về HAR-only) không đạt ý nghĩa
+thống kê ở n=3 seed, nhất quán với cách diễn giải "tin tức giúp dự báo đúng độ lớn biến động hơn,
+không giúp dự báo đúng chiều thay đổi ngày-qua-ngày" — xem thêm phân tích chi tiết ở
+`docs/reports/2026-08-04_diracc_low_accuracy_analysis.md` (§ mục 8 dưới đây liệt kê đầy đủ report
+mới). **Lưu ý cỡ mẫu:** n=3 seed là tối thiểu để có paired t-test, không phải chuẩn thống kê mạnh
+(khuyến nghị ≥5 seed nếu paper cần mức độ chắc chắn cao hơn) — nhưng đã đủ để not còn là kết luận
+dựa trên 1 lần chạy như bản báo cáo trước đó (2026-08-03) ghi nhận.
 "Giới hạn còn lại" trước khi viết thành kết luận cứng trong paper.
 
 ## 2. Bối cảnh: vì sao số liệu đêm nay khác các báo cáo trước
@@ -173,13 +192,20 @@ CLAUDE.md khi chưa cài tool.
 
 ## 6. Giới hạn còn lại (chưa làm, cần biết trước khi viết paper)
 
-1. **Chỉ 1 seed (42) cho bảng so sánh cuối cùng ở mục 1.** Chưa có xác nhận đa-seed (mean±std,
-   kiểm định ý nghĩa thống kê) cho số liệu post-fix. Kết luận "QLIKE/RMSE/MAE/R² tốt hơn" nên được
-   diễn đạt là kết quả 1 lần chạy, không phải kết luận đã kiểm định thống kê, trừ khi chạy thêm
-   multi-seed trước khi nộp.
-2. **VN30 universe staleness** (32 mã dự án dùng vs danh sách VN30 chính thức, lệch 5 mã dư/3 mã
-   thiếu — memory `project_vn30_ticker_universe_mismatch`) — vẫn chưa đóng băng chính thức, cần ghi
-   vào phần Limitations của paper.
+1. ~~Chỉ 1 seed (42) cho bảng so sánh cuối cùng~~ — **[ĐÃ XONG, 2026-08-04]**: đã chạy thêm seed
+   123, 2026 (20 epoch/seed, cả 2 kiến trúc), có mean±std + paired t-test — xem mục 1. QLIKE/RMSE
+   cải thiện có ý nghĩa thống kê ở n=3 seed; DirAcc không có ý nghĩa thống kê. Khuyến nghị còn lại:
+   n=3 là tối thiểu, ≥5 seed sẽ chắc chắn hơn nếu có thời gian trước hạn nộp, nhưng không còn là
+   "1 lần chạy" như trước.
+2. ~~VN30 universe staleness — vẫn chưa đóng băng chính thức~~ — **[SỬA LẠI, 2026-08-03]**: kiểm tra
+   lại thấy quyết định này ĐàXONG từ 2026-08-02, không phải còn treo như ghi nhầm ở bản trước của
+   report này. Xem `docs/reports/2026-08-02_1634_vn30_data_source_audit.md` §5-7: universe đã chốt
+   **33 mã** (28/30 mã VN30 chính thức hiệu lực đến 2026-08-02 + 5 mã ngoài danh sách giữ lại vì đủ
+   dữ liệu lịch sử — BCM, BVH, NVL, PDR, POW; loại BSR/VPL vì lịch sử giao dịch quá ngắn, có định
+   lượng cụ thể). Xác nhận lại 2026-08-03: `data/processed/` hiện có đúng 33 file ticker (`ls
+   data/processed/*_processed.csv | wc -l` → 33), khớp chính xác bảng đã chốt. Đoạn văn dùng cho
+   Limitations/Dataset Description của paper đã có sẵn ở §7 của báo cáo đó (BSR/VPL: số phiên giao
+   dịch cụ thể, lý do loại). Không cần làm gì thêm — chỉ cần paper trích dẫn đúng file đó.
 3. **947 lỗi ruff + 9 lỗi pytest collection** — nợ kỹ thuật toàn repo, không chặn số liệu paper
    nhưng nên biết nếu công khai repo cùng paper.
 4. **`sanity_constant_baseline.py`, `check_vhm_normalizer.py`, `debug_corrupted_val_batches.py`**
@@ -212,9 +238,30 @@ CLAUDE.md khi chưa cài tool.
 - [x] Summary report này — đúng văn phong khách quan theo CLAUDE.md (không xưng hô cá nhân, không
       tự nhận "trung thực", chỉ nêu sự kiện/số liệu/nguồn)
 
-## 8. Việc tiếp theo đề xuất (không tự làm thêm trong phiên này, cần quyết định người dùng)
+## 8. Báo cáo bổ sung (2026-08-04, cùng phiên mở rộng)
 
-- Multi-seed rerun cho bảng so sánh mục 1 nếu paper cần kết luận có ý nghĩa thống kê.
-- Đóng băng chính thức VN30 universe hoặc xác nhận giữ nguyên + ghi Limitations.
-- Canonical table đầy đủ mọi baseline (mục 6, điểm 6) nếu paper cần so sánh > 2 kiến trúc.
-- Cài `diff-cover`/`ruff` vào quy trình CI chính thức nếu muốn gate C0=100% thực thi được máy móc.
+Sau khi mục 1-7 hoàn tất, phiên làm việc tiếp tục thêm các hạng mục sau (đêm 2026-08-03 →
+2026-08-04), mỗi hạng mục có report riêng — không lặp lại nội dung ở đây:
+
+- `docs/reports/2026-08-03_canonical_results_table.md` — bảng số liệu 8 baseline còn lại (dual-group,
+  macro-news, spillover-qlike, calendar-gate, horizon 1/10/22); kết luận: KHÔNG baseline nào re-eval
+  được sạch bằng checkpoint cũ (tất cả checkpoint đều predate fix P1.2) — cần train lại nếu muốn đưa
+  vào bảng so sánh chính thức.
+- `docs/reports/2026-08-04_diracc_low_accuracy_analysis.md` — phân tích vì sao DirAcc ~47-48%
+  (gần/dưới random) dù QLIKE/R² tốt.
+- `docs/reports/2026-08-04_horizon_news_usefulness_analysis.md` — phân tích vì sao tin tức giúp ích
+  ở horizon 1/5-ngày nhưng giảm dần ở 10/22-ngày.
+- `docs/reports/2026-08-03_archive_candidates_for_review.md` — danh sách file/folder có thể archive
+  thêm, để người dùng tự xem xét quyết định (KHÔNG tự động archive).
+- Dọn nợ kỹ thuật: `src/common/provenance.py` (git SHA/seed vào `results.json`, retrofit 2/10+
+  baseline), seeding cho TimesNet, fix DirAcc cho `lstm_har_gat_hybrid/train_hybrid.py`, ruff/pytest
+  collection cleanup (xem log task tương ứng nếu cần chi tiết).
+
+## 9. Việc tiếp theo đề xuất (cần quyết định người dùng)
+
+- Canonical table đầy đủ mọi baseline (mục 6, điểm 6 / mục 8) — cần train lại 8 baseline còn lại
+  nếu paper cần so sánh > 2 kiến trúc, vì checkpoint hiện có không dùng lại được (predate P1.2).
+- Retrofit provenance vào toàn bộ baseline còn lại (hiện chỉ 2/10+ file có).
+- Cài `diff-cover` vào quy trình CI chính thức nếu muốn gate C0=100% thực thi được máy móc (`ruff`
+  đã cài, đã chạy auto-fix 1 phần — xem report riêng nếu có).
+- Cân nhắc chạy thêm seed (≥5) cho bảng mục 1 nếu paper cần độ tin cậy thống kê cao hơn n=3.

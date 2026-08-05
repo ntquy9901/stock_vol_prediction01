@@ -23,7 +23,6 @@ import sys
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.utils.data import DataLoader
 from datetime import datetime
 import time
 import json
@@ -58,9 +57,9 @@ def train_cryptomamba_v2(data_dir: str, output_dir: str = None):
     print("CRYPTOMAMBA TRAINING V2 - FULL ARCHITECTURE (70/15/15)")
     print("=" * 80)
     print("\nPhase 1 Proof-of-Concept: Test if CryptoMamba beats LSTM")
-    print(f"LSTM Baseline: 48.01-48.32% Dir Acc")
-    print(f"HAR-R Baseline: 51.53% Dir Acc")
-    print(f"CryptoMamba V2 Target: Beat LSTM (>48%), approach HAR-R (>51%)")
+    print("LSTM Baseline: 48.01-48.32% Dir Acc")
+    print("HAR-R Baseline: 51.53% Dir Acc")
+    print("CryptoMamba V2 Target: Beat LSTM (>48%), approach HAR-R (>51%)")
     print("\nKey Changes from V1:")
     print("  - Learning rate: 0.001 → 0.01 (10× higher)")
     print("  - Max epochs: 100 → 1000 (10× longer)")
@@ -84,7 +83,7 @@ def train_cryptomamba_v2(data_dir: str, output_dir: str = None):
     print(f"  Sequence Length: {CRYPTOMAMBA_CONFIG_V2['seq_length']}")
     print(f"  Use Volume: {CRYPTOMAMBA_CONFIG_V2['use_volume']}")
     print(f"  Features: {MODEL_CONFIG_V2['num_features']}")
-    print(f"  Train/Val/Test Split: 70% / 15% / 15%")
+    print("  Train/Val/Test Split: 70% / 15% / 15%")
 
     # Create dataset
     print("\n1. Creating CryptoMamba dataset...")
@@ -102,7 +101,7 @@ def train_cryptomamba_v2(data_dir: str, output_dir: str = None):
     splitter = TemporalSplitter(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
     split_info = splitter.get_info(len(dataset))
 
-    print(f"Split plan:")
+    print("Split plan:")
     print(f"  Train: {split_info['train_size']} sequences (70%)")
     print(f"  Val:   {split_info['val_size']} sequences (15%)")
     print(f"  Test:  {split_info['test_size']} sequences (15%)")
@@ -132,7 +131,7 @@ def train_cryptomamba_v2(data_dir: str, output_dir: str = None):
     model = model.to(device)
 
     print(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"Architecture: CryptoMamba (full hierarchical structure)")
+    print("Architecture: CryptoMamba (full hierarchical structure)")
 
     # Training configuration (original hyperparameters)
     criterion = nn.MSELoss()
@@ -322,19 +321,19 @@ def train_cryptomamba_v2(data_dir: str, output_dir: str = None):
     print(f"\n{'='*80}")
     print("BASELINE COMPARISON")
     print(f"{'='*80}")
-    print(f"LSTM Baseline: 48.01-48.32% Dir Acc")
-    print(f"HAR-R Baseline: 51.53% Dir Acc")
+    print("LSTM Baseline: 48.01-48.32% Dir Acc")
+    print("HAR-R Baseline: 51.53% Dir Acc")
     print(f"CryptoMamba V2:  {test_metrics['directional_accuracy']:.2f}% Dir Acc")
 
     if test_metrics['directional_accuracy'] > 48.32:
-        print(f"✅ CryptoMamba V2 BEATS LSTM baseline!")
+        print("✅ CryptoMamba V2 BEATS LSTM baseline!")
     else:
-        print(f"❌ CryptoMamba V2 does NOT beat LSTM baseline")
+        print("❌ CryptoMamba V2 does NOT beat LSTM baseline")
 
     if test_metrics['directional_accuracy'] > 51.53:
-        print(f"🎉 CryptoMamba V2 BEATS HAR-R baseline!")
+        print("🎉 CryptoMamba V2 BEATS HAR-R baseline!")
     else:
-        print(f"⚠️  CryptoMamba V2 approaches HAR-R baseline")
+        print("⚠️  CryptoMamba V2 approaches HAR-R baseline")
 
     # Save comprehensive results
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
@@ -429,8 +428,8 @@ if __name__ == "__main__":
     print("PHASE 1 COMPLETE - V2")
     print("="*80)
     print(f"Final Test Dir Acc: {test_metrics['directional_accuracy']:.2f}%")
-    print(f"Target: >48% (beat LSTM)")
-    print(f"Stretch: >51% (beat HAR-R)")
+    print("Target: >48% (beat LSTM)")
+    print("Stretch: >51% (beat HAR-R)")
 
     if test_metrics['directional_accuracy'] > 48.32:
         print("Status: ✅ SUCCESS - Beats LSTM baseline!")

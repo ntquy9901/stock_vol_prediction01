@@ -4,18 +4,15 @@ Train HAR-R Linear Baseline on VN30 Stocks Only
 import os
 import sys
 import pandas as pd
-import numpy as np
 from sklearn.linear_model import LinearRegression
 import joblib
 import json
-from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
 project_root = Path.cwd()
 sys.path.insert(0, str(project_root))
 
-from src.common.parkinson_utils import calculate_parkinson_volatility
 from src.common.feature_engineering import create_har_features, create_5day_target
 from src.common.evaluation import evaluate_predictions
 
@@ -80,7 +77,7 @@ print(f'  Feature shape: {X.shape}')
 print(f'  Target shape: {y.shape}')
 
 # Display sample statistics
-print(f'\n  VN30 Data Statistics:')
+print('\n  VN30 Data Statistics:')
 print(f'    X mean: {X.mean():.6f}, std: {X.std():.6f}')
 print(f'    y mean: {y.mean():.6f}, std: {y.std():.6f}')
 
@@ -122,7 +119,7 @@ print('-'*80)
 
 metrics = evaluate_predictions(y_test, y_pred_test)
 
-print(f'\nVN30-ONLY PERFORMANCE:')
+print('\nVN30-ONLY PERFORMANCE:')
 for metric_name, value in metrics.items():
     if metric_name == 'Directional_Acc':
         print(f'  {metric_name}: {value:.2f}%')

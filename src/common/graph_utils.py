@@ -16,7 +16,6 @@ import pandas as pd
 import torch
 import networkx as nx
 from typing import Tuple, Dict, Optional
-from scipy.stats import pearsonr
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -47,7 +46,7 @@ def build_correlation_graph(
     """
     num_stocks = returns_matrix.shape[0]
 
-    print(f"\n[Building Correlation Graph]")
+    print("\n[Building Correlation Graph]")
     print(f"  Stocks: {num_stocks}")
     print(f"  Time steps: {returns_matrix.shape[1]}")
     print(f"  Threshold: {threshold}")
@@ -109,7 +108,7 @@ def build_correlation_graph(
         'corr_matrix': corr_matrix
     }
 
-    print(f"  [OK] Graph constructed")
+    print("  [OK] Graph constructed")
     print(f"    Nodes: {graph_info['num_nodes']}")
     print(f"    Edges: {graph_info['num_edges']}")
     print(f"    Density: {graph_info['edge_density']:.4f}")
@@ -160,7 +159,7 @@ def build_spillover_graph(
 
     num_stocks = volatility_data.shape[0]
 
-    print(f"\n[Building Spillover Graph]")
+    print("\n[Building Spillover Graph]")
     print(f"  Stocks: {num_stocks}")
     print(f"  Time steps: {volatility_data.shape[1]}")
     print(f"  VAR lag order (p): {p}")
@@ -180,7 +179,7 @@ def build_spillover_graph(
         spillover_available = True
     except Exception as e:
         print(f"  [!] VAR fitting failed: {e}")
-        print(f"  [!] Using fallback: correlation-based spillover approximation")
+        print("  [!] Using fallback: correlation-based spillover approximation")
 
     # Compute forecast error variance decomposition (FEVD)
     if spillover_available:
@@ -190,7 +189,7 @@ def build_spillover_graph(
             spillover_available = True
         except Exception as e:
             print(f"  [!] FEVD computation failed: {e}")
-            print(f"  [!] Using fallback: correlation-based spillover approximation")
+            print("  [!] Using fallback: correlation-based spillover approximation")
             spillover_available = False
 
     # Process spillover data (either from FEVD or fallback)
@@ -283,7 +282,7 @@ def build_spillover_graph(
         'used_fallback': not spillover_available
     }
 
-    print(f"  [OK] Graph constructed")
+    print("  [OK] Graph constructed")
     print(f"    Nodes: {graph_info['num_nodes']}")
     print(f"    Directed edges: {graph_info['num_edges']}")
     print(f"    Density: {graph_info['edge_density']:.4f}")

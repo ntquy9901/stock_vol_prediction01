@@ -16,7 +16,6 @@ Date: 2026-06-19
 
 import torch
 import torch.nn as nn
-from typing import List
 import sys
 
 # Try to import mamba_ssm
@@ -305,9 +304,9 @@ def test_model():
         hierarchical=True,
     )
 
-    print(f"✅ Model created successfully")
+    print("✅ Model created successfully")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"   Architecture: Hierarchical hidden_dims=[14, 1]")
+    print("   Architecture: Hierarchical hidden_dims=[14, 1]")
 
     # Test forward pass
     batch_size = 4

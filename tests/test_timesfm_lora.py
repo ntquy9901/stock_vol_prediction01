@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 import tempfile
 from pathlib import Path
 
@@ -860,7 +860,6 @@ class TestThirdAdversarialReviewFixes:
     def test_best_model_has_timestamp(self):
         """Test that best model path includes timestamp."""
         from src.timesfm_baseline.timesfm_lora_finetuning import TimesFMLoRAFineTuner
-        from pathlib import Path
         from unittest.mock import MagicMock, patch
 
         import numpy as np
@@ -920,7 +919,6 @@ class TestThirdAdversarialReviewFixes:
     def test_learning_curves_has_timestamp(self):
         """Test that learning curves have timestamp to prevent race condition."""
         from src.timesfm_baseline.timesfm_lora_finetuning import TimesFMLoRAFineTuner
-        from pathlib import Path
         from unittest.mock import MagicMock, patch
 
         import numpy as np

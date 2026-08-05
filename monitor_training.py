@@ -1,7 +1,6 @@
 """
 Monitor TimesNet training progress
 """
-import time
 from pathlib import Path
 
 results_dir = Path('results/timesnet_baseline_2026-06-20_091514')

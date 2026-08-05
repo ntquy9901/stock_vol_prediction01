@@ -22,16 +22,13 @@ import numpy as np
 import pandas as pd
 import torch
 from pathlib import Path
-from datetime import datetime
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.cryptomamba_baseline.model_enhanced import create_cryptomamba_model_enhanced
-from src.cryptomamba_baseline.config_enhanced import MODEL_CONFIG_ENHANCED
 from src.common.har_features import generate_har_features, validate_har_features
-from src.common.evaluation import evaluate_predictions
 
 
 class TestHARFeaturesGeneration:

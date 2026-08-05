@@ -12,7 +12,6 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import tempfile
-from datetime import datetime
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -68,10 +67,10 @@ sys.argv = [
 logger.info("\n" + "="*70)
 logger.info("Starting TimesFM 2.5 LoRA Training Test")
 logger.info("="*70)
-logger.info(f"Configuration:")
-logger.info(f"  Epochs: 2")
-logger.info(f"  Batch Size: 16")
-logger.info(f"  Train Samples: 100")
+logger.info("Configuration:")
+logger.info("  Epochs: 2")
+logger.info("  Batch Size: 16")
+logger.info("  Train Samples: 100")
 logger.info(f"  Output: {temp_dir / 'timesfm_lora_test'}")
 logger.info("="*70 + "\n")
 

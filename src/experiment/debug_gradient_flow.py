@@ -5,7 +5,6 @@ import sys
 import os
 import torch
 import torch.nn as nn
-import numpy as np
 
 # Add project root to path
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -82,7 +81,7 @@ for lr in [0.00209, 0.001, 0.0001, 0.00001]:
                 large_grads += 1
                 print(f"  [!] LARGE gradient: {name} (norm={grad_norm:.2e})")
 
-    print(f"\nGradient Statistics:")
+    print("\nGradient Statistics:")
     print(f"  Total parameters: {total_params}")
     print(f"  Zero gradients: {zero_grads} ({zero_grads/total_params*100:.1f}%)")
     print(f"  Tiny gradients: {tiny_grads} ({tiny_grads/total_params*100:.1f}%)")
@@ -95,17 +94,17 @@ for lr in [0.00209, 0.001, 0.0001, 0.00001]:
     final_lstm_hh = model.lstm.weight_hh_l0[0, 0].item()
     weight_change = abs(final_lstm_hh - initial_lstm_hh)
 
-    print(f"\nWeight Change Analysis:")
+    print("\nWeight Change Analysis:")
     print(f"  Initial LSTM weight[0,0]: {initial_lstm_hh:.6f}")
     print(f"  Final LSTM weight[0,0]: {final_lstm_hh:.6f}")
     print(f"  Absolute change: {weight_change:.6e}")
 
     if weight_change < 1e-8:
-        print(f"  [X] ERROR: Weights NOT updating! Change too small.")
+        print("  [X] ERROR: Weights NOT updating! Change too small.")
     elif weight_change < 1e-6:
-        print(f"  [!] WARNING: Weights barely updating.")
+        print("  [!] WARNING: Weights barely updating.")
     else:
-        print(f"  [OK] Weights updating normally.")
+        print("  [OK] Weights updating normally.")
 
 print(f"\n{'='*80}")
 print("DEBUG COMPLETE")

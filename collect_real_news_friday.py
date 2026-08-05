@@ -114,8 +114,8 @@ def collect_real_news_2026_06_26() -> list:
             })
 
     print(f"\n[SUCCESS] Collected {len(news_list)} real news articles from web")
-    print(f"[DATE] 2026-06-26 (Friday - Trading Day)")
-    print(f"[SOURCES] Dantri, other financial news websites")
+    print("[DATE] 2026-06-26 (Friday - Trading Day)")
+    print("[SOURCES] Dantri, other financial news websites")
     print(f"[TICKERS] {len(real_news)} VN30 stocks covered")
 
     return news_list
@@ -195,7 +195,7 @@ def analyze_real_news_with_finbert(news_list: list, output_dir: str):
         print(f"  [FILE] {combined_file}")
 
         # Save per-ticker aggregates
-        print(f"\n  [INFO] Creating per-ticker aggregates...")
+        print("\n  [INFO] Creating per-ticker aggregates...")
         ticker_stats = []
         for ticker in df['ticker'].unique():
             ticker_data = df[df['ticker'] == ticker]
@@ -225,15 +225,15 @@ def analyze_real_news_with_finbert(news_list: list, output_dir: str):
 
         print(f"\nTotal Articles: {len(df)}")
         print(f"Stocks Covered: {len(df['ticker'].unique())}")
-        print(f"Date: 2026-06-26 (Friday - Trading Day)")
+        print("Date: 2026-06-26 (Friday - Trading Day)")
 
-        print(f"\nSentiment Distribution:")
+        print("\nSentiment Distribution:")
         sentiment_counts = df['sentiment_label'].value_counts()
         for label, count in sentiment_counts.items():
             pct = count / len(df) * 100
             print(f"  {label}: {count} ({pct:.1f}%)")
 
-        print(f"\nPer-Stock Average Sentiment (Ranked):")
+        print("\nPer-Stock Average Sentiment (Ranked):")
         ticker_sorted = ticker_df.sort_values('avg_sentiment_score', ascending=False)
         for idx, row in ticker_sorted.iterrows():
             print(f"  {row['ticker']}: {row['avg_sentiment_score']:+.3f} ({row['num_articles']} articles)")

@@ -46,7 +46,7 @@ def test_improved_graph_construction():
     volatility = returns.copy()  # Simplified
 
     print(f"\nData shape: {returns.shape}")
-    print(f"Expected pattern: Stocks 0-2 correlated, Stocks 3-4 different")
+    print("Expected pattern: Stocks 0-2 correlated, Stocks 3-4 different")
 
     # Test correlation graph
     print("\n" + "-"*80)
@@ -58,7 +58,7 @@ def test_improved_graph_construction():
     print(f"Correlation graph shape: {corr_graph.shape}")
     print(f"Graph density: {(corr_graph > 0).sum() / (num_stocks * num_stocks):.4f}")
 
-    print(f"\nCorrelation adjacency matrix:")
+    print("\nCorrelation adjacency matrix:")
     for i in range(num_stocks):
         for j in range(num_stocks):
             if i != j and corr_graph[i, j] > 0:
@@ -74,7 +74,7 @@ def test_improved_graph_construction():
     print(f"Spillover graph shape: {spill_graph.shape}")
     print(f"Graph density: {(spill_graph > 0).sum() / (num_stocks * num_stocks):.4f}")
 
-    print(f"\nSpillover adjacency matrix:")
+    print("\nSpillover adjacency matrix:")
     for i in range(num_stocks):
         for j in range(num_stocks):
             if i != j and spill_graph[i, j] > 0:
@@ -90,7 +90,7 @@ def test_improved_graph_construction():
     print(f"Hybrid graph shape: {hybrid_graph.shape}")
     print(f"Graph density: {(hybrid_graph > 0).sum() / (num_stocks * num_stocks):.4f}")
 
-    print(f"\nHybrid adjacency matrix:")
+    print("\nHybrid adjacency matrix:")
     for i in range(num_stocks):
         for j in range(num_stocks):
             if i != j and hybrid_graph[i, j] > 0:
@@ -108,7 +108,7 @@ def test_improved_graph_construction():
             if i != j and hybrid_graph[i, j] > 0:
                 connections_group1 += 1
 
-    print(f"\nExpected: Stocks 0-2 should be interconnected")
+    print("\nExpected: Stocks 0-2 should be interconnected")
     print(f"Actual connections among group 1: {connections_group1}/6")
 
     if connections_group1 >= 3:

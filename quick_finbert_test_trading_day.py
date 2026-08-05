@@ -11,7 +11,7 @@ import sys
 import os
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -75,9 +75,9 @@ def test_finbert_on_trading_day() -> dict:
     trading_day = datetime.now().replace(day=26)  # 2026-06-26 (Friday)
     print(f"Test Date: {trading_day.strftime('%Y-%m-%d')}")
     print(f"Day of Week: {trading_day.strftime('%A')}")
-    print(f"Status: MARKET TRADING DAY (not weekend)")
+    print("Status: MARKET TRADING DAY (not weekend)")
     print("=" * 70)
-    print(f"Stocks: ACB, VCB, VHM, VNM, VIC (5 major VN30 stocks)")
+    print("Stocks: ACB, VCB, VHM, VNM, VIC (5 major VN30 stocks)")
     print("=" * 70)
 
     # Initialize FinBERT
@@ -94,8 +94,8 @@ def test_finbert_on_trading_day() -> dict:
     print("\n[+] Loading sample news for REAL trading day...")
     sample_news = get_real_trading_day_sample_news()
     print(f"[SUCCESS] Loaded {sum(len(news) for news in sample_news.values())} news articles")
-    print(f"[INFO] These are SAMPLE news simulating what would be published on trading day")
-    print(f"[INFO] In production, real news will be collected from actual sources")
+    print("[INFO] These are SAMPLE news simulating what would be published on trading day")
+    print("[INFO] In production, real news will be collected from actual sources")
 
     # Analyze sentiment for each stock
     results = {}
@@ -238,11 +238,11 @@ def main():
         print("[SUCCESS] Sentiment analysis pipeline validated!")
         print("[SUCCESS] CSV data files generated with CORRECT date!")
         print("\n[IMPORTANT FIX] Now using Friday instead of Saturday")
-        print(f"[INFO] In production, ALWAYS use actual trading days (Mon-Fri)")
-        print(f"[INFO] Never use weekend dates for trading data")
+        print("[INFO] In production, ALWAYS use actual trading days (Mon-Fri)")
+        print("[INFO] Never use weekend dates for trading data")
 
-        print(f"\n[CHECK] Check results in: data/processed/vn30_sentiment/daily/")
-        print(f"[NEXT] Ready to scale to all 30 VN30 stocks!")
+        print("\n[CHECK] Check results in: data/processed/vn30_sentiment/daily/")
+        print("[NEXT] Ready to scale to all 30 VN30 stocks!")
         print("=" * 70)
 
 

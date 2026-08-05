@@ -31,13 +31,10 @@ import logging
 from pathlib import Path
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
-import torch
 
 from src.timesfm_baseline.timesfm_lora_finetuning import compare_zero_shot_vs_finetuned
 from src.timesfm_baseline.volatility_dataset import create_multi_stock_volatility_datasets
-from src.common.evaluation import evaluate_predictions
 
 logging.basicConfig(
     level=logging.INFO,

@@ -20,7 +20,6 @@ import torch.nn as nn
 import numpy as np
 import pandas as pd
 from datetime import datetime
-import joblib
 
 # Add project root to path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -318,5 +317,5 @@ if __name__ == "__main__":
     model, metrics = train_with_best_params(data_dir, best_params, args.output)
 
     print("\n[SUCCESS] Training completed successfully!")
-    print(f"\nTo compare with HAR:")
-    print(f"  python compare_models.py")
+    print("\nTo compare with HAR:")
+    print("  python compare_models.py")

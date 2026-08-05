@@ -8,12 +8,10 @@ Author: Stock Volatility Prediction Team
 Date: 2026-06-28
 """
 
-import requests
 from bs4 import BeautifulSoup
 from typing import List, Optional
-import re
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from urllib.parse import urljoin
 
 from .base_crawler import BaseNewsCrawler, NewsArticle, get_vn30_tickers
@@ -37,7 +35,7 @@ class CafefCrawler(BaseNewsCrawler):
         self.base_url = "https://cafef.vn"
         self.search_url = "https://cafef.vn/tim-kiem"
 
-        logger.info(f"[CafefCrawler] Initialized")
+        logger.info("[CafefCrawler] Initialized")
 
     def fetch_news_for_ticker(self, ticker: str, start_date: str, end_date: str) -> List[NewsArticle]:
         """
@@ -437,7 +435,7 @@ def main():
 
         # Show sample
         for article in articles[:3]:
-            print(f"\nSample Article:")
+            print("\nSample Article:")
             print(f"  Title: {article.title}")
             print(f"  Date: {article.date}")
             print(f"  URL: {article.url}")

@@ -16,10 +16,6 @@ Date: 2026-06-19
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from functools import partial
-from typing import Callable, Any
-import math
 
 
 class MambaBlock(nn.Module):
@@ -273,7 +269,7 @@ def test_model():
         d_state=16,
     )
 
-    print(f"Model created successfully")
+    print("Model created successfully")
     print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     # Test forward pass

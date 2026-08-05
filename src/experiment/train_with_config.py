@@ -11,15 +11,12 @@ import yaml
 import argparse
 from pathlib import Path
 import sys
-import torch
 import pandas as pd
-from datetime import datetime
 
 # Add src to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from common.temporal_split import TemporalSplitter
-from common.evaluation import evaluate_predictions
 
 
 def load_config(config_path: str = None) -> dict:

@@ -24,7 +24,7 @@ model.eval()
 # Predict
 with torch.no_grad():
     pred = model(X_sample.unsqueeze(0))
-    
+
 print("Prediction (scaled):", pred.item())
 
 # Inverse transform

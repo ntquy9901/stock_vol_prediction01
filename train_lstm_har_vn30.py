@@ -1,11 +1,9 @@
 """
 Train LSTM-HAR on VN30-only data
 """
-import os
 import sys
 import torch
 import numpy as np
-import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
@@ -157,7 +155,7 @@ print('\n' + '='*80)
 print('LSTM-HAR (VN30-ONLY) RESULTS')
 print('='*80)
 
-print(f'\nTest Metrics:')
+print('\nTest Metrics:')
 print(f'  MSE:  {metrics["mse"]:.6f}')
 print(f'  RMSE: {metrics["rmse"]:.6f}')
 print(f'  MAE:  {metrics["mae"]:.6f}')
@@ -168,7 +166,7 @@ print(f'  Dir Acc: {metrics["directional_accuracy"]:.2f}%')
 print('\n' + '='*80)
 print('COMPARISON vs HAR-R BASELINE')
 print('='*80)
-print(f'  HAR-R Dir Acc: 51.53%')
+print('  HAR-R Dir Acc: 51.53%')
 print(f'  LSTM-HAR Dir Acc: {metrics["directional_accuracy"]:.2f}%')
 print(f'  Improvement: {metrics["directional_accuracy"] - 51.53:.2f}%')
 

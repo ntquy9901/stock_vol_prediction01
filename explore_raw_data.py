@@ -10,5 +10,5 @@ print(f"\nData types:\n{df.dtypes}")
 
 # Check label distribution if exists
 if len(df.columns) > 1:
-    print(f"\nUnique labels in last column:")
+    print("\nUnique labels in last column:")
     print(df.iloc[:, -1].value_counts())

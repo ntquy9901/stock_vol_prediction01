@@ -4,7 +4,6 @@ sys.path.insert(0, '.')
 
 import torch
 import numpy as np
-from torch.utils.data import DataLoader
 from src.lstm_baseline.dataset import PooledVolatilityDataset
 from src.lstm_baseline.model import SimpleVolatilityLSTM
 from src.common.evaluation import evaluate_predictions
@@ -41,13 +40,13 @@ actuals_scaled = np.array(actuals_scaled)
 predictions = dataset.target_scaler.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
 actuals = dataset.target_scaler.inverse_transform(actuals_scaled.reshape(-1, 1)).flatten()
 
-print(f"\nPredictions statistics:")
+print("\nPredictions statistics:")
 print(f"  Min: {predictions.min():.6f}")
 print(f"  Max: {predictions.max():.6f}")
 print(f"  Mean: {predictions.mean():.6f}")
 print(f"  Std: {predictions.std():.6f}")
 
-print(f"\nActuals statistics:")
+print("\nActuals statistics:")
 print(f"  Min: {actuals.min():.6f}")
 print(f"  Max: {actuals.max():.6f}")
 print(f"  Mean: {actuals.mean():.6f}")
@@ -55,7 +54,7 @@ print(f"  Std: {actuals.std():.6f}")
 
 # Calculate metrics
 metrics = evaluate_predictions(actuals, predictions)
-print(f"\nTest Metrics:")
+print("\nTest Metrics:")
 for name, value in metrics.items():
     if name == 'Directional_Acc':
         print(f"  {name}: {value:.2f}%")

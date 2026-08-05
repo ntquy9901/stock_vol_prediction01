@@ -4,7 +4,6 @@ Debug script to check if model outputs vary with different weights.
 import sys
 import os
 import torch
-import torch.nn as nn
 import numpy as np
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

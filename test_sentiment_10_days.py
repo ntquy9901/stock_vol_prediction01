@@ -12,7 +12,7 @@ Test Structure:
 import sys
 import os
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -387,7 +387,7 @@ def run_sentiment_test_suite(test_news: dict, output_dir: str):
     print(f"\nTotal Tests: {total_tests}")
     print(f"Correct Predictions: {total_correct}")
     print(f"Overall Accuracy: {overall_accuracy:.2f}%")
-    print(f"\nModel: FinBERT (ProsusAI/finbert)")
+    print("\nModel: FinBERT (ProsusAI/finbert)")
     print(f"Test Period: {list(test_news.keys())[0]} to {list(test_news.keys())[-1]}")
 
     # Save detailed results
@@ -419,7 +419,7 @@ def run_sentiment_test_suite(test_news: dict, output_dir: str):
             f.write("SENTIMENT ANALYSIS TEST REPORT\n")
             f.write("=" * 70 + "\n\n")
             f.write(f"Test Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Model: FinBERT (ProsusAI/finbert)\n")
+            f.write("Model: FinBERT (ProsusAI/finbert)\n")
             f.write(f"Test Period: {list(test_news.keys())[0]} to {list(test_news.keys())[-1]}\n")
             f.write(f"Total Trading Days: {len(test_news)}\n")
             f.write(f"Total Articles: {total_tests}\n\n")
@@ -488,10 +488,10 @@ def main():
             print("=" * 70)
             print(f"\n[SUCCESS] Tested {len(df)} articles across 10 trading days")
             print(f"[ACCURACY] {accuracy:.2f}% correct predictions")
-            print(f"\n[OUTPUT FILES]")
-            print(f"  - Detailed results: sentiment_test_detailed_results.csv")
-            print(f"  - Daily summary: sentiment_test_summary_by_day.csv")
-            print(f"  - Human report: sentiment_test_report.txt")
+            print("\n[OUTPUT FILES]")
+            print("  - Detailed results: sentiment_test_detailed_results.csv")
+            print("  - Daily summary: sentiment_test_summary_by_day.csv")
+            print("  - Human report: sentiment_test_report.txt")
             print(f"\n[DIRECTORY] {output_dir}")
             print("[NEXT] Review test report for model performance analysis")
             print("=" * 70)

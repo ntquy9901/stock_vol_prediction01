@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 from sklearn.preprocessing import StandardScaler
 
 from src.lstm_har_gat_hybrid.hybrid_model import LSTMHAR_GAT_Hybrid
@@ -34,7 +34,7 @@ SEQ_LENGTH = 22
 FORECAST_HORIZON = 5
 NUM_EPOCHS = 2  # Quick test - just 2 epochs
 
-print(f"\n[Configuration]")
+print("\n[Configuration]")
 print(f"  Stocks: {NUM_STOCKS}")
 print(f"  Batch size: {BATCH_SIZE}")
 print(f"  Sequence length: {SEQ_LENGTH}")
@@ -131,7 +131,7 @@ class HybridVolatilityDataset(Dataset):
         return self.target_scaler.inverse_transform(y_scaled.reshape(-1, 1))
 
 # Load dataset
-print(f"\n[2] Creating dataset...")
+print("\n[2] Creating dataset...")
 dataset = HybridVolatilityDataset(
     data_dir='data/processed',
     seq_length=SEQ_LENGTH,
@@ -141,7 +141,7 @@ dataset = HybridVolatilityDataset(
 print(f"  Dataset size: {len(dataset)}")
 
 # Create data loader (simple batching)
-print(f"\n[3] Creating data loader...")
+print("\n[3] Creating data loader...")
 
 # Reshape sequences for multi-stock processing
 num_stocks = len(dataset.stock_names)
@@ -174,7 +174,7 @@ dataloader = list(range(0, len(dataset), BATCH_SIZE))[:5]  # Just 5 batches for 
 print(f"  Created {len(dataloader)} batches for testing")
 
 # Build graph
-print(f"\n[4] Building graph...")
+print("\n[4] Building graph...")
 
 # Load volatility data for graph construction
 volatility_list = []
@@ -197,7 +197,7 @@ edge_index, edge_weight, graph_info = build_correlation_graph(
 print(f"  Graph: {graph_info['num_nodes']} nodes, {graph_info['num_edges']} edges")
 
 # Initialize model
-print(f"\n[5] Initializing LSTM-HAR-GAT Hybrid model...")
+print("\n[5] Initializing LSTM-HAR-GAT Hybrid model...")
 
 model = LSTMHAR_GAT_Hybrid(
     num_stocks=num_stocks,
@@ -213,7 +213,7 @@ model = LSTMHAR_GAT_Hybrid(
 print(f"  Model parameters: {sum(p.numel() for p in model.parameters()):,}")
 
 # Test forward pass
-print(f"\n[6] Testing forward pass...")
+print("\n[6] Testing forward pass...")
 
 X_batch, y_batch = collate_fn([dataset[i] for i in range(BATCH_SIZE * num_stocks)])
 
@@ -228,7 +228,7 @@ print(f"  Expected: ({BATCH_SIZE}, {num_stocks}, 1)")
 
 assert predictions.shape == (BATCH_SIZE, num_stocks, 1), f"Shape mismatch: {predictions.shape}"
 
-print(f"  [OK] Forward pass successful!")
+print("  [OK] Forward pass successful!")
 
 # Quick training test
 print(f"\n[7] Quick training test ({NUM_EPOCHS} epochs)...")
@@ -271,10 +271,10 @@ for epoch in range(NUM_EPOCHS):
 
     print(f"  Epoch {epoch+1}/{NUM_EPOCHS}: Loss = {avg_loss:.6f}")
 
-print(f"  [OK] Training test completed!")
+print("  [OK] Training test completed!")
 
 # Evaluation test
-print(f"\n[8] Evaluation test...")
+print("\n[8] Evaluation test...")
 
 model.eval()
 
@@ -291,7 +291,7 @@ metrics = evaluate_predictions(
     pred_original.reshape(-1)
 )
 
-print(f"  Test Metrics:")
+print("  Test Metrics:")
 print(f"    MSE: {metrics['mse']:.6f}")
 print(f"    RMSE: {metrics['rmse']:.6f}")
 print(f"    MAE: {metrics['mae']:.6f}")
@@ -299,28 +299,28 @@ print(f"    R²: {metrics['r2']:.6f}")
 print(f"    QLIKE: {metrics['qlike']:.6f}")
 print(f"    Dir Acc: {metrics['directional_accuracy']:.2f}%")
 
-print(f"\n  [OK] Evaluation completed!")
+print("\n  [OK] Evaluation completed!")
 
 # Summary
-print(f"\n[9] Summary:")
-print(f"  [OK] Data pipeline working")
-print(f"  [OK] Graph construction working")
-print(f"  [OK] Model forward pass working")
-print(f"  [OK] Training loop working (loss: 8.69 -> 7.14)")
-print(f"  [OK] Evaluation metrics working")
+print("\n[9] Summary:")
+print("  [OK] Data pipeline working")
+print("  [OK] Graph construction working")
+print("  [OK] Model forward pass working")
+print("  [OK] Training loop working (loss: 8.69 -> 7.14)")
+print("  [OK] Evaluation metrics working")
 
-print(f"\n  Current Performance (2 epochs, untrained):")
-print(f"    RMSE: 0.00248 (scaled)")
-print(f"    Dir Acc: 44.54%")
+print("\n  Current Performance (2 epochs, untrained):")
+print("    RMSE: 0.00248 (scaled)")
+print("    Dir Acc: 44.54%")
 
-print(f"\n  Expected Performance (after full training):")
-print(f"    RMSE: 0.18 -> < 0.15 (target: 17% improvement)")
-print(f"    Dir Acc: 67.90% -> > 75% (target: 7% improvement)")
+print("\n  Expected Performance (after full training):")
+print("    RMSE: 0.18 -> < 0.15 (target: 17% improvement)")
+print("    Dir Acc: 67.90% -> > 75% (target: 7% improvement)")
 
-print(f"\n  Next Steps:")
-print(f"    - Implement full training pipeline (Week 3-4)")
-print(f"    - Hyperparameter tuning")
-print(f"    - Compare vs LSTM-HAR baseline")
+print("\n  Next Steps:")
+print("    - Implement full training pipeline (Week 3-4)")
+print("    - Hyperparameter tuning")
+print("    - Compare vs LSTM-HAR baseline")
 
 print("\n" + "="*70)
 print("PROTOTYPE VALIDATION SUCCESSFUL!")

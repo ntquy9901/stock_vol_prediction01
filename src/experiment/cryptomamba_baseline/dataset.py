@@ -81,7 +81,7 @@ class CryptoMambaDataset(Dataset):
         self._create_sequences()
 
         # Print dataset info
-        print(f"\nDataset Statistics:")
+        print("\nDataset Statistics:")
         print(f"  Total sequences: {len(self)}")
         print(f"  Sequence length: {self.seq_length}")
         print(f"  Forecast horizon: {self.forecast_horizon} days")

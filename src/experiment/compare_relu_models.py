@@ -4,7 +4,6 @@ Compare SimpleLSTM vs LSTM-HAR to understand ReLU issue.
 import sys
 import os
 import torch
-import torch.nn as nn
 import numpy as np
 
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -32,7 +31,7 @@ print("=" * 80)
 
 # Create SimpleLSTM dataset
 simple_dataset = PooledVolatilityDataset('data/processed', seq_length=22, forecast_horizon=5)
-print(f"\nSimpleLSTM Dataset:")
+print("\nSimpleLSTM Dataset:")
 print(f"  Total samples: {len(simple_dataset)}")
 
 # Get one sample
@@ -44,7 +43,7 @@ print(f"  Target: {y_simple.item():.6f}")
 
 # Create LSTM-HAR dataset
 har_dataset = HARVolatilityDataset('data/processed', seq_length=22, forecast_horizon=5)
-print(f"\nLSTM-HAR Dataset:")
+print("\nLSTM-HAR Dataset:")
 print(f"  Total samples: {len(har_dataset)}")
 
 # Get one sample
@@ -124,12 +123,12 @@ for i in range(0, min(1000, len(simple_dataset)), 10):
 simple_targets = np.array(simple_targets)
 har_targets = np.array(har_targets)
 
-print(f"\nSimpleLSTM Targets (raw):")
+print("\nSimpleLSTM Targets (raw):")
 print(f"  Range: [{simple_targets.min():.6f}, {simple_targets.max():.6f}]")
 print(f"  Mean: {simple_targets.mean():.6f}, Std: {simple_targets.std():.6f}")
 print(f"  Non-zero ratio: {(simple_targets != 0).sum() / len(simple_targets):.2%}")
 
-print(f"\nLSTM-HAR Targets (scaled):")
+print("\nLSTM-HAR Targets (scaled):")
 print(f"  Range: [{har_targets.min():.6f}, {har_targets.max():.6f}]")
 print(f"  Mean: {har_targets.mean():.6f}, Std: {har_targets.std():.6f}")
 print(f"  Non-zero ratio: {(har_targets != 0).sum() / len(har_targets):.2%}")
@@ -138,22 +137,22 @@ print("\n" + "=" * 80)
 print("ANALYSIS")
 print("=" * 80)
 
-print(f"\n1. Zero Output Rate:")
+print("\n1. Zero Output Rate:")
 print(f"   SimpleLSTM: {simple_zero_count}/10 ({simple_zero_count*10}%)")
 print(f"   LSTM-HAR: {har_zero_count}/10 ({har_zero_count*10}%)")
 
 if simple_zero_count < har_zero_count:
-    print(f"   → SimpleLSTM has FEWER zero outputs (better)")
+    print("   → SimpleLSTM has FEWER zero outputs (better)")
 elif simple_zero_count > har_zero_count:
-    print(f"   → SimpleLSTM has MORE zero outputs (worse)")
+    print("   → SimpleLSTM has MORE zero outputs (worse)")
 else:
-    print(f"   → Both have SAME zero output rate")
+    print("   → Both have SAME zero output rate")
 
-print(f"\n2. Input Scale:")
+print("\n2. Input Scale:")
 print(f"   SimpleLSTM: mean={X_simple.mean():.6f}, std={X_simple.std():.6f}")
 print(f"   LSTM-HAR: mean={X_har.mean():.6f}, std={X_har.std():.6f}")
 
-print(f"\n3. Target Scale:")
+print("\n3. Target Scale:")
 print(f"   SimpleLSTM: mean={simple_targets.mean():.6f}, std={simple_targets.std():.6f}")
 print(f"   LSTM-HAR: mean={har_targets.mean():.6f}, std={har_targets.std():.6f}")
 

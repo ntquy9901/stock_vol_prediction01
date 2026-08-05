@@ -14,7 +14,6 @@ Date: 2026-06-18
 """
 
 import pandas as pd
-import numpy as np
 
 
 def create_har_features(parkinson_volatility: pd.Series,

@@ -17,7 +17,6 @@ import numpy as np
 import optuna
 from optuna.pruners import MedianPruner
 from optuna.samplers import TPESampler
-import pandas as pd
 from datetime import datetime
 import json
 
@@ -322,8 +321,8 @@ def main():
     trials_df.to_csv(os.path.join(output_dir, 'all_trials.csv'), index=False)
 
     print(f"\n4. Results saved to: {output_dir}/")
-    print(f"   - best_params.json")
-    print(f"   - all_trials.csv")
+    print("   - best_params.json")
+    print("   - all_trials.csv")
 
     # Display top 5 trials
     print("\n5. Top 5 Trials:")

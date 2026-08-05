@@ -22,7 +22,6 @@ Date: 2026-06-18
 import os
 import sys
 import pandas as pd
-import numpy as np
 from sklearn.linear_model import LinearRegression
 from datetime import datetime
 import joblib
@@ -33,7 +32,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(current_dir))
 sys.path.insert(0, project_root)
 
-from src.common.parkinson_utils import calculate_parkinson_volatility
 from src.common.feature_engineering import create_har_features, create_5day_target
 from src.common.evaluation import evaluate_predictions
 
@@ -108,7 +106,7 @@ def train_har_baseline(data_dir: str, output_dir: str = None):
     print(f"  Target shape: {y.shape}")
 
     # Display sample statistics
-    print(f"\n  Data Statistics:")
+    print("\n  Data Statistics:")
     print(f"    X mean: {X.mean():.6f}, std: {X.std():.6f}")
     print(f"    y mean: {y.mean():.6f}, std: {y.std():.6f}")
 

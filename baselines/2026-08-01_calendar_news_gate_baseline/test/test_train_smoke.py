@@ -4,7 +4,6 @@ debug-output helpers (mirrors `2026-07-26_per_ticker_news_gate_baseline/test/tes
 1:1, since this baseline's train script duplicates that logic unchanged -- design.md §6).
 """
 import sys
-import json
 from pathlib import Path
 
 import numpy as np
