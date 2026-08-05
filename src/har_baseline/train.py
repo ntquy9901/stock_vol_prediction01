@@ -36,6 +36,80 @@ from src.common.feature_engineering import create_har_features, create_5day_targ
 from src.common.evaluation import evaluate_predictions
 
 
+FEATURE_COLS = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']
+
+
+def load_har_train_test_split(data_dir: str, train_ratio: float = 0.8):
+    """
+    Load processed CSVs and build a PER-TICKER chronological train/test split.
+
+    For each ticker: sort by date, compute HAR features + the 5-day-ahead target
+    (both causal), drop warm-up/trailing NaN rows, then cut at ``train_ratio`` of
+    THAT ticker's own valid rows. The early portion of every ticker goes to train
+    and the late portion of every ticker goes to test.
+
+    This replaces the earlier single global cut over a ticker-concatenated array,
+    which -- because tickers were concatenated whole in arbitrary os.listdir order
+    -- put some tickers entirely in train and others entirely in test instead of
+    performing a temporal split (CLAUDE.md Section 3.A). The pattern here mirrors
+    HARVolatilityDataset._load_all_data (src/lstm_har_baseline/dataset.py).
+
+    The rows stay ticker-blocked (one ticker's contiguous block after another),
+    so within each block consecutive array positions are consecutive trading days
+    for that ticker; evaluate_predictions()'s np.diff-based directional accuracy is
+    therefore already correct without an n_stocks argument (only the few
+    ticker-boundary transitions produce a spurious diff, negligible at this data
+    volume).
+
+    Args:
+        data_dir: Directory containing ``*_processed.csv`` files.
+        train_ratio: Fraction of each ticker's valid rows used for training.
+
+    Returns:
+        Tuple ``(X_train, y_train, X_test, y_test, train_meta, test_meta)`` where
+        the ``*_meta`` DataFrames carry ``ticker`` and ``date`` per row.
+    """
+    train_parts, test_parts = [], []
+
+    for filename in sorted(os.listdir(data_dir)):
+        if not filename.endswith('_processed.csv'):
+            continue
+
+        ticker = filename.replace('_processed.csv', '')
+        df = pd.read_csv(os.path.join(data_dir, filename))
+
+        # Sort chronologically (per-ticker) before any feature/target creation.
+        df = df.sort_values('date').reset_index(drop=True)
+
+        vol = df['parkinson_volatility']
+        har_features = create_har_features(vol)
+        df = pd.concat([df, har_features], axis=1)
+        df['target_5d'] = create_5day_target(vol)
+        df['ticker'] = ticker
+
+        # Keep valid rows (no NaN in features or target).
+        df_valid = df.dropna(subset=FEATURE_COLS + ['target_5d']).copy()
+        if len(df_valid) == 0:
+            continue
+
+        # Per-ticker chronological cut point.
+        split_idx = int(train_ratio * len(df_valid))
+        train_parts.append(df_valid.iloc[:split_idx])
+        test_parts.append(df_valid.iloc[split_idx:])
+
+    train_df = pd.concat(train_parts, ignore_index=True)
+    test_df = pd.concat(test_parts, ignore_index=True)
+
+    X_train = train_df[FEATURE_COLS].values
+    y_train = train_df['target_5d'].values
+    X_test = test_df[FEATURE_COLS].values
+    y_test = test_df['target_5d'].values
+    train_meta = train_df[['ticker', 'date']].reset_index(drop=True)
+    test_meta = test_df[['ticker', 'date']].reset_index(drop=True)
+
+    return X_train, y_train, X_test, y_test, train_meta, test_meta
+
+
 def train_har_baseline(data_dir: str, output_dir: str = None):
     """
     Train HAR-R baseline on pooled dataset using Parkinson volatility.
@@ -56,66 +130,24 @@ def train_har_baseline(data_dir: str, output_dir: str = None):
     os.makedirs(output_dir, exist_ok=True)
     print(f"Results will be saved to: {output_dir}")
 
-    # Load processed data (already contains parkinson_volatility)
-    print("\n1. Loading processed data (Parkinson volatility)...")
-    all_files = []
-    for filename in os.listdir(data_dir):
-        if filename.endswith('_processed.csv'):
-            file_path = os.path.join(data_dir, filename)
-            df = pd.read_csv(file_path)
-            all_files.append(df)
+    # Load processed data and build a per-ticker chronological train/test split.
+    # (See load_har_train_test_split for why a single global cut was wrong.)
+    print("\n1-3. Loading data, creating HAR features, and splitting per ticker...")
+    feature_cols = FEATURE_COLS
+    X_train, y_train, X_test, y_test, train_meta, test_meta = (
+        load_har_train_test_split(data_dir)
+    )
 
-    print(f"  Loaded {len(all_files)} stock files")
+    n_tickers = train_meta['ticker'].nunique()
+    print(f"  Tickers: {n_tickers}")
+    print(f"  Total samples: {len(X_train) + len(X_test)}")
+    print(f"  Feature shape (train): {X_train.shape}")
 
-    # Create HAR features for all stocks
-    print("\n2. Creating HAR features using src/common utilities...")
-    features_list = []
+    print("\n  Data Statistics (train):")
+    print(f"    X mean: {X_train.mean():.6f}, std: {X_train.std():.6f}")
+    print(f"    y mean: {y_train.mean():.6f}, std: {y_train.std():.6f}")
 
-    for df in all_files:
-        # Sort by date
-        df = df.sort_values('date').reset_index(drop=True)
-
-        # Extract parkinson volatility (already calculated from raw OHLCV)
-        vol = df['parkinson_volatility']
-
-        # Create HAR features using src/common/feature_engineering
-        har_features = create_har_features(vol)
-        df = pd.concat([df, har_features], axis=1)
-
-        # Create 5-day target using src/common/feature_engineering
-        target = create_5day_target(vol)
-        df['target_5d'] = target
-
-        # Keep valid rows (no NaN in features or target)
-        df_valid = df.dropna(subset=['har_daily_vol', 'har_weekly_vol',
-                                      'har_monthly_vol', 'target_5d']).copy()
-
-        if len(df_valid) > 0:
-            features_list.append(df_valid)
-
-    # Combine all stocks into pooled dataset
-    all_features = pd.concat(features_list, ignore_index=True)
-    print(f"  Total samples: {len(all_features)}")
-
-    # Prepare features and target
-    feature_cols = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']
-    X = all_features[feature_cols].values
-    y = all_features['target_5d'].values
-
-    print(f"  Feature shape: {X.shape}")
-    print(f"  Target shape: {y.shape}")
-
-    # Display sample statistics
-    print("\n  Data Statistics:")
-    print(f"    X mean: {X.mean():.6f}, std: {X.std():.6f}")
-    print(f"    y mean: {y.mean():.6f}, std: {y.std():.6f}")
-
-    # Temporal train/test split (80/20) - CHRONOLOGICAL
-    print("\n3. Splitting data chronologically (temporal split)...")
-    split_idx = int(0.8 * len(X))
-    X_train, X_test = X[:split_idx], X[split_idx:]
-    y_train, y_test = y[:split_idx], y[split_idx:]
-
+    print("\n  Per-ticker chronological split (80/20 of each ticker's own rows):")
     print(f"  Train size: {len(X_train)}")
     print(f"  Test size: {len(X_test)}")
 
