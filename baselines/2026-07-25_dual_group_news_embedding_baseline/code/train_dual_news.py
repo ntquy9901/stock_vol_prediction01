@@ -119,12 +119,14 @@ def main():
     ap.add_argument("--smoke", action="store_true",
                     help="quick run (no real panel needed; verifies shapes/forward)")
     ap.add_argument("--graph_method", default="knn")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="torch/numpy RNG seed (multi-seed gate-ablation protocol, 2026-08-05)")
     args = ap.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.manual_seed(42)
-    np.random.seed(42)
-    print(f"[train] device={device}, smoke={args.smoke}")
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    print(f"[train] device={device}, smoke={args.smoke}, seed={args.seed}")
 
     config = LSTMGATConfig()
     config.num_features_per_stock = 3   # HAR only
@@ -220,6 +222,7 @@ def main():
     results = {
         "model": "DualGroupNewsBaseline",
         "n_feat": int(n_feat), "d_news": args.d_news, "smoke": bool(args.smoke),
+        "seed": args.seed,
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),
         "val_test_diff": val_test_diff,
