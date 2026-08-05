@@ -116,6 +116,13 @@ Task chỉ "done" khi TẤT CẢ đúng:
 - **Tests + coverage:** khi đổi behavior, viết/chạy unit test và đạt coverage gate — chi tiết + lệnh ở section **Testing quality rules (ENFORCED)** ngay dưới đây (C0=100% / C1≥80% trên CHANGED lines, đo bằng **diff-coverage**, KHÔNG phải total coverage). Change phải staged/committed để diff đo được.
 - **Checks run:** bắt buộc chạy test + lint. KHÔNG claim "pass" nếu chưa chạy thật.
 - **Lint scope:** exclude vendored/generated/third-party (`.agents .claude _bmad archive data`).
+- **Audit/Review scope:** `archive/` (any depth) is retired code/data, intentionally out of scope
+  for ALL audits, code review, adversarial review, and any AI-driven "find issues" pass — not
+  just lint. Do not report findings, propose fixes, or flag bugs for anything under `archive/`
+  unless the user explicitly asked to review `archive/` itself. When briefing a subagent for a
+  repo-wide audit, state this exclusion explicitly in the prompt — a subagent given only a
+  directory to explore will not otherwise know `archive/` is off-limits. `archive/README.md`
+  carries the same notice for anyone who lands there directly.
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
   - **Two-stage review (per Superpowers):** Khi task phức tạp, tách review thành 2 stage:
     1. **Spec compliance:** Code có khớp spec/plan không? Có test không? Output đúng không?
@@ -123,6 +130,12 @@ Task chỉ "done" khi TẤT CẢ đúng:
     - Stage 1 fail → fix trước, không sang stage 2. Stage 1 pass → sang stage 2.
     - Stage đơn giản: review gộp 1 lần như bình thường.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
+- **Push remote ngay sau mỗi task done:** khi 1 task đã verify xong (có evidence — test pass,
+  smoke pass, hoặc kết quả đo được cụ thể), commit VÀ `git push origin master` ngay, không đợi
+  user nhắc, không gộp nhiều task rồi push 1 lần cuối session. Áp dụng cho AI/session bất kỳ làm
+  việc trên repo này — không chỉ push khi được hỏi (khác Git Safety Protocol mặc định, override
+  có chủ đích theo yêu cầu user 2026-08-02). Nếu push thất bại (remote đã đổi khác) — dừng lại,
+  hỏi user, KHÔNG force-push.
 - **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.
 - **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
 - **Similar check:** sau fix/pattern change, grep cùng idiom/duplicate trong repo + sibling repos. Apply cùng change nơi hợp lệ, hoặc list remaining as follow-up. Đừng fix 1/N copy silent.
@@ -333,7 +346,27 @@ nhật CLAUDE.md này — 11 gate ở trên áp dụng thủ công cho tới khi
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
 - Fit THIS change: bỏ phần không relevant — **trừ code review, luôn required + tóm tắt.**
 - Cover (as applicable): what changed, files (path → purpose), tests + coverage %, code-review result + actions, commands run thật, risks/follow-ups, DoD checklist.
-- Trung thực: chỉ ghi gì thật xảy ra; `Not run` (+lý do) cho cái skip.
+- Chỉ ghi gì thật xảy ra; `Not run` (+lý do) cho cái skip.
+
+## Văn phong báo cáo — khách quan (ENFORCED, áp dụng MỌI report/tài liệu, không riêng summary report)
+
+> Áp dụng theo yêu cầu user 2026-08-01. Lý do vi phạm trước đó: file/nội dung report từng dùng
+> cách xưng hô cá nhân ("thầy") và ngôn từ tự khẳng định ("báo cáo trung thực") — không phù hợp
+> văn phong tài liệu kỹ thuật khách quan.
+
+- **KHÔNG xưng hô/gọi tên vai trò cụ thể** trong nội dung hay tên file: không dùng "thầy",
+  "giảng viên", "sinh viên", hay bất kỳ cách xưng hô cá nhân nào khác. Viết như tài liệu kỹ thuật
+  trung lập, không phải thư/lời nhắn gửi một người cụ thể.
+- **KHÔNG dùng ngôn từ chủ quan/hoa mỹ** (cảm thán, nhấn mạnh cảm xúc, tự khen). Chỉ nêu sự kiện,
+  số liệu, kết luận — để dữ liệu tự nói, không cần tính từ tô điểm.
+- **KHÔNG tự khẳng định "trung thực"/"thành thật"/"honest"** ở đầu hay cuối báo cáo (vd "Báo cáo
+  trung thực:", "Lưu ý trung thực:"). Việc báo cáo đúng sự thật là mặc định bắt buộc (đã có rule
+  "chỉ ghi gì thật xảy ra" ở trên) — không cần tuyên bố lại, tuyên bố này chính nó mang tính chủ
+  quan/phòng vệ, không phải văn phong khách quan.
+- **Cách viết đúng:** nêu thẳng dữ kiện + số liệu + nguồn trích dẫn (file/`results.json`), không
+  thêm câu dẫn nhập mang tính cá nhân hoá hay tự đánh giá về độ tin cậy của chính báo cáo.
+- Áp dụng cho: tên file, tiêu đề, mọi section trong `docs/reports/`, `docs/report_*/`,
+  `code_review/`, và bất kỳ markdown nào sinh ra làm báo cáo.
 
 ## Code hygiene (mọi ngôn ngữ)
 - No hidden global state / unbounded in-process caches (dùng bounded TTL/size cache; externalize shared state).

@@ -232,7 +232,10 @@ kết quả chính thức để so sánh công bằng (epoch-matched) với Embe
 
 # 5. SO SÁNH VỚI KIẾN TRÚC NỀN (không dùng tin tức)
 
-**Nguồn:** `docs/report_2026-06-27/01_main_report/MODEL_COMPARISON_FINAL_REPORT.md` (2026-06-21).
+**Nguồn:** `docs/report_2026-06-27/01_main_report/MODEL_COMPARISON_FINAL_REPORT.md` (2026-06-21) —
+folder `docs/report_2026-06-27/` đã archive 2026-08-02 (`archive/docs_reports_legacy/report_2026-06-27/`,
+không còn ai tham chiếu tại thời điểm archive); đường dẫn dưới đây là lịch sử, số liệu bảng sau
+vẫn giữ nguyên để đối chiếu.
 
 | Model | MSE | RMSE | MAE | R² | QLIKE | DirAcc |
 |---|---|---|---|---|---|---|

@@ -93,12 +93,55 @@ def temporal_split_dataframe(df: pd.DataFrame, train_ratio=0.7, val_ratio=0.15,
     assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6, \
         "Ratios must sum to 1.0"
 
+    # Validate date_column BEFORE sorting: pd.to_datetime(..., errors='coerce')
+    # turns anything unparseable into NaT -- including mixed tz-aware/tz-naive
+    # values within the same column (the VPB/VRE class of bug fixed elsewhere
+    # in src/common/parkinson_utils.py). Fail loudly instead of silently
+    # sorting/splitting around missing dates.
+    parsed_dates = pd.to_datetime(df[date_column], errors='coerce')
+    n_bad = int(parsed_dates.isna().sum())
+    if n_bad > 0:
+        bad_idx = df.index[parsed_dates.isna()].tolist()
+        raise ValueError(
+            f"date_column '{date_column}' has {n_bad} unparseable/NaT value(s) "
+            f"after pd.to_datetime coercion (row indices: {bad_idx[:10]}"
+            f"{', ...' if n_bad > 10 else ''}). This includes mixed tz-aware/"
+            "tz-naive timestamps, which coerce to NaT rather than raising. "
+            "Fix the source data before splitting."
+        )
+
+    n_dup = int(parsed_dates.duplicated().sum())
+    if n_dup > 0:
+        raise ValueError(
+            f"date_column '{date_column}' has {n_dup} duplicate date value(s). "
+            "temporal_split_dataframe expects one row per date (a single "
+            "chronological series) -- pooled multi-ticker data must be split "
+            "per-ticker before calling this function."
+        )
+
     # Sort by date to ensure chronological order
     df = df.sort_values(date_column).reset_index(drop=True)
 
     total_size = len(df)
     train_size = int(total_size * train_ratio)
     val_size = int(total_size * val_ratio)
+    test_size = total_size - train_size - val_size
+
+    # Only reject an UNINTENTIONALLY empty partition (ratio > 0 but rounds
+    # down to 0 rows for this total_size). A ratio explicitly given as 0.0
+    # (e.g. test_ratio=0.0) is a deliberate "skip this split" and must stay
+    # supported -- src/common/multi_ticker_dataset.py's per-ticker splitting
+    # relies on it (StandardScaler.transform() on a 0-row array is handled
+    # explicitly there, not here).
+    if (train_ratio > 0 and train_size == 0) or (val_ratio > 0 and val_size == 0) \
+            or (test_ratio > 0 and test_size == 0):
+        raise ValueError(
+            f"Split would produce an unintentionally empty partition for "
+            f"{total_size} row(s) with ratios train={train_ratio}, "
+            f"val={val_ratio}, test={test_ratio} (sizes: train={train_size}, "
+            f"val={val_size}, test={test_size}). Provide more data or adjust "
+            "the ratios."
+        )
 
     # CHRONOLOGICAL split
     train_df = df.iloc[0:train_size].copy()

@@ -1,0 +1,42 @@
+$ git rev-parse HEAD
+started_at: 2026-08-03T15:51:26.614338+00:00
+duration_seconds: 0.014
+exit_code: 0
+--- stdout ---
+2914352f30a612fcfd0336a6994b9c7a888e9983
+
+--- stderr ---
+
+
+$ git rev-parse --abbrev-ref HEAD
+started_at: 2026-08-03T15:51:26.628024+00:00
+duration_seconds: 0.013
+exit_code: 0
+--- stdout ---
+master
+
+--- stderr ---
+
+
+$ git status --porcelain
+started_at: 2026-08-03T15:51:26.641474+00:00
+duration_seconds: 0.032
+exit_code: 0
+--- stdout ---
+ M src/lstm_gat_hybrid/dataset.py
+?? AGENTS.md
+?? docs/reports/2026-08-02_1547_consolidated_fix_plan.md
+?? results/cryptomamba_enhanced_2026-08-02_172008/
+?? results/cryptomamba_enhanced_2026-08-02_172009/
+?? results/cryptomamba_enhanced_2026-08-02_172012/
+?? results/cryptomamba_enhanced_2026-08-02_172014/
+?? results/cryptomamba_enhanced_2026-08-02_172844/
+?? results/cryptomamba_enhanced_2026-08-02_172846/
+?? results/cryptomamba_enhanced_2026-08-02_172851/
+?? results/cryptomamba_enhanced_2026-08-02_172854/
+?? results/parallel_lstm_gnn_knn_2026-08-03_002158/
+?? results/per_ticker_gate_2026-08-02_172219/
+?? results/per_ticker_gate_2026-08-03_000923/
+
+--- stderr ---
+

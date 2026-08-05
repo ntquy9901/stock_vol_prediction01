@@ -1,0 +1,1 @@
+Not run — coverage.xml was not produced by the pytest-cov invocation (see coverage_summary.txt for the underlying test run's exit code/output).

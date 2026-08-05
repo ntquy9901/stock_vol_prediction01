@@ -8,15 +8,17 @@ _bmad-output/
 
 # Data files - allowing training data (will commit small files)
 # Excluding only large data directories
-data/raw/all_available/
-data/raw/vn100/
-data/raw/vn100_enhanced/
-data/raw/hnx/
-data/raw/hnx_enhanced/
+archive/data_raw/all_available/
+archive/data_raw/vn100/
+archive/data_raw/vn100_enhanced/
+archive/data_raw/hnx/
+archive/data_raw/hnx_enhanced/
 data/processed_all/
+archive/data/processed_all/
 # Intermediate sentiment/news datasets (regenerable; exclude from VCS)
 data/raw/news/
 data/sentiment_*/
+archive/data/sentiment_*/
 
 # External resources (copyrighted material)
 docs/paper/
@@ -61,6 +63,10 @@ data/external_news_embeddings/
 
 # Ad-hoc rollback snapshots of regenerable feature panels (not source, not the current result)
 data/features/*_backup_*.parquet
+
+# Human-readable CSV debug dumps of parquet feature panels (regenerable, large, not source)
+data/features/*_DEBUG.csv
+data/features/DEBUG_by_ticker/
 
 # Jupyter Notebook
 .ipynb_checkpoints

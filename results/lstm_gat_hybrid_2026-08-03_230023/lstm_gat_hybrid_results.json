@@ -1,0 +1,47 @@
+{
+  "model": "LSTM-GAT Hybrid",
+  "timestamp": "2026-08-03_230023",
+  "config": {
+    "num_stocks": 30,
+    "seq_length": 22,
+    "forecast_horizon": 5,
+    "num_features_per_stock": 3,
+    "lstm_hidden_dim": 64,
+    "lstm_num_layers": 2,
+    "lstm_dropout": 0.2,
+    "graph_method": "correlation",
+    "correlation_window": 22,
+    "top_k_neighbors": 8,
+    "edge_threshold": 0.5,
+    "gat_hidden_dim": 64,
+    "gat_num_heads": 4,
+    "gat_num_layers": 2,
+    "gat_dropout": 0.1,
+    "gat_alpha": 0.2,
+    "fusion_method": "concat",
+    "fusion_hidden_dim": 128,
+    "output_dim": 1,
+    "num_epochs": 2,
+    "patience": 1,
+    "learning_rate": 0.0005,
+    "weight_decay": 1e-05,
+    "batch_size": 32,
+    "gradient_clip": 1.0,
+    "min_epochs": 1,
+    "min_delta": 1e-06,
+    "device": "cpu"
+  },
+  "training_summary": {
+    "num_epochs_trained": 2,
+    "best_epoch": 2,
+    "best_val_loss": 1.2105505615472794
+  },
+  "test_metrics": {
+    "mse": 1.2169074580015149e-05,
+    "rmse": 0.0034884200693172185,
+    "mae": 0.0009122264455072582,
+    "r2": 0.6796400547027588,
+    "qlike": 0.7208914160728455,
+    "directional_accuracy": 49.519143531119575
+  }
+}

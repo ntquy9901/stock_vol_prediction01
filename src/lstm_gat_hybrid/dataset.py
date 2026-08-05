@@ -108,7 +108,7 @@ class MultiStockDataset(Dataset):
 
     def __init__(
         self,
-        data_dir: str,
+        data_dir: Optional[str] = None,
         seq_length: int = 22,
         forecast_horizon: int = 5,
         graph_method: str = 'hybrid',
@@ -118,13 +118,16 @@ class MultiStockDataset(Dataset):
         data_augmentation: bool = True,
         augmentation_prob: float = 0.3,
         augmentation_factor: float = 0.1,
-        train_mode: bool = False
+        train_mode: bool = False,
+        precomputed_raw_data: Optional[Dict] = None,
+        precomputed_har_data: Optional[Dict] = None
     ):
         """
         Initialize multi-stock dataset with anti-overfitting techniques
 
         Args:
-            data_dir: Directory containing processed CSV files
+            data_dir: Directory containing processed CSV files (legacy direct-load
+                path). Ignored when precomputed_raw_data/precomputed_har_data given.
             seq_length: Input sequence length
             forecast_horizon: Forecast horizon (5-day ahead)
             graph_method: Graph construction method ('correlation', 'spillover', 'hybrid')
@@ -135,6 +138,13 @@ class MultiStockDataset(Dataset):
             augmentation_prob: Probability of applying augmentation (0.3 = 30%)
             augmentation_factor: Strength of augmentation (default: 0.1)
             train_mode: If True, apply data augmentation during training
+            precomputed_raw_data: Pre-split raw stock data dict (ticker -> DataFrame).
+                When both precomputed_* args are given, disk loading and full-series
+                HAR/normalizer computation are skipped (split-first pipeline path);
+                the caller (create_multi_stock_dataloaders) fits normalizers on the
+                train split only. Prevents the HAR/normalizer leakage of the legacy
+                full-series construction path.
+            precomputed_har_data: Pre-split HAR feature data dict (ticker -> DataFrame).
         """
         self.seq_length = seq_length
         self.forecast_horizon = forecast_horizon
@@ -153,23 +163,33 @@ class MultiStockDataset(Dataset):
         print(f"  - Data Augmentation: {data_augmentation} (prob={augmentation_prob}, factor={augmentation_factor})")
         print(f"  - Train Mode: {train_mode}")
 
-        # Load and process data
-        self.stock_data = self._load_multi_stock_data(data_dir)
-        self.stock_names = sorted(self.stock_data.keys())
-
-        print(f"[MultiStockDataset] Loaded {len(self.stock_names)} stocks: {self.stock_names[:5]}...")
-
-        # Generate HAR features for each stock
-        self.stock_data_with_har = self._generate_features_for_all_stocks()
-
-        # Initialize graph builder
+        # Initialize graph builder (needed by _create_sequences in both paths)
         self.graph_builder = DynamicGraphBuilder(self.config)
 
-        # Initialize normalizers
+        # Initialize normalizers (populated below or by the caller in the pre-split path)
         self.feature_normalizers = {}
         self.target_normalizers = {}
-        if normalize:
-            self._initialize_normalizers()
+
+        if precomputed_raw_data is not None and precomputed_har_data is not None:
+            # Pre-split path: raw + HAR already computed per split by the caller.
+            # Skip disk load, full-series HAR generation, and normalizer fitting —
+            # the caller fits normalizers on the train split only (no leakage).
+            self.stock_data = precomputed_raw_data
+            self.stock_data_with_har = precomputed_har_data
+            self.stock_names = sorted(precomputed_har_data.keys())
+        else:
+            # Legacy direct-load path (still used by test_phase1_implementation.py):
+            # load full series, generate HAR over full series, fit normalizers.
+            self.stock_data = self._load_multi_stock_data(data_dir)
+            self.stock_names = sorted(self.stock_data.keys())
+
+            print(f"[MultiStockDataset] Loaded {len(self.stock_names)} stocks: {self.stock_names[:5]}...")
+
+            # Generate HAR features for each stock
+            self.stock_data_with_har = self._generate_features_for_all_stocks()
+
+            if normalize:
+                self._initialize_normalizers()
 
         # Create sequences
         self.sequences = self._create_sequences()
@@ -352,6 +372,41 @@ class MultiStockDataset(Dataset):
         if self.data_augmentation and self.train_mode and np.random.random() < self.augmentation_prob:
             x, y = augment_sequence(x, y, self.augmentation_factor)
 
+        # Apply per-stock normalization (mirrors MultiStockDatasetWithPreSplitData.
+        # __getitem__ in dataset_presplit.py). Previously the fitted normalizers were
+        # never applied here, so training/eval ran on raw ~1e-3 volatility values —
+        # the exact "fit a scaler then forget to use it" failure documented in
+        # CLAUDE.md (LSTM-GNN Normalization Failure). Falls back to raw (with a
+        # warning) for any stock missing from the normalizer dict.
+        if self.normalize:
+            x_normalized = np.zeros_like(x)
+            for stock_idx in range(x.shape[1]):
+                stock_name = self.stock_names[stock_idx]
+                if stock_name in self.feature_normalizers:
+                    for feat_idx in range(x.shape[2]):
+                        x_normalized[:, stock_idx, feat_idx] = \
+                            self.feature_normalizers[stock_name].transform(
+                                x[:, stock_idx, feat_idx:feat_idx+1]
+                            ).flatten()
+                else:
+                    x_normalized[:, stock_idx, :] = x[:, stock_idx, :]
+                    print(f"[MultiStockDataset __getitem__] WARNING: {stock_name} not in feature_normalizers!")
+            x = x_normalized
+
+            y_normalized = np.zeros_like(y)
+            for stock_idx, stock_name in enumerate(self.stock_names):
+                if stock_name in self.target_normalizers:
+                    y_normalized[stock_idx] = \
+                        self.target_normalizers[stock_name].transform(
+                            y[stock_idx:stock_idx+1].reshape(1, -1)
+                        ).flatten()[0]
+                else:
+                    y_normalized[stock_idx] = y[stock_idx]
+                    print(f"[MultiStockDataset __getitem__] WARNING: {stock_name} not in target_normalizers!")
+            # Clip normalized targets to guard against distribution-shift outliers
+            # (val/test volatility far outside the training range → huge z-scores).
+            y = np.clip(y_normalized, -10.0, 10.0)
+
         # Convert to tensors
         x = torch.FloatTensor(x)
         adj_matrix = torch.FloatTensor(adj_matrix)
@@ -408,33 +463,49 @@ def create_multi_stock_dataloaders(
     print(f"  - Outlier Removal: {remove_outliers} (n_std={n_std})")
     print(f"  - Data Augmentation: {data_augmentation} (prob={augmentation_prob}, factor={augmentation_factor})")
 
-    # Create full dataset with anti-overfitting (train_mode=False for validation split)
-    full_dataset = MultiStockDataset(
-        data_dir=data_dir,
-        seq_length=seq_length,
-        forecast_horizon=forecast_horizon,
-        graph_method=graph_method,
-        normalize=normalize,
-        remove_outliers=remove_outliers,
-        n_std=n_std,
-        data_augmentation=False,  # No augmentation for full dataset
-        augmentation_prob=augmentation_prob,
-        augmentation_factor=augmentation_factor,
-        train_mode=False  # Not training mode during split
+    # Split-first pipeline (reuses the already-tested helpers from the news-fusion
+    # lineage): load RAW data → split RAW chronologically by date → generate HAR
+    # SEPARATELY per split → fit normalizers on the TRAIN split only. This fixes
+    # both the HAR rolling-window leakage and the normalizer-fit-on-full-series
+    # leakage of the previous "build full dataset then positionally Subset" flow.
+    from .dataset_with_graph_method import (
+        _load_raw_stock_data,
+        _split_raw_data_by_date,
+        _generate_har_for_split,
     )
 
-    # Calculate split indices (TEMPORAL split - no shuffling!)
-    n = len(full_dataset)
-    train_end = int(n * train_ratio)
-    val_end = int(n * (train_ratio + val_ratio))
+    # Step 1: load raw data (no HAR yet), date-aligned across tickers (P1.2 fix)
+    stock_data_raw = _load_raw_stock_data(
+        data_dir=data_dir, remove_outliers=remove_outliers, n_std=n_std
+    )
 
-    # Create separate dataset instances for train/val/test with different train_mode settings
-    # This allows data augmentation only for training set
-    print(f"[create_multi_stock_dataloaders] Creating separate datasets with different train_mode settings...")
+    # Step 2: split raw data chronologically BEFORE generating HAR features
+    train_raw, val_raw, test_raw, _, _, _ = _split_raw_data_by_date(
+        stock_data_raw, train_ratio, val_ratio, test_ratio
+    )
 
-    # Training dataset (with augmentation enabled)
+    # Step 3: generate HAR features separately per split (no cross-split leakage)
+    train_har = _generate_har_for_split(train_raw, 'train')
+    val_har = _generate_har_for_split(val_raw, 'val')
+    test_har = _generate_har_for_split(test_raw, 'test')
+
+    # Tickers present in ALL splits (need HAR features in each to build sequences)
+    common_stocks = sorted(set(train_har) & set(val_har) & set(test_har))
+    if not common_stocks:
+        raise ValueError("No stock is present in all of train/val/test HAR splits.")
+
+    train_har_c = {k: v for k, v in train_har.items() if k in common_stocks}
+    val_har_c = {k: v for k, v in val_har.items() if k in common_stocks}
+    test_har_c = {k: v for k, v in test_har.items() if k in common_stocks}
+    train_raw_c = {k: v for k, v in train_raw.items() if k in common_stocks}
+    val_raw_c = {k: v for k, v in val_raw.items() if k in common_stocks}
+    test_raw_c = {k: v for k, v in test_raw.items() if k in common_stocks}
+
+    print(f"[create_multi_stock_dataloaders] Creating pre-split datasets "
+          f"({len(common_stocks)} common stocks)...")
+
+    # Step 4: construct the 3 dataset instances via the pre-split path
     train_dataset = MultiStockDataset(
-        data_dir=data_dir,
         seq_length=seq_length,
         forecast_horizon=forecast_horizon,
         graph_method=graph_method,
@@ -444,12 +515,11 @@ def create_multi_stock_dataloaders(
         data_augmentation=data_augmentation,
         augmentation_prob=augmentation_prob,
         augmentation_factor=augmentation_factor,
-        train_mode=True  # Enable augmentation for training
+        train_mode=True,  # Enable augmentation for training
+        precomputed_raw_data=train_raw_c,
+        precomputed_har_data=train_har_c,
     )
-
-    # Validation dataset (no augmentation)
     val_dataset = MultiStockDataset(
-        data_dir=data_dir,
         seq_length=seq_length,
         forecast_horizon=forecast_horizon,
         graph_method=graph_method,
@@ -459,12 +529,11 @@ def create_multi_stock_dataloaders(
         data_augmentation=False,  # No augmentation for validation
         augmentation_prob=augmentation_prob,
         augmentation_factor=augmentation_factor,
-        train_mode=False
+        train_mode=False,
+        precomputed_raw_data=val_raw_c,
+        precomputed_har_data=val_har_c,
     )
-
-    # Test dataset (no augmentation)
     test_dataset = MultiStockDataset(
-        data_dir=data_dir,
         seq_length=seq_length,
         forecast_horizon=forecast_horizon,
         graph_method=graph_method,
@@ -474,13 +543,38 @@ def create_multi_stock_dataloaders(
         data_augmentation=False,  # No augmentation for testing
         augmentation_prob=augmentation_prob,
         augmentation_factor=augmentation_factor,
-        train_mode=False
+        train_mode=False,
+        precomputed_raw_data=test_raw_c,
+        precomputed_har_data=test_har_c,
     )
 
-    # Apply temporal split using Subset
-    train_dataset = torch.utils.data.Subset(train_dataset, range(0, train_end))
-    val_dataset = torch.utils.data.Subset(val_dataset, range(train_end, val_end))
-    test_dataset = torch.utils.data.Subset(test_dataset, range(val_end, n))
+    # Step 5: fit normalizers on TRAINING sequences only, then copy (not refit) the
+    # fitted objects into val/test — mirrors create_multi_stock_dataloaders_with_
+    # graph_method_fixed's Step 5. Fitting on train only is the leakage fix.
+    if normalize:
+        print(f"[create_multi_stock_dataloaders] Fitting normalizers on TRAIN split only...")
+        for stock_name in common_stocks:
+            train_dataset.feature_normalizers[stock_name] = VolatilityNormalizer()
+            train_dataset.target_normalizers[stock_name] = VolatilityNormalizer()
+
+        for stock_idx, stock_name in enumerate(train_dataset.stock_names):
+            train_features = []
+            train_targets = []
+            for seq in train_dataset.sequences:
+                x, _adj, y, _graph = seq
+                train_features.append(x[:, stock_idx, :])
+                train_targets.append(y[stock_idx])
+            train_features = np.concatenate(train_features, axis=0)
+            train_targets = np.array(train_targets)
+
+            train_dataset.feature_normalizers[stock_name].fit(train_features)
+            train_dataset.target_normalizers[stock_name].fit(train_targets.reshape(-1, 1))
+
+            # Copy the SAME fitted objects to val/test (no independent refit)
+            val_dataset.feature_normalizers[stock_name] = train_dataset.feature_normalizers[stock_name]
+            val_dataset.target_normalizers[stock_name] = train_dataset.target_normalizers[stock_name]
+            test_dataset.feature_normalizers[stock_name] = train_dataset.feature_normalizers[stock_name]
+            test_dataset.target_normalizers[stock_name] = train_dataset.target_normalizers[stock_name]
 
     # Create dataloaders
     train_loader = DataLoader(

@@ -1,0 +1,17 @@
+$ git diff --stat
+started_at: 2026-08-02T15:13:36.580149+00:00
+duration_seconds: 0.049
+exit_code: 0
+--- stdout ---
+
+--- stderr ---
+
+
+$ git diff
+started_at: 2026-08-02T15:13:36.629243+00:00
+duration_seconds: 0.045
+exit_code: 0
+--- stdout ---
+
+--- stderr ---
+

@@ -1,0 +1,2 @@
+finding_id,severity,requirement,status,changed_files,test_ids,commands,evidence_files,review_disposition,notes
+# No findings supplied to this run (--findings-json was not given). Populate this file from the audit report's findings before claiming verification is complete.

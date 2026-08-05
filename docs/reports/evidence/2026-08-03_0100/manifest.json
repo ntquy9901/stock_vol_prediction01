@@ -1,0 +1,332 @@
+{
+  "verification_timestamp": "2026-08-03T22:56:03.111091+07:00",
+  "audit_report_path": "docs/reports/2026-08-02_1056_paper_readiness_audit_report.md",
+  "target_scope": "Overnight autonomous fix wave 2026-08-02/03: DirAcc n_stocks fix (train.py/train_parallel.py/train_parallel_enhanced.py), non-finite metric guard (AUD-016), temporal_split.py edge-case hardening (AUD-018), duplicate-value-pair root cause (audit 1.8), objective_news_baseline closure decision. Diff base: 6e5a618 (post archive-batch) to HEAD.",
+  "git": {
+    "sha": "2914352f30a612fcfd0336a6994b9c7a888e9983",
+    "branch": "master",
+    "working_tree_clean": false,
+    "diff_hash": "d8acac7644be59809d50f9e9f57e717fbd06a8767ec9787c9abb70baed3b8dfb"
+  },
+  "environment": {
+    "python_version": "3.14.6",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "dependency_lock_hash": "61da0b3789c13a79cdd5884ae5687554c5830d416994d61cb4697c9929efd28e"
+  },
+  "data": null,
+  "experiment": null,
+  "gates": {
+    "gate_1_repository_identity": {
+      "status": "dirty",
+      "note": "Working tree is dirty. Per Gate 1, this run's scope must explicitly cover every uncommitted modification listed in git_status.txt \u2014 a dirty tree is not automatically rejected by this runner; scope acknowledgement is the caller's (skill/orchestrator's) responsibility."
+    },
+    "gate_2_static_repository_checks": {
+      "status": "fail"
+    },
+    "gate_3_test_discovery": {
+      "status": "fail"
+    },
+    "gate_4_full_tests": {
+      "status": "fail"
+    },
+    "gate_5_smoke_tests": {
+      "status": "fail"
+    },
+    "gate_6_coverage": {
+      "status": "not_run"
+    }
+  },
+  "gate_details": {
+    "gate_2_static_repository_checks": {
+      "status": "fail",
+      "git_diff_check": {
+        "status": "pass",
+        "exit_code": 0
+      },
+      "ruff": {
+        "status": "fail",
+        "exit_code": 1,
+        "tool_available": true
+      },
+      "scans": {
+        "files_scanned": 13282,
+        "hardcoded_paths_count": 107,
+        "bare_except_count": 91,
+        "random_split_count": 181,
+        "duplicate_module_names_count": 1108,
+        "evidence_file": "static_scans.txt"
+      },
+      "commands": [
+        {
+          "command": "git diff --check",
+          "started_at": "2026-08-03T15:51:30.402098+00:00",
+          "duration_seconds": 0.022,
+          "exit_code": 0,
+          "stdout_file": "static_checks.txt",
+          "stderr_file": "static_checks.txt"
+        },
+        {
+          "command": "ruff check . --exclude .agents --exclude .claude --exclude _bmad --exclude archive --exclude data",
+          "started_at": "2026-08-03T15:51:30.426472+00:00",
+          "duration_seconds": 0.628,
+          "exit_code": 1,
+          "stdout_file": "ruff.txt",
+          "stderr_file": "ruff.txt"
+        }
+      ]
+    },
+    "gate_3_test_discovery": {
+      "status": "fail",
+      "exit_code": 2,
+      "collected_total": 298,
+      "collection_errors": 9,
+      "per_directory": {
+        "src": {
+          "exists": true,
+          "exit_code": 0,
+          "collected": 6,
+          "collection_errors": 0
+        },
+        "baselines": {
+          "exists": true,
+          "exit_code": 0,
+          "collected": 150,
+          "collection_errors": 0
+        },
+        "tests": {
+          "exists": true,
+          "exit_code": 2,
+          "collected": 142,
+          "collection_errors": 9
+        }
+      },
+      "commands": [
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q",
+          "started_at": "2026-08-03T15:55:35.894771+00:00",
+          "duration_seconds": 5.192,
+          "exit_code": 2,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q src",
+          "started_at": "2026-08-03T15:55:41.087617+00:00",
+          "duration_seconds": 0.864,
+          "exit_code": 0,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q baselines",
+          "started_at": "2026-08-03T15:55:41.951637+00:00",
+          "duration_seconds": 3.417,
+          "exit_code": 0,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        },
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q tests",
+          "started_at": "2026-08-03T15:55:45.370052+00:00",
+          "duration_seconds": 3.903,
+          "exit_code": 2,
+          "stdout_file": "pytest_collection.txt",
+          "stderr_file": "pytest_collection.txt"
+        }
+      ]
+    },
+    "gate_4_full_tests": {
+      "status": "fail",
+      "exit_code": 2,
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 18,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0
+      },
+      "junit_xml": "junit_full.xml",
+      "commands": [
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -q --junitxml=C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\junit_full.xml",
+          "started_at": "2026-08-03T15:55:49.274346+00:00",
+          "duration_seconds": 4.202,
+          "exit_code": 2,
+          "stdout_file": "pytest_full.txt",
+          "stderr_file": "pytest_full.txt"
+        }
+      ]
+    },
+    "gate_5_smoke_tests": {
+      "status": "fail",
+      "exit_code": 2,
+      "zero_selected": false,
+      "counts": {
+        "passed": 0,
+        "failed": 0,
+        "errors": 18,
+        "skipped": 0,
+        "xfailed": 0,
+        "xpassed": 0
+      },
+      "note": "Smoke tests were selected but did not all pass.",
+      "junit_xml": "junit_smoke.xml",
+      "commands": [
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -m smoke -q --junitxml=C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\junit_smoke.xml",
+          "started_at": "2026-08-03T15:55:53.476637+00:00",
+          "duration_seconds": 4.336,
+          "exit_code": 2,
+          "stdout_file": "pytest_smoke.txt",
+          "stderr_file": "pytest_smoke.txt"
+        }
+      ]
+    },
+    "gate_6_coverage": {
+      "status": "not_run",
+      "reason": "coverage.xml was not produced (test run likely failed before coverage was written).",
+      "pytest_exit_code": 2,
+      "commands": [
+        {
+          "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -q --cov src --cov-branch --cov-report=xml:C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\coverage.xml --cov-report=term-missing",
+          "started_at": "2026-08-03T15:55:57.817898+00:00",
+          "duration_seconds": 5.292,
+          "exit_code": 2,
+          "stdout_file": "coverage_summary.txt",
+          "stderr_file": "coverage_summary.txt"
+        }
+      ]
+    }
+  },
+  "gates_7_11": {
+    "gate_7_regression_evidence": "Not verifiable \u2014 no per-finding regression test suite exists yet (leakage/date-alignment/DirAcc-panel/temporal-split/import-isolation/JSON NaN-Infinity tests). Requires writing those tests against named audit findings first; this runner does not author tests.",
+    "gate_8_ml_result_provenance": "Not verifiable \u2014 no canonical run-record schema exists that binds a metrics result to git SHA + data/ticker-manifest hash + split dates + seed + config hash + checkpoint hash + metric-schema version. Requires an ML experiment-tracking component this project does not have.",
+    "gate_9_statistical_verification": "Not verifiable \u2014 no multi-seed (3-5 seed) run framework, paired/block-bootstrap comparison, or documented model-selection/multiple-comparison policy exists yet for this project's models.",
+    "gate_10_adversarial_review": "Not run by this runner \u2014 requires invoking the project's adversarial code-review skill (Blind Hunter + Edge Case Hunter + Acceptance Auditor, e.g. bmad-code-review) against the exact target diff and retaining its structured disposition. This is an orchestration step for the verify-audit-fixes SKILL.md, not a mechanical command.",
+    "gate_11_clean_reproduction": "Not verifiable \u2014 no isolated/clean-checkout reproduction environment (e.g. fresh venv + fresh clone) is wired up for this project, and no canonical comparison table with numerical tolerances is defined yet."
+  },
+  "commands": [
+    {
+      "command": "git rev-parse HEAD",
+      "started_at": "2026-08-03T15:51:26.614338+00:00",
+      "duration_seconds": 0.014,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git rev-parse --abbrev-ref HEAD",
+      "started_at": "2026-08-03T15:51:26.628024+00:00",
+      "duration_seconds": 0.013,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git status --porcelain",
+      "started_at": "2026-08-03T15:51:26.641474+00:00",
+      "duration_seconds": 0.032,
+      "exit_code": 0,
+      "stdout_file": "git_status.txt",
+      "stderr_file": "git_status.txt"
+    },
+    {
+      "command": "git diff --stat",
+      "started_at": "2026-08-03T15:51:26.673936+00:00",
+      "duration_seconds": 0.024,
+      "exit_code": 0,
+      "stdout_file": "git_diff_stat.txt",
+      "stderr_file": "git_diff_stat.txt"
+    },
+    {
+      "command": "git diff",
+      "started_at": "2026-08-03T15:51:26.697840+00:00",
+      "duration_seconds": 0.022,
+      "exit_code": 0,
+      "stdout_file": "git_diff_stat.txt",
+      "stderr_file": "git_diff_stat.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pip freeze",
+      "started_at": "2026-08-03T15:51:26.721147+00:00",
+      "duration_seconds": 3.62,
+      "exit_code": 0,
+      "stdout_file": "environment.txt",
+      "stderr_file": "environment.txt"
+    },
+    {
+      "command": "git diff --check",
+      "started_at": "2026-08-03T15:51:30.402098+00:00",
+      "duration_seconds": 0.022,
+      "exit_code": 0,
+      "stdout_file": "static_checks.txt",
+      "stderr_file": "static_checks.txt"
+    },
+    {
+      "command": "ruff check . --exclude .agents --exclude .claude --exclude _bmad --exclude archive --exclude data",
+      "started_at": "2026-08-03T15:51:30.426472+00:00",
+      "duration_seconds": 0.628,
+      "exit_code": 1,
+      "stdout_file": "ruff.txt",
+      "stderr_file": "ruff.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q",
+      "started_at": "2026-08-03T15:55:35.894771+00:00",
+      "duration_seconds": 5.192,
+      "exit_code": 2,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q src",
+      "started_at": "2026-08-03T15:55:41.087617+00:00",
+      "duration_seconds": 0.864,
+      "exit_code": 0,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q baselines",
+      "started_at": "2026-08-03T15:55:41.951637+00:00",
+      "duration_seconds": 3.417,
+      "exit_code": 0,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest --collect-only -q tests",
+      "started_at": "2026-08-03T15:55:45.370052+00:00",
+      "duration_seconds": 3.903,
+      "exit_code": 2,
+      "stdout_file": "pytest_collection.txt",
+      "stderr_file": "pytest_collection.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -q --junitxml=C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\junit_full.xml",
+      "started_at": "2026-08-03T15:55:49.274346+00:00",
+      "duration_seconds": 4.202,
+      "exit_code": 2,
+      "stdout_file": "pytest_full.txt",
+      "stderr_file": "pytest_full.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -m smoke -q --junitxml=C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\junit_smoke.xml",
+      "started_at": "2026-08-03T15:55:53.476637+00:00",
+      "duration_seconds": 4.336,
+      "exit_code": 2,
+      "stdout_file": "pytest_smoke.txt",
+      "stderr_file": "pytest_smoke.txt"
+    },
+    {
+      "command": "C:\\Users\\QUY\\AppData\\Local\\Programs\\Python\\Python314\\python.exe -m pytest -q --cov src --cov-branch --cov-report=xml:C:\\luanvan\\stock_vol_prediction01\\docs\\reports\\evidence\\2026-08-03_0100\\coverage.xml --cov-report=term-missing",
+      "started_at": "2026-08-03T15:55:57.817898+00:00",
+      "duration_seconds": 5.292,
+      "exit_code": 2,
+      "stdout_file": "coverage_summary.txt",
+      "stderr_file": "coverage_summary.txt"
+    }
+  ],
+  "manifest_validation_problems": []
+}
