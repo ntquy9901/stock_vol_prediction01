@@ -455,6 +455,58 @@ IMPROVEMENT_TARGETS = {
 
 ## 📝 UPDATE HISTORY
 
+### 2026-08-05 - global-benchmark branch (S&P500): applied VN30 audit findings, merged master twice
+
+**Note:** continuation of the 2026-08-02 entry below, same branch/clone
+(`C:\luanvan\stock_vol_prediction01_branchGlobal`, own independent `.git`, not a git worktree of
+the VN30 clone despite CLAUDE.md's "git worktree" terminology — confirmed both have separate
+`.git` directories).
+
+**Applied VN30's 2026-08-02 audit reports (`docs/reports/2026-08-02_1056_paper_readiness_audit_report.md`,
+`_152253_summaryOfUpdate_report.md`, `_152758_summaryOfUpdate_report.md`) to this branch, scoped to
+what actually applies:** verified directly (not by inference) that AUD-001 (normalizer fit on 100%
+of data before split) and AUD-002 (per-ticker outlier removal desyncs cross-stock row alignment)
+are present in `src/lstm_gat_hybrid/dataset.py` — the exact file this branch's S&P500 baseline
+imports read-only — while AUD-003/004/005/006/010/011/012/017/018/020/021 do not apply (verified
+each, not assumed). Wrote 2 `xfail(strict=True)` regression tests
+(`baselines/2026-08-01_lstm_gnn_sp500_baseline/test/test_dataset_leakage_and_alignment.py`) proving
+both bugs against real code paths — left unfixed on purpose (dataset.py is shared with VN30 master,
+which was fixing it independently) so the tests flip to XPASS (loudly, via `strict=True`) once that
+fix is merged in, rather than silently diverging with an independent fix here.
+
+**Adopted the full 11-gate verification spec** from `docs/reports/2026-08-02_152758_summaryOfUpdate_report.md`
+into `CLAUDE.md` ("Verification Gates (Evidence-Based)" section) at the user's explicit request for
+the complete version (not a scoped-down subset) — evidence directory schema, manifest.json,
+acceptance_traceability.csv, all 11 gates, with the "skills to compose" list adapted to this
+project's actual tooling (no `bmad-*` skills here). Also added a new CLAUDE.md §7 rule mandating
+regular `git fetch`/merge from master, motivated directly by this session's dataset.py-bug
+situation.
+
+**Installed 2 Superpowers skills standalone** (`systematic-debugging`, `test-driven-development`,
+from `github.com/obra/superpowers`) at project-level `.claude/skills/` — deliberately not the full
+plugin. Also un-gitignored `.claude/` entirely (was previously fully ignored) per explicit user
+decision, confirmed twice, so project skills + `settings.local.json` are now tracked in git.
+
+**Merged `origin/master` into `global-benchmark` twice** (fixed a single-branch-clone
+`remote.origin.fetch` restriction first — this clone could not see `origin/master` at all until
+the refspec was widened to `+refs/heads/*:refs/remotes/origin/*`). First merge: 1 real conflict in
+`src/common/evaluation.py` (kept both branches' directional-accuracy fixes — this branch's
+`evaluate_predictions_grouped`/`directional_accuracy_grouped`, used directly by
+`train_sp500_lstm_gnn.py`, alongside master's `directional_accuracy_per_ticker`/`n_stocks=`
+parameter, a different fix for the same underlying flatten bug on master's data layout); surfaced
+and fixed a real regression afterward (master's new AUD-018 empty-partition guard in
+`temporal_split_dataframe()` rejected ANY zero-size partition unconditionally, breaking this
+branch's intentional `test_ratio=0.0` support in `src/common/multi_ticker_dataset.py` — narrowed
+the guard to only reject *unintentionally* empty partitions). Second merge (13 more master commits):
+0 conflicts. Confirmed after both merges: `src/lstm_gat_hybrid/dataset.py` itself still untouched
+by master — the 2 xfail tests remain correctly red, not a false XPASS.
+
+**Full test suite re-verified clean after every step:** 52 passed, 2 xfailed (expected) as of the
+final push. Full detail in auto-memory (Claude Code project memory directory, not this repo's own
+`memory/` convention which doesn't exist on this branch) —
+`project_sp500_lstm_gnn_baseline_status.md`, `project_vn30_lstm_gnn_missing_seed.md`,
+`project_vn30_diracc_flattening_and_master_sync.md`.
+
 ### 2026-08-02 - global-benchmark branch (S&P500): seed + checkpoint-selection bugs found and fixed
 
 **Note:** this entry documents work on the `global-benchmark` branch/worktree
