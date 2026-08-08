@@ -171,6 +171,8 @@ class PreprocessorStore:
         normalized = np.asarray(y_norm, dtype=float)
         if ids.shape != normalized.shape:
             raise ValueError("ticker_ids and y_norm must have matching shapes")
+        if np.issubdtype(ids.dtype, np.bool_) or not np.issubdtype(ids.dtype, np.integer):
+            raise ValueError("ticker_ids must use an integer dtype")
         if not np.isfinite(normalized).all():
             raise ValueError("normalized target values must be finite")
         restored = [

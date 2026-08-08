@@ -210,3 +210,22 @@ def test_scaler_boundaries_reject_nonfinite_and_incompatible_values() -> None:
         store.transform_features(0, np.array([[np.inf, 1.0, 1.0]]))
     with pytest.raises(ValueError, match="finite"):
         store.inverse_targets(np.array([0]), np.array([np.nan]))
+
+
+@pytest.mark.parametrize("ticker_ids", [np.array([0.9]), np.array([0.0]), np.array([True]), np.array(["0"])])
+def test_inverse_targets_rejects_non_integer_ticker_ids(ticker_ids: np.ndarray) -> None:
+    store = PreprocessorStore(
+        {0: TickerPreprocessor.fit(_frame(70), ["parkinson_volatility"], "parkinson_volatility")}
+    )
+
+    with pytest.raises(ValueError, match="integer"):
+        store.inverse_targets(ticker_ids, np.array([0.0]))
+
+
+def test_inverse_targets_accepts_python_and_numpy_integer_ids() -> None:
+    store = PreprocessorStore(
+        {0: TickerPreprocessor.fit(_frame(70), ["parkinson_volatility"], "parkinson_volatility")}
+    )
+
+    np.testing.assert_allclose(store.inverse_targets([0], np.array([0.0])), [45.0])
+    np.testing.assert_allclose(store.inverse_targets(np.array([np.int64(0)]), np.array([0.0])), [45.0])
