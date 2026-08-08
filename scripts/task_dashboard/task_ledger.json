@@ -943,5 +943,139 @@
     ],
     "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1\u2248G0, mean \u0394 +0.001, marginally worse). So the graph-null is a CLEAN, genuine null \u2014 NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
     "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "a-history-rewrite",
+    "phase": "Repo hygiene",
+    "title": "(a) Purge ~76MB manifests from public git history (fresh-clone filter-repo + force-push)",
+    "status": "done",
+    "timestamp": "2026-08-08 22:36",
+    "branch": "feature/{pooled,masked}",
+    "commits": [
+      "126cdfb",
+      "3665936"
+    ],
+    "skills_applied": [
+      "verification-before-completion",
+      "git-safety (user-authorized force-push)"
+    ],
+    "evidence": [
+      {
+        "cmd": "git rev-list --all --objects | grep sample_manifest (in fresh clone)",
+        "result": "2 unique blobs (~76MB, dedup) BEFORE -> 0 AFTER filter-repo"
+      },
+      {
+        "cmd": "git push origin --force feature/{pooled,masked}",
+        "result": "45c2712->3665936, 71cfa8d->126cdfb (forced), user-authorized"
+      },
+      {
+        "cmd": "post-resync worktree history manifest count",
+        "result": "pooled=0, masked=0; master unchanged e61c3db"
+      }
+    ],
+    "quality_gate": {
+      "tests": "n/a",
+      "lint": "n/a",
+      "code_review": "n/a (git op)",
+      "diff_cover": "n/a"
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "fresh-clone (safe, no live-worktree corruption)",
+        "ok": true
+      },
+      {
+        "item": "filter-repo strip verified 0",
+        "ok": true
+      },
+      {
+        "item": "force-push (user-authorized)",
+        "ok": true
+      },
+      {
+        "item": "worktrees re-synced + verified",
+        "ok": true
+      },
+      {
+        "item": "backup branches kept",
+        "ok": true
+      }
+    ],
+    "result_summary": "Removed all sample_manifest.json blobs from public git history via fresh-clone git-filter-repo + force-push (user-authorized). Actual bloat ~76MB (2 unique blobs; git dedup, not 1.2GB). master untouched. Worktrees re-synced to rewritten tips; both feature branches now carry 0 manifest blobs. Local backup branches kept as recovery net.",
+    "report_md": "scripts/git_hooks/README.md"
+  },
+  {
+    "id": "b-review-masked-gnn",
+    "phase": "Track B / QA",
+    "title": "(b) 3-layer code-review of masked-GNN",
+    "status": "done",
+    "timestamp": "2026-08-08 22:36",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "3665936"
+    ],
+    "skills_applied": [
+      "3-layer-code-review",
+      "verification-before-completion",
+      "TDD (fix)"
+    ],
+    "evidence": [
+      {
+        "cmd": "Blind Hunter",
+        "result": "NO HIGH/MEDIUM; non-leakage guarantee confirmed by code trace"
+      },
+      {
+        "cmd": "Edge Case Hunter",
+        "result": "F1 MEDIUM (per-ticker boundary look-ahead, design/intent, does NOT affect G1-vs-G0 verdict); F2/F3 LOW"
+      },
+      {
+        "cmd": "Acceptance Auditor",
+        "result": "PASS; F1 tone violation, F2 weak non-leakage test"
+      },
+      {
+        "cmd": "fixes: strengthen test + drop 'honest'",
+        "result": "135 passed, ruff clean, pushed 3665936"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass (135)",
+      "lint": "pass",
+      "code_review": "3-layer done",
+      "diff_cover": "hook-enforced"
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 2,
+      "findings_deferred": 3
+    },
+    "dod": [
+      {
+        "item": "3-layer review run",
+        "ok": true
+      },
+      {
+        "item": "no HIGH/MEDIUM code bug",
+        "ok": true
+      },
+      {
+        "item": "tone fix + strengthened non-leakage test",
+        "ok": true
+      },
+      {
+        "item": "isfinite guard + boundary-intent surfaced to user",
+        "ok": true
+      }
+    ],
+    "result_summary": "3-layer review: masking correctness/non-leakage CONFIRMED (Blind Hunter code trace + strengthened test). Fixed: objective-tone violation + weak non-leakage test. Surfaced to user: F1 per-ticker boundary look-ahead (Limitations caveat, does not change graph-null verdict since both G0/G1 share it) + snapshot loss-weighting sign-off. Deferred LOW: isfinite guard on present features (unreachable via standard pipeline).",
+    "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   }
 ]
