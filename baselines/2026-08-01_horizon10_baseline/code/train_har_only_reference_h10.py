@@ -34,14 +34,16 @@ import torch.nn as nn
 import matplotlib
 matplotlib.use("Agg")
 from src.common.evaluation import evaluate_predictions
+from src.common.provenance import get_provenance
 from src.lstm_gat_hybrid.config import LSTMGATConfig
 from src.lstm_gat_hybrid.model_parallel import ParallelLSTMGNN
 from src.lstm_gat_hybrid.train_parallel_enhanced import EarlyStopping
 
 from dataset_dual_news import create_dual_news_dataloaders  # sibling, read-only
 
-MAX_EPOCHS = 10  # CLAUDE.md Training policy: >10 epochs needs explicit user approval based on
-                  # 5/10-epoch results.
+MAX_EPOCHS = 20  # 20-epoch clean run: explicitly authorized (2026-08-06 multi-horizon task) to
+                  # match the 5-day HAR-only backbone protocol (clean 20 epochs). No resume support
+                  # here, so a single 20-epoch run is the fair-budget equivalent of the gate's 10+10.
 
 
 def train_epoch(model, loader, criterion, optimizer, device, grad_clip=1.0):
@@ -124,6 +126,8 @@ def main():
     ap.add_argument("--weight_decay", type=float, default=1e-5)
     ap.add_argument("--dropout", type=float, default=0.5)
     ap.add_argument("--graph_method", default="knn")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="torch/numpy RNG seed (multi-seed protocol: 42/123/2026)")
     args = ap.parse_args()
 
     if args.epochs > MAX_EPOCHS:
@@ -132,9 +136,9 @@ def main():
             "experimental runs without explicit user approval based on 5/10-epoch results.")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.manual_seed(42)
-    np.random.seed(42)
-    print(f"[train] device={device}, forecast_horizon={args.forecast_horizon}")
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    print(f"[train] device={device}, forecast_horizon={args.forecast_horizon}, seed={args.seed}")
 
     config = LSTMGATConfig()
     config.num_features_per_stock = 3
@@ -202,10 +206,12 @@ def main():
     results = {
         "model": "ParallelLSTMGNN_HAR_only_reference",
         "forecast_horizon": args.forecast_horizon,
+        "seed": args.seed,
         "stock_names": list(train_ds.stock_names),
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),
         "per_ticker_test_metrics": test_m.get('_per_ticker', {}),
+        "provenance": get_provenance(),
     }
     (out_dir / "results.json").write_text(
         json.dumps(results, indent=2, ensure_ascii=False, allow_nan=False), encoding="utf-8")
