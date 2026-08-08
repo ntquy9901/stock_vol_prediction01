@@ -1138,5 +1138,70 @@
     ],
     "result_summary": "HAR-hard-to-beat is MAINSTREAM (Audrino&Chassot 2024); project's result is not a failure. Wins over HAR are conditional (QLIKE/longer-horizon/extra-info), matching 'deep beats HAR only on QLIKE, ties RMSE'. Paper actions: add log-HAR+HARQ baselines (same inputs; main reviewer-risk fix), QLIKE+MSE primary (Patton 2011) + Diebold-Mariano + MCS tests. Novelty niche: no emerging-market panel HAR-vs-DL-with-news study found.",
     "report_md": "docs/reports/2026-08-08_har_benchmark_literature.md"
+  },
+  {
+    "id": "final-architecture-svg",
+    "phase": "Paper artifacts",
+    "title": "Final combined architecture diagram (SVG, matplotlib)",
+    "status": "done",
+    "timestamp": "2026-08-08 23:31",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "matplotlib-svg (project method)",
+      "verification-before-completion",
+      "dataviz"
+    ],
+    "evidence": [
+      {
+        "cmd": "file",
+        "result": "docs/paper/diagrams/final_combined_architecture.svg (61KB) + generate_final_combined.py"
+      },
+      {
+        "cmd": "label grep (svg.fonttype=none)",
+        "result": "9/9 key labels searchable (manifests, LEAKAGE BARRIER, frozen P3, presence_mask, positivity, graph-safe P3, P0 HAR, NULL)"
+      },
+      {
+        "cmd": "regenerate",
+        "result": "reproducible (wrote SVG, 61001 bytes); ruff clean"
+      },
+      {
+        "cmd": "source",
+        "result": "traced to committed masked-gnn 3665936 + knn commit e319307; sparse-adjacency drawn dashed 'being added'"
+      }
+    ],
+    "quality_gate": {
+      "tests": "n/a (diagram)",
+      "lint": "pass",
+      "code_review": "self (label read-back + reproducibility)",
+      "diff_cover": "n/a"
+    },
+    "code_review": {
+      "layers": [
+        "self"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "matplotlib-SVG (not Mermaid)",
+        "ok": true
+      },
+      {
+        "item": "components traced to code",
+        "ok": true
+      },
+      {
+        "item": "null components tagged",
+        "ok": true
+      },
+      {
+        "item": "reproducible generator",
+        "ok": true
+      }
+    ],
+    "result_summary": "Current combined pooled news-GNN architecture drawn to SVG (matplotlib, project method): two manifests (pooled async / masked common-date graph), causal preprocessing + leakage barriers, P1-P3 shared encoders + per-ticker gate, masked availability-aware GNN G0/G1 (frozen P3, presence mask, correlation adjacency + dashed knn-8 'being added'), positivity floor, 6 metrics. HAR=external baseline; null components (graph/gate/pooling) tagged.",
+    "report_md": "docs/paper/diagrams/final_combined_architecture.svg"
   }
 ]
