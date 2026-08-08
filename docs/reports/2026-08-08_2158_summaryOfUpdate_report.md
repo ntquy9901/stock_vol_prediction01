@@ -59,7 +59,7 @@ Intersection (prior, batched, seed 42) — `results/pooled_news_gnn_g0g1_batched
 |---|---|---|---|---|---|---|---|---|---|
 | 42 | 0.860710 | 0.862690 | +0.001980 | 0.68762 | 0.69628 | 0.002407 | 0.002410 | 48.61 | 48.52 |
 
-## Verdict (honest)
+## Verdict
 
 With ~4× more graph data (4,523 train snapshots vs ~900; 4,941 dates vs 1,296), message passing
 STILL does not help. On the primary validation loss the G1−G0 delta stays within ±0.0024 of zero

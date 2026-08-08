@@ -105,6 +105,25 @@ def test_masked_message_passing_ignores_absent_node_features() -> None:
     torch.testing.assert_close(baseline[:, :2], perturbed[:, :2])
 
 
+def test_absent_node_masked_even_with_nonzero_adjacency_edge() -> None:
+    """Isolate the presence-masking defense: adjacency has NONZERO edges FROM the
+    absent node to present nodes, so without masking the absent node would leak.
+    The present outputs must still be independent of the absent node's features."""
+    layer = _ResidualMessagePassing(1)
+    with torch.no_grad():
+        layer.projection.weight.fill_(1.0)
+    node_features = torch.tensor([[[2.0], [3.0], [99.0]]])
+    adjacency = torch.ones(1, 3, 3)  # every edge present, incl. absent(2) -> present(0,1)
+    presence = torch.tensor([[True, True, False]])
+
+    baseline = layer(node_features, adjacency, presence)
+    perturbed_features = node_features.clone()
+    perturbed_features[0, 2, 0] = -1234.0
+    perturbed = layer(perturbed_features, adjacency, presence)
+
+    torch.testing.assert_close(baseline[:, :2], perturbed[:, :2])
+
+
 def test_graph_model_present_output_is_independent_of_absent_node(tmp_path: Path) -> None:
     p3 = PooledPriceNewsLSTM(3, 2, 3, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
     model = GraphAblationModel(p3, use_gnn=True).eval()
