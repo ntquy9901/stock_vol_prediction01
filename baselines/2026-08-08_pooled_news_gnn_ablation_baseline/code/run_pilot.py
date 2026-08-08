@@ -31,6 +31,7 @@ from data import (  # noqa: E402
     attach_news,
     build_pooled_manifest,
     build_graph_manifest,
+    build_masked_graph_manifest,
     common_trading_dates,
     load_and_split_price_data,
     load_effective_news_panel,
@@ -367,8 +368,6 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     graph_store = _fit_graph_preprocessors(full_frames)
     graph_horizon = horizon
     pooled_horizon = horizon
-    graph = build_graph_manifest(full_frames, panel, graph_store, horizon=graph_horizon)
-    _validate_graph_manifest(graph)
     device = resolve_graph_device(args.device)
     graph_pooled = build_pooled_manifest(raw, graph_store, horizon=pooled_horizon)
     # The pooled and graph manifests are hashed independently, so a horizon mismatch
@@ -381,6 +380,14 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
          for split in ("train", "val", "test")},
         graph_pooled.exclusions, graph_pooled.ticker_to_id, graph_pooled.preprocessing_hash,
     )
+    graph_mode = getattr(args, "graph", "intersection")
+    if graph_mode == "masked":
+        # Availability-aware: one snapshot per date over PRESENT tickers only, trained on the
+        # full date union instead of the 26% synchronized-date intersection.  No imputation.
+        graph = build_masked_graph_manifest(graph_pooled, graph_store)
+    else:
+        graph = build_graph_manifest(full_frames, panel, graph_store, horizon=graph_horizon)
+    _validate_graph_manifest(graph)
     out = Path(args.output_dir) / f"h{horizon}"
     out.mkdir(parents=True, exist_ok=True)
     warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
@@ -401,8 +408,15 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
         )
         for name in ("G0", "G1")
     }
-    payload = {"phase": "graph", "horizon": horizon, "graph_hashes": dict(graph.hashes),
-               "graph_train_hash": graph_hash,
+    snapshot_dates = {snapshot.target_date for snapshot in graph.snapshots}
+    split_snapshot_counts = {
+        split: sum(1 for snapshot in graph.snapshots if snapshot.split == split)
+        for split in ("train", "val", "test")
+    }
+    payload = {"phase": "graph", "graph_mode": graph_mode, "horizon": horizon,
+               "graph_hashes": dict(graph.hashes), "graph_train_hash": graph_hash,
+               "snapshot_count": len(graph.snapshots), "distinct_date_count": len(snapshot_dates),
+               "split_snapshot_counts": split_snapshot_counts,
                "graph_safe_p3_checkpoint": str(graph_safe), "runtime": _graph_runtime_metadata(args.device, device),
                "results": results,
                "paired_delta": results["G1"]["validation_loss"] - results["G0"]["validation_loss"]}
@@ -445,8 +459,8 @@ def _run_one_graph_model(
         for start in range(0, len(train), train_batch_size):
             snapshots = train[start:start + train_batch_size]
             optimizer.zero_grad()
-            predictions, targets = _graph_prediction_batch(model, snapshots, selected_device)
-            loss = _mean_snapshot_mse(predictions, targets)
+            predictions, targets, presence = _graph_prediction_batch(model, snapshots, selected_device)
+            loss = _mean_snapshot_mse(predictions, targets, presence)
             loss.backward()
             if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
                 raise RuntimeError("frozen graph encoder received gradients")
@@ -461,14 +475,22 @@ def _run_one_graph_model(
         validation_snapshot_count = 0
         for start in range(0, len(validation), validation_batch_size):
             snapshots = validation[start:start + validation_batch_size]
-            predictions, targets = _graph_prediction_batch(model, snapshots, selected_device)
+            predictions, targets, presence = _graph_prediction_batch(model, snapshots, selected_device)
             # Keep the original per-snapshot weighting exactly, even if a future
             # manifest contains snapshots with different node counts.
-            batch_loss = _mean_snapshot_mse(predictions, targets)
+            batch_loss = _mean_snapshot_mse(predictions, targets, presence)
             validation_loss_sum = validation_loss_sum + batch_loss * len(snapshots)
             validation_snapshot_count += len(snapshots)
-            for snapshot, snapshot_predictions in zip(snapshots, predictions.cpu(), strict=True):
-                for node, prediction in zip(snapshot.nodes, snapshot_predictions, strict=True):
+            presence_cpu = presence.cpu()
+            for snapshot, snapshot_predictions, snapshot_presence in zip(
+                snapshots, predictions.cpu(), presence_cpu, strict=True
+            ):
+                for index, (node, prediction) in enumerate(
+                    zip(snapshot.nodes, snapshot_predictions, strict=True)
+                ):
+                    # Masked absent nodes are excluded from the raw-scale evaluation.
+                    if not bool(snapshot_presence[index]):
+                        continue
                     records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
                                     "prediction_norm": float(prediction), "target_raw": node.y_raw})
         validation_loss = (validation_loss_sum / validation_snapshot_count).item()
@@ -476,28 +498,42 @@ def _run_one_graph_model(
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
                                             "train_losses": losses, "validation_loss": validation_loss,
                                             "runtime": _graph_runtime_metadata(str(device), selected_device),
+                                            "train_snapshot_count": len(train),
+                                            "validation_snapshot_count": len(validation),
+                                            "present_validation_node_count": len(records),
                                             "validation_metrics": evaluation["metrics"],
                                             "nonpositive_prediction_rate": evaluation["nonpositive_prediction_rate"]})
     return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
             "validation_metrics": evaluation["metrics"]}
 
 
+def _snapshot_presence(snapshot: Any, device: torch.device) -> torch.Tensor | None:
+    if snapshot.presence_mask is None:
+        return None
+    return torch.from_numpy(snapshot.presence_mask.copy()).to(device).to(dtype=torch.bool)
+
+
 def _graph_prediction(
     model: GraphAblationModel, snapshot: Any, device: torch.device,
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     non_blocking = device.type == "cuda"
-    return model(
+    presence = _snapshot_presence(snapshot, device)
+    prediction = model(
         torch.from_numpy(snapshot.x_price.copy()).to(device, non_blocking=non_blocking),
         torch.from_numpy(snapshot.x_news.copy()).to(device, non_blocking=non_blocking),
         torch.from_numpy(snapshot.news_mask.copy()).to(device, non_blocking=non_blocking),
         torch.tensor([node.ticker_id for node in snapshot.nodes], dtype=torch.long, device=device),
         torch.from_numpy(snapshot.adjacency.copy()).to(device, non_blocking=non_blocking),
-    ), torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32, device=device)
+        presence,
+    )
+    target = torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32, device=device)
+    resolved = presence if presence is not None else torch.ones_like(target, dtype=torch.bool)
+    return prediction, target, resolved
 
 
 def _graph_prediction_batch(
     model: GraphAblationModel, snapshots: list[Any], device: torch.device,
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """Run validation snapshots as one graph batch without changing train updates."""
 
     if not snapshots:
@@ -510,13 +546,20 @@ def _graph_prediction_batch(
            for snapshot in snapshots[1:]):
         predictions = []
         targets = []
+        presences = []
         for snapshot in snapshots:
-            prediction, target = _graph_prediction(model, snapshot, device)
+            prediction, target, presence = _graph_prediction(model, snapshot, device)
             predictions.append(prediction)
             targets.append(target)
-        return torch.stack(predictions), torch.stack(targets)
+            presences.append(presence)
+        return torch.stack(predictions), torch.stack(targets), torch.stack(presences)
     non_blocking = device.type == "cuda"
-    return model(
+    presence_mask = None
+    if any(snapshot.presence_mask is not None for snapshot in snapshots):
+        presence_mask = torch.from_numpy(
+            np.stack([snapshot.presence_mask for snapshot in snapshots])).to(
+            device, non_blocking=non_blocking).to(dtype=torch.bool)
+    predictions = model(
         torch.from_numpy(np.stack([snapshot.x_price for snapshot in snapshots])).to(device, non_blocking=non_blocking),
         torch.from_numpy(np.stack([snapshot.x_news for snapshot in snapshots])).to(device, non_blocking=non_blocking),
         torch.from_numpy(np.stack([snapshot.news_mask for snapshot in snapshots])).to(
@@ -525,19 +568,39 @@ def _graph_prediction_batch(
                      dtype=torch.long, device=device),
         torch.from_numpy(np.stack([snapshot.adjacency for snapshot in snapshots])).to(
             device, non_blocking=non_blocking),
-    ), torch.tensor([[node.y_norm for node in snapshot.nodes] for snapshot in snapshots],
-                    dtype=torch.float32, device=device)
+        presence_mask,
+    )
+    targets = torch.tensor([[node.y_norm for node in snapshot.nodes] for snapshot in snapshots],
+                           dtype=torch.float32, device=device)
+    resolved = presence_mask if presence_mask is not None else torch.ones_like(targets, dtype=torch.bool)
+    return predictions, targets, resolved
 
 
-def _mean_snapshot_mse(predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-    """Return equal-weighted snapshot MSE, independent of validation batch size."""
+def _mean_snapshot_mse(
+    predictions: torch.Tensor, targets: torch.Tensor, presence: torch.Tensor | None = None,
+) -> torch.Tensor:
+    """Return equal-weighted snapshot MSE, independent of validation batch size.
+
+    When ``presence`` is given, each snapshot's MSE is averaged over its PRESENT nodes only,
+    so masked absent nodes never enter the loss.
+    """
 
     if predictions.shape != targets.shape or predictions.ndim != 2 or not predictions.shape[0]:
         raise ValueError("predictions and targets must be non-empty [batch, nodes] tensors")
-    return torch.stack([
-        torch.nn.functional.mse_loss(prediction, target)
-        for prediction, target in zip(predictions, targets, strict=True)
-    ]).mean()
+    if presence is None:
+        return torch.stack([
+            torch.nn.functional.mse_loss(prediction, target)
+            for prediction, target in zip(predictions, targets, strict=True)
+        ]).mean()
+    if presence.shape != predictions.shape:
+        raise ValueError("presence must match the [batch, nodes] prediction shape")
+    present = presence.to(dtype=torch.bool)
+    per_snapshot = []
+    for prediction, target, mask in zip(predictions, targets, present, strict=True):
+        if not mask.any():
+            raise ValueError("each snapshot must contain at least one present node")
+        per_snapshot.append(torch.nn.functional.mse_loss(prediction[mask], target[mask]))
+    return torch.stack(per_snapshot).mean()
 
 
 def _assert_matched_horizon(pooled_horizon: int, graph_horizon: int) -> None:
@@ -714,6 +777,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--phase", choices=("pooled", "P0", "P1", "P2", "P3", "graph"), default="pooled")
     parser.add_argument("--regime", choices=("pooled", "common-date"), default="pooled",
                         help="A1 training-sample set: full pooled history or common-date intersection")
+    parser.add_argument("--graph", choices=("intersection", "masked"), default="intersection",
+                        help="graph construction: fixed-node date intersection (default) or "
+                             "availability-aware masked variable-node union")
     parser.add_argument("--horizon", type=int, default=5, choices=(1, 5, 10, 22),
                         help="forecast horizon in trading days (5 is the primary target)")
     parser.add_argument("--p3-checkpoint", type=Path)
