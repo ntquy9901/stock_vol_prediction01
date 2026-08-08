@@ -175,7 +175,8 @@ def run_training(
             for batch in loaders["train"]:
                 optimizer.zero_grad()
                 prediction = _forward(model, batch, device)
-                target = batch["y_norm"].to(device=device, dtype=torch.float32)
+                target = batch["y_norm"].to(device=device, dtype=torch.float32,
+                                             non_blocking=device.type == "cuda")
                 loss = criterion(prediction, target)
                 if not torch.isfinite(loss):
                     raise ValueError("non-finite training loss")
@@ -213,14 +214,15 @@ def run_training(
 
 
 def _forward(model: nn.Module, batch: Mapping[str, Any], device: torch.device) -> torch.Tensor:
-    price = batch["x_price"].to(device=device, dtype=torch.float32)
+    non_blocking = device.type == "cuda"
+    price = batch["x_price"].to(device=device, dtype=torch.float32, non_blocking=non_blocking)
     if isinstance(model, PooledPriceLSTM):
         return model(price)
     return model(
         price,
-        batch["x_news"].to(device=device, dtype=torch.float32),
-        batch["news_mask"].to(device=device),
-        batch["ticker_id"].to(device=device, dtype=torch.long),
+        batch["x_news"].to(device=device, dtype=torch.float32, non_blocking=non_blocking),
+        batch["news_mask"].to(device=device, non_blocking=non_blocking),
+        batch["ticker_id"].to(device=device, dtype=torch.long, non_blocking=non_blocking),
     )
 
 
@@ -229,7 +231,8 @@ def _normalized_loss(model: nn.Module, loader: Any, criterion: nn.Module, device
     losses: list[float] = []
     with torch.no_grad():
         for batch in loader:
-            target = batch["y_norm"].to(device=device, dtype=torch.float32)
+            target = batch["y_norm"].to(device=device, dtype=torch.float32,
+                                         non_blocking=device.type == "cuda")
             losses.append(float(criterion(_forward(model, batch, device), target).item()))
     if not losses or not np.isfinite(losses).all():
         raise ValueError("validation loss must be finite")

@@ -299,11 +299,30 @@ def test_cli_smoke_options_are_bounded_and_recorded(tmp_path: Path) -> None:
     args = run_pilot.parse_args([
         "--phase", "pooled", "--epochs", "1", "--seed", "42", "--output-dir", str(tmp_path),
         "--smoke", "--max-tickers", "2",
-    ])
-
+        ])
     assert args.smoke is True
     assert args.max_tickers == 2
     assert args.epochs == 1
+
+
+def test_manifest_dataset_batches_without_changing_sample_values() -> None:
+    sample = PooledSample(
+        SampleKey(0, "AAA", "2020-01-01"),
+        np.ones((22, 2), dtype=np.float32),
+        np.zeros((22, 3), dtype=np.float32),
+        np.zeros(22, dtype=np.int8),
+        10.0,
+        y_model_raw=10.0,
+        y_eval_raw=10.0,
+    )
+    dataset = run_pilot._ManifestDataset((sample,), _store())
+    item = dataset[0]
+    batch = next(iter(DataLoader(dataset, batch_size=1, shuffle=False, pin_memory=False)))
+    assert tuple(item["x_price"].shape) == (22, 2)
+    assert torch.equal(batch["x_price"][0], torch.ones((22, 2)))
+    assert torch.equal(batch["x_news"][0], torch.zeros((22, 3)))
+    assert float(batch["y_norm"][0]) == pytest.approx(0.0)
+
 
 
 def test_price_only_inputs_do_not_load_news_and_keep_p0_p1_manifests_identical(

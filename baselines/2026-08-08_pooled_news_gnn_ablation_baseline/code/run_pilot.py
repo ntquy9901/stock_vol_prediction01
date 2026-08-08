@@ -43,6 +43,15 @@ class _ManifestDataset(Dataset[dict[str, torch.Tensor | str]]):
     def __init__(self, samples: Sequence[PooledSample], store: PreprocessorStore) -> None:
         self.samples = tuple(samples)
         self.store = store
+        # Compute the scalar transform once.  ``__getitem__`` is on the hot path
+        # for every epoch; repeating sklearn-style scaling there was unnecessary
+        # CPU work and did not change the causal preprocessing contract.
+        self._y_norm = tuple(
+            float(store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([
+                sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
+            ]))[0])
+            for sample in self.samples
+        )
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -50,12 +59,14 @@ class _ManifestDataset(Dataset[dict[str, torch.Tensor | str]]):
     def __getitem__(self, index: int) -> dict[str, torch.Tensor | str]:
         sample = self.samples[index]
         ticker_id = sample.key.ticker_id
-        target = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
-        y_norm = self.store.get(ticker_id).target_scaler.transform(np.asarray([target]))[0]
+        y_norm = self._y_norm[index]
         return {
-            "x_price": torch.tensor(sample.x_price_raw, dtype=torch.float32),
-            "x_news": torch.tensor(sample.x_news, dtype=torch.float32),
-            "news_mask": torch.tensor(sample.news_mask, dtype=torch.bool),
+            # as_tensor/from_numpy avoids an extra per-sample copy.  DataLoader
+            # performs the batch transfer; pinning is enabled at loader creation
+            # for CUDA runs.
+            "x_price": torch.as_tensor(sample.x_price_raw.copy(), dtype=torch.float32),
+            "x_news": torch.as_tensor(sample.x_news.copy(), dtype=torch.float32),
+            "news_mask": torch.as_tensor(sample.news_mask.copy(), dtype=torch.bool),
             "ticker_id": torch.tensor(ticker_id, dtype=torch.long),
             "y_norm": torch.tensor(y_norm, dtype=torch.float32),
             "y_raw": torch.tensor(
@@ -264,7 +275,10 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
 
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
-    inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase)
+    if args.batch_size == 256:
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase)
+    else:
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase, args.batch_size)
     manifest = assert_shared_manifest({name: inputs.manifest for name in _phase_configs(args.phase)})
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -304,7 +318,10 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
-    inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3")
+    if args.batch_size == 256:
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3")
+    else:
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3", args.batch_size)
     raw = load_and_split_price_data(_ROOT / "data" / "processed")
     selected = tuple(inputs.smoke_filter["selected_tickers"])
     raw = _select_tickers(raw, selected)
@@ -473,11 +490,15 @@ def _fit_graph_preprocessors(full_frames: Mapping[str, Any]) -> PreprocessorStor
     })
 
 
-def build_screening_inputs(smoke: bool, max_tickers: int | None, phase: str = "pooled") -> ScreeningInputs:
+def build_screening_inputs(
+    smoke: bool, max_tickers: int | None, phase: str = "pooled", batch_size: int = 256
+) -> ScreeningInputs:
     """Apply ticker filtering before fitting preprocessing or constructing the shared manifest."""
 
     if max_tickers is not None and max_tickers < 1:
         raise ValueError("max_tickers must be positive")
+    if batch_size < 1:
+        raise ValueError("batch_size must be positive")
     requested = 3 if smoke and max_tickers is None else max_tickers
     raw_splits = load_and_split_price_data(_ROOT / "data" / "processed")
     selected = sorted(raw_splits.ticker_to_id)[:requested] if requested else sorted(raw_splits.ticker_to_id)
@@ -504,7 +525,15 @@ def build_screening_inputs(smoke: bool, max_tickers: int | None, phase: str = "p
         }
         manifest = PooledManifest(attached, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
     loaders = {
-        split: DataLoader(_ManifestDataset(manifest.samples[split], store), batch_size=64, shuffle=False)
+        split: DataLoader(
+            _ManifestDataset(manifest.samples[split], store),
+            batch_size=batch_size,
+            shuffle=False,
+            # Windows worker processes add substantial overhead for this in-memory
+            # manifest, so keep the conservative single-process loader.
+            num_workers=0,
+            pin_memory=torch.cuda.is_available(),
+        )
         for split in ("train", "val")
     }
     return ScreeningInputs(manifest, store, loaders, {
@@ -547,6 +576,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=_ROOT / "results" / "pooled_news_gnn_pilot")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)
+    parser.add_argument("--batch-size", type=int, default=256)
     return parser.parse_args(argv)
 
 
