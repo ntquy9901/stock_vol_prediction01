@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import torch
 from torch import nn
+from torch.nn.functional import softplus
 from torch.nn.utils.rnn import pack_padded_sequence
+
+
+# Volatility is strictly positive; the standardized linear head does not structurally
+# guarantee it.  The graph message-passing widens the normalized-prediction variance
+# enough that its lower tail crosses each ticker's ``raw = z*std + mean = 0`` boundary,
+# denormalizing to nonpositive volatility.  A denormalized-scale floor at this epsilon
+# (three orders of magnitude below the ~1e-3 typical Parkinson scale) restores positivity
+# without reshaping the bulk of the distribution.
+POSITIVITY_EPSILON = 1e-6
 
 
 class PooledPriceLSTM(nn.Module):
@@ -147,6 +159,52 @@ class GraphAblationModel(nn.Module):
             for parameter in component.parameters():
                 parameter.requires_grad_(False)
         self.gate_logits.requires_grad_(False)
+        num_tickers = self.gate_logits.numel()
+        self.register_buffer("target_mean", torch.zeros(num_tickers))
+        self.register_buffer("target_std", torch.ones(num_tickers))
+        self._positivity_configured = False
+        self._positivity_epsilon = POSITIVITY_EPSILON
+
+    def configure_positivity(self, store: Any, epsilon: float = POSITIVITY_EPSILON) -> "GraphAblationModel":
+        """Install the per-ticker target scaling used to floor denormalized predictions.
+
+        Enforcing positivity requires each ticker's train-fitted target mean/std (the same
+        values ``PreprocessorStore.inverse_targets`` uses), so no new statistic is derived
+        and the leakage/scaler contract is unchanged.
+        """
+
+        if epsilon <= 0:
+            raise ValueError("positivity epsilon must be positive")
+        mean = self.target_mean.clone()
+        std = self.target_std.clone()
+        for ticker_id in range(mean.numel()):
+            preprocessor = store.preprocessors.get(ticker_id)
+            if preprocessor is None:
+                raise ValueError(f"positivity config missing preprocessor for ticker_id {ticker_id}")
+            scaler = preprocessor.target_scaler
+            mean[ticker_id] = float(scaler.mean[0])
+            std[ticker_id] = float(scaler.std[0])
+        self.target_mean.copy_(mean)
+        self.target_std.copy_(std)
+        self._positivity_epsilon = float(epsilon)
+        self._positivity_configured = True
+        return self
+
+    def _apply_positivity(self, output: torch.Tensor, ticker_ids: torch.Tensor) -> torch.Tensor:
+        """Map normalized predictions through a denormalized-scale positive floor.
+
+        ``raw = z*std + mean`` is passed through ``epsilon*softplus(raw/epsilon) + epsilon``:
+        an identity for ``raw >> epsilon`` (the bulk, so the spread is not collapsed) that
+        smoothly floors the sub-epsilon tail to a strictly positive value, then renormalized
+        so the model still emits normalized predictions for the unchanged evaluation path.
+        """
+
+        mean = self.target_mean[ticker_ids].reshape(output.shape)
+        std = self.target_std[ticker_ids].reshape(output.shape)
+        raw = output * std + mean
+        epsilon = self._positivity_epsilon
+        raw_positive = epsilon * softplus(raw / epsilon) + epsilon
+        return (raw_positive - mean) / std
 
     @classmethod
     def from_p3_checkpoint(
@@ -219,4 +277,8 @@ class GraphAblationModel(nn.Module):
             else:
                 base = base + self.message_passing(base.unsqueeze(0), adjacency).squeeze(0)
         output = self.head(base).squeeze(-1)
-        return output.reshape(batch_size, node_count) if batched else output
+        if batched:
+            output = output.reshape(batch_size, node_count)
+        if self._positivity_configured:
+            output = self._apply_positivity(output, ticker_ids)
+        return output

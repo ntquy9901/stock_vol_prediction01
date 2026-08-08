@@ -453,6 +453,155 @@ def test_message_passing_masks_non_neighbors_for_an_isolated_node() -> None:
     torch.testing.assert_close(output, torch.tensor([[[2.0], [100.0]]]))
 
 
+def _target_preprocessor(mean: float, std: float) -> TickerPreprocessor:
+    return TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)),
+        ArrayStandardizer(np.array([mean]), np.array([std])),
+    )
+
+
+def _negative_prone_graph_model(use_gnn: bool) -> GraphAblationModel:
+    """A graph model whose trainable head emits a strongly negative prediction."""
+
+    torch.manual_seed(0)
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    model = GraphAblationModel(p3, use_gnn=use_gnn)
+    with torch.no_grad():
+        for parameter in model.head.parameters():
+            parameter.zero_()
+        model.head[-1].bias.fill_(-50.0)
+    return model.eval()
+
+
+def test_graph_positivity_floor_forces_strictly_positive_denormalized_predictions() -> None:
+    model = _negative_prone_graph_model(use_gnn=True)
+    store = PreprocessorStore({0: _target_preprocessor(0.5, 0.1), 1: _target_preprocessor(0.4, 0.2)})
+    price, news, mask = _same_inputs()
+    ticker_ids = torch.tensor([0, 1])
+    adjacency = torch.ones(2, 2)
+
+    raw_without_floor = store.inverse_targets(
+        ticker_ids.numpy(), model(price, news, mask, ticker_ids, adjacency).detach().numpy(),
+    )
+    assert (raw_without_floor <= 0.0).any()
+
+    model.configure_positivity(store)
+    raw_with_floor = store.inverse_targets(
+        ticker_ids.numpy(), model(price, news, mask, ticker_ids, adjacency).detach().numpy(),
+    )
+    assert (raw_with_floor > 0.0).all()
+
+
+def test_graph_positivity_floor_preserves_prediction_spread_no_collapse() -> None:
+    torch.manual_seed(1)
+    p3 = PooledPriceNewsLSTM(3, 2, 3, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    with torch.no_grad():
+        for parameter in p3.parameters():
+            parameter.uniform_(-0.5, 0.5)
+    model = GraphAblationModel(p3, use_gnn=True).eval()
+    store = PreprocessorStore({index: _target_preprocessor(0.02 + 0.01 * index, 0.01) for index in range(3)})
+    price = torch.randn(3, 22, 3)
+    news = torch.randn(3, 22, 2)
+    mask = torch.ones(3, 22, dtype=torch.bool)
+    ticker_ids = torch.tensor([0, 1, 2])
+    adjacency = torch.ones(3, 3)
+
+    before = model(price, news, mask, ticker_ids, adjacency).detach()
+    model.configure_positivity(store)
+    after = model(price, news, mask, ticker_ids, adjacency).detach()
+
+    raw_after = store.inverse_targets(ticker_ids.numpy(), after.numpy())
+    assert (raw_after > 0.0).all()
+    # The bulk of positive-denormalizing predictions must survive unchanged, so
+    # the spread cannot collapse toward a single value (the Softplus-collapse mode).
+    assert float(after.std()) > 0.5 * float(before.std())
+    assert float(after.std()) > 1e-3
+
+
+def test_configure_positivity_does_not_mutate_scaler_or_provenance(tmp_path: Path) -> None:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    checkpoint = tmp_path / "graph_safe_p3.pt"
+    torch.save(_graph_safe_payload(p3), checkpoint)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, use_gnn=True, graph_train_end_date="2020-03-31", graph_manifest_hash="manifest",
+    )
+    store = PreprocessorStore({0: _target_preprocessor(0.5, 0.1), 1: _target_preprocessor(0.4, 0.2)})
+    scaler_snapshot = store.to_dict()
+    boundary, manifest_hash = model.graph_train_end_date, model.graph_manifest_hash
+
+    model.configure_positivity(store)
+
+    assert store.to_dict() == scaler_snapshot
+    assert model.graph_train_end_date == boundary
+    assert model.graph_manifest_hash == manifest_hash
+    assert all(not parameter.requires_grad for parameter in model.price_encoder.parameters())
+
+
+def test_positivity_buffers_do_not_break_p3_checkpoint_loading(tmp_path: Path) -> None:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    checkpoint = tmp_path / "graph_safe_p3.pt"
+    torch.save(_graph_safe_payload(p3), checkpoint)
+
+    state = torch.load(checkpoint, weights_only=False)["model_state"]
+    assert "target_mean" not in state and "target_std" not in state
+
+    model = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
+    reference = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
+    price, news, mask = _same_inputs()
+    ticker_ids = torch.tensor([0, 1])
+    adjacency = torch.ones(2, 2)
+
+    # An unconfigured model applies no floor: forward is backward compatible.
+    torch.testing.assert_close(
+        model(price, news, mask, ticker_ids, adjacency),
+        reference(price, news, mask, ticker_ids, adjacency),
+    )
+
+
+def test_run_one_graph_model_positivity_gate_passes_for_negative_prone_head(tmp_path: Path) -> None:
+    from data import GraphManifest, GraphNode, GraphSnapshot
+    from run_pilot import _run_one_graph_model
+
+    p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    with torch.no_grad():
+        for parameter in p3.head.parameters():
+            parameter.zero_()
+        p3.head[-1].bias.fill_(-50.0)
+    train = GraphSnapshot(
+        "2020-01-27", "train", tuple(f"2020-01-{day:02d}" for day in range(1, 23)),
+        (GraphNode(0, "AAA", "train", 1.0),), np.ones((1, 22, 3)), np.ones((1, 22, 2)),
+        np.ones((1, 22)), np.ones((1, 1)),
+    )
+    val = GraphSnapshot(
+        "2020-02-27", "val", train.input_dates, (GraphNode(0, "AAA", "val", 1.1),),
+        np.ones((1, 22, 3)), np.ones((1, 22, 2)), np.ones((1, 22)), np.ones((1, 1)),
+    )
+    val_next = GraphSnapshot(
+        "2020-02-28", "val", train.input_dates, (GraphNode(0, "AAA", "val", 1.2),),
+        np.ones((1, 22, 3)), np.ones((1, 22, 2)), np.ones((1, 22)), np.ones((1, 1)),
+    )
+    graph = GraphManifest((train, val, val_next), {"AAA": 0}, "2020-01-31", "2020-02-28",
+                          {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
+    checkpoint = tmp_path / "safe.pt"
+    payload = _graph_safe_payload(p3)
+    payload["max_training_target_date"] = graph.train_end_date
+    payload["graph_train_end_date"] = graph.train_end_date
+    payload["graph_manifest_hash"] = graph.content_hash("train")
+    torch.save(payload, checkpoint)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+
+    # Pre-fix this raised "nonpositive prediction rate 100% exceeds 1%"; the positivity
+    # floor now lets the safety gate pass and yields finite metrics.
+    result = _run_one_graph_model(model, graph, PreprocessorStore({0: _target_preprocessor(1e-3, 1e-3)}),
+                                  "G1", 1, 42, tmp_path / "G1", "cpu")
+
+    metrics = result["validation_metrics"]
+    assert all(np.isfinite(value) for value in metrics.values())
+
+
 def _state_bytes(module: torch.nn.Module) -> bytes:
     return b"".join(value.detach().cpu().numpy().tobytes() for value in module.state_dict().values())
 

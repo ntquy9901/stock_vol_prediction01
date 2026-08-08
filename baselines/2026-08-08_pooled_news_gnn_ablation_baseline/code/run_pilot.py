@@ -376,6 +376,7 @@ def _run_one_graph_model(
     _validate_graph_run_provenance(model, graph)
     if not graph.snapshots:
         raise ValueError("graph manifest must contain snapshots")
+    model.configure_positivity(store)
     _seed_graph_device(seed, selected_device)
     model.to(selected_device)
     output.mkdir(parents=True, exist_ok=True)
