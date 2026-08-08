@@ -30,6 +30,16 @@ class PooledSample:
     x_news: np.ndarray
     news_mask: np.ndarray
     y_raw: float
+    y_model_raw: float | None = None
+    y_eval_raw: float | None = None
+
+
+@dataclass(frozen=True)
+class PooledManifest:
+    """One shared P0-P3 sample set with stable eligibility decisions."""
+
+    samples: dict[str, list[PooledSample]]
+    exclusions: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -108,3 +118,69 @@ def load_and_split_price_data(
         frames=frames,
         ticker_to_id={ticker: ticker_id for ticker_id, ticker in enumerate(tickers)},
     )
+
+
+def build_ticker_samples(
+    frame: pd.DataFrame,
+    ticker: str,
+    ticker_id: int,
+    seq_length: int = 22,
+    horizon: int = 5,
+) -> list[PooledSample]:
+    """Create windows whose target is exactly ``horizon`` observations after the origin."""
+
+    if seq_length <= 0 or horizon <= 0:
+        raise ValueError("seq_length and horizon must be positive")
+    if "date" not in frame or "parkinson_volatility" not in frame:
+        raise ValueError("frame must contain date and parkinson_volatility")
+    feature_columns = [column for column in frame.columns if column.startswith("feature_")]
+    if not feature_columns:
+        feature_columns = ["parkinson_volatility"]
+    model_targets = frame.get("y_model_raw", frame["parkinson_volatility"])
+    eval_targets = frame.get("y_eval_raw", frame["parkinson_volatility"])
+    valid_count = len(frame) - seq_length - horizon + 1
+    samples: list[PooledSample] = []
+    for start in range(max(0, valid_count)):
+        target_index = start + seq_length + horizon - 1
+        target_date = pd.Timestamp(frame.iloc[target_index]["date"]).strftime("%Y-%m-%d")
+        y_eval_raw = float(eval_targets.iloc[target_index])
+        samples.append(
+            PooledSample(
+                key=SampleKey(ticker_id=ticker_id, ticker=ticker, target_date=target_date),
+                x_price_raw=frame.iloc[start : start + seq_length][feature_columns].to_numpy(dtype=float),
+                x_news=np.empty((seq_length, 0), dtype=float),
+                news_mask=np.zeros(seq_length, dtype=np.int8),
+                y_raw=y_eval_raw,
+                y_model_raw=float(model_targets.iloc[target_index]),
+                y_eval_raw=y_eval_raw,
+            )
+        )
+    return samples
+
+
+def build_pooled_manifest(
+    split_frames: SplitFrames,
+    preprocessors: object,
+    seq_length: int = 22,
+    horizon: int = 5,
+) -> PooledManifest:
+    """Transform each raw split using train-fitted state and pool eligible ticker samples."""
+
+    samples = {name: [] for name in _SPLIT_NAMES}
+    exclusions: dict[str, str] = {}
+    for ticker, ticker_id in sorted(split_frames.ticker_to_id.items(), key=lambda item: item[1]):
+        ticker_samples: dict[str, list[PooledSample]] = {}
+        for split_name in _SPLIT_NAMES:
+            preprocessor = preprocessors.preprocessors[ticker_id]
+            transformed = preprocessor.transform_frame(split_frames.frames[ticker][split_name])
+            ticker_samples[split_name] = build_ticker_samples(
+                transformed, ticker, ticker_id, seq_length=seq_length, horizon=horizon
+            )
+        if any(not ticker_samples[name] for name in _SPLIT_NAMES):
+            exclusions[ticker] = "insufficient windows in every split"
+            continue
+        for split_name in _SPLIT_NAMES:
+            samples[split_name].extend(ticker_samples[split_name])
+    for split_name in _SPLIT_NAMES:
+        samples[split_name].sort(key=lambda sample: (sample.key.target_date, sample.key.ticker_id))
+    return PooledManifest(samples=samples, exclusions=exclusions)
