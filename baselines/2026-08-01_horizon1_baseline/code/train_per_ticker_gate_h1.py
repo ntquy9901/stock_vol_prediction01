@@ -39,6 +39,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from src.common.evaluation import evaluate_predictions
+from src.common.provenance import get_provenance
 from src.lstm_gat_hybrid.config import LSTMGATConfig
 from src.lstm_gat_hybrid.train_parallel_enhanced import (
     EarlyStopping, plot_learning_curves_with_analysis,
@@ -47,8 +48,9 @@ from src.lstm_gat_hybrid.train_parallel_enhanced import (
 from dataset_dual_news import create_dual_news_dataloaders  # noqa: E402 (sibling, read-only)
 from model_per_ticker_gate import PerTickerGatedNewsBaseline  # noqa: E402 (sibling, read-only, unchanged)
 
-MAX_EPOCHS = 10  # CLAUDE.md Training policy: >10 epochs needs explicit user approval based on
-                  # 5/10-epoch results.
+MAX_EPOCHS = 20  # 20-epoch clean run: explicitly authorized (2026-08-06 multi-horizon task) to
+                  # match the 5-day protocol's 20-epoch budget as a single symmetric run vs the
+                  # HAR-only reference (both clean 20 epochs, fair-budget comparison).
 
 
 def train_epoch(model, loader, criterion, optimizer, device, grad_clip=1.0):
@@ -194,6 +196,8 @@ def main():
     ap.add_argument("--resume_results_dir", default=None,
                     help="path to a previous run's results/ dir (gate_history.json + "
                          "loss_history.json) to continue epoch numbering/history from")
+    ap.add_argument("--seed", type=int, default=42,
+                    help="torch/numpy RNG seed (multi-seed protocol: 42/123/2026)")
     args = ap.parse_args()
 
     if args.epochs > MAX_EPOCHS:
@@ -206,10 +210,10 @@ def main():
         raise ValueError("--resume_checkpoint and --resume_results_dir must be given together")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    torch.manual_seed(42)
-    np.random.seed(42)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
     print(f"[train] device={device}, smoke={args.smoke}, gate_lr={args.gate_lr}, lr={args.lr}, "
-          f"forecast_horizon={args.forecast_horizon}")
+          f"forecast_horizon={args.forecast_horizon}, seed={args.seed}")
 
     config = LSTMGATConfig()
     config.num_features_per_stock = 3   # HAR only
@@ -343,11 +347,12 @@ def main():
         "model": "PerTickerGatedNewsBaseline",
         "forecast_horizon": args.forecast_horizon,
         "n_feat": int(n_feat), "d_news": args.d_news, "smoke": bool(args.smoke),
-        "gate_lr": args.gate_lr, "lr": args.lr,
+        "gate_lr": args.gate_lr, "lr": args.lr, "seed": args.seed,
         "final_gate_values": {sn: float(g) for sn, g in zip(stock_names, final_gate)},
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),
         "val_test_diff": val_test_diff,
+        "provenance": get_provenance(),
     }
     (out_dir / "results.json").write_text(
         json.dumps(results, indent=2, ensure_ascii=False, allow_nan=False),
