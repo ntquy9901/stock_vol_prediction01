@@ -786,5 +786,82 @@
     ],
     "result_summary": "The 26% intersection ceiling is an ARTIFACT of a fixed 33-node set, not intrinsic to GNNs -> graph-null IS confounded with data scarcity (confirms the concern). Rank-1 fix: masked availability-aware message-passing (per-day present-ticker adjacency + presence mask; dataloader/collate change, no leakage, trains on full ~4,900-date union). Rank-2: long-history panel-selection (bias, diagnostic only). NOT imputation (leaks/fabricates). Literature gap = paper contribution: no surveyed financial-GNN paper trains on per-day variable stock set with masking.",
     "report_md": "docs/reports/2026-08-08_gnn_sparse_data_research.md"
+  },
+  {
+    "id": "t-pooled-20ep",
+    "phase": "Track B / longer-training check",
+    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) \u2014 does longer training beat HAR?",
+    "status": "done",
+    "timestamp": "2026-08-08 22:00",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "e5f4af6",
+      "6ccc54d",
+      "3ccca8a"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "verification-before-completion",
+      "systematic-debugging"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest scripts/pooled_20ep_analysis/ (from repo root, AFTER conftest fix)",
+        "result": "5 passed (agent's original passed only from inside the dir \u2014 verification caught it)"
+      },
+      {
+        "cmd": "20ep 3-seed means",
+        "result": "P0 rmse .001485 ql .5167 | P1 .001498/.5110 | P2 .001486/.5084 | P3 .001487/.5084"
+      },
+      {
+        "cmd": "paired-t",
+        "result": "News P2vsP1 sig (p~.009); Gate P3vsP2 inert (p>=.61); P1 worse than HAR RMSE (p~.028); P2/P3 TIE HAR RMSE; all beat HAR QLIKE (p<.004)"
+      },
+      {
+        "cmd": "5ep vs 20ep",
+        "result": "UNCHANGED (deltas 4th-5th sig fig); best-val epoch 5-7 then OVERFIT -> 20ep add nothing"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass (after conftest fix)",
+      "lint": "pass",
+      "code_review": "verification caught 3 real issues (see below), all fixed except history bloat",
+      "diff_cover": "enforced via pre-push hook (now runs on worktrees)"
+    },
+    "code_review": {
+      "layers": [
+        "verification-caught"
+      ],
+      "findings_fixed": 2,
+      "findings_deferred": 1
+    },
+    "dod": [
+      {
+        "item": "20ep 3-seed run",
+        "ok": true
+      },
+      {
+        "item": "verdict: longer training does NOT beat HAR",
+        "ok": true
+      },
+      {
+        "item": "FIX test collection (conftest)",
+        "ok": true
+      },
+      {
+        "item": "FIX 60MB public-repo bloat (untrack+gitignore)",
+        "ok": true
+      },
+      {
+        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) \u2014 flagged",
+        "ok": true
+      },
+      {
+        "item": "540MB in git HISTORY -> needs user decision on rewrite",
+        "ok": false
+      }
+    ],
+    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R\u00b2 (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
+    "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
   }
 ]
