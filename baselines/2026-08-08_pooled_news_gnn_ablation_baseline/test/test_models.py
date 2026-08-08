@@ -18,6 +18,7 @@ for _path in (str(_ROOT), str(_CODE_DIR)):
 
 from data import PooledSample, SampleKey  # noqa: E402
 from models import GraphAblationModel, PooledPriceLSTM, PooledPriceNewsLSTM  # noqa: E402
+from scaling import ArrayStandardizer, PreprocessorStore, TickerPreprocessor  # noqa: E402
 
 
 def _price(batch_size: int = 2) -> torch.Tensor:
@@ -237,9 +238,15 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
 
     warm_start = tmp_path / "p3.pt"
     p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0)
-    torch.save({"config_name": "P3", "model_state": p3.state_dict()}, warm_start)
+    torch.save({"config_name": "P3", "model_state": p3.state_dict(),
+                "max_training_target_date": "2020-01-31", "manifest_hash": "boundary-safe"}, warm_start)
+    preprocessor = TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )
     checkpoint = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, seed=42,
-                                                 warm_start_checkpoint=warm_start)
+                                                 warm_start_checkpoint=warm_start,
+                                                 store=PreprocessorStore({0: preprocessor}))
     payload = torch.load(checkpoint, weights_only=False)
 
     assert payload["graph_safe"] is True
@@ -259,7 +266,8 @@ def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Pa
             (GraphNode(0, "AAA", split, 1.0), GraphNode(1, "BBB", split, 1.1)),
             np.ones((2, 22, 3)), np.ones((2, 22, 2)), np.ones((2, 22)), np.eye(2),
         )
-    graph = GraphManifest((snapshot("train", "2020-01-27"), snapshot("val", "2020-02-27")),
+    graph = GraphManifest((snapshot("train", "2020-01-27"), snapshot("val", "2020-02-27"),
+                           snapshot("val", "2020-02-28")),
                           {"AAA": 0, "BBB": 1}, "2020-01-31", "2020-02-28",
                           {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
     checkpoint = tmp_path / "safe.pt"
@@ -273,11 +281,27 @@ def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Pa
         checkpoint, True, graph.train_end_date, graph.content_hash("train"),
     )
 
-    result = _run_one_graph_model(model, graph, "G1", args.epochs, args.seed, tmp_path / "G1")
+    preprocessor = TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )
+    result = _run_one_graph_model(model, graph, PreprocessorStore({0: preprocessor, 1: preprocessor}),
+                                  "G1", args.epochs, args.seed, tmp_path / "G1")
 
     assert args.phase == "graph"
     assert result["graph_hash"] == graph.content_hash("val")
     assert (tmp_path / "G1" / "results.json").exists()
+
+
+def test_message_passing_masks_non_neighbors_for_an_isolated_node() -> None:
+    from models import _ResidualMessagePassing
+
+    layer = _ResidualMessagePassing(1)
+    with torch.no_grad():
+        layer.projection.weight.fill_(1.0)
+    output = layer(torch.tensor([[[2.0], [100.0]]]), torch.eye(2))
+
+    torch.testing.assert_close(output, torch.tensor([[[2.0], [100.0]]]))
 
 
 def _state_bytes(module: torch.nn.Module) -> bytes:

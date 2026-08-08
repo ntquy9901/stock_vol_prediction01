@@ -76,7 +76,7 @@ class ScreeningInputs:
 
 def build_graph_safe_p3_checkpoint(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
-    warm_start_checkpoint: Path | str, epochs: int = 1,
+    warm_start_checkpoint: Path | str, store: PreprocessorStore, epochs: int = 1,
 ) -> Path:
     """Create the only P3 initialization permitted for the matched graph pair.
 
@@ -96,6 +96,12 @@ def build_graph_safe_p3_checkpoint(
     warm = torch.load(warm_start_checkpoint, map_location="cpu", weights_only=False)
     if warm.get("config_name") != "P3" or not isinstance(warm.get("model_state"), dict):
         raise ValueError("warm-start checkpoint must be a trained P3 checkpoint")
+    warm_max_date = warm.get("max_training_target_date")
+    warm_manifest_hash = warm.get("manifest_hash")
+    if not warm_max_date or not warm_manifest_hash:
+        raise ValueError("warm-start P3 checkpoint lacks training provenance")
+    if str(warm_max_date) > graph_manifest.train_end_date:
+        raise ValueError("warm-start P3 checkpoint crosses the graph train boundary")
     dimensions = {(sample.x_price_raw.shape[1], sample.x_news.shape[1]) for sample in allowed}
     if len(dimensions) != 1:
         raise ValueError("graph-safe P3 samples must have one shared feature width")
@@ -117,8 +123,9 @@ def build_graph_safe_p3_checkpoint(
                 torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
                 torch.tensor([sample.key.ticker_id], dtype=torch.long),
             )
-            # The graph-safe refinement is intentionally bounded to eligible P3 samples.
-            loss = prediction.square().mean()
+            target_raw = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
+            target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([target_raw]))
+            loss = torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32))
             loss.backward()
             optimizer.step()
     out = Path(output_dir)
@@ -254,11 +261,18 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     }
     panel = load_runner_news_panel(_ROOT / "data" / "features" / "dual_group_news_panel.parquet", selected,
                                    _train_news_cutoffs(inputs.manifest))
-    graph = build_graph_manifest(full_frames, panel, inputs.store)
+    graph_store = _fit_graph_preprocessors(full_frames)
+    graph = build_graph_manifest(full_frames, panel, graph_store)
+    graph_pooled = build_pooled_manifest(raw, graph_store)
+    graph_pooled = PooledManifest(
+        {split: tuple(attach_news(graph_pooled.samples[split], panel, panel.feature_cols))
+         for split in ("train", "val", "test")},
+        graph_pooled.exclusions, graph_pooled.ticker_to_id, graph_pooled.preprocessing_hash,
+    )
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
     graph_safe = build_graph_safe_p3_checkpoint(
-        inputs.manifest, graph, out, args.seed, args.p3_checkpoint, epochs=1,
+        graph_pooled, graph, out, args.seed, args.p3_checkpoint, graph_store, epochs=1,
     )
     graph_hash = graph.content_hash("train")
     results = {
@@ -266,7 +280,7 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
             GraphAblationModel.from_p3_checkpoint(
                 str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
                 graph_manifest_hash=graph_hash,
-            ), graph, name, args.epochs, args.seed, out / name,
+            ), graph, graph_store, name, args.epochs, args.seed, out / name,
         )
         for name in ("G0", "G1")
     }
@@ -278,7 +292,8 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 
 
 def _run_one_graph_model(
-    model: GraphAblationModel, graph: GraphManifest, name: str, epochs: int, seed: int, output: Path,
+    model: GraphAblationModel, graph: GraphManifest, store: PreprocessorStore, name: str,
+    epochs: int, seed: int, output: Path,
 ) -> dict[str, Any]:
     torch.manual_seed(seed)
     output.mkdir(parents=True, exist_ok=True)
@@ -295,7 +310,7 @@ def _run_one_graph_model(
         for snapshot in train:
             optimizer.zero_grad()
             prediction = _graph_prediction(model, snapshot)
-            target = torch.tensor([node.y_raw for node in snapshot.nodes], dtype=torch.float32)
+            target = torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32)
             loss = torch.nn.functional.mse_loss(prediction, target)
             loss.backward()
             if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
@@ -304,16 +319,24 @@ def _run_one_graph_model(
             epoch_losses.append(float(loss.item()))
         losses.append(float(np.mean(epoch_losses)))
     model.eval()
+    records = []
     with torch.no_grad():
         validation_loss = float(np.mean([
             torch.nn.functional.mse_loss(
                 _graph_prediction(model, snapshot),
-                torch.tensor([node.y_raw for node in snapshot.nodes], dtype=torch.float32),
+                torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32),
             ).item() for snapshot in validation
         ]))
+        for snapshot in validation:
+            for node, prediction in zip(snapshot.nodes, _graph_prediction(model, snapshot), strict=True):
+                records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
+                                "prediction_norm": float(prediction), "target_raw": node.y_raw})
+    evaluation = evaluate_records(records, store)
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
-                                            "train_losses": losses, "validation_loss": validation_loss})
-    return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss}
+                                            "train_losses": losses, "validation_loss": validation_loss,
+                                            "validation_metrics": evaluation["metrics"]})
+    return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
+            "validation_metrics": evaluation["metrics"]}
 
 
 def _graph_prediction(model: GraphAblationModel, snapshot: Any) -> torch.Tensor:
@@ -327,6 +350,19 @@ def np_concat_frames(frames: Any) -> Any:
     import pandas as pd
 
     return pd.concat(tuple(frames), ignore_index=True)
+
+
+def _fit_graph_preprocessors(full_frames: Mapping[str, Any]) -> PreprocessorStore:
+    common_dates = sorted(set.intersection(*[
+        set(frame["date"].astype(str)) for frame in full_frames.values()
+    ]))
+    train_end = common_dates[int(len(common_dates) * 0.7) - 1]
+    return PreprocessorStore({
+        ticker_id: TickerPreprocessor.fit(
+            frame.loc[frame["date"].astype(str) <= train_end], ["parkinson_volatility"], "parkinson_volatility",
+        )
+        for ticker_id, (_, frame) in enumerate(sorted(full_frames.items()))
+    })
 
 
 def build_screening_inputs(smoke: bool, max_tickers: int | None, phase: str = "pooled") -> ScreeningInputs:

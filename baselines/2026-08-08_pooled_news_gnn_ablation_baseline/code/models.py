@@ -121,7 +121,12 @@ class _ResidualMessagePassing(nn.Module):
             adjacency = adjacency.unsqueeze(0).expand(node_features.shape[0], -1, -1)
         if adjacency.ndim != 3 or adjacency.shape[:2] != node_features.shape[:2]:
             raise ValueError("adjacency must be [nodes, nodes] or [batch, nodes, nodes]")
-        weights = torch.softmax(adjacency.to(node_features.dtype), dim=-1)
+        topology = adjacency != 0
+        if not topology.any(dim=-1).all():
+            raise ValueError("each graph node requires a self-loop or neighbor")
+        weights = torch.softmax(
+            adjacency.to(node_features.dtype).masked_fill(~topology, float("-inf")), dim=-1,
+        )
         return self.projection(torch.bmm(weights, node_features))
 
 

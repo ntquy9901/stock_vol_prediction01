@@ -180,6 +180,7 @@ class GraphNode:
     ticker: str
     split: str
     y_raw: float
+    y_norm: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -717,7 +718,10 @@ def build_graph_manifest(
             nodes = tuple(
                 GraphNode(
                     ticker_to_id[ticker], ticker, split,
-                    float(normalized[ticker].loc[target_date, "parkinson_volatility"]),
+                    float(normalized[ticker].loc[target_date, "y_eval_raw"]),
+                    float(preprocessors.get(ticker_to_id[ticker]).target_scaler.transform(
+                        np.asarray([normalized[ticker].loc[target_date, "y_model_raw"]])
+                    )[0]),
                 )
                 for ticker in ordered_tickers
             )
@@ -777,7 +781,8 @@ def _graph_snapshot_hash(snapshot: GraphSnapshot) -> dict[str, object]:
     return {
         "target_date": snapshot.target_date, "split": snapshot.split, "input_dates": snapshot.input_dates,
         "nodes": [
-            (node.ticker_id, node.ticker, node.split, _canonical_scalar_hash(node.y_raw))
+            (node.ticker_id, node.ticker, node.split, _canonical_scalar_hash(node.y_raw),
+             _canonical_scalar_hash(node.y_norm))
             for node in snapshot.nodes
         ],
         "price": _canonical_array_hash(snapshot.x_price), "news": _canonical_array_hash(snapshot.x_news),
