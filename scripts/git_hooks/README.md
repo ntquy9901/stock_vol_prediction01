@@ -2,11 +2,16 @@
 
 `pre-push` runs the quality gate automatically before every `git push`, so it cannot be forgotten.
 
-## Activate (once per clone / worktree share the repo config)
+## Activate (once; covers ALL worktrees/branches)
+Use an ABSOLUTE hooksPath so the hook fires from feature-branch worktrees too (those
+branches do not contain `scripts/git_hooks`, so a relative path silently disables the
+gate there — a real gap found 2026-08-08):
 ```bash
-git config core.hooksPath scripts/git_hooks
+git config core.hooksPath "$(git rev-parse --show-toplevel)/scripts/git_hooks"
 chmod +x scripts/git_hooks/pre-push
 ```
+The hook resolves `scripts/quality_gate` (Pandera/Evidently) from its own absolute
+location, so the data-quality step works even from a worktree that lacks `scripts/`.
 
 ## What it enforces
 | Step | Behaviour |

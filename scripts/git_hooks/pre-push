@@ -66,9 +66,13 @@ fi
 echo "[pre-push] 4/4 data-quality gate (Pandera + Evidently) if data/manifest touched"
 DATA_TOUCHED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -iE 'data|manifest|scaling|dataset|panel' || true)
 if [ -n "$DATA_TOUCHED" ]; then
-  python - <<'PY' || { echo "[pre-push] BLOCK: Pandera schema failed." >&2; exit 3; }
-import sys, pathlib
-sys.path.insert(0, str(pathlib.Path.cwd()))
+  # scripts/quality_gate lives in the MAIN repo root (not in feature-branch
+  # worktrees), so resolve it from the hook's own absolute location, not the cwd.
+  HOOK_SELF="${BASH_SOURCE[0]:-$0}"
+  MAINROOT="$(cd "$(dirname "$HOOK_SELF")/../.." && pwd)"
+  MAINROOT="$MAINROOT" python - <<'PY' || { echo "[pre-push] BLOCK: Pandera schema failed." >&2; exit 3; }
+import os, sys, pathlib
+sys.path.insert(0, os.environ.get("MAINROOT", str(pathlib.Path.cwd())))
 try:
     from scripts.quality_gate.run_quality_gate import check_schema, check_drift, PROJECT_ROOT
 except Exception as e:
