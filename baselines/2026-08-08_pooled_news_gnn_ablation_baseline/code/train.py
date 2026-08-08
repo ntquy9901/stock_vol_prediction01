@@ -123,9 +123,8 @@ def run_training(
         if isinstance(loader.sampler, RandomSampler):
             raise ValueError(f"{name} loader must use shuffle=False")
     preprocessors = store.to_dict()
-    manifest = _manifest_payload(loaders)
     preprocessors_hash = _canonical_hash(preprocessors)
-    manifest_hash = _canonical_hash(manifest)
+    manifest, manifest_hash = _manifest_payload(loaders, preprocessors_hash)
     state: Mapping[str, Any] | None = None
     if resume_from is not None:
         state = torch.load(Path(resume_from), map_location="cpu", weights_only=False)
@@ -237,11 +236,23 @@ def _normalized_loss(model: nn.Module, loader: Any, criterion: nn.Module, device
     return float(np.mean(losses))
 
 
-def _manifest_payload(loaders: Mapping[str, Any]) -> dict[str, Any]:
-    payload: dict[str, Any] = {}
+def _manifest_payload(
+    loaders: Mapping[str, Any], preprocessing_hash: str
+) -> tuple[dict[str, Any], str]:
+    """Build a compact artifact and a tensor-content resume identity.
+
+    The JSON artifact intentionally records only sample keys and canonical content
+    hashes.  The checkpoint identity is derived from those full in-memory tensor
+    hashes, rather than from the keys alone.
+    """
+
+    splits: dict[str, dict[str, Any]] = {}
     for split, loader in loaders.items():
-        payload[split] = [_batch_payload(batch) for batch in loader]
-    return payload
+        ordered_keys = _ordered_keys(loader)
+        hashes = _split_content_hashes(loader)
+        splits[split] = {"count": len(ordered_keys), "ordered_keys": ordered_keys, "hashes": hashes}
+    payload = {"version": 2, "preprocessing_hash": preprocessing_hash, "splits": splits}
+    return payload, _canonical_hash(payload)
 
 
 def _plot_losses(train_losses: list[float], val_losses: list[float], path: Path) -> None:
@@ -293,9 +304,57 @@ def _restore_rng_state(state: Mapping[str, Any]) -> None:
         torch.cuda.set_rng_state_all(state["cuda"])
 
 
-def _batch_payload(batch: Mapping[str, Any]) -> dict[str, Any]:
-    return {name: _as_numpy(batch[name]).tolist() if name != "target_date" else list(batch[name])
-            for name in ("ticker_id", "target_date", "x_price", "x_news", "news_mask", "y_norm", "y_raw")}
+def _ordered_keys(loader: Any) -> list[dict[str, Any]]:
+    samples = getattr(getattr(loader, "dataset", None), "samples", None)
+    if samples is not None:
+        return [
+            {
+                "ticker_id": int(sample.key.ticker_id),
+                "ticker": str(sample.key.ticker),
+                "target_date": str(sample.key.target_date),
+                "input_dates": list(sample.input_dates),
+            }
+            for sample in samples
+        ]
+
+    keys: list[dict[str, Any]] = []
+    for batch in loader:
+        ticker_ids = _as_numpy(batch["ticker_id"]).astype(np.int64)
+        for ticker_id, target_date in zip(ticker_ids, batch["target_date"], strict=True):
+            keys.append({
+                "ticker_id": int(ticker_id), "ticker": str(ticker_id),
+                "target_date": str(target_date), "input_dates": [],
+            })
+    return keys
+
+
+def _split_content_hashes(loader: Any) -> dict[str, str]:
+    values: dict[str, list[str]] = {
+        "price": [], "news": [], "mask": [], "raw_targets": [], "model_targets": [],
+    }
+    for batch in loader:
+        values["price"].extend(_canonical_sample_hashes(batch["x_price"]))
+        values["news"].extend(_canonical_sample_hashes(batch["x_news"]))
+        values["mask"].extend(_canonical_sample_hashes(batch["news_mask"]))
+        values["raw_targets"].extend(_canonical_sample_hashes(batch["y_raw"]))
+        values["model_targets"].extend(_canonical_sample_hashes(batch["y_norm"]))
+    return {name: _canonical_hash(hashes) for name, hashes in values.items()}
+
+
+def _canonical_sample_hashes(value: Any) -> list[str]:
+    array = _as_numpy(value)
+    return [_canonical_tensor_hash(sample) for sample in array]
+
+
+def _canonical_tensor_hash(value: Any) -> str:
+    array = np.ascontiguousarray(_as_numpy(value))
+    header = json.dumps(
+        {"dtype": array.dtype.str, "shape": array.shape}, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    digest = sha256()
+    digest.update(header)
+    digest.update(array.tobytes())
+    return digest.hexdigest()
 
 
 def _validate_resume_state(

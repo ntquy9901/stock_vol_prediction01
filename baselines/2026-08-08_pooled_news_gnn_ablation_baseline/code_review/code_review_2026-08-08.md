@@ -80,3 +80,26 @@ was corrected to:
 The suggestion to shuffle pooled training remained rejected because `shuffle=False` was explicitly
 approved as the conservative pilot protocol. The final plan contains no unresolved critical/high
 review finding.
+
+## Compact manifest follow-up review
+
+### Blind Hunter
+
+Checked that `sample_manifest.json` contains ordered sample keys, split counts, preprocessing
+hash, and hashes only. The artifact no longer persists price/news/mask/target arrays.
+
+### Edge Case Hunter
+
+Checked that the resume identity combines hashes derived from every in-memory price, news, mask,
+raw-target, and model-target tensor. Hashing is per sample, so a different DataLoader batch size
+does not alter the identity. A regression changes price and raw-target values while retaining the
+same sample keys and confirms resume rejection.
+
+### Acceptance Auditor
+
+Checked that P0-P3 manifest identity/order gates remain in `run_pilot.py` and were not modified.
+The baseline test suite, including price-only and P2/P3 tests, passed with the compact artifact.
+
+## Result
+
+No critical or major finding remained in the compact-manifest change.

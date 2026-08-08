@@ -120,6 +120,21 @@ def test_one_epoch_runner_writes_finite_screening_artifacts(tmp_path: Path) -> N
 
     for name in ("results.json", "sample_manifest.json", "preprocessors.json", "best.pt", "learning_curve_partial.png"):
         assert (tmp_path / "run" / name).exists()
+    manifest_path = tmp_path / "run" / "sample_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest_path.stat().st_size < 4_000
+    assert manifest["version"] == 2
+    assert manifest["splits"]["train"]["count"] == 2
+    assert manifest["splits"]["train"]["ordered_keys"] == [
+        {"ticker_id": 0, "ticker": "0", "target_date": "2020-01-01", "input_dates": []},
+        {"ticker_id": 0, "ticker": "0", "target_date": "2020-01-02", "input_dates": []},
+    ]
+    assert set(manifest["splits"]["train"]["hashes"]) == {
+        "price", "news", "mask", "raw_targets", "model_targets",
+    }
+    assert manifest["preprocessing_hash"]
+    assert "x_price" not in manifest_path.read_text(encoding="utf-8")
+    assert "x_news" not in manifest_path.read_text(encoding="utf-8")
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert "test_metrics" not in payload
     assert all(math.isfinite(value) for value in payload["validation_metrics"].values())
