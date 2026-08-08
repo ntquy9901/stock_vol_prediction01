@@ -1,0 +1,102 @@
+[
+  {
+    "id": "quality-gate",
+    "phase": "Cross-cutting - Quality tooling",
+    "title": "Post-code quality gate (pandera/evidently/ruff/pytest)",
+    "status": "done",
+    "timestamp": "2026-08-08T15:42",
+    "branch": "master",
+    "commits": ["48a14bb"],
+    "skills_applied": ["3-layer-code-review", "verification-before-completion"],
+    "evidence": [
+      {
+        "cmd": "python -m pytest scripts/quality_gate/test_quality_gate.py -q",
+        "result": "13 passed in 1.28s"
+      }
+    ],
+    "quality_gate": {"tests": "pass", "lint": "pass", "code_review": "pass", "diff_cover": "skip"},
+    "code_review": {"layers": 3, "findings_fixed": 4, "findings_deferred": 0},
+    "dod": [
+      {"item": "pytest green (13 passed)", "ok": true},
+      {"item": "3-layer code review run + findings fixed", "ok": true},
+      {"item": "committed to master (48a14bb)", "ok": true},
+      {"item": "summary report written", "ok": true}
+    ],
+    "result_summary": "Post-code data/schema quality gate built (pandera schemas, evidently drift, ruff, pytest) and hardened via a 3-layer adversarial review; tests re-run green.",
+    "report_md": "docs/reports/2026-08-08_1542_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "task-7",
+    "phase": "Phase 1 - Headline Track B experiments",
+    "title": "Pooled news-GNN G0/G1 graph ablation + G1 positivity fix",
+    "status": "done",
+    "timestamp": "2026-08-08T16:21",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": ["8055413", "702289f"],
+    "skills_applied": ["systematic-debugging", "TDD-red-green", "verification-before-completion"],
+    "evidence": [
+      {
+        "cmd": "python -m pytest baselines/2026-08-08_pooled_news_gnn_ablation_baseline/test/ -q",
+        "result": "92 passed in 15.23s"
+      }
+    ],
+    "quality_gate": {"tests": "pass", "lint": "pass", "code_review": "pass", "diff_cover": "skip"},
+    "code_review": {"layers": 3, "findings_fixed": 0, "findings_deferred": 0},
+    "result_summary": "G1 positivity fixed via a denormalized floor (models.py:206). Result (seed 42, 5 epochs, 33 tickers): graph message-passing HURTS - G1 worse than no-graph control G0 on all 6 metrics; GNN stays an ablation, not the main architecture.",
+    "dod": [
+      {"item": "pytest green (92 passed) re-verified in worktree", "ok": true},
+      {"item": "positivity floor at models.py:206", "ok": true},
+      {"item": "committed on feature/pooled-news-gnn-pilot", "ok": true},
+      {"item": "summary report written", "ok": true}
+    ],
+    "report_md": ".worktrees/pooled-news-gnn-pilot/docs/reports/2026-08-08_1621_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "roadmap",
+    "phase": "Planning - Unified roadmap",
+    "title": "Unified Track A+B roadmap (architecture based on Track B)",
+    "status": "done",
+    "timestamp": "2026-08-08T17:00",
+    "branch": "master",
+    "commits": ["127dace", "cbbf75e"],
+    "skills_applied": ["writing-plans"],
+    "evidence": [
+      {
+        "cmd": "git log -1 --format=%H %s 127dace",
+        "result": "127dace5e4c3a633a5c93dac71372fd0e2057591 Add unified Track A+B roadmap (architecture based on Track B)"
+      },
+      {
+        "cmd": "git log -1 --format=%H %s cbbf75e",
+        "result": "cbbf75e3d7c88095627ffcd6fb8a0702f0a65db9 Roadmap: R10 graph-training batching approved by user, move into T0.2"
+      }
+    ],
+    "quality_gate": {"tests": "n/a", "lint": "n/a", "code_review": "pass", "diff_cover": "n/a"},
+    "code_review": {"layers": 1, "findings_fixed": 0, "findings_deferred": 0},
+    "result_summary": "Dependency-ordered plan unifying remaining Track A (paper) and Track B (pooled news-GNN) work; execution order T0.1 -> T1.1 -> T1.2 -> T1.3 -> T2.* -> Phase 3 -> Phase 4.",
+    "dod": [
+      {"item": "roadmap committed to master", "ok": true},
+      {"item": "R10 approval folded into T0.2", "ok": true}
+    ],
+    "report_md": "docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md"
+  },
+  {
+    "id": "t0.1-multihorizon",
+    "phase": "Phase 0 - Foundations",
+    "title": "T0.1 Multi-horizon --horizon knob (1/5/10/22)",
+    "status": "running",
+    "timestamp": "2026-08-08T18:00",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [],
+    "skills_applied": ["TDD-red-green", "verification-before-completion"],
+    "evidence": [],
+    "quality_gate": {"tests": "n/a", "lint": "n/a", "code_review": "n/a", "diff_cover": "n/a"},
+    "code_review": {"layers": 0, "findings_fixed": 0, "findings_deferred": 0},
+    "result_summary": "In flight: plumb one horizon into the three manifest builders in run_pilot.py, add --horizon {1,5,10,22}, namespace outputs, add the h=22 leakage regression test. No model/scaler change.",
+    "dod": [
+      {"item": "pytest test/ green incl new h cases", "ok": false},
+      {"item": "smoke each horizon", "ok": false},
+      {"item": "h=22 leakage regression test added", "ok": false}
+    ],
+    "report_md": ""
+  }
+]
