@@ -17,7 +17,7 @@ for _path in (str(_ROOT), str(_CODE_DIR)):
         sys.path.insert(0, _path)
 
 from data import PooledSample, SampleKey  # noqa: E402
-from models import PooledPriceLSTM, PooledPriceNewsLSTM  # noqa: E402
+from models import GraphAblationModel, PooledPriceLSTM, PooledPriceNewsLSTM  # noqa: E402
 
 
 def _price(batch_size: int = 2) -> torch.Tensor:
@@ -187,3 +187,64 @@ def test_forward_has_no_hidden_state_from_preceding_batch() -> None:
     actual = model(price, news, mask, ticker_ids)
 
     torch.testing.assert_close(actual, expected)
+
+
+def test_graph_pair_loads_byte_identical_frozen_p3_encoders_and_head(tmp_path: Path) -> None:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    checkpoint = tmp_path / "graph_safe_p3.pt"
+    torch.save({"model_state": p3.state_dict(), "graph_safe": True,
+                "max_training_target_date": "2020-03-31"}, checkpoint)
+
+    g0 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
+    g1 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=True)
+
+    assert _state_bytes(g0.price_encoder) == _state_bytes(g1.price_encoder)
+    assert _state_bytes(g0.head) == _state_bytes(g1.head)
+    assert all(not parameter.requires_grad for parameter in g0.price_encoder.parameters())
+    assert all(not parameter.requires_grad for parameter in g1.news_encoder.parameters())
+    assert any(parameter.requires_grad for parameter in g1.message_passing.parameters())
+
+
+def test_graph_g0_has_no_message_passing_and_g1_gradients_only_touch_gnn(tmp_path: Path) -> None:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    checkpoint = tmp_path / "graph_safe_p3.pt"
+    torch.save({"model_state": p3.state_dict(), "graph_safe": True,
+                "max_training_target_date": "2020-03-31"}, checkpoint)
+    g0 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
+    g1 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=True)
+    price, news, mask = _same_inputs()
+    adjacency = torch.ones(2, 2)
+
+    assert torch.isfinite(g0(price, news, mask, torch.tensor([0, 1]), adjacency)).all()
+    loss = g1(price, news, mask, torch.tensor([0, 1]), adjacency).square().sum()
+    loss.backward()
+
+    assert all(parameter.grad is None for parameter in g1.price_encoder.parameters())
+    assert all(parameter.grad is None for parameter in g1.news_encoder.parameters())
+    assert any(parameter.grad is not None and torch.isfinite(parameter.grad).all()
+               for parameter in g1.message_passing.parameters())
+
+
+def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundary(tmp_path: Path) -> None:
+    from data import GraphManifest, PooledManifest
+    from run_pilot import build_graph_safe_p3_checkpoint
+
+    def sample(date: str) -> PooledSample:
+        return PooledSample(SampleKey(0, "AAA", date), np.ones((22, 3)), np.ones((22, 2)),
+                            np.ones(22, dtype=np.int8), 1.0)
+    pooled = PooledManifest({"train": (sample("2020-01-31"), sample("2020-04-30")), "val": (), "test": ()},
+                            {}, {"AAA": 0}, "preprocessing")
+    graph = GraphManifest((), {"AAA": 0}, "2020-03-31", "2020-04-30",
+                          {"snapshots": "x", "node_vocabulary": "x", "adjacency": "x", "tensors": "x"})
+
+    checkpoint = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, seed=42)
+    payload = torch.load(checkpoint, weights_only=False)
+
+    assert payload["graph_safe"] is True
+    assert payload["max_training_target_date"] == "2020-01-31"
+    assert payload["training_sample_count"] == 1
+    assert (tmp_path / "graph_safe_p3_checkpoint.txt").read_text(encoding="utf-8").strip() == str(checkpoint)
+
+
+def _state_bytes(module: torch.nn.Module) -> bytes:
+    return b"".join(value.detach().cpu().numpy().tobytes() for value in module.state_dict().values())

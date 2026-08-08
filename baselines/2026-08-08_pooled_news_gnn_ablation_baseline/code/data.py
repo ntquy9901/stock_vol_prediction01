@@ -172,6 +172,77 @@ class SplitFrames:
     ticker_to_id: dict[str, int]
 
 
+@dataclass(frozen=True)
+class GraphNode:
+    """One fixed-vocabulary node inside a graph snapshot."""
+
+    ticker_id: int
+    ticker: str
+    split: str
+    y_raw: float
+
+
+@dataclass(frozen=True)
+class GraphSnapshot:
+    """A common-date graph input whose nodes all belong to one temporal split."""
+
+    target_date: str
+    split: str
+    input_dates: tuple[str, ...]
+    nodes: tuple[GraphNode, ...]
+    x_price: np.ndarray
+    x_news: np.ndarray
+    news_mask: np.ndarray
+    adjacency: np.ndarray
+
+    def __post_init__(self) -> None:
+        node_count = len(self.nodes)
+        if self.split not in _SPLIT_NAMES or not node_count:
+            raise ValueError("graph snapshots require nodes and a valid split")
+        if any(node.split != self.split for node in self.nodes):
+            raise ValueError("graph snapshot nodes must share the snapshot split")
+        price = np.asarray(self.x_price, dtype=np.float32)
+        news = np.asarray(self.x_news, dtype=np.float32)
+        mask = np.asarray(self.news_mask, dtype=np.int8)
+        adjacency = np.asarray(self.adjacency, dtype=np.float32)
+        if price.ndim != 3 or price.shape[0] != node_count:
+            raise ValueError("graph x_price must be [nodes, sequence, features]")
+        if news.ndim != 3 or news.shape[:2] != price.shape[:2] or mask.shape != price.shape[:2]:
+            raise ValueError("graph news tensors must align with price nodes and sequence")
+        if adjacency.shape != (node_count, node_count) or not np.isfinite(adjacency).all():
+            raise ValueError("graph adjacency must be finite and square over nodes")
+        object.__setattr__(self, "x_price", _readonly_array(price, np.float32))
+        object.__setattr__(self, "x_news", _readonly_array(news, np.float32))
+        object.__setattr__(self, "news_mask", _readonly_array(mask, np.int8))
+        object.__setattr__(self, "adjacency", _readonly_array(adjacency, np.float32))
+
+
+@dataclass(frozen=True)
+class GraphManifest:
+    """Matched G0/G1 graph snapshots derived on a single common date axis."""
+
+    snapshots: tuple[GraphSnapshot, ...]
+    ticker_to_id: Mapping[str, int]
+    train_end_date: str
+    val_end_date: str
+    hashes: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        vocabulary = dict(sorted(self.ticker_to_id.items(), key=lambda item: item[1]))
+        if list(vocabulary.values()) != list(range(len(vocabulary))):
+            raise ValueError("graph node vocabulary must have contiguous ticker IDs")
+        object.__setattr__(self, "snapshots", tuple(self.snapshots))
+        object.__setattr__(self, "ticker_to_id", MappingProxyType(vocabulary))
+        object.__setattr__(self, "hashes", MappingProxyType(dict(self.hashes)))
+
+    def content_hash(self, split: str) -> str:
+        if split not in _SPLIT_NAMES:
+            raise ValueError(f"unknown graph split: {split}")
+        return _stable_hash({"split": split, "hashes": dict(self.hashes), "snapshots": [
+            _graph_snapshot_hash(snapshot) for snapshot in self.snapshots if snapshot.split == split
+        ]})
+
+
 def _validate_ratios(ratios: tuple[float, float, float]) -> None:
     if len(ratios) != len(_SPLIT_NAMES) or any(ratio <= 0 for ratio in ratios):
         raise ValueError("ratios must contain three positive values")
@@ -596,3 +667,113 @@ def _news_tensor_hash(samples: tuple[PooledSample, ...]) -> str:
 
 def _stable_json(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def build_graph_manifest(
+    price_frames: Mapping[str, pd.DataFrame],
+    news_panel: NewsPanel,
+    seq_length: int = 22,
+    horizon: int = 5,
+) -> GraphManifest:
+    """Build matched graph snapshots on the price-date intersection only.
+
+    Splitting the common date axis before windows makes the graph boundary explicit:
+    neither an input observation nor a target can cross from one graph split into another.
+    """
+
+    if seq_length <= 0 or horizon <= 0:
+        raise ValueError("seq_length and horizon must be positive")
+    if len(price_frames) < 2:
+        raise ValueError("graph ablation requires at least two ticker frames")
+    ordered_tickers = sorted(price_frames)
+    normalized: dict[str, pd.DataFrame] = {}
+    date_sets: list[set[str]] = []
+    for ticker in ordered_tickers:
+        frame = price_frames[ticker].copy()
+        _validated_dates(frame)
+        if "parkinson_volatility" not in frame:
+            raise ValueError("graph price frames require parkinson_volatility")
+        frame["date"] = pd.to_datetime(frame["date"], errors="raise").dt.strftime("%Y-%m-%d")
+        if not np.isfinite(frame["parkinson_volatility"].to_numpy(dtype=float)).all():
+            raise ValueError("graph price values must be finite")
+        normalized[ticker] = frame.set_index("date", drop=False)
+        date_sets.append(set(frame["date"]))
+    common_dates = sorted(set.intersection(*date_sets))
+    if not common_dates:
+        raise ValueError("graph price frames have no common dates")
+    counts = _global_split_counts(len(common_dates))
+    ticker_to_id = {ticker: index for index, ticker in enumerate(ordered_tickers)}
+    snapshots: list[GraphSnapshot] = []
+    start = 0
+    for split, count in zip(_SPLIT_NAMES, counts, strict=True):
+        split_dates = common_dates[start : start + count]
+        start += count
+        for offset in range(max(0, len(split_dates) - seq_length - horizon + 1)):
+            input_dates = tuple(split_dates[offset : offset + seq_length])
+            target_date = split_dates[offset + seq_length + horizon - 1]
+            nodes = tuple(
+                GraphNode(
+                    ticker_to_id[ticker], ticker, split,
+                    float(normalized[ticker].loc[target_date, "parkinson_volatility"]),
+                )
+                for ticker in ordered_tickers
+            )
+            price = np.stack([
+                normalized[ticker].loc[list(input_dates), "parkinson_volatility"].to_numpy(dtype=np.float32)[:, None]
+                for ticker in ordered_tickers
+            ])
+            news, mask = _graph_news_tensors(ordered_tickers, input_dates, news_panel)
+            snapshots.append(GraphSnapshot(target_date, split, input_dates, nodes, price, news, mask,
+                                           _correlation_adjacency(price[:, :, 0])))
+    hashes = {
+        "node_vocabulary": _stable_hash(ticker_to_id),
+        "snapshots": _stable_hash([_graph_snapshot_hash(snapshot) for snapshot in snapshots]),
+        "adjacency": _stable_hash([_canonical_array_hash(snapshot.adjacency) for snapshot in snapshots]),
+        "tensors": _stable_hash([(
+            _canonical_array_hash(snapshot.x_price), _canonical_array_hash(snapshot.x_news),
+            _canonical_array_hash(snapshot.news_mask),
+        ) for snapshot in snapshots]),
+    }
+    return GraphManifest(tuple(snapshots), ticker_to_id, common_dates[counts[0] - 1],
+                         common_dates[counts[0] + counts[1] - 1], hashes)
+
+
+def _global_split_counts(length: int) -> tuple[int, int, int]:
+    counts = (int(length * 0.7), int(length * 0.15), length - int(length * 0.7) - int(length * 0.15))
+    if any(count <= 0 for count in counts):
+        raise ValueError("each global graph split must contain at least one date")
+    return counts
+
+
+def _graph_news_tensors(
+    tickers: list[str], input_dates: tuple[str, ...], panel: NewsPanel
+) -> tuple[np.ndarray, np.ndarray]:
+    width = len(panel.feature_cols)
+    news = np.zeros((len(tickers), len(input_dates), width), dtype=np.float32)
+    mask = np.zeros((len(tickers), len(input_dates)), dtype=np.int8)
+    for node_index, ticker in enumerate(tickers):
+        for date_index, date in enumerate(input_dates):
+            vector = panel.values.get((ticker, date))
+            if vector is not None:
+                news[node_index, date_index] = vector
+                mask[node_index, date_index] = 1
+    return news, mask
+
+
+def _correlation_adjacency(values: np.ndarray) -> np.ndarray:
+    correlation = np.corrcoef(values)
+    correlation = np.nan_to_num(correlation, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+    np.fill_diagonal(correlation, 1.0)
+    return correlation
+
+
+def _graph_snapshot_hash(snapshot: GraphSnapshot) -> dict[str, object]:
+    return {
+        "target_date": snapshot.target_date, "split": snapshot.split, "input_dates": snapshot.input_dates,
+        "nodes": [
+            (node.ticker_id, node.ticker, node.split, _canonical_scalar_hash(node.y_raw))
+            for node in snapshot.nodes
+        ],
+        "price": _canonical_array_hash(snapshot.x_price), "news": _canonical_array_hash(snapshot.x_news),
+        "mask": _canonical_array_hash(snapshot.news_mask), "adjacency": _canonical_array_hash(snapshot.adjacency),
+    }

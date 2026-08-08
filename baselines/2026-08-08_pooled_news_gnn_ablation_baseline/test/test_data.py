@@ -31,6 +31,27 @@ from data import (  # noqa: E402
 )
 
 
+def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_windows() -> None:
+    from data import build_graph_manifest
+
+    dates = pd.date_range("2020-01-01", periods=120, freq="B")
+    frames = {
+        ticker: pd.DataFrame({"date": dates, "parkinson_volatility": np.arange(120, dtype=float) + offset + 1})
+        for ticker, offset in (("AAA", 0), ("BBB", 10))
+    }
+
+    manifest = build_graph_manifest(frames, NewsPanel({}, (), {}), seq_length=22, horizon=5)
+
+    assert manifest.train_end_date == dates[83].strftime("%Y-%m-%d")
+    assert all(len({node.split for node in snapshot.nodes}) == 1 for snapshot in manifest.snapshots)
+    assert all(
+        all(date <= snapshot.target_date for date in snapshot.input_dates)
+        and all(node.split == snapshot.split for node in snapshot.nodes)
+        for snapshot in manifest.snapshots
+    )
+    assert set(manifest.hashes) >= {"snapshots", "node_vocabulary", "adjacency", "tensors"}
+
+
 def _frame(size: int, ticker: str = "AAA") -> pd.DataFrame:
     return pd.DataFrame(
         {

@@ -107,3 +107,79 @@ class PooledPriceNewsLSTM(nn.Module):
             ticker_ids = self._validated_ticker_ids(ticker_ids, x_price.shape[0])
             news_hidden = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
         return self.head(torch.cat((price_hidden[-1], news_hidden), dim=1)).squeeze(-1)
+
+
+class _ResidualMessagePassing(nn.Module):
+    """Small native-PyTorch GAT-style aggregation used by the research-only ablation."""
+
+    def __init__(self, hidden_dim: int) -> None:
+        super().__init__()
+        self.projection = nn.Linear(hidden_dim, hidden_dim, bias=False)
+
+    def forward(self, node_features: torch.Tensor, adjacency: torch.Tensor) -> torch.Tensor:
+        if adjacency.ndim == 2:
+            adjacency = adjacency.unsqueeze(0).expand(node_features.shape[0], -1, -1)
+        if adjacency.ndim != 3 or adjacency.shape[:2] != node_features.shape[:2]:
+            raise ValueError("adjacency must be [nodes, nodes] or [batch, nodes, nodes]")
+        weights = torch.softmax(adjacency.to(node_features.dtype), dim=-1)
+        return self.projection(torch.bmm(weights, node_features))
+
+
+class GraphAblationModel(nn.Module):
+    """G0/G1 with a graph-safe P3 initialization and frozen pretrained encoders."""
+
+    def __init__(self, p3: PooledPriceNewsLSTM, use_gnn: bool) -> None:
+        super().__init__()
+        self.use_gnn = use_gnn
+        self.price_encoder = p3.price_lstm
+        self.news_encoder = p3.news_lstm
+        self.gate_logits = p3.gate_logits
+        self.head = p3.head
+        self._news_encoder = p3
+        self.message_passing = _ResidualMessagePassing(p3.head[0].in_features) if use_gnn else None
+        for component in (self.price_encoder, self.news_encoder):
+            component.eval()
+            for parameter in component.parameters():
+                parameter.requires_grad_(False)
+        self.gate_logits.requires_grad_(False)
+
+    @classmethod
+    def from_p3_checkpoint(cls, path: str, use_gnn: bool) -> "GraphAblationModel":
+        checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+        if not checkpoint.get("graph_safe"):
+            raise ValueError("P3 checkpoint is not graph-safe")
+        state = checkpoint.get("model_state")
+        if not isinstance(state, dict):
+            raise ValueError("P3 checkpoint has no model_state")
+        try:
+            price_dim = int(state["price_lstm.weight_ih_l0"].shape[1])
+            hidden_dim = int(state["price_lstm.weight_hh_l0"].shape[1])
+            news_dim = int(state["news_lstm.weight_ih_l0"].shape[1])
+            news_hidden_dim = int(state["news_lstm.weight_hh_l0"].shape[1])
+            num_tickers = int(state["gate_logits"].numel())
+        except (KeyError, IndexError, AttributeError) as error:
+            raise ValueError("P3 checkpoint does not contain a compatible gated model") from error
+        p3 = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True,
+                                 hidden_dim=hidden_dim, news_hidden_dim=news_hidden_dim, dropout=0.0)
+        p3.load_state_dict(state, strict=True)
+        return cls(p3, use_gnn)
+
+    def train(self, mode: bool = True) -> "GraphAblationModel":
+        super().train(mode)
+        self.price_encoder.eval()
+        self.news_encoder.eval()
+        return self
+
+    def forward(
+        self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
+        ticker_ids: torch.Tensor, adjacency: torch.Tensor,
+    ) -> torch.Tensor:
+        with torch.no_grad():
+            _, (price_hidden, _) = self.price_encoder(x_price)
+            news_hidden = self._news_encoder._encode_news(x_news, news_mask)
+            ticker_ids = self._news_encoder._validated_ticker_ids(ticker_ids, x_price.shape[0])
+            gated_news = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
+            base = torch.cat((price_hidden[-1], gated_news), dim=1)
+        if self.message_passing is not None:
+            base = base + self.message_passing(base.unsqueeze(0), adjacency).squeeze(0)
+        return self.head(base).squeeze(-1)

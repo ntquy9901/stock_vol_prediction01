@@ -24,6 +24,7 @@ for _path in (str(_ROOT), str(_CODE)):
         sys.path.insert(0, _path)
 
 from data import (  # noqa: E402
+    GraphManifest,
     PooledManifest,
     PooledSample,
     SplitFrames,
@@ -32,6 +33,7 @@ from data import (  # noqa: E402
     load_and_split_price_data,
     load_effective_news_panel,
 )
+from models import PooledPriceNewsLSTM  # noqa: E402
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 from train import evaluate_records, run_training  # noqa: E402
 
@@ -69,6 +71,48 @@ class ScreeningInputs:
     store: PreprocessorStore
     loaders: Mapping[str, DataLoader]
     smoke_filter: Mapping[str, Any]
+
+
+def build_graph_safe_p3_checkpoint(
+    pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int
+) -> Path:
+    """Create the only P3 initialization permitted for the matched graph pair.
+
+    The artifact deliberately records the graph training boundary and includes only
+    P3 train samples at or before that date.  An unrestricted pooled P3 checkpoint
+    has no such provenance and is rejected by ``GraphAblationModel``.
+    """
+
+    allowed = tuple(
+        sample for sample in pooled_manifest.samples["train"]
+        if sample.key.target_date <= graph_manifest.train_end_date
+    )
+    if not allowed:
+        raise ValueError("no pooled P3 training samples fall within the graph train boundary")
+    dimensions = {(sample.x_price_raw.shape[1], sample.x_news.shape[1]) for sample in allowed}
+    if len(dimensions) != 1:
+        raise ValueError("graph-safe P3 samples must have one shared feature width")
+    price_dim, news_dim = dimensions.pop()
+    if news_dim == 0:
+        raise ValueError("graph-safe P3 checkpoint requires attached P3 news features")
+    num_tickers = max(pooled_manifest.ticker_to_id.values()) + 1
+    torch.manual_seed(seed)
+    model = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True, dropout=0.0)
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    checkpoint = out / "graph_safe_p3.pt"
+    torch.save({
+        "model_state": model.state_dict(),
+        "graph_safe": True,
+        "seed": seed,
+        "max_training_target_date": max(sample.key.target_date for sample in allowed),
+        "graph_train_end_date": graph_manifest.train_end_date,
+        "training_sample_count": len(allowed),
+        "training_sample_hash": _canonical_sample_hash(allowed),
+        "graph_manifest_hash": graph_manifest.content_hash("train"),
+    }, checkpoint)
+    (out / "graph_safe_p3_checkpoint.txt").write_text(str(checkpoint), encoding="utf-8")
+    return checkpoint
 
 
 def run_har_reference(manifest: PooledManifest, store: PreprocessorStore, output_dir: Path | str) -> Path:
@@ -309,6 +353,22 @@ def _sample_identity(samples: Sequence[PooledSample]) -> tuple[tuple[Any, ...], 
         )
         for sample in samples
     )
+
+
+def _canonical_sample_hash(samples: Sequence[PooledSample]) -> str:
+    return _canonical_hash([
+        (sample.key.ticker_id, sample.key.target_date, sample.x_price_raw.tobytes().hex(),
+         sample.x_news.tobytes().hex(), sample.news_mask.tobytes().hex(), sample.y_raw)
+        for sample in samples
+    ])
+
+
+def _canonical_hash(value: Any) -> str:
+    import hashlib
+
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    ).hexdigest()
 
 
 def comparison_payload(
