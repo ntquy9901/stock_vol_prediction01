@@ -863,5 +863,85 @@
     ],
     "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R\u00b2 (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
     "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "masked-gnn-rerun",
+    "phase": "Track B / graph confound resolution",
+    "title": "Masked availability-aware GNN \u2014 does graph help with 3.8x more data?",
+    "status": "done",
+    "timestamp": "2026-08-08 22:03",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "(5 commits, pushed)"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "pandera-evidently-data-gate"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "134 passed (6 new masking tests incl absent-node non-leakage invariance)"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "snapshot count",
+        "result": "masked 4,941 dates / 4,523 train snapshots vs intersection 1,296/900 = 3.8x more"
+      },
+      {
+        "cmd": "masked G0/G1 3-seed \u0394(G1-G0 vloss)",
+        "result": "+0.001039 mean (G1 marginally WORSE 2/3 seeds); nonpos 0.0 all"
+      },
+      {
+        "cmd": "pre-push hook",
+        "result": "ran from worktree: TDD+pytest+diff-cover+ruff+Pandera 34/34+Evidently -> passed"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass (134)",
+      "lint": "pass",
+      "code_review": "6 targeted masking tests + self-review; 3-layer /code-review NOT run (follow-up)",
+      "diff_cover": "enforced by hook (passed floor 80)"
+    },
+    "code_review": {
+      "layers": [
+        "self+tests"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 1
+    },
+    "dod": [
+      {
+        "item": "masked message-passing (TDD, 134 tests)",
+        "ok": true
+      },
+      {
+        "item": "non-leakage invariance tested",
+        "ok": true
+      },
+      {
+        "item": "3.8x more data (union not intersection)",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate run",
+        "ok": true
+      },
+      {
+        "item": "verdict: graph-null is GENUINE not scarcity artifact",
+        "ok": true
+      },
+      {
+        "item": "3-layer /code-review",
+        "ok": false
+      }
+    ],
+    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1\u2248G0, mean \u0394 +0.001, marginally worse). So the graph-null is a CLEAN, genuine null \u2014 NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
+    "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   }
 ]
