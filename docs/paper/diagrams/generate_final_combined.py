@@ -167,7 +167,7 @@ def build():
           label="last-step HAR\nfeatures", fontsize=6.6, label_dy=0.2)
 
     # -- LEFT: pooled shared-weight encoders (P1/P2/P3) ------------------
-    lc = box(ax, 5.95, 6.65, 7.0, 4.35, "", COLOR_NEUTRAL, edgecolor="#888888")
+    box(ax, 5.95, 6.65, 7.0, 4.35, "", COLOR_NEUTRAL, edgecolor="#888888")
     ax.text(5.95, 8.55,
             "Pooled shared-weight encoders  (ONE weight set for all tickers)  ->  "
             "P1 / P2 / P3",
@@ -197,7 +197,7 @@ def build():
             ha="center", va="center", fontsize=6.9, color="#444444", fontstyle="italic")
 
     # -- RIGHT: masked availability-aware GNN (G0/G1) --------------------
-    rc = box(ax, 13.6, 6.65, 8.5, 4.35, "", COLOR_NEUTRAL, edgecolor="#888888")
+    box(ax, 13.6, 6.65, 8.5, 4.35, "", COLOR_NEUTRAL, edgecolor="#888888")
     ax.text(13.6, 8.55,
             "Masked availability-aware GNN  (frozen P3 encoders)  ->  G0 / G1",
             ha="center", va="center", fontsize=8.0, fontweight="bold")
