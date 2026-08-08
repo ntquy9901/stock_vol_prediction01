@@ -11,6 +11,7 @@ chmod +x scripts/git_hooks/pre-push
 ## What it enforces
 | Step | Behaviour |
 |---|---|
+| TDD gate | BLOCKS if implementation `.py` changed with NO accompanying test change (proxy for test-first; cannot prove ordering, but forbids untested code) |
 | pytest (+coverage) | BLOCKS push on any test failure |
 | diff-coverage on changed lines | BLOCKS if below `QG_MIN_COVER` (default 80; **target 100** per CLAUDE.md C0) |
 | ruff on changed `.py` | Reports findings (warn) |

@@ -19,6 +19,22 @@ cd "$ROOT" || exit 1
 MIN_COVER="${QG_MIN_COVER:-80}"
 FAIL=0
 
+# --- TDD gate (step 0): implementation code must ship WITH a test change ---
+# Proxy for test-first: you cannot push new implementation .py without touching a
+# test. Does not prove test-was-written-first, but makes "code with no test"
+# impossible without an explicit, justified bypass.
+PUSH_BASE="$(git rev-parse '@{upstream}' 2>/dev/null || git merge-base HEAD master 2>/dev/null || echo master)"
+ALLPY=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
+CODE_CHG=$(echo "$ALLPY" | grep -vE '(test_|/test/|conftest)' | grep -vE '^$' || true)
+TEST_CHG=$(echo "$ALLPY" | grep -E '(test_|/test/)' | grep -vE '^$' || true)
+echo "[pre-push] 0/4 TDD gate (code changes require a test change)"
+if [ -n "$CODE_CHG" ] && [ -z "$TEST_CHG" ]; then
+  echo "[pre-push] BLOCK (TDD): implementation code changed with NO accompanying test:" >&2
+  echo "$CODE_CHG" | sed 's/^/    /' >&2
+  echo "  -> Write a failing test first (superpowers:test-driven-development). Bypass: QG_SKIP=1 (justify)." >&2
+  FAIL=1
+fi
+
 PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
 if [ -d "$PILOT/test" ]; then
   TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"
