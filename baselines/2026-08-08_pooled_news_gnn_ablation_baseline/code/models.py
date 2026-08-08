@@ -178,7 +178,10 @@ class GraphAblationModel(nn.Module):
         p3 = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True,
                                  hidden_dim=hidden_dim, news_hidden_dim=news_hidden_dim, dropout=0.0)
         p3.load_state_dict(state, strict=True)
-        return cls(p3, use_gnn)
+        model = cls(p3, use_gnn)
+        model.graph_train_end_date = checkpoint_boundary
+        model.graph_manifest_hash = checkpoint.get("graph_manifest_hash")
+        return model
 
     def train(self, mode: bool = True) -> "GraphAblationModel":
         super().train(mode)

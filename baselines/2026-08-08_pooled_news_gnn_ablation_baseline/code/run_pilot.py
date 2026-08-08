@@ -76,7 +76,7 @@ class ScreeningInputs:
 
 def build_graph_bound_p3_warm_start(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str,
-    seed: int, store: PreprocessorStore, epochs: int = 1,
+    seed: int, store: PreprocessorStore, epochs: int = 1, device: torch.device | None = None,
 ) -> Path:
     """Train a fresh P3 only on graph-bound samples and attest its exact provenance."""
 
@@ -89,20 +89,24 @@ def build_graph_bound_p3_warm_start(
     price_dim, news_dim = allowed[0].x_price_raw.shape[1], allowed[0].x_news.shape[1]
     if news_dim == 0:
         raise ValueError("graph-bound P3 requires attached news features")
-    torch.manual_seed(seed)
+    selected_device = device or torch.device("cpu")
+    _validate_graph_manifest(graph_manifest)
+    _seed_graph_device(seed, selected_device)
     model = PooledPriceNewsLSTM(price_dim, news_dim, max(pooled_manifest.ticker_to_id.values()) + 1,
-                                 use_gate=True, dropout=0.0)
+                                 use_gate=True, dropout=0.0).to(selected_device)
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
     for _ in range(epochs):
         for sample in allowed:
             optimizer.zero_grad()
-            prediction = model(torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
-                               torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
-                               torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
-                               torch.tensor([sample.key.ticker_id], dtype=torch.long))
+            prediction = model(torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0).to(selected_device),
+                               torch.from_numpy(sample.x_news.copy()).unsqueeze(0).to(selected_device),
+                               torch.from_numpy(sample.news_mask.copy()).unsqueeze(0).to(selected_device),
+                               torch.tensor([sample.key.ticker_id], dtype=torch.long, device=selected_device))
             raw_target = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
             target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([raw_target]))
-            torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32)).backward()
+            torch.nn.functional.mse_loss(
+                prediction, torch.tensor(target, dtype=torch.float32, device=selected_device),
+            ).backward()
             optimizer.step()
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -119,6 +123,7 @@ def build_graph_bound_p3_warm_start(
 def build_graph_safe_p3_checkpoint(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
     warm_start_checkpoint: Path | str, store: PreprocessorStore, epochs: int = 1,
+    device: torch.device | None = None,
 ) -> Path:
     """Create the only P3 initialization permitted for the matched graph pair.
 
@@ -156,23 +161,28 @@ def build_graph_safe_p3_checkpoint(
     if news_dim == 0:
         raise ValueError("graph-safe P3 checkpoint requires attached P3 news features")
     num_tickers = max(pooled_manifest.ticker_to_id.values()) + 1
-    torch.manual_seed(seed)
+    selected_device = device or torch.device("cpu")
+    _validate_graph_manifest(graph_manifest)
+    _seed_graph_device(seed, selected_device)
     model = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True, dropout=0.0)
     model.load_state_dict(warm["model_state"], strict=True)
+    model.to(selected_device)
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
     model.train()
     for _ in range(epochs):
         for sample in allowed:
             optimizer.zero_grad()
             prediction = model(
-                torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
-                torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
-                torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
-                torch.tensor([sample.key.ticker_id], dtype=torch.long),
+                torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0).to(selected_device),
+                torch.from_numpy(sample.x_news.copy()).unsqueeze(0).to(selected_device),
+                torch.from_numpy(sample.news_mask.copy()).unsqueeze(0).to(selected_device),
+                torch.tensor([sample.key.ticker_id], dtype=torch.long, device=selected_device),
             )
             target_raw = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
             target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([target_raw]))
-            loss = torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32))
+            loss = torch.nn.functional.mse_loss(
+                prediction, torch.tensor(target, dtype=torch.float32, device=selected_device),
+            )
             loss.backward()
             optimizer.step()
     checkpoint = out / "graph_safe_p3.pt"
@@ -306,6 +316,8 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
                                    _train_news_cutoffs(inputs.manifest))
     graph_store = _fit_graph_preprocessors(full_frames)
     graph = build_graph_manifest(full_frames, panel, graph_store)
+    _validate_graph_manifest(graph)
+    device = resolve_graph_device(args.device)
     graph_pooled = build_pooled_manifest(raw, graph_store)
     graph_pooled = PooledManifest(
         {split: tuple(attach_news(graph_pooled.samples[split], panel, panel.feature_cols))
@@ -315,22 +327,23 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
     warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
-        graph_pooled, graph, out, args.seed, graph_store, epochs=1,
+        graph_pooled, graph, out, args.seed, graph_store, epochs=1, device=device,
     )
     graph_safe = build_graph_safe_p3_checkpoint(graph_pooled, graph, out, args.seed, warm_start,
-                                                 graph_store, epochs=1)
+                                                 graph_store, epochs=1, device=device)
     graph_hash = graph.content_hash("train")
     results = {
         name: _run_one_graph_model(
             GraphAblationModel.from_p3_checkpoint(
                 str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
                 graph_manifest_hash=graph_hash,
-            ), graph, graph_store, name, args.epochs, args.seed, out / name,
+            ), graph, graph_store, name, args.epochs, args.seed, out / name, device,
         )
         for name in ("G0", "G1")
     }
     payload = {"phase": "graph", "graph_hashes": dict(graph.hashes), "graph_train_hash": graph_hash,
-               "graph_safe_p3_checkpoint": str(graph_safe), "results": results,
+               "graph_safe_p3_checkpoint": str(graph_safe), "runtime": _graph_runtime_metadata(args.device, device),
+               "results": results,
                "paired_delta": results["G1"]["validation_loss"] - results["G0"]["validation_loss"]}
     _write_json(out / "graph_validation_comparison.json", payload)
     return out / "graph_validation_comparison.json"
@@ -338,9 +351,14 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 
 def _run_one_graph_model(
     model: GraphAblationModel, graph: GraphManifest, store: PreprocessorStore, name: str,
-    epochs: int, seed: int, output: Path,
+    epochs: int, seed: int, output: Path, device: str | torch.device = "cpu",
 ) -> dict[str, Any]:
-    torch.manual_seed(seed)
+    selected_device = resolve_graph_device(device) if isinstance(device, str) else device
+    _validate_graph_run_provenance(model, graph)
+    if not graph.snapshots:
+        raise ValueError("graph manifest must contain snapshots")
+    _seed_graph_device(seed, selected_device)
+    model.to(selected_device)
     output.mkdir(parents=True, exist_ok=True)
     train = [snapshot for snapshot in graph.snapshots if snapshot.split == "train"]
     validation = [snapshot for snapshot in graph.snapshots if snapshot.split == "val"]
@@ -354,41 +372,86 @@ def _run_one_graph_model(
         epoch_losses = []
         for snapshot in train:
             optimizer.zero_grad()
-            prediction = _graph_prediction(model, snapshot)
-            target = torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32)
+            prediction, target = _graph_prediction(model, snapshot, selected_device)
             loss = torch.nn.functional.mse_loss(prediction, target)
             loss.backward()
             if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
                 raise RuntimeError("frozen graph encoder received gradients")
             optimizer.step()
-            epoch_losses.append(float(loss.item()))
-        losses.append(float(np.mean(epoch_losses)))
+            epoch_losses.append(loss.detach())
+        losses.append(torch.stack(epoch_losses).mean().item())
     model.eval()
     records = []
     with torch.no_grad():
-        validation_loss = float(np.mean([
-            torch.nn.functional.mse_loss(
-                _graph_prediction(model, snapshot),
-                torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32),
-            ).item() for snapshot in validation
-        ]))
+        validation_losses = []
         for snapshot in validation:
-            for node, prediction in zip(snapshot.nodes, _graph_prediction(model, snapshot), strict=True):
+            predictions, target = _graph_prediction(model, snapshot, selected_device)
+            validation_losses.append(torch.nn.functional.mse_loss(predictions, target))
+            for node, prediction in zip(snapshot.nodes, predictions.cpu(), strict=True):
                 records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
                                 "prediction_norm": float(prediction), "target_raw": node.y_raw})
+        validation_loss = torch.stack(validation_losses).mean().item()
     evaluation = evaluate_records(records, store)
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
                                             "train_losses": losses, "validation_loss": validation_loss,
+                                            "runtime": _graph_runtime_metadata(str(device), selected_device),
                                             "validation_metrics": evaluation["metrics"]})
     return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
             "validation_metrics": evaluation["metrics"]}
 
 
-def _graph_prediction(model: GraphAblationModel, snapshot: Any) -> torch.Tensor:
-    return model(torch.from_numpy(snapshot.x_price.copy()), torch.from_numpy(snapshot.x_news.copy()),
-                 torch.from_numpy(snapshot.news_mask.copy()),
-                 torch.tensor([node.ticker_id for node in snapshot.nodes], dtype=torch.long),
-                 torch.from_numpy(snapshot.adjacency.copy()))
+def _graph_prediction(
+    model: GraphAblationModel, snapshot: Any, device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    non_blocking = device.type == "cuda"
+    return model(
+        torch.from_numpy(snapshot.x_price.copy()).to(device, non_blocking=non_blocking),
+        torch.from_numpy(snapshot.x_news.copy()).to(device, non_blocking=non_blocking),
+        torch.from_numpy(snapshot.news_mask.copy()).to(device, non_blocking=non_blocking),
+        torch.tensor([node.ticker_id for node in snapshot.nodes], dtype=torch.long, device=device),
+        torch.from_numpy(snapshot.adjacency.copy()).to(device, non_blocking=non_blocking),
+    ), torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32, device=device)
+
+
+def resolve_graph_device(requested: str) -> torch.device:
+    """Resolve the graph runner's bounded device choice without silent CUDA fallback."""
+
+    if requested not in {"auto", "cpu", "cuda"}:
+        raise ValueError("graph device must be one of: auto, cpu, cuda")
+    available = torch.cuda.is_available()
+    if requested == "cuda" and not available:
+        raise RuntimeError("CUDA was requested for graph screening but is unavailable")
+    return torch.device("cuda" if requested == "cuda" or (requested == "auto" and available) else "cpu")
+
+
+def _validate_graph_manifest(graph: GraphManifest) -> None:
+    required_hashes = {"snapshots", "node_vocabulary", "adjacency", "tensors"}
+    if not required_hashes.issubset(graph.hashes) or any(not graph.hashes[name] for name in required_hashes):
+        raise ValueError("graph manifest lacks required provenance hashes")
+    for split in ("train", "val"):
+        if not graph.content_hash(split):
+            raise ValueError(f"graph manifest cannot hash {split} split")
+
+
+def _validate_graph_run_provenance(model: GraphAblationModel, graph: GraphManifest) -> None:
+    _validate_graph_manifest(graph)
+    if getattr(model, "graph_train_end_date", None) != graph.train_end_date:
+        raise ValueError("graph model train boundary differs from graph manifest")
+    if getattr(model, "graph_manifest_hash", None) != graph.content_hash("train"):
+        raise ValueError("graph model manifest hash differs from graph manifest")
+
+
+def _seed_graph_device(seed: int, device: torch.device) -> None:
+    torch.manual_seed(seed)
+    if device.type == "cuda":
+        torch.cuda.manual_seed_all(seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+
+def _graph_runtime_metadata(requested: str, device: torch.device) -> dict[str, str | None]:
+    return {"requested": requested, "selected": str(device), "torch_version": torch.__version__,
+            "cuda_version": torch.version.cuda}
 
 
 def np_concat_frames(frames: Any) -> Any:
@@ -480,6 +543,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--p3-checkpoint", type=Path)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument("--output-dir", type=Path, default=_ROOT / "results" / "pooled_news_gnn_pilot")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)

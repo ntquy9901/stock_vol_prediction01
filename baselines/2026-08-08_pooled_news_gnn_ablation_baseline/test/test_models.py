@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 
 import numpy as np
@@ -335,6 +336,80 @@ def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Pa
     assert args.phase == "graph"
     assert result["graph_hash"] == graph.content_hash("val")
     assert (tmp_path / "G1" / "results.json").exists()
+
+
+def test_graph_device_cpu_path_records_runtime_metadata(tmp_path: Path) -> None:
+    from data import GraphManifest, GraphNode, GraphSnapshot
+    from run_pilot import _run_one_graph_model, parse_args
+
+    p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    snapshot = GraphSnapshot(
+        "2020-01-27", "train", tuple(f"2020-01-{day:02d}" for day in range(1, 23)),
+        (GraphNode(0, "AAA", "train", 1.0),), np.ones((1, 22, 3)), np.ones((1, 22, 2)),
+        np.ones((1, 22)), np.ones((1, 1)),
+    )
+    validation = GraphSnapshot(
+        "2020-02-27", "val", snapshot.input_dates, (GraphNode(0, "AAA", "val", 1.1),),
+        np.ones((1, 22, 3)), np.ones((1, 22, 2)), np.ones((1, 22)), np.ones((1, 1)),
+    )
+    validation_next = GraphSnapshot(
+        "2020-02-28", "val", snapshot.input_dates, (GraphNode(0, "AAA", "val", 1.2),),
+        np.ones((1, 22, 3)), np.ones((1, 22, 2)), np.ones((1, 22)), np.ones((1, 1)),
+    )
+    graph = GraphManifest((snapshot, validation, validation_next), {"AAA": 0}, "2020-01-31", "2020-02-28",
+                          {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
+    checkpoint = tmp_path / "safe.pt"
+    payload = _graph_safe_payload(p3)
+    payload["max_training_target_date"] = graph.train_end_date
+    payload["graph_train_end_date"] = graph.train_end_date
+    payload["graph_manifest_hash"] = graph.content_hash("train")
+    torch.save(payload, checkpoint)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+    processor = TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )
+    args = parse_args(["--phase", "graph", "--epochs", "1", "--device", "cpu"])
+
+    _run_one_graph_model(model, graph, PreprocessorStore({0: processor}), "G1", args.epochs,
+                         args.seed, tmp_path / "G1", args.device)
+
+    metadata = json.loads((tmp_path / "G1" / "results.json").read_text(encoding="utf-8"))["runtime"]
+    assert args.device == "cpu"
+    assert metadata["selected"] == "cpu"
+    assert metadata["torch_version"] == torch.__version__
+
+
+def test_graph_device_rejects_explicit_cuda_when_unavailable(monkeypatch: pytest.MonkeyPatch) -> None:
+    from run_pilot import resolve_graph_device
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    assert resolve_graph_device("auto").type == "cpu"
+    with pytest.raises(RuntimeError, match="CUDA was requested"):
+        resolve_graph_device("cuda")
+
+
+def test_graph_runner_rejects_provenance_before_model_device_transfer(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    from data import GraphManifest
+    from run_pilot import _run_one_graph_model
+
+    model = GraphAblationModel(PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0), use_gnn=True)
+    model.graph_train_end_date = "2020-01-31"
+    model.graph_manifest_hash = "wrong"
+    graph = GraphManifest((), {"AAA": 0}, "2020-01-31", "2020-02-28",
+                          {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
+    transfers: list[torch.device] = []
+    monkeypatch.setattr(model, "to", lambda device: transfers.append(device))
+
+    with pytest.raises(ValueError, match="manifest hash"):
+        _run_one_graph_model(model, graph, PreprocessorStore({}), "G1", 1, 42, tmp_path, "cpu")
+
+    assert not transfers
 
 
 def test_message_passing_masks_non_neighbors_for_an_isolated_node() -> None:
