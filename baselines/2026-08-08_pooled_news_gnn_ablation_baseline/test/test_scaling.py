@@ -176,3 +176,37 @@ def test_manifest_fails_fast_when_ticker_mapping_is_missing() -> None:
     frames = {name: _frame(50) for name in ("train", "val", "test")}
     with pytest.raises(ValueError, match="missing preprocessor"):
         build_pooled_manifest(SplitFrames({"AAA": frames}, {"AAA": 0}), PreprocessorStore({}))
+
+
+def test_manifest_sample_arrays_are_isolated_read_only_and_stable() -> None:
+    frames = {name: _frame(50) for name in ("train", "val", "test")}
+    store = PreprocessorStore(
+        {0: TickerPreprocessor.fit(frames["train"], ["parkinson_volatility"], "parkinson_volatility")}
+    )
+    manifest = build_pooled_manifest(SplitFrames({"AAA": frames}, {"AAA": 0}), store)
+    first, second = manifest.samples["train"][:2]
+    before = manifest.to_dict()
+    second_value = second.x_price_raw[0, 0]
+
+    for values in (first.x_price_raw, first.x_news, first.news_mask):
+        assert not values.flags.writeable
+        with pytest.raises(ValueError):
+            values.flat[0] = 1
+    assert second.x_price_raw[0, 0] == second_value
+    assert manifest.to_dict() == before
+
+
+def test_scaler_boundaries_reject_nonfinite_and_incompatible_values() -> None:
+    scaler = ArrayStandardizer().fit(np.ones((4, 3)))
+    store = PreprocessorStore(
+        {0: TickerPreprocessor.fit(_frame(70), ["parkinson_volatility"], "parkinson_volatility")}
+    )
+
+    with pytest.raises(ValueError, match="finite"):
+        scaler.transform(np.array([[np.nan, 1.0, 1.0]]))
+    with pytest.raises(ValueError, match="shape"):
+        scaler.inverse_transform(np.array([[1.0, 1.0]]))
+    with pytest.raises(ValueError, match="finite"):
+        store.transform_features(0, np.array([[np.inf, 1.0, 1.0]]))
+    with pytest.raises(ValueError, match="finite"):
+        store.inverse_targets(np.array([0]), np.array([np.nan]))

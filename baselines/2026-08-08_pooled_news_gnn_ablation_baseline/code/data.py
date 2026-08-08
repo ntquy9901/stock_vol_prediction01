@@ -39,6 +39,11 @@ class PooledSample:
     y_model_raw: float | None = None
     y_eval_raw: float | None = None
 
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "x_price_raw", _readonly_array(self.x_price_raw, dtype=float))
+        object.__setattr__(self, "x_news", _readonly_array(self.x_news, dtype=float))
+        object.__setattr__(self, "news_mask", _readonly_array(self.news_mask, dtype=np.int8))
+
 
 @dataclass(frozen=True)
 class PooledManifest:
@@ -320,3 +325,9 @@ def _manifest_hashes(payload: dict[str, object]) -> dict[str, str]:
 def _stable_hash(value: object) -> str:
     encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def _readonly_array(values: np.ndarray, dtype: type[np.floating] | type[np.int8]) -> np.ndarray:
+    array = np.array(values, dtype=dtype, copy=True)
+    array.setflags(write=False)
+    return array

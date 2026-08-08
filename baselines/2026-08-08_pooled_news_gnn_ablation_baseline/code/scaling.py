@@ -29,11 +29,13 @@ class ArrayStandardizer:
 
     def transform(self, values: np.ndarray) -> np.ndarray:
         self._check_fitted()
-        return (np.asarray(values, dtype=float) - self.mean) / self.std
+        array = self._validated_transform_values(values)
+        return (array - self.mean) / self.std
 
     def inverse_transform(self, values: np.ndarray) -> np.ndarray:
         self._check_fitted()
-        return np.asarray(values, dtype=float) * self.std + self.mean
+        array = self._validated_transform_values(values)
+        return array * self.std + self.mean
 
     def to_dict(self) -> dict[str, list[float]]:
         self._check_fitted()
@@ -46,6 +48,21 @@ class ArrayStandardizer:
     def _check_fitted(self) -> None:
         if self.mean is None or self.std is None:
             raise ValueError("scaler must be fitted before transformation")
+
+    def _validated_transform_values(self, values: np.ndarray) -> np.ndarray:
+        array = np.asarray(values, dtype=float)
+        if not np.isfinite(array).all():
+            raise ValueError("scaler transformation values must be finite")
+        expected_width = self.mean.size
+        if array.ndim == 1:
+            width = array.shape[0]
+        elif array.ndim == 2:
+            width = array.shape[1]
+        else:
+            raise ValueError("scaler transformation values must have one or two dimensions")
+        if width != expected_width:
+            raise ValueError(f"scaler transformation shape must have width {expected_width}")
+        return array
 
 
 @dataclass(frozen=True)
@@ -154,6 +171,8 @@ class PreprocessorStore:
         normalized = np.asarray(y_norm, dtype=float)
         if ids.shape != normalized.shape:
             raise ValueError("ticker_ids and y_norm must have matching shapes")
+        if not np.isfinite(normalized).all():
+            raise ValueError("normalized target values must be finite")
         restored = [
             self.get(int(ticker_id)).target_scaler.inverse_transform(np.array([value]))[0]
             for ticker_id, value in zip(ids, normalized, strict=True)
