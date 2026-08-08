@@ -35,6 +35,7 @@ Run
 
 import argparse
 import json
+import shutil
 import sys
 import time
 from datetime import datetime
@@ -275,7 +276,13 @@ def build_config():
     return config
 
 
-def run_one_seed(seed, run_sanity_check=False):
+def run_one_seed(seed, run_sanity_check=False, resume_checkpoint=None, resume_results_dir=None):
+    """Train (or, with resume_checkpoint set, continue) one seed.
+
+    Resume (2026-08-06 convergence check): load a prior 20-epoch best_no_graph_model.pth,
+    continue the epoch axis from the prior run's num_epochs_trained, and only replace the
+    saved best if a resumed epoch strictly beats the checkpoint's best. Mirrors the resume
+    added to train_parallel_enhanced.py (same model/config)."""
     print("=" * 80)
     print(f"NO-GRAPH ABLATION (identity adjacency) - seed {seed}")
     print("=" * 80)
@@ -315,6 +322,20 @@ def run_one_seed(seed, run_sanity_check=False):
     total_params = sum(p.numel() for p in model.parameters())
     print(f"  Model parameters: {total_params:,}")
 
+    start_epoch = 0
+    resume_best_val_loss = None
+    resume_best_epoch = 0
+    if resume_checkpoint is not None:
+        model.load_state_dict(torch.load(resume_checkpoint, map_location=device))
+        prev = json.loads((Path(resume_results_dir) / "training_results.json").read_text())
+        start_epoch = int(prev["training_summary"]["num_epochs_trained"])
+        resume_best_val_loss = float(prev["training_summary"]["best_val_loss"])
+        resume_best_epoch = int(prev["training_summary"]["best_epoch"])
+        print(f"[resume] loaded weights from {resume_checkpoint}; continuing from epoch "
+              f"{start_epoch} for {config.num_epochs} more epoch(s) -> epoch "
+              f"{start_epoch + config.num_epochs} (prior best_epoch={resume_best_epoch}, "
+              f"best_val_loss={resume_best_val_loss:.6f})")
+
     sanity = None
     if run_sanity_check:
         # Use val_loader for the sanity check (deterministic, no augmentation noise
@@ -333,12 +354,19 @@ def run_one_seed(seed, run_sanity_check=False):
 
     best_val_loss = float("inf")
     best_epoch = 0
+    if resume_checkpoint is not None:
+        # Seed the running best from the prior run; preserve its best checkpoint here so test
+        # eval loads the best-over-all-epochs model even if no resumed epoch beats it.
+        best_val_loss = resume_best_val_loss
+        best_epoch = resume_best_epoch
+        shutil.copy(resume_checkpoint, results_dir / "best_no_graph_model.pth")
     train_losses, val_losses = [], []
     epoch_times = []
 
     for epoch in range(config.num_epochs):
         t0 = time.time()
-        print(f"\n[Epoch {epoch + 1}/{config.num_epochs}]", flush=True)
+        epoch_num = start_epoch + epoch + 1   # continuous numbering across resumes
+        print(f"\n[Epoch {epoch_num}/{start_epoch + config.num_epochs}]", flush=True)
         train_loss = train_epoch(model, train_loader, criterion, optimizer, device, config,
                                  verbose_first=(epoch == 0))
         train_losses.append(train_loss)
@@ -348,17 +376,18 @@ def run_one_seed(seed, run_sanity_check=False):
         scheduler.step(val_loss)
         current_lr = optimizer.param_groups[0]["lr"]
 
-        print(f"  Epoch {epoch + 1}: train={train_loss:.6f} val={val_loss:.6f} "
+        print(f"  Epoch {epoch_num}: train={train_loss:.6f} val={val_loss:.6f} "
               f"DirAcc={val_metrics['directional_accuracy']:.2f}% RMSE={val_metrics['rmse']:.6f} "
               f"lr={current_lr:.6f}", flush=True)
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_epoch = epoch + 1
+            best_epoch = epoch_num
             torch.save(model.state_dict(), results_dir / "best_no_graph_model.pth")
 
         epoch_times.append(time.time() - t0)
 
+    total_epochs_trained = start_epoch + config.num_epochs
     print(f"\nTraining done. Best epoch: {best_epoch}, best val loss: {best_val_loss:.6f}")
     print(f"Total training time: {sum(epoch_times) / 60:.1f} min")
 
@@ -389,17 +418,23 @@ def run_one_seed(seed, run_sanity_check=False):
             "num_stocks": config.num_stocks,
             "learning_rate": config.learning_rate,
             "batch_size": config.batch_size,
-            "num_epochs_trained": config.num_epochs,
+            "num_epochs_trained": total_epochs_trained,
             "best_epoch": best_epoch,
             "patience": config.patience,
             "weight_decay": config.weight_decay,
         },
         "training_summary": {
-            "num_epochs_trained": config.num_epochs,
+            "num_epochs_trained": total_epochs_trained,
             "best_epoch": best_epoch,
             "best_val_loss": float(best_val_loss),
             "total_time_minutes": float(sum(epoch_times) / 60),
         },
+        "resumed_from": ({
+            "resume_checkpoint": str(resume_checkpoint),
+            "resume_results_dir": str(resume_results_dir),
+            "start_epoch": start_epoch,
+            "epochs_this_run": config.num_epochs,
+        } if resume_checkpoint is not None else None),
         "test_metrics": {
             "mse": float(test_metrics["mse"]),
             "rmse": float(test_metrics["rmse"]),
@@ -423,12 +458,27 @@ def main():
     parser = argparse.ArgumentParser(description="No-graph (identity adjacency) ablation")
     parser.add_argument("--seeds", type=int, nargs="+", default=[42, 123, 2026],
                         help="Seeds to run (default: 42 123 2026, matching the reference protocol)")
+    parser.add_argument("--resume_checkpoint", default=None,
+                        help="path to a prior best_no_graph_model.pth to resume from "
+                             "(2026-08-06 convergence check: +20-epoch resume; single seed only)")
+    parser.add_argument("--resume_results_dir", default=None,
+                        help="path to that prior run's results dir (training_results.json) to "
+                             "continue epoch numbering and best-loss bookkeeping from")
     args = parser.parse_args()
+
+    if bool(args.resume_checkpoint) != bool(args.resume_results_dir):
+        raise ValueError("--resume_checkpoint and --resume_results_dir must be given together")
+    if args.resume_checkpoint and len(args.seeds) != 1:
+        raise ValueError("--resume_checkpoint requires exactly one --seeds value (checkpoints are "
+                         "per-seed); resume one seed per invocation")
 
     all_results = []
     for i, seed in enumerate(args.seeds):
-        # Run the (relatively expensive) sanity check on the first seed only.
-        res = run_one_seed(seed, run_sanity_check=(i == 0))
+        # Run the (relatively expensive) sanity check on the first seed only. Skip on resume
+        # (already verified on the original run; the substitution logic is unchanged).
+        res = run_one_seed(seed, run_sanity_check=(i == 0 and not args.resume_checkpoint),
+                           resume_checkpoint=args.resume_checkpoint,
+                           resume_results_dir=args.resume_results_dir)
         all_results.append(res)
 
     print("\n" + "=" * 80)

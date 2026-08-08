@@ -17,6 +17,7 @@ Real run (after build_dual_group_panel.py produced data/features/dual_group_news
 import sys
 import argparse
 import json
+import shutil
 from pathlib import Path
 from datetime import datetime
 
@@ -121,7 +122,18 @@ def main():
     ap.add_argument("--graph_method", default="knn")
     ap.add_argument("--seed", type=int, default=42,
                     help="torch/numpy RNG seed (multi-seed gate-ablation protocol, 2026-08-05)")
+    ap.add_argument("--resume_checkpoint", default=None,
+                    help="path to a previous best.pt to load weights from before training "
+                         "(2026-08-06 convergence check: +20-epoch resume). This run predates "
+                         "loss_history/best_epoch being saved, so the loaded checkpoint's val loss "
+                         "is measured up front to seed the running best (never regress below it).")
+    ap.add_argument("--resume_start_epoch", type=int, default=0,
+                    help="epoch-number offset for continuous numbering across a resume (e.g. 20 to "
+                         "continue a finished 20-epoch run as epochs 21..40)")
     args = ap.parse_args()
+
+    if bool(args.resume_checkpoint) != bool(args.resume_start_epoch):
+        raise ValueError("--resume_checkpoint and --resume_start_epoch must be given together")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     torch.manual_seed(args.seed)
@@ -143,6 +155,12 @@ def main():
                                    dropout=args.dropout).to(device)
     print(f"[train] model n_feat={n_feat}, d_news={args.d_news}")
 
+    start_epoch = args.resume_start_epoch
+    if args.resume_checkpoint:
+        model.load_state_dict(torch.load(args.resume_checkpoint, map_location=device))
+        print(f"[resume] loaded weights from {args.resume_checkpoint}; continuing from epoch "
+              f"{start_epoch} for {args.epochs} more epoch(s) -> epoch {start_epoch + args.epochs}")
+
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
@@ -157,36 +175,53 @@ def main():
     best_path = ckpt_dir / "best.pt"
     best_vl = float('inf')
     best_vm = None
+    best_epoch = 0
     train_losses, val_losses = [], []
+
+    if args.resume_checkpoint:
+        # Measure the loaded checkpoint's val loss to seed the running best, and preserve it as
+        # best.pt so we never regress below the best model found in the original run.
+        best_vl, best_vm = validate(model, val_loader, criterion, device, val_ds)
+        best_epoch = start_epoch
+        shutil.copy(args.resume_checkpoint, best_path)
+        print(f"[resume] loaded-checkpoint val_loss={best_vl:.6f} (baseline best to beat)")
 
     print(f"\n{'ep':>4} | {'train_loss':>11} | {'val_loss':>9} | {'DirAcc':>7} | {'RMSE':>10}")
     print("-" * 55)
     for ep in range(args.epochs):
+        ep_num = start_epoch + ep + 1   # continuous numbering across resumes
         tl = train_epoch(model, train_loader, criterion, optimizer, device)
         vl, vm = validate(model, val_loader, criterion, device, val_ds)
         scheduler.step(vl)
         train_losses.append(tl)
         val_losses.append(vl)
-        print(f"{ep+1:>4} | {tl:>11.6f} | {vl:>9.6f} | "
+        print(f"{ep_num:>4} | {tl:>11.6f} | {vl:>9.6f} | "
               f"{vm['directional_accuracy']:>6.2f}% | {vm['rmse']:>10.6f}", flush=True)
-        if (ep + 1) % 5 == 0:
+        if ep_num % 5 == 0:
             print(f"      [5-epoch report] MSE={vm['mse']:.6f} RMSE={vm['rmse']:.6f} "
                   f"MAE={vm['mae']:.6f} R2={vm['r2']:.6f} QLIKE={vm['qlike']:.6f} "
                   f"DirAcc={vm['directional_accuracy']:.2f}%", flush=True)
         if vl < best_vl:
             best_vl = vl
             best_vm = vm
+            best_epoch = ep_num
             torch.save(model.state_dict(), best_path)
-        if (ep + 1) % args.plot_every == 0 and len(train_losses) >= 2:
+        if ep_num % args.plot_every == 0 and len(train_losses) >= 2:
             try:
                 plot_learning_curves_with_analysis(
                     train_losses, val_losses, out_dir, ep, gap_threshold=0.05)
             except Exception as e:
-                print(f"[warn] learning-curve plot failed at epoch {ep+1}: {e}")
-        early(vl, ep + 1)
+                print(f"[warn] learning-curve plot failed at epoch {ep_num}: {e}")
+        early(vl, ep_num)
         if early.early_stop:
-            print(f"[early stop] epoch {ep+1}")
+            print(f"[early stop] epoch {ep_num}")
             break
+
+    (out_dir / "loss_history.json").write_text(
+        json.dumps({"train_losses": train_losses, "val_losses": val_losses,
+                    "start_epoch": start_epoch, "best_epoch": best_epoch,
+                    "best_val_loss": float(best_vl)}, indent=2),
+        encoding="utf-8")
 
     if len(train_losses) >= 2:
         try:
@@ -223,6 +258,14 @@ def main():
         "model": "DualGroupNewsBaseline",
         "n_feat": int(n_feat), "d_news": args.d_news, "smoke": bool(args.smoke),
         "seed": args.seed,
+        "best_epoch": best_epoch,
+        "best_val_loss": float(best_vl),
+        "num_epochs_trained": start_epoch + len(train_losses),
+        "resumed_from": ({
+            "resume_checkpoint": str(args.resume_checkpoint),
+            "resume_start_epoch": start_epoch,
+            "epochs_this_run": args.epochs,
+        } if args.resume_checkpoint else None),
         "validation_metrics": _fin(val_m),
         "test_metrics": _fin(test_m),
         "val_test_diff": val_test_diff,

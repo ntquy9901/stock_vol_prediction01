@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import json
+import shutil
 import matplotlib.pyplot as plt
 import sys
 import time
@@ -437,7 +438,8 @@ def validate(model, dataloader, criterion, device, dataset=None):
 
 
 # ========================================================================
-def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False, seed=42, epochs=None):
+def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=False, seed=42, epochs=None,
+                                     resume_checkpoint=None, resume_results_dir=None):
     """
     Main training function for Parallel LSTM-GNN with enhanced anti-overfitting
 
@@ -456,6 +458,14 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
             `epochs` epochs without early stopping cutting it short, matching the
             same one-shot-no-early-stop convention used for the 2026-08-03 20-epoch
             comparison. Takes precedence over quick_test.
+        resume_checkpoint: path to a previous run's best_parallel_model.pth to load
+            weights from before training (2026-08-06 convergence check: resume the
+            20-epoch runs for 20 more epochs). Matches the resume pattern already used
+            by train_per_ticker_gate.py (load best weights, continue epoch numbering).
+        resume_results_dir: path to that previous run's results dir; its
+            training_results.json supplies start_epoch (num_epochs_trained),
+            best_val_loss and best_epoch so the resumed run continues the epoch axis
+            and never regresses below the checkpoint's already-found best.
     """
     print("="*80)
     print("PARALLEL LSTM-GNN TRAINING - WITH ENHANCED ANTI-OVERFITTING")
@@ -554,6 +564,23 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
     total_params = sum(p.numel() for p in model.parameters())
     print(f"  Model parameters: {total_params:,}")
 
+    # --- Resume support (2026-08-06 convergence check): load prior best weights and the
+    # prior run's epoch/best bookkeeping so the extension continues the epoch axis and only
+    # replaces the saved best if a resumed epoch strictly beats the checkpoint's best. ---
+    start_epoch = 0
+    resume_best_val_loss = None
+    resume_best_epoch = 0
+    if resume_checkpoint is not None:
+        model.load_state_dict(torch.load(resume_checkpoint, map_location=device))
+        prev = json.loads((Path(resume_results_dir) / 'training_results.json').read_text())
+        start_epoch = int(prev['training_summary']['num_epochs_trained'])
+        resume_best_val_loss = float(prev['training_summary']['best_val_loss'])
+        resume_best_epoch = int(prev['training_summary']['best_epoch'])
+        print(f"[resume] loaded weights from {resume_checkpoint}; continuing from epoch "
+              f"{start_epoch} for {config.num_epochs} more epoch(s) -> epoch "
+              f"{start_epoch + config.num_epochs} (prior best_epoch={resume_best_epoch}, "
+              f"best_val_loss={resume_best_val_loss:.6f})")
+
     # Loss and optimizer
     criterion = nn.MSELoss()
     optimizer = optim.Adam(
@@ -589,19 +616,28 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
 
     print(f"\nResults directory: {results_dir}")
 
+    # On resume, seed the running best from the prior run and preserve the prior best
+    # checkpoint in this new results dir so test eval loads the best-over-all-epochs model
+    # even if no resumed epoch beats it.
+    best_val_loss = float('inf')
+    best_epoch = 0
+    if resume_checkpoint is not None:
+        best_val_loss = resume_best_val_loss
+        best_epoch = resume_best_epoch
+        shutil.copy(resume_checkpoint, results_dir / 'best_parallel_model.pth')
+
     # Training loop
     print(f"\nStarting training loop...")
     print(f"{'Epoch':>5} | {'Train Loss':>12} | {'Val Loss':>12} | {'Val Dir Acc':>12} | {'Val RMSE':>12} | {'LR':>12}", flush=True)
     print("-" * 90, flush=True)
 
-    best_val_loss = float('inf')
-    best_epoch = 0
     epoch_times = []
 
     for epoch in range(config.num_epochs):
         epoch_start = time.time()
 
-        print(f"\n[Epoch {epoch+1}/{config.num_epochs}] Training...", flush=True)
+        epoch_num = start_epoch + epoch + 1   # continuous numbering across resumes
+        print(f"\n[Epoch {epoch_num}/{start_epoch + config.num_epochs}] Training...", flush=True)
 
         # Train
         train_loss = train_epoch(model, train_loader, criterion, optimizer, device, config)
@@ -617,12 +653,12 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
         current_lr = optimizer.param_groups[0]['lr']
 
         # Print progress
-        print(f"{epoch+1:>5} | {train_loss:>12.6f} | {val_loss:>12.6f} | {val_metrics['directional_accuracy']:>11.2f}% | {val_metrics['rmse']:>12.6f} | {current_lr:>12.6f}", flush=True)
+        print(f"{epoch_num:>5} | {train_loss:>12.6f} | {val_loss:>12.6f} | {val_metrics['directional_accuracy']:>11.2f}% | {val_metrics['rmse']:>12.6f} | {current_lr:>12.6f}", flush=True)
 
         # Save best model
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            best_epoch = epoch + 1
+            best_epoch = epoch_num
             torch.save(model.state_dict(), results_dir / 'best_parallel_model.pth')
 
         # Plot learning curves every 10 epochs (from LSTM-HAR-Enhanced)
@@ -644,7 +680,8 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
         epoch_times.append(epoch_time)
 
     # Training complete
-    print(f"\nTraining completed at epoch {epoch+1}")
+    total_epochs_trained = start_epoch + epoch + 1
+    print(f"\nTraining completed at epoch {total_epochs_trained}")
     print(f"  - Best epoch: {best_epoch}")
     print(f"  - Best val loss: {best_val_loss:.6f}")
     print(f"  - Total training time: {sum(epoch_times)/60:.1f} minutes")
@@ -683,17 +720,23 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
             'num_stocks': config.num_stocks,
             'learning_rate': config.learning_rate,
             'batch_size': config.batch_size,
-            'num_epochs_trained': epoch + 1,
+            'num_epochs_trained': total_epochs_trained,
             'best_epoch': best_epoch,
             'patience': config.patience,
             'weight_decay': config.weight_decay
         },
         'training_summary': {
-            'num_epochs_trained': epoch + 1,
+            'num_epochs_trained': total_epochs_trained,
             'best_epoch': best_epoch,
             'best_val_loss': float(best_val_loss),
             'total_time_minutes': float(sum(epoch_times) / 60)
         },
+        'resumed_from': ({
+            'resume_checkpoint': str(resume_checkpoint),
+            'resume_results_dir': str(resume_results_dir),
+            'start_epoch': start_epoch,
+            'epochs_this_run': config.num_epochs,
+        } if resume_checkpoint is not None else None),
         'test_metrics': {
             'mse': float(test_metrics['mse']),
             'rmse': float(test_metrics['rmse']),
@@ -738,6 +781,11 @@ def train_parallel_lstm_gat_enhanced(graph_method='correlation', quick_test=Fals
 MAX_EPOCHS = 20  # CLAUDE.md Training policy: >10 epochs needs explicit user approval based on
                  # 5/10-epoch results; 20 was explicitly authorized 2026-08-03 for the
                  # HAR-only-vs-news-fusion headline comparison (matched epoch count both sides).
+                 # 2026-08-06: resuming a 20-epoch run for 20 more (cumulative 40) was explicitly
+                 # authorized by the user ("resume train thêm 20 epoch") for the convergence check;
+                 # a resume invocation is still capped at MAX_EPOCHS per call (the 40 total is
+                 # reached as a second <=20-epoch invocation, mirroring the 10+10 chaining
+                 # precedent in train_per_ticker_gate.py), so the per-call cap is left at 20.
 
 if __name__ == '__main__':
     import argparse
@@ -753,6 +801,12 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=None,
                         help=f'explicit epoch count override, capped at {MAX_EPOCHS} per CLAUDE.md '
                              'Training policy (e.g. --epochs 20 to match the news-fusion comparison)')
+    parser.add_argument('--resume_checkpoint', default=None,
+                        help='path to a previous best_parallel_model.pth to load weights from '
+                             '(2026-08-06 convergence check: +20-epoch resume)')
+    parser.add_argument('--resume_results_dir', default=None,
+                        help="path to that previous run's results dir (training_results.json) to "
+                             'continue epoch numbering and best-loss bookkeeping from')
 
     args = parser.parse_args()
 
@@ -760,6 +814,8 @@ if __name__ == '__main__':
         raise ValueError(
             f"--epochs={args.epochs} exceeds CLAUDE.md Training policy cap ({MAX_EPOCHS}) for "
             "this file without further explicit user approval.")
+    if bool(args.resume_checkpoint) != bool(args.resume_results_dir):
+        raise ValueError("--resume_checkpoint and --resume_results_dir must be given together")
 
     print(f"\nGraph method: {args.graph_method}")
     print(f"  - 'correlation': Pearson correlation threshold (|corr| > 0.7) - from paper")
@@ -770,4 +826,5 @@ if __name__ == '__main__':
 
     results = train_parallel_lstm_gat_enhanced(
         graph_method=args.graph_method, quick_test=args.quick_test, seed=args.seed,
-        epochs=args.epochs)
+        epochs=args.epochs, resume_checkpoint=args.resume_checkpoint,
+        resume_results_dir=args.resume_results_dir)
