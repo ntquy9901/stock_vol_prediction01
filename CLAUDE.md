@@ -129,6 +129,11 @@ Task chỉ "done" khi TẤT CẢ đúng:
   có chủ đích theo yêu cầu user 2026-08-02). Nếu push thất bại (remote đã đổi khác) — dừng lại,
   hỏi user, KHÔNG force-push.
 - **Smoke (gate):** ≥1 smoke test (tag `smoke`) boot pipeline/app + 1 happy-path. **Phải pass trước done.** Nếu cần infra ngoài cũng phải chạy.
+- **Data-quality gate (Pandera + Evidently) — BẮT BUỘC trong quality gate:** quality gate PHẢI chạy 2 tool này và capture evidence vào summary report + task dashboard, KHÔNG được bỏ qua/skip im lặng:
+  - **Pandera** — schema validation trên `data/processed` (OHLCV/HAR non-neg, high≥low, date monotonic) + news panel (`check_schema()` trong `scripts/quality_gate/`).
+  - **Evidently** — drift report train-vs-test trên feature (`check_drift()`), sinh `drift.html` artifact.
+  - Lệnh: `python scripts/quality_gate/run_quality_gate.py` (chạy cả LINT/TESTS/SCHEMA/DRIFT), hoặc gọi `check_schema()`/`check_drift()` trực tiếp cho phần data-quality.
+  - **Scope bắt buộc:** MỌI change đụng data/features/manifest/pipeline-train (vd baseline mới, đổi dataset, đổi manifest). Change thuần code KHÔNG đụng data: ghi `N/A (no data change)` kèm lý do trong report — không claim đã chạy khi chưa chạy. Cả 2 tool đã cài (pandera 0.32.1 + evidently 0.7.21, verified trên pandas 3.0).
 - **Impact analysis:** trước change non-trivial, xác định blast radius — grep callers/dependents, check registration/integration points, note cross-repo consumers. Tóm tắt affected + verified. Flag risk nếu blast radius lớn mà chưa test đủ.
 - **Similar check:** sau fix/pattern change, grep cùng idiom/duplicate trong repo + sibling repos. Apply cùng change nơi hợp lệ, hoặc list remaining as follow-up. Đừng fix 1/N copy silent.
 
@@ -197,9 +202,10 @@ Khi **thử nghiệm** model (không phải final run):
 - **Lint excludes:** `.agents .claude _bmad archive data`
 - **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*
 - **Code-review tool:** `/code-review` skill (Claude Code)
+- **Data-quality gate (ENFORCED, xem §Definition of Done):** `python scripts/quality_gate/run_quality_gate.py` — Pandera schema (`data/processed` + news panel) + Evidently drift (train-vs-test → `drift.html`). *(pandera 0.32.1 + evidently 0.7.21 đã cài, verified trên pandas 3.0.)*
 - **Python extras:** tránh bare `except` + mutable default args; dùng type hints + `pathlib`
 
-> **Tooling gaps (honest):** pytest-cov, diff-cover, ruff chưa install; smoke marker chưa register. Rules áp dụng ngay cho review/code-review/summary-report; tooling setup là follow-up.
+> **Tooling status (2026-08-08):** ruff (0.16.1), pandera (0.32.1), evidently (0.7.21), pytest (9.1.1) ĐÃ install; data-quality gate (`scripts/quality_gate/`) hoạt động (Pandera schema + Evidently drift, verified). **Còn gap:** pytest-cov + diff-cover chưa install (diff-cover C0/C1 ghi `Not run`); smoke marker registration cần xác nhận trong pytest.ini.
 
 ---
 
