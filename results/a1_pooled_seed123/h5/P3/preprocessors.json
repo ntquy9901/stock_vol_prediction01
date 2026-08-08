@@ -1,0 +1,992 @@
+{
+  "0": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.003028406913071645,
+    "upper_bound": 0.0040616397265354105,
+    "feature_scaler": {
+      "mean": [
+        0.00045389321733985014,
+        0.00045388583046144447,
+        0.00045733161704862064
+      ],
+      "std": [
+        0.0007884427908188966,
+        0.0005421568643470084,
+        0.00043658081158837604
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0004538932173398502
+      ],
+      "std": [
+        0.0007884427908188972
+      ]
+    }
+  },
+  "1": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.004245476657302821,
+    "upper_bound": 0.0059492838503118345,
+    "feature_scaler": {
+      "mean": [
+        0.0007513592538323311,
+        0.0007532953122672805,
+        0.0007640299464924554
+      ],
+      "std": [
+        0.0012089617168732105,
+        0.0007811184278810562,
+        0.0005732907287718897
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0007513592538323315
+      ],
+      "std": [
+        0.001208961716873211
+      ]
+    }
+  },
+  "2": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0012674420987997263,
+    "upper_bound": 0.00208099930061344,
+    "feature_scaler": {
+      "mean": [
+        0.00038826301651932255,
+        0.0003880646163467779,
+        0.0003877302701023225
+      ],
+      "std": [
+        0.0004616227741279823,
+        0.0003218914501310026,
+        0.00025051435028135055
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003882630165193227
+      ],
+      "std": [
+        0.00046162277412798233
+      ]
+    }
+  },
+  "3": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.001280743203448147,
+    "upper_bound": 0.0021918981090966205,
+    "feature_scaler": {
+      "mean": [
+        0.00043679155777356183,
+        0.00043729416243268803,
+        0.0004380244762920732
+      ],
+      "std": [
+        0.000489362250626388,
+        0.0003330897061231628,
+        0.0002577718426713044
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00043679155777356135
+      ],
+      "std": [
+        0.0004893622506263879
+      ]
+    }
+  },
+  "4": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0009700960243893535,
+    "upper_bound": 0.001575896353806885,
+    "feature_scaler": {
+      "mean": [
+        0.000286150971809765,
+        0.00028608739615203265,
+        0.0002854454584484986
+      ],
+      "std": [
+        0.00033615352873472447,
+        0.00024175098060050097,
+        0.00019195162010747003
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0002861509718097649
+      ],
+      "std": [
+        0.0003361535287347248
+      ]
+    }
+  },
+  "5": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0011910196603101039,
+    "upper_bound": 0.0016308286354382265,
+    "feature_scaler": {
+      "mean": [
+        0.00020510580764989585,
+        0.0002050420112144189,
+        0.00020495643413242584
+      ],
+      "std": [
+        0.0002805704476533886,
+        0.00017846811542707815,
+        0.00012863603891283176
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0002051058076498959
+      ],
+      "std": [
+        0.0002805704476533886
+      ]
+    }
+  },
+  "6": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0010390006477545342,
+    "upper_bound": 0.0017005328769364619,
+    "feature_scaler": {
+      "mean": [
+        0.00031187572408581754,
+        0.00031144920588068744,
+        0.0003110815846301046
+      ],
+      "std": [
+        0.0003637673012080323,
+        0.000251684498767989,
+        0.00018961792860064405
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003118757240858174
+      ],
+      "std": [
+        0.00036376730120803174
+      ]
+    }
+  },
+  "7": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.005313872434462193,
+    "upper_bound": 0.007068157276213254,
+    "feature_scaler": {
+      "mean": [
+        0.0008106738876513984,
+        0.0008108915195219591,
+        0.0008183954979326972
+      ],
+      "std": [
+        0.0010622914224322558,
+        0.0006704658602436262,
+        0.0004633511466658975
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0008106738876513989
+      ],
+      "std": [
+        0.0010622914224322566
+      ]
+    }
+  },
+  "8": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0012998887072472268,
+    "upper_bound": 0.0020725209806610675,
+    "feature_scaler": {
+      "mean": [
+        0.00036416228188501605,
+        0.0003640345592446094,
+        0.0003655066569876654
+      ],
+      "std": [
+        0.00044377780669184084,
+        0.00031349829912673483,
+        0.00023778762064992394
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00036416228188501556
+      ],
+      "std": [
+        0.00044377780669184046
+      ]
+    }
+  },
+  "9": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0010851618764402375,
+    "upper_bound": 0.00173443568725777,
+    "feature_scaler": {
+      "mean": [
+        0.00030849505773629295,
+        0.00030890881486547305,
+        0.0003090583747407866
+      ],
+      "std": [
+        0.00035773498938360723,
+        0.00022914446911968288,
+        0.00016670236050363678
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003084950577362929
+      ],
+      "std": [
+        0.00035773498938360707
+      ]
+    }
+  },
+  "10": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0016232454775332648,
+    "upper_bound": 0.0026443442614971055,
+    "feature_scaler": {
+      "mean": [
+        0.0004904407443969235,
+        0.0004903190142128357,
+        0.0004901812968935725
+      ],
+      "std": [
+        0.0005901145154844823,
+        0.00040699833293904026,
+        0.0003008386937457924
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0004904407443969232
+      ],
+      "std": [
+        0.0005901145154844819
+      ]
+    }
+  },
+  "11": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0007917819063803724,
+    "upper_bound": 0.0012586313238147201,
+    "feature_scaler": {
+      "mean": [
+        0.00021800365612674238,
+        0.00021789230784968224,
+        0.00021891349998634722
+      ],
+      "std": [
+        0.00026691042431402844,
+        0.0001957790198915582,
+        0.00016104893467053165
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0002180036561267429
+      ],
+      "std": [
+        0.0002669104243140282
+      ]
+    }
+  },
+  "12": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.001122933301652842,
+    "upper_bound": 0.0018854095790935077,
+    "feature_scaler": {
+      "mean": [
+        0.0003623411873372097,
+        0.0003628850978832232,
+        0.0003645521159808045
+      ],
+      "std": [
+        0.0004279076787595028,
+        0.00029206241930648016,
+        0.0002205012015355984
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003623411873372096
+      ],
+      "std": [
+        0.00042790767875950265
+      ]
+    }
+  },
+  "13": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0011098280449199425,
+    "upper_bound": 0.0017430230523455188,
+    "feature_scaler": {
+      "mean": [
+        0.0003005532881084699,
+        0.00029982659403775746,
+        0.00029682344212968615
+      ],
+      "std": [
+        0.00037202881593984715,
+        0.00025183982537686723,
+        0.00018309888201546894
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003005532881084698
+      ],
+      "std": [
+        0.0003720288159398474
+      ]
+    }
+  },
+  "14": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0011854258138042843,
+    "upper_bound": 0.0018541426981634303,
+    "feature_scaler": {
+      "mean": [
+        0.0003180036430855801,
+        0.0003173693988651149,
+        0.0003132661076485191
+      ],
+      "std": [
+        0.00040186416697144935,
+        0.00029604783940674183,
+        0.00023444961784706758
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003180036430855808
+      ],
+      "std": [
+        0.00040186416697144935
+      ]
+    }
+  },
+  "15": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0018607103537906797,
+    "upper_bound": 0.0026938451066043393,
+    "feature_scaler": {
+      "mean": [
+        0.00038513182965449217,
+        0.00038540972957151623,
+        0.00038511996465033786
+      ],
+      "std": [
+        0.0005947310099102059,
+        0.0003851730910959997,
+        0.00029136044982013145
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.000385131829654491
+      ],
+      "std": [
+        0.0005947310099102055
+      ]
+    }
+  },
+  "16": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0011129997401724463,
+    "upper_bound": 0.0018081192618039131,
+    "feature_scaler": {
+      "mean": [
+        0.00032838621381624467,
+        0.00032957329408982877,
+        0.00033122542719478404
+      ],
+      "std": [
+        0.0003961813450442561,
+        0.00026828700433016245,
+        0.00020688640388885648
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00032838621381624537
+      ],
+      "std": [
+        0.000396181345044256
+      ]
+    }
+  },
+  "17": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0016566102720696027,
+    "upper_bound": 0.0026695544739183236,
+    "feature_scaler": {
+      "mean": [
+        0.00047746795778175866,
+        0.0004779290073520996,
+        0.000479512602822476
+      ],
+      "std": [
+        0.0005607269133494653,
+        0.0004025088041976378,
+        0.00030953169495474153
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0004774679577817588
+      ],
+      "std": [
+        0.0005607269133494654
+      ]
+    }
+  },
+  "18": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0013481272687730697,
+    "upper_bound": 0.002000432675480233,
+    "feature_scaler": {
+      "mean": [
+        0.00030024412215459,
+        0.0003002129255833595,
+        0.0003030429698272649
+      ],
+      "std": [
+        0.00041300741889374593,
+        0.0002808533601139051,
+        0.0002072995999151476
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003002441221545905
+      ],
+      "std": [
+        0.0004130074188937457
+      ]
+    }
+  },
+  "19": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0026934628763733755,
+    "upper_bound": 0.004345613494084728,
+    "feature_scaler": {
+      "mean": [
+        0.0007814504386008213,
+        0.0007818096837940188,
+        0.0007784035651405313
+      ],
+      "std": [
+        0.0009630012135999747,
+        0.0006486447150026318,
+        0.00046307354743594644
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0007814504386008234
+      ],
+      "std": [
+        0.0009630012135999729
+      ]
+    }
+  },
+  "20": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0015409807864490382,
+    "upper_bound": 0.0022032400844490237,
+    "feature_scaler": {
+      "mean": [
+        0.00030804560977971577,
+        0.0003079813531387121,
+        0.0003088933029334862
+      ],
+      "std": [
+        0.0004814024334224637,
+        0.00036396887910781144,
+        0.00029519609890636493
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00030804560977971626
+      ],
+      "std": [
+        0.0004814024334224636
+      ]
+    }
+  },
+  "21": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0017131705564293308,
+    "upper_bound": 0.0024760472157407763,
+    "feature_scaler": {
+      "mean": [
+        0.0003452567492710428,
+        0.0003464743290201831,
+        0.0003493178625274494
+      ],
+      "std": [
+        0.0004417573173555046,
+        0.0003138124768412779,
+        0.0002583530513890051
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003452567492710422
+      ],
+      "std": [
+        0.0004417573173555043
+      ]
+    }
+  },
+  "22": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.00124461133767742,
+    "upper_bound": 0.0018416757914046485,
+    "feature_scaler": {
+      "mean": [
+        0.00028359419480156157,
+        0.000283548884524977,
+        0.0002829057792127327
+      ],
+      "std": [
+        0.00036951492865001684,
+        0.0002460075967328383,
+        0.00018773227327636394
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00028359419480156124
+      ],
+      "std": [
+        0.00036951492865001684
+      ]
+    }
+  },
+  "23": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0012384018723306622,
+    "upper_bound": 0.0019228931641677347,
+    "feature_scaler": {
+      "mean": [
+        0.0003172000593808317,
+        0.0003184279509426157,
+        0.0003211240797948201
+      ],
+      "std": [
+        0.0004135520006694659,
+        0.00029704304481749003,
+        0.00022917358696757608
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00031720005938083175
+      ],
+      "std": [
+        0.00041355200066946565
+      ]
+    }
+  },
+  "24": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0013068133405478226,
+    "upper_bound": 0.002115204062021769,
+    "feature_scaler": {
+      "mean": [
+        0.00038380368925047706,
+        0.00038411026005487044,
+        0.00038589261730186125
+      ],
+      "std": [
+        0.00047859203503314936,
+        0.0003325238213810001,
+        0.00025028568311055954
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00038380368925047657
+      ],
+      "std": [
+        0.00047859203503314914
+      ]
+    }
+  },
+  "25": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0008763366652968937,
+    "upper_bound": 0.0014465366183039094,
+    "feature_scaler": {
+      "mean": [
+        0.00027115917207530245,
+        0.00027158524865294185,
+        0.0002716323426464478
+      ],
+      "std": [
+        0.00032095172311720694,
+        0.00022475131972723812,
+        0.00016976228048356092
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00027115917207530234
+      ],
+      "std": [
+        0.0003209517231172073
+      ]
+    }
+  },
+  "26": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.000968374664034744,
+    "upper_bound": 0.0012384378467787853,
+    "feature_scaler": {
+      "mean": [
+        0.00011690454618355259,
+        0.0001164681121753427,
+        0.00011558032314479253
+      ],
+      "std": [
+        0.0002466773161015236,
+        0.00019220184255346731,
+        0.00016476368347097378
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00011690454618355241
+      ],
+      "std": [
+        0.00024667731610152337
+      ]
+    }
+  },
+  "27": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.003950493945617599,
+    "upper_bound": 0.0050014525089511624,
+    "feature_scaler": {
+      "mean": [
+        0.0004722031775818449,
+        0.0004721923609918222,
+        0.0004736656234356177
+      ],
+      "std": [
+        0.0007353140857581557,
+        0.0004751251722908973,
+        0.0003256179465354598
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00047220317758184423
+      ],
+      "std": [
+        0.0007353140857581551
+      ]
+    }
+  },
+  "28": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0010215999341656832,
+    "upper_bound": 0.0016586865789508102,
+    "feature_scaler": {
+      "mean": [
+        0.0003038447611074411,
+        0.0003036353586254377,
+        0.0003036532245468118
+      ],
+      "std": [
+        0.0003740661582413269,
+        0.000252207740234971,
+        0.00019103657813710848
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.0003038447611074402
+      ],
+      "std": [
+        0.0003740661582413269
+      ]
+    }
+  },
+  "29": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0010800988439821787,
+    "upper_bound": 0.0015633479632648204,
+    "feature_scaler": {
+      "mean": [
+        0.00022052797712216455,
+        0.0002203490069825689,
+        0.00022244473365910913
+      ],
+      "std": [
+        0.00032106233191578945,
+        0.0002269120829913119,
+        0.00017845934899835106
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00022052797712216512
+      ],
+      "std": [
+        0.0003210623319157895
+      ]
+    }
+  },
+  "30": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.0011137554707539236,
+    "upper_bound": 0.0015028877558205306,
+    "feature_scaler": {
+      "mean": [
+        0.00018296139179330262,
+        0.0001829395171522182,
+        0.0001829104423467914
+      ],
+      "std": [
+        0.00025817049587000804,
+        0.0001654975910719896,
+        0.0001145864127805073
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.00018296139179330322
+      ],
+      "std": [
+        0.00025817049587000804
+      ]
+    }
+  },
+  "31": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.017851014463756382,
+    "upper_bound": 0.051304474347695084,
+    "feature_scaler": {
+      "mean": [
+        0.016631355831710656,
+        0.016623542113089758,
+        0.016601770611253154
+      ],
+      "std": [
+        0.010935679285729947,
+        0.007814608504791936,
+        0.006148330586723099
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.016631355831710645
+      ],
+      "std": [
+        0.010935679285729962
+      ]
+    }
+  },
+  "32": {
+    "feature_order": [
+      "parkinson_volatility",
+      "har_weekly",
+      "har_monthly"
+    ],
+    "target_column": "parkinson_volatility",
+    "lower_bound": -0.018385821869457447,
+    "upper_bound": 0.052260113986025716,
+    "feature_scaler": {
+      "mean": [
+        0.01678803244298759,
+        0.016780534736335295,
+        0.01676238270520093
+      ],
+      "std": [
+        0.01129223096240191,
+        0.007898835877079062,
+        0.005848898809034097
+      ]
+    },
+    "target_scaler": {
+      "mean": [
+        0.016788032442987565
+      ],
+      "std": [
+        0.011292230962401917
+      ]
+    }
+  }
+}
