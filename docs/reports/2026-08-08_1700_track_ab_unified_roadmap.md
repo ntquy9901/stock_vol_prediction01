@@ -40,10 +40,12 @@ parsimony core; the graph work (A2/A7) is confirmatory of a likely null.
   h=22 leakage regression test (single shared horizon across pooled+graph manifests; graph-safe
   boundary). NO model/scaler change (target scaler is horizon-independent). Enables the paper's
   horizon table (G6). Verify: `pytest test/` green incl new h cases; smoke each horizon.
-- **T0.2 Graph-path SAFE optimization** (perf R11-safe only): batch the forward-only warm-start /
-  graph-safe P3 builders IF confirmed forward-only (cuts the ~21-min warm-start bottleneck).
-  DEPRIORITIZED — graph is a confirmed-ish null, so few graph runs remain; do only if A2/A7 need it.
-  R10 (training-loop batching) stays PARKED.
+- **T0.2 Graph-path optimization**: (i) batch the forward-only warm-start / graph-safe P3 builders IF
+  confirmed forward-only (cuts the ~21-min warm-start bottleneck); (ii) **R10 — batch the graph
+  TRAINING loop (APPROVED by user 2026-08-08).** R10 changes SGD-batch-1 update semantics, so it
+  re-baselines graph results: all graph comparisons (A2/A7, and a re-run of G0/G1) must use the
+  batched trainer for both arms; Task 7's single-seed batch-1 G0/G1 numbers are then superseded, not
+  compared against. Verify training still converges + positivity gate holds after batching.
 
 ## Phase 1 — Headline Track B experiments (validate the architecture; n≥5 for claim-defining)
 - **T1.1 A1 pooled-vs-common-date** (HEADLINE): identical P1/P2 trained on pooled vs common-date-only
@@ -77,7 +79,8 @@ graph-safe P3 boundary; manifest content-hash equality; shuffle=False. Evidence-
 commit+push per task.
 
 ## Needs user sign-off (surfaced, not auto-done)
-1. R10 graph-training-loop batching (semantics/provenance change).
+1. ~~R10 graph-training-loop batching~~ — APPROVED by user 2026-08-08; now in T0.2 (re-baselines
+   graph results, see T0.2 note).
 2. Final acceptance of the paper v4 rebuild direction once Track B numbers land.
 
 ## Execution order (autonomous)
