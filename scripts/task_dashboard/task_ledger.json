@@ -1077,5 +1077,66 @@
     ],
     "result_summary": "3-layer review: masking correctness/non-leakage CONFIRMED (Blind Hunter code trace + strengthened test). Fixed: objective-tone violation + weak non-leakage test. Surfaced to user: F1 per-ticker boundary look-ahead (Limitations caveat, does not change graph-null verdict since both G0/G1 share it) + snapshot loss-weighting sign-off. Deferred LOW: isfinite guard on present features (unreachable via standard pipeline).",
     "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "research-har-benchmark",
+    "phase": "Research (paper baselines)",
+    "title": "Literature: which models beat HAR + standard benchmark/baseline suite",
+    "status": "done",
+    "timestamp": "2026-08-08 23:25",
+    "branch": "master",
+    "commits": [
+      "051af1c"
+    ],
+    "skills_applied": [
+      "web-research",
+      "verification-before-completion",
+      "no-fake-citation"
+    ],
+    "evidence": [
+      {
+        "cmd": "report",
+        "result": "331 lines, 9 sections, 55 DOI/citation markers; [unverified] marked + kept out of load-bearing claims"
+      },
+      {
+        "cmd": "key finding",
+        "result": "Audrino&Chassot 2024 'HARd to Beat': ML fails vs properly-fitted HAR; many wins = weak-HAR artifact"
+      },
+      {
+        "cmd": "consistency",
+        "result": "wins over HAR concentrate on QLIKE / longer horizon / extra info (LOB,news) -> matches project (deep beats HAR only on QLIKE, ties RMSE)"
+      }
+    ],
+    "quality_gate": {
+      "tests": "n/a (research)",
+      "lint": "n/a",
+      "code_review": "n/a",
+      "diff_cover": "n/a"
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "models-that-beat-HAR surveyed w/ metric/market/horizon",
+        "ok": true
+      },
+      {
+        "item": "HAR variants (HARQ/log-HAR/SHAR)",
+        "ok": true
+      },
+      {
+        "item": "benchmark methodology (QLIKE+MSE, DM, MCS)",
+        "ok": true
+      },
+      {
+        "item": "paper recommendations",
+        "ok": true
+      }
+    ],
+    "result_summary": "HAR-hard-to-beat is MAINSTREAM (Audrino&Chassot 2024); project's result is not a failure. Wins over HAR are conditional (QLIKE/longer-horizon/extra-info), matching 'deep beats HAR only on QLIKE, ties RMSE'. Paper actions: add log-HAR+HARQ baselines (same inputs; main reviewer-risk fix), QLIKE+MSE primary (Patton 2011) + Diebold-Mariano + MCS tests. Novelty niche: no emerging-market panel HAR-vs-DL-with-news study found.",
+    "report_md": "docs/reports/2026-08-08_har_benchmark_literature.md"
   }
 ]
