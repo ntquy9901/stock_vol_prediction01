@@ -134,7 +134,7 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
 
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
-    inputs = build_screening_inputs(args.smoke, args.max_tickers)
+    inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase)
     manifest = assert_shared_manifest({name: inputs.manifest for name in _phase_configs(args.phase)})
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -169,7 +169,7 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
     return out / "validation_comparison.json"
 
 
-def build_screening_inputs(smoke: bool, max_tickers: int | None) -> ScreeningInputs:
+def build_screening_inputs(smoke: bool, max_tickers: int | None, phase: str = "pooled") -> ScreeningInputs:
     """Apply ticker filtering before fitting preprocessing or constructing the shared manifest."""
 
     if max_tickers is not None and max_tickers < 1:
@@ -188,16 +188,17 @@ def build_screening_inputs(smoke: bool, max_tickers: int | None) -> ScreeningInp
     }
     store = PreprocessorStore(preprocessors)
     manifest = build_pooled_manifest(splits, store)
-    panel = load_runner_news_panel(
-        _ROOT / "data" / "features" / "dual_group_news_panel.parquet",
-        selected,
-        _train_news_cutoffs(manifest),
-    )
-    attached = {
-        split: tuple(attach_news(manifest.samples[split], panel, panel.feature_cols))
-        for split in ("train", "val", "test")
-    }
-    manifest = PooledManifest(attached, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
+    if any(config_name in {"P2", "P3"} for config_name in _phase_configs(phase)):
+        panel = load_runner_news_panel(
+            _ROOT / "data" / "features" / "dual_group_news_panel.parquet",
+            selected,
+            _train_news_cutoffs(manifest),
+        )
+        attached = {
+            split: tuple(attach_news(manifest.samples[split], panel, panel.feature_cols))
+            for split in ("train", "val", "test")
+        }
+        manifest = PooledManifest(attached, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
     loaders = {
         split: DataLoader(_ManifestDataset(manifest.samples[split], store), batch_size=64, shuffle=False)
         for split in ("train", "val")

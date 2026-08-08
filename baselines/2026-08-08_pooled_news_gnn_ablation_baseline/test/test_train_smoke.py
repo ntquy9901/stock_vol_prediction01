@@ -23,7 +23,7 @@ for _path in (str(_ROOT), str(_CODE)):
 from scaling import ArrayStandardizer, PreprocessorStore, TickerPreprocessor  # noqa: E402
 import train as train_module  # noqa: E402
 from train import evaluate_records, run_training  # noqa: E402
-from data import PooledManifest, PooledSample, SampleKey, SplitFrames  # noqa: E402
+from data import NewsPanel, PooledManifest, PooledSample, SampleKey, SplitFrames  # noqa: E402
 import run_pilot  # noqa: E402
 
 
@@ -289,6 +289,105 @@ def test_cli_smoke_options_are_bounded_and_recorded(tmp_path: Path) -> None:
     assert args.smoke is True
     assert args.max_tickers == 2
     assert args.epochs == 1
+
+
+def test_price_only_inputs_do_not_load_news_and_keep_p0_p1_manifests_identical(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = pd.DataFrame({
+        "date": pd.date_range("2020-01-01", periods=100),
+        "parkinson_volatility": np.linspace(1.0, 100.0, 100),
+    })
+    splits = SplitFrames(
+        {"AAA": {name: frame.copy() for name in ("train", "val", "test")}}, {"AAA": 0}
+    )
+    monkeypatch.setattr(run_pilot, "load_and_split_price_data", lambda _path: splits)
+    monkeypatch.setattr(
+        run_pilot,
+        "load_runner_news_panel",
+        lambda *_args, **_kwargs: pytest.fail("P0/P1 must not load the news panel"),
+    )
+
+    p0 = run_pilot.build_screening_inputs(smoke=False, max_tickers=1, phase="P0")
+    p1 = run_pilot.build_screening_inputs(smoke=False, max_tickers=1, phase="P1")
+
+    assert run_pilot._manifest_identity(p0.manifest) == run_pilot._manifest_identity(p1.manifest)
+    assert all(sample.x_news.shape[-1] == 0 for samples in p1.manifest.samples.values() for sample in samples)
+    assert all(not sample.news_mask.any() for samples in p1.manifest.samples.values() for sample in samples)
+
+
+@pytest.mark.parametrize("phase", ["P2", "P3"])
+def test_news_phases_reject_missing_provenance(
+    monkeypatch: pytest.MonkeyPatch, phase: str
+) -> None:
+    frame = pd.DataFrame({
+        "date": pd.date_range("2020-01-01", periods=100),
+        "parkinson_volatility": np.linspace(1.0, 100.0, 100),
+    })
+    splits = SplitFrames(
+        {"AAA": {name: frame.copy() for name in ("train", "val", "test")}}, {"AAA": 0}
+    )
+    monkeypatch.setattr(run_pilot, "load_and_split_price_data", lambda _path: splits)
+    monkeypatch.setattr(
+        run_pilot,
+        "load_runner_news_panel",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(ValueError("news provenance is required")),
+    )
+
+    with pytest.raises(ValueError, match="news provenance"):
+        run_pilot.build_screening_inputs(smoke=False, max_tickers=1, phase=phase)
+
+
+@pytest.mark.parametrize("phase", ["P2", "P3"])
+def test_news_phases_attach_validated_news_panel(
+    monkeypatch: pytest.MonkeyPatch, phase: str
+) -> None:
+    frame = pd.DataFrame({
+        "date": pd.date_range("2020-01-01", periods=100),
+        "parkinson_volatility": np.linspace(1.0, 100.0, 100),
+    })
+    splits = SplitFrames(
+        {"AAA": {name: frame.copy() for name in ("train", "val", "test")}}, {"AAA": 0}
+    )
+    panel = NewsPanel({("AAA", "2020-01-01"): np.array([1.0])}, ("f0",), {})
+    monkeypatch.setattr(run_pilot, "load_and_split_price_data", lambda _path: splits)
+    monkeypatch.setattr(run_pilot, "load_runner_news_panel", lambda *_args, **_kwargs: panel)
+
+    inputs = run_pilot.build_screening_inputs(smoke=False, max_tickers=1, phase=phase)
+
+    assert all(sample.x_news.shape[-1] == 1 for samples in inputs.manifest.samples.values() for sample in samples)
+
+
+def test_p1_runner_forwards_phase_to_price_only_input_builder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    manifest = _har_manifest()
+    loaders = {
+        split: DataLoader(run_pilot._ManifestDataset(manifest.samples[split], _store()), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+    captured: list[str] = []
+
+    def build_inputs(smoke: bool, max_tickers: int | None, phase: str) -> run_pilot.ScreeningInputs:
+        captured.append(phase)
+        return run_pilot.ScreeningInputs(manifest, _store(), loaders, {})
+
+    def train(*_args: object, **_kwargs: object) -> Path:
+        output_dir = Path(_args[3])
+        result = output_dir / "results.json"
+        result.write_text(json.dumps({"validation_metrics": {
+            "mse": 1.0, "rmse": 1.0, "mae": 1.0, "r2": 0.0, "qlike": 1.0,
+            "directional_accuracy": 50.0,
+        }}), encoding="utf-8")
+        return result
+
+    monkeypatch.setattr(run_pilot, "build_screening_inputs", build_inputs)
+    monkeypatch.setattr(run_pilot, "run_training", train)
+    args = run_pilot.parse_args(["--phase", "P1", "--epochs", "1", "--output-dir", str(tmp_path)])
+
+    run_pilot.run_pooled_screening(args)
+
+    assert captured == ["P1"]
 
 
 def test_runner_news_loader_converts_sparse_panel_cells_to_zero_vectors(tmp_path: Path) -> None:
