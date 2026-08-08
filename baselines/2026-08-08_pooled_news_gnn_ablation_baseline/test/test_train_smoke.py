@@ -346,7 +346,9 @@ def test_pooled_screening_namespaces_outputs_by_horizon(
         for split in ("train", "val")
     }
 
-    def build_inputs(smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5) -> run_pilot.ScreeningInputs:
+    def build_inputs(
+        smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5, regime: str = "pooled"
+    ) -> run_pilot.ScreeningInputs:
         return run_pilot.ScreeningInputs(manifest, _store(), loaders, {})
 
     def train(*args: object, **_kwargs: object) -> Path:
@@ -544,7 +546,7 @@ def test_p1_runner_forwards_phase_to_price_only_input_builder(
     captured: list[str] = []
 
     def build_inputs(
-        smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5
+        smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5, regime: str = "pooled"
     ) -> run_pilot.ScreeningInputs:
         captured.append(phase)
         return run_pilot.ScreeningInputs(manifest, _store(), loaders, {})

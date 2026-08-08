@@ -670,6 +670,69 @@ def _stable_json(value: object) -> bytes:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
 
 
+def _transform_full_frames(
+    price_frames: Mapping[str, pd.DataFrame], preprocessors: PreprocessorStore
+) -> tuple[dict[str, pd.DataFrame], tuple[str, ...]]:
+    """Transform each full ticker frame with train-fitted state and intersect their dates.
+
+    The intersection is the globally-common post-HAR trading axis shared by the graph
+    manifest and the common-date pooled regime: a date survives only when every ticker
+    both traded on it and had a complete HAR warm-up by then.
+    """
+
+    ordered_tickers = sorted(price_frames)
+    normalized: dict[str, pd.DataFrame] = {}
+    date_sets: list[set[str]] = []
+    for ticker in ordered_tickers:
+        frame = price_frames[ticker].copy()
+        _validated_dates(frame)
+        if "parkinson_volatility" not in frame:
+            raise ValueError("graph price frames require parkinson_volatility")
+        frame["date"] = pd.to_datetime(frame["date"], errors="raise").dt.strftime("%Y-%m-%d")
+        if not np.isfinite(frame["parkinson_volatility"].to_numpy(dtype=float)).all():
+            raise ValueError("graph price values must be finite")
+        ticker_id = ordered_tickers.index(ticker)
+        transformed = preprocessors.get(ticker_id).transform_frame(frame)
+        normalized[ticker] = transformed
+        date_sets.append(set(transformed["date"]))
+    common_dates = sorted(set.intersection(*date_sets))
+    if not common_dates:
+        raise ValueError("graph price frames have no common dates")
+    return normalized, tuple(common_dates)
+
+
+def common_trading_dates(
+    price_frames: Mapping[str, pd.DataFrame], preprocessors: PreprocessorStore
+) -> tuple[str, ...]:
+    """Return the sorted globally-common post-HAR trading dates (the graph common date axis)."""
+
+    return _transform_full_frames(price_frames, preprocessors)[1]
+
+
+def restrict_manifest_to_common_dates(
+    manifest: PooledManifest, common_dates: Iterable[str]
+) -> PooledManifest:
+    """Keep only pooled samples whose entire window lies on globally-common trading dates.
+
+    This is the A1 sample-set operation: the per-ticker split, train-fitted scalers/winsor
+    bounds, sequence length, horizon, and any attached news are all carried through unchanged;
+    only the training-sample SET is reduced to the common-date intersection.
+    """
+
+    common = frozenset(common_dates)
+    filtered: dict[str, tuple[PooledSample, ...]] = {}
+    for split in _SPLIT_NAMES:
+        kept = tuple(
+            sample
+            for sample in manifest.samples[split]
+            if sample.key.target_date in common and set(sample.input_dates) <= common
+        )
+        if not kept:
+            raise ValueError(f"common-date restriction removed all {split} samples")
+        filtered[split] = kept
+    return PooledManifest(filtered, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
+
+
 def build_graph_manifest(
     price_frames: Mapping[str, pd.DataFrame],
     news_panel: NewsPanel,
@@ -688,23 +751,10 @@ def build_graph_manifest(
     if len(price_frames) < 2:
         raise ValueError("graph ablation requires at least two ticker frames")
     ordered_tickers = sorted(price_frames)
-    normalized: dict[str, pd.DataFrame] = {}
-    date_sets: list[set[str]] = []
-    for ticker in ordered_tickers:
-        frame = price_frames[ticker].copy()
-        _validated_dates(frame)
-        if "parkinson_volatility" not in frame:
-            raise ValueError("graph price frames require parkinson_volatility")
-        frame["date"] = pd.to_datetime(frame["date"], errors="raise").dt.strftime("%Y-%m-%d")
-        if not np.isfinite(frame["parkinson_volatility"].to_numpy(dtype=float)).all():
-            raise ValueError("graph price values must be finite")
-        ticker_id = sorted(price_frames).index(ticker)
-        transformed = preprocessors.get(ticker_id).transform_frame(frame)
-        normalized[ticker] = transformed.set_index("date", drop=False)
-        date_sets.append(set(transformed["date"]))
-    common_dates = sorted(set.intersection(*date_sets))
-    if not common_dates:
-        raise ValueError("graph price frames have no common dates")
+    transformed_frames, common_dates = _transform_full_frames(price_frames, preprocessors)
+    normalized = {
+        ticker: frame.set_index("date", drop=False) for ticker, frame in transformed_frames.items()
+    }
     counts = _global_split_counts(len(common_dates))
     ticker_to_id = {ticker: index for index, ticker in enumerate(ordered_tickers)}
     snapshots: list[GraphSnapshot] = []

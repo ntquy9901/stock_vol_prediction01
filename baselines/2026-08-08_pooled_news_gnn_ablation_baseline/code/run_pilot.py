@@ -31,8 +31,10 @@ from data import (  # noqa: E402
     attach_news,
     build_pooled_manifest,
     build_graph_manifest,
+    common_trading_dates,
     load_and_split_price_data,
     load_effective_news_panel,
+    restrict_manifest_to_common_dates,
 )
 from models import GraphAblationModel, PooledPriceNewsLSTM  # noqa: E402
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
@@ -300,16 +302,20 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
     if args.batch_size == 256:
-        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase, horizon=args.horizon)
+        inputs = build_screening_inputs(
+            args.smoke, args.max_tickers, args.phase, horizon=args.horizon, regime=args.regime
+        )
     else:
         inputs = build_screening_inputs(
-            args.smoke, args.max_tickers, args.phase, args.batch_size, horizon=args.horizon
+            args.smoke, args.max_tickers, args.phase, args.batch_size, horizon=args.horizon,
+            regime=args.regime,
         )
     manifest = assert_shared_manifest({name: inputs.manifest for name in _phase_configs(args.phase)})
     out = Path(args.output_dir) / f"h{args.horizon}"
     out.mkdir(parents=True, exist_ok=True)
     _write_json(out / "screening_metadata.json", {
-        "phase": args.phase, "horizon": args.horizon, "epochs": args.epochs, "seed": args.seed,
+        "phase": args.phase, "regime": args.regime, "horizon": args.horizon, "epochs": args.epochs,
+        "seed": args.seed,
         "smoke_filter": dict(inputs.smoke_filter),
         "manifest_hashes": {split: manifest.content_hash(split) for split in ("train", "val", "test")},
     })
@@ -611,7 +617,7 @@ def _fit_graph_preprocessors(full_frames: Mapping[str, Any]) -> PreprocessorStor
 
 def build_screening_inputs(
     smoke: bool, max_tickers: int | None, phase: str = "pooled", batch_size: int = 256,
-    horizon: int = 5,
+    horizon: int = 5, regime: str = "pooled",
 ) -> ScreeningInputs:
     """Apply ticker filtering before fitting preprocessing or constructing the shared manifest."""
 
@@ -621,6 +627,8 @@ def build_screening_inputs(
         raise ValueError("batch_size must be positive")
     if horizon < 1:
         raise ValueError("horizon must be positive")
+    if regime not in {"pooled", "common-date"}:
+        raise ValueError("regime must be one of: pooled, common-date")
     requested = 3 if smoke and max_tickers is None else max_tickers
     raw_splits = load_and_split_price_data(_ROOT / "data" / "processed")
     selected = sorted(raw_splits.ticker_to_id)[:requested] if requested else sorted(raw_splits.ticker_to_id)
@@ -646,6 +654,16 @@ def build_screening_inputs(
             for split in ("train", "val", "test")
         }
         manifest = PooledManifest(attached, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
+    if regime == "common-date":
+        # Reuse the graph common-date axis to keep, per ticker, only anchors whose window
+        # sits on globally-common trading dates.  Restriction runs AFTER scaler fitting and
+        # (optional) news attachment, so the per-ticker scalers, winsor bounds, and the news
+        # panel are byte-identical to the pooled regime -- only the training-sample SET differs.
+        full_frames = {
+            ticker: np_concat_frames(splits.frames[ticker][name] for name in ("train", "val", "test"))
+            for ticker in splits.frames
+        }
+        manifest = restrict_manifest_to_common_dates(manifest, common_trading_dates(full_frames, store))
     loaders = {
         split: DataLoader(
             _ManifestDataset(manifest.samples[split], store),
@@ -661,6 +679,7 @@ def build_screening_inputs(
     return ScreeningInputs(manifest, store, loaders, {
         "enabled": smoke, "max_tickers": requested, "selected_tickers": selected,
         "rows_per_split": _SMOKE_ROWS_PER_SPLIT if smoke else None, "horizon": horizon,
+        "regime": regime,
     })
 
 
@@ -691,6 +710,8 @@ def _train_news_cutoffs(manifest: PooledManifest) -> dict[str, str]:
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("pooled", "P0", "P1", "P2", "P3", "graph"), default="pooled")
+    parser.add_argument("--regime", choices=("pooled", "common-date"), default="pooled",
+                        help="A1 training-sample set: full pooled history or common-date intersection")
     parser.add_argument("--horizon", type=int, default=5, choices=(1, 5, 10, 22),
                         help="forecast horizon in trading days (5 is the primary target)")
     parser.add_argument("--p3-checkpoint", type=Path)
