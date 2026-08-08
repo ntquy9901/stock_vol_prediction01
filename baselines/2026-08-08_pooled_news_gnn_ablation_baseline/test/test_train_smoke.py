@@ -107,3 +107,46 @@ def test_one_epoch_runner_writes_finite_screening_artifacts(tmp_path: Path) -> N
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert "test_metrics" not in payload
     assert all(math.isfinite(value) for value in payload["validation_metrics"].values())
+
+
+def test_resume_continues_history_and_optimizer_to_requested_epoch(tmp_path: Path) -> None:
+    records = [
+        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
+        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)) * 2, "y_norm": 1.0, "y_raw": 12.0},
+    ]
+    loaders = {
+        split: DataLoader(_TinyDataset(records), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+    run_dir = tmp_path / "run"
+    run_training("P1", loaders, _store(), run_dir, epochs=1, seed=42)
+    result_path = run_training(
+        "P1", loaders, _store(), run_dir, epochs=2, seed=42, resume_from=run_dir / "training_state.pt"
+    )
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    state = torch.load(run_dir / "training_state.pt", weights_only=True)
+    assert payload["epochs"] == state["completed_epoch"] == 2
+    assert len(payload["train_losses"]) == len(state["train_losses"]) == 2
+    assert state["optimizer_state"]["state"]
+
+
+def test_resume_rejects_manifest_or_preprocessor_mismatch(tmp_path: Path) -> None:
+    records = [
+        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
+        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)), "y_norm": 1.0, "y_raw": 12.0},
+    ]
+    loaders = {split: DataLoader(_TinyDataset(records), batch_size=2, shuffle=False) for split in ("train", "val")}
+    run_dir = tmp_path / "run"
+    run_training("P1", loaders, _store(), run_dir, epochs=1, seed=42)
+    changed = list(records)
+    changed[1] = {**changed[1], "target_date": "2020-01-03"}
+    changed_loaders = {
+        split: DataLoader(_TinyDataset(changed), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+
+    with pytest.raises(ValueError, match="manifest hash"):
+        run_training(
+            "P1", changed_loaders, _store(), run_dir, epochs=2, seed=42, resume_from=run_dir / "training_state.pt"
+        )

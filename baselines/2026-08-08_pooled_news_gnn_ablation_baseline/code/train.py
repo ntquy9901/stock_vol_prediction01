@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+from hashlib import sha256
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -107,6 +108,7 @@ def run_training(
     output_dir: Path | str,
     epochs: int,
     seed: int,
+    resume_from: Path | str | None = None,
 ) -> Path:
     """Train P1-P3 with validation-only screening selection and durable local artifacts."""
 
@@ -122,8 +124,12 @@ def run_training(
     _set_seed(seed)
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    _write_json(out / "preprocessors.json", store.to_dict())
-    _write_json(out / "sample_manifest.json", _manifest_payload(loaders))
+    preprocessors = store.to_dict()
+    manifest = _manifest_payload(loaders)
+    preprocessors_hash = _canonical_hash(preprocessors)
+    manifest_hash = _canonical_hash(manifest)
+    _write_json(out / "preprocessors.json", preprocessors)
+    _write_json(out / "sample_manifest.json", manifest)
 
     first_batch = next(iter(loaders["train"]))
     price_dim = int(first_batch["x_price"].shape[-1])
@@ -141,8 +147,22 @@ def run_training(
     val_losses: list[float] = []
     best_loss = float("inf")
     best_path = out / "best.pt"
+    state_path = out / "training_state.pt"
     best_metrics: dict[str, Any] | None = None
-    for _epoch in range(1, epochs + 1):
+    completed_epoch = 0
+    if resume_from is not None:
+        state = torch.load(Path(resume_from), map_location=device, weights_only=True)
+        _validate_resume_state(state, config_name, seed, manifest_hash, preprocessors_hash)
+        completed_epoch = int(state["completed_epoch"])
+        if epochs <= completed_epoch:
+            raise ValueError("requested epochs must exceed completed_epoch when resuming")
+        model.load_state_dict(state["model_state"])
+        optimizer.load_state_dict(state["optimizer_state"])
+        train_losses = [float(value) for value in state["train_losses"]]
+        val_losses = [float(value) for value in state["val_losses"]]
+        best_loss = float(state["best_loss"])
+        best_metrics = state["best_metrics"]
+    for _epoch in range(completed_epoch + 1, epochs + 1):
         model.train()
         losses: list[float] = []
         for batch in loaders["train"]:
@@ -163,6 +183,22 @@ def run_training(
         if val_loss < best_loss:
             best_loss, best_metrics = val_loss, validation
             torch.save({"config_name": config_name, "seed": seed, "model_state": model.state_dict()}, best_path)
+        torch.save(
+            {
+                "config_name": config_name,
+                "seed": seed,
+                "completed_epoch": _epoch,
+                "model_state": model.state_dict(),
+                "optimizer_state": optimizer.state_dict(),
+                "train_losses": train_losses,
+                "val_losses": val_losses,
+                "best_loss": best_loss,
+                "best_metrics": best_metrics,
+                "manifest_hash": manifest_hash,
+                "preprocessors_hash": preprocessors_hash,
+            },
+            state_path,
+        )
         if _epoch in {5, 10}:
             _plot_losses(train_losses, val_losses, out / f"learning_curve_epoch_{_epoch}.png")
     curve_name = "learning_curve_partial.png" if epochs < 5 else "learning_curve_final.png"
@@ -241,6 +277,28 @@ def _set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+def _validate_resume_state(
+    state: Mapping[str, Any],
+    config_name: str,
+    seed: int,
+    manifest_hash: str,
+    preprocessors_hash: str,
+) -> None:
+    if state.get("config_name") != config_name:
+        raise ValueError("resume config_name does not match")
+    if state.get("seed") != seed:
+        raise ValueError("resume seed does not match")
+    if state.get("manifest_hash") != manifest_hash:
+        raise ValueError("resume manifest hash does not match")
+    if state.get("preprocessors_hash") != preprocessors_hash:
+        raise ValueError("resume preprocessor hash does not match")
+
+
+def _canonical_hash(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return sha256(encoded).hexdigest()
 
 
 def _write_json(path: Path, value: Any) -> None:
