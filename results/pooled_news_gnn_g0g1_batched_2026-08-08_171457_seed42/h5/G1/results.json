@@ -1,0 +1,27 @@
+{
+  "config_name": "G1",
+  "graph_hash": "772bc399bc312c2e302b285ca8bd83efb53b74e9129f559c7c23765e22b4c18c",
+  "train_losses": [
+    0.7942656874656677,
+    0.7862016558647156,
+    0.7850044369697571,
+    0.7841252088546753,
+    0.7836190462112427
+  ],
+  "validation_loss": 0.8626902103424072,
+  "runtime": {
+    "requested": "cuda",
+    "selected": "cuda",
+    "torch_version": "2.6.0+cu124",
+    "cuda_version": "12.4"
+  },
+  "validation_metrics": {
+    "mse": 5.809179662557168e-06,
+    "rmse": 0.0024102239859725002,
+    "mae": 0.0006601841886677025,
+    "r2": 0.743989784701212,
+    "qlike": 0.6962780929517002,
+    "directional_accuracy": 48.52180339985218
+  },
+  "nonpositive_prediction_rate": 0.0
+}
