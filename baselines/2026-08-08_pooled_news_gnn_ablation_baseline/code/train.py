@@ -171,8 +171,7 @@ def run_training(
     try:
         for _epoch in range(completed_epoch + 1, epochs + 1):
             model.train()
-            loss_total = 0.0
-            sample_count = 0
+            losses: list[float] = []
             for batch in loaders["train"]:
                 optimizer.zero_grad()
                 prediction = _forward(model, batch, device)
@@ -184,12 +183,8 @@ def run_training(
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
-                batch_count = int(target.shape[0])
-                loss_total += float(loss.item()) * batch_count
-                sample_count += batch_count
-            if sample_count == 0:
-                raise ValueError("training loader must contain at least one sample")
-            train_losses.append(loss_total / sample_count)
+                losses.append(float(loss.item()))
+            train_losses.append(float(np.mean(losses)))
             val_loss = _normalized_loss(model, loaders["val"], criterion, device)
             val_losses.append(val_loss)
             validation = evaluate_by_ticker(model, loaders["val"], store)
@@ -233,19 +228,15 @@ def _forward(model: nn.Module, batch: Mapping[str, Any], device: torch.device) -
 
 def _normalized_loss(model: nn.Module, loader: Any, criterion: nn.Module, device: torch.device) -> float:
     model.eval()
-    loss_total = 0.0
-    sample_count = 0
+    losses: list[float] = []
     with torch.no_grad():
         for batch in loader:
             target = batch["y_norm"].to(device=device, dtype=torch.float32,
                                          non_blocking=device.type == "cuda")
-            loss = criterion(_forward(model, batch, device), target)
-            batch_count = int(target.shape[0])
-            loss_total += float(loss.item()) * batch_count
-            sample_count += batch_count
-    if sample_count == 0 or not np.isfinite(loss_total):
+            losses.append(float(criterion(_forward(model, batch, device), target).item()))
+    if not losses or not np.isfinite(losses).all():
         raise ValueError("validation loss must be finite")
-    return loss_total / sample_count
+    return float(np.mean(losses))
 
 
 def _manifest_payload(
