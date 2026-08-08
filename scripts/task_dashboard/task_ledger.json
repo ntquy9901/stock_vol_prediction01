@@ -601,5 +601,62 @@
     ],
     "result_summary": "Pandera + Evidently exercised on the data foundation shared by every Track B experiment: schema 34/34 valid (OHLCV/HAR non-neg, high>=low, monotonic dates; news panel structural cols), temporal drift report produced. A1's new common-date manifest draws from this same validated source data.",
     "report_md": "scripts/quality_gate/README.md"
+  },
+  {
+    "id": "consolidated-metrics",
+    "phase": "Reporting",
+    "title": "Consolidated metrics table (Track A + Track B, 3 clusters)",
+    "status": "done",
+    "timestamp": "2026-08-08 20:11",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "aggregate results/a1_*/h5/* (3 seeds) + G0/G1 batched + Track A table",
+        "result": "real val metrics re-read from results.json, not copied"
+      },
+      {
+        "cmd": "News P2 vs P1",
+        "result": "RMSE t=-4.81, QLIKE t=-6.94, 3/3 SIGNIFICANT"
+      },
+      {
+        "cmd": "Graph/Gate/Pooling",
+        "result": "all null"
+      }
+    ],
+    "quality_gate": {
+      "tests": "n/a (doc)",
+      "lint": "n/a",
+      "code_review": "n/a",
+      "diff_cover": "n/a"
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "3 clusters with eval-basis caveat",
+        "ok": true
+      },
+      {
+        "item": "paired-t verdicts",
+        "ok": true
+      },
+      {
+        "item": "provenance to result files",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate",
+        "ok": true
+      }
+    ],
+    "result_summary": "Only NEWS features carry a robust contribution (QLIKE + RMSE-recovery-to-tie vs HAR); graph/gate/pooling null; HAR strong on RMSE; direction near-random. Track A and Track B on different eval bases -> compare within cluster only.",
+    "report_md": "docs/reports/2026-08-08_2010_consolidated_metrics.md"
   }
 ]
