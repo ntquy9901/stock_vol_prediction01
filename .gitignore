@@ -109,3 +109,7 @@ temp_github_dataset
 
 # Local Git worktrees
 .worktrees/
+
+# Large per-run manifest dumps (regenerable; do NOT commit ~60MB each)
+results/**/sample_manifest.json
+results/**/*.pt
