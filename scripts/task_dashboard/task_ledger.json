@@ -295,5 +295,95 @@
     ],
     "result_summary": "Self-contained HTML dashboard aggregates all task evidence; every future task appends here + regenerates.",
     "report_md": "docs/reports/2026-08-08_1644_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "t0.2-batch-graph",
+    "phase": "Track B / Phase 0",
+    "title": "Batch graph path (R10 approved) + ~10x speedup + G0/G1 re-baseline",
+    "status": "done",
+    "timestamp": "2026-08-08 17:24",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "29babb2",
+      "b96e4d2",
+      "eae9403"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "focused-adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "117 passed (110 prior + 7 new); smoke 2 passed"
+      },
+      {
+        "cmd": "ruff check code/ test/",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "batched GPU run seed42 5ep wall-clock",
+        "result": "235s (~3.9 min) vs ~40 min batch-1 -> ~10x"
+      },
+      {
+        "cmd": "G0 batched",
+        "result": "rmse 0.002407 r2 0.7447 qlike 0.6876 diracc 48.61% nonpos 0.0%"
+      },
+      {
+        "cmd": "G1 batched",
+        "result": "rmse 0.002410 r2 0.7440 qlike 0.6963 diracc 48.52% nonpos 0.0%"
+      },
+      {
+        "cmd": "graph_hash vs Task 7 batch-1",
+        "result": "byte-identical 772bc399bc312c -> leakage/provenance preserved"
+      },
+      {
+        "cmd": "batch_size=1 vs old per-sample trajectory",
+        "result": "exactly reproduced (asserted by test)"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass",
+      "lint": "pass",
+      "code_review": "focused adversarial: frozen no-grad + positivity gate + byte-identical hash verified",
+      "diff_cover": "not run (tooling gap)"
+    },
+    "code_review": {
+      "layers": [
+        "focused-adversarial"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "TDD red-green",
+        "ok": true
+      },
+      {
+        "item": "117 tests pass",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "positivity gate 0.0% nonpos",
+        "ok": true
+      },
+      {
+        "item": "leakage/provenance hash-identical",
+        "ok": true
+      },
+      {
+        "item": "pushed",
+        "ok": true
+      }
+    ],
+    "result_summary": "~10x faster graph path (batched builders+training, R10 approved). Verdict STABLE: graph message-passing still does not help (G1 marginally worse than G0); pathological batch-1 G1 QLIKE 4.38->0.70. These batched seed-42 numbers SUPERSEDE Task 7's batch-1.",
+    "report_md": "docs/reports/2026-08-08_1720_summaryOfUpdate_report.md"
   }
 ]
