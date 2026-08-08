@@ -195,6 +195,7 @@ class GraphSnapshot:
     x_news: np.ndarray
     news_mask: np.ndarray
     adjacency: np.ndarray
+    presence_mask: np.ndarray | None = None
 
     def __post_init__(self) -> None:
         node_count = len(self.nodes)
@@ -216,6 +217,13 @@ class GraphSnapshot:
         object.__setattr__(self, "x_news", _readonly_array(news, np.float32))
         object.__setattr__(self, "news_mask", _readonly_array(mask, np.int8))
         object.__setattr__(self, "adjacency", _readonly_array(adjacency, np.float32))
+        if self.presence_mask is not None:
+            presence = np.asarray(self.presence_mask, dtype=np.int8)
+            if presence.shape != (node_count,) or not np.isin(presence, (0, 1)).all():
+                raise ValueError("presence_mask must be a binary vector over nodes")
+            if not presence.any():
+                raise ValueError("presence_mask must mark at least one present node")
+            object.__setattr__(self, "presence_mask", _readonly_array(presence, np.int8))
 
 
 @dataclass(frozen=True)
@@ -839,7 +847,7 @@ def _correlation_adjacency(values: np.ndarray) -> np.ndarray:
 
 
 def _graph_snapshot_hash(snapshot: GraphSnapshot) -> dict[str, object]:
-    return {
+    payload: dict[str, object] = {
         "target_date": snapshot.target_date, "split": snapshot.split, "input_dates": snapshot.input_dates,
         "nodes": [
             (node.ticker_id, node.ticker, node.split, _canonical_scalar_hash(node.y_raw),
@@ -849,3 +857,112 @@ def _graph_snapshot_hash(snapshot: GraphSnapshot) -> dict[str, object]:
         "price": _canonical_array_hash(snapshot.x_price), "news": _canonical_array_hash(snapshot.x_news),
         "mask": _canonical_array_hash(snapshot.news_mask), "adjacency": _canonical_array_hash(snapshot.adjacency),
     }
+    # Only masked snapshots carry a presence mask; omitting the key entirely for the
+    # intersection path keeps its content hash byte-identical to earlier runs.
+    if snapshot.presence_mask is not None:
+        payload["presence"] = _canonical_array_hash(snapshot.presence_mask)
+    return payload
+
+
+def build_masked_graph_manifest(
+    pooled_manifest: PooledManifest,
+    preprocessors: PreprocessorStore,
+) -> GraphManifest:
+    """Build availability-aware masked snapshots over the FULL date union, not the intersection.
+
+    Each pooled per-ticker window (already per-ticker chronological, train-only scaled, and
+    news-attached) is placed as one node of the graph snapshot for its own target date.  Nodes
+    are padded to the fixed ticker vocabulary; a ticker with no window on a date is masked
+    (``presence_mask[id] == 0``) and never imputed.  Message passing, loss, and metrics run over
+    present nodes only.  Grouping happens inside each pooled split, so a snapshot never mixes
+    splits and the graph-safe P3 boundary (``train_end_date``) stays the max train target date.
+    """
+
+    ticker_to_id = dict(sorted(pooled_manifest.ticker_to_id.items(), key=lambda item: item[1]))
+    node_count = len(ticker_to_id)
+    if node_count < 2:
+        raise ValueError("masked graph requires at least two tickers")
+    id_to_ticker = {ticker_id: ticker for ticker, ticker_id in ticker_to_id.items()}
+    every_sample = [
+        sample for split in _SPLIT_NAMES for sample in pooled_manifest.samples[split]
+    ]
+    if not every_sample:
+        raise ValueError("masked graph requires at least one pooled sample")
+    seq_length = every_sample[0].x_price_raw.shape[0]
+    price_width = every_sample[0].x_price_raw.shape[1]
+    news_width = every_sample[0].x_news.shape[1]
+
+    snapshots: list[GraphSnapshot] = []
+    split_max_date: dict[str, str] = {}
+    for split in _SPLIT_NAMES:
+        grouped: dict[str, dict[int, PooledSample]] = {}
+        for sample in pooled_manifest.samples[split]:
+            bucket = grouped.setdefault(sample.key.target_date, {})
+            if sample.key.ticker_id in bucket:
+                raise ValueError("two windows share a ticker and target date in one split")
+            bucket[sample.key.ticker_id] = sample
+        for target_date in sorted(grouped):
+            bucket = grouped[target_date]
+            price = np.zeros((node_count, seq_length, price_width), dtype=np.float32)
+            news = np.zeros((node_count, seq_length, news_width), dtype=np.float32)
+            mask = np.zeros((node_count, seq_length), dtype=np.int8)
+            presence = np.zeros(node_count, dtype=np.int8)
+            nodes: list[GraphNode] = []
+            for ticker_id in range(node_count):
+                ticker = id_to_ticker[ticker_id]
+                sample = bucket.get(ticker_id)
+                if sample is None:
+                    nodes.append(GraphNode(ticker_id, ticker, split, 0.0, 0.0))
+                    continue
+                if (sample.x_price_raw.shape != (seq_length, price_width)
+                        or sample.x_news.shape != (seq_length, news_width)):
+                    raise ValueError("masked graph samples must share one sequence and feature width")
+                price[ticker_id] = sample.x_price_raw
+                news[ticker_id] = sample.x_news
+                mask[ticker_id] = sample.news_mask
+                presence[ticker_id] = 1
+                model_target = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
+                y_norm = float(preprocessors.get(ticker_id).target_scaler.transform(
+                    np.asarray([model_target]))[0])
+                y_raw = float(sample.y_eval_raw if sample.y_eval_raw is not None else sample.y_raw)
+                nodes.append(GraphNode(ticker_id, ticker, split, y_raw, y_norm))
+            snapshots.append(GraphSnapshot(
+                target_date, split, (), tuple(nodes), price, news, mask,
+                _masked_correlation_adjacency(price, presence), presence,
+            ))
+        if grouped:
+            split_max_date[split] = max(grouped)
+    if not snapshots:
+        raise ValueError("masked graph manifest produced no snapshots")
+    if "train" not in split_max_date or "val" not in split_max_date:
+        raise ValueError("masked graph manifest requires train and val snapshots")
+    hashes = {
+        "graph_mode": "masked",
+        "node_vocabulary": _stable_hash(ticker_to_id),
+        "snapshots": _stable_hash([_graph_snapshot_hash(snapshot) for snapshot in snapshots]),
+        "adjacency": _stable_hash([_canonical_array_hash(snapshot.adjacency) for snapshot in snapshots]),
+        "tensors": _stable_hash([(
+            _canonical_array_hash(snapshot.x_price), _canonical_array_hash(snapshot.x_news),
+            _canonical_array_hash(snapshot.news_mask), _canonical_array_hash(snapshot.presence_mask),
+        ) for snapshot in snapshots]),
+    }
+    return GraphManifest(tuple(snapshots), ticker_to_id, split_max_date["train"],
+                         split_max_date["val"], hashes)
+
+
+def _masked_correlation_adjacency(price: np.ndarray, presence: np.ndarray) -> np.ndarray:
+    """Correlation adjacency over PRESENT tickers only; absent rows/cols stay zero."""
+
+    node_count = price.shape[0]
+    adjacency = np.zeros((node_count, node_count), dtype=np.float32)
+    present = np.flatnonzero(presence)
+    if present.size == 0:
+        raise ValueError("masked adjacency requires at least one present node")
+    if present.size > 1:
+        with np.errstate(invalid="ignore", divide="ignore"):
+            correlation = np.corrcoef(price[present, :, 0])
+        correlation = np.nan_to_num(correlation, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+        adjacency[np.ix_(present, present)] = correlation
+    for index in present:
+        adjacency[index, index] = 1.0
+    return adjacency
