@@ -255,7 +255,7 @@ def test_news_provenance_fit_period_cannot_exceed_train_cutoff(tmp_path: Path) -
 
 
 @pytest.mark.smoke
-def test_real_panel_slice_and_source_timestamp_use_effective_trading_date() -> None:
+def test_real_panel_slice_and_source_timestamp_use_effective_trading_date(tmp_path: Path) -> None:
     panel_path = _ROOT / "data" / "features" / "dual_group_news_panel.parquet"
     source_root = Path(os.environ.get("CRAWL_DATA_ROOT", str(_ROOT.parents[2] / "crawl_data")))
     source_path = source_root / "data" / "news_articles.csv"
@@ -263,12 +263,24 @@ def test_real_panel_slice_and_source_timestamp_use_effective_trading_date() -> N
     assert source_path.exists()
     with pytest.raises(ValueError, match="finite"):
         load_effective_news_panel(panel_path, tickers=["ACB"])
-    raw_panel = pd.read_parquet(panel_path, filters=[("ticker", "in", ["ACB"])])
-    panel_dates = set(raw_panel["date"].astype(str).str[:10])
     source = pd.read_csv(source_path, usecols=["title", "pub_date"], nrows=5000)
     record = source[source["title"].fillna("").str.contains(r"\bACB\b", regex=True)].iloc[0]
     calendar = pd.read_csv(_ROOT / "data" / "processed" / "ACB_processed.csv", usecols=["date"])["date"]
     from vendor_data_eda.phase04_news_helpers import effective_trading_date  # noqa: PLC0415
 
     expected = effective_trading_date(pd.Series([record["pub_date"]]), calendar).iloc[0].strftime("%Y-%m-%d")
+    raw_panel = pd.read_parquet(panel_path, filters=[("ticker", "in", ["ACB"])])
+    panel_dates = set(raw_panel["date"].astype(str).str[:10])
     assert expected in panel_dates
+
+    real_slice = raw_panel[raw_panel["date"].astype(str).str[:10] == expected]
+    slice_path = tmp_path / "real_acb_slice.parquet"
+    real_slice.to_parquet(slice_path, index=False)
+    slice_path.with_suffix(".provenance.json").write_text(
+        '{"fit_period_end": "' + expected + '", "missing_value_policy": "zero_fill"}',
+        encoding="utf-8",
+    )
+    loaded = load_effective_news_panel(
+        slice_path, tickers=["ACB"], require_provenance=True, eligible_train_cutoff=expected
+    )
+    assert ("ACB", expected) in loaded.keys()
