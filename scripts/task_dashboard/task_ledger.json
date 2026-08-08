@@ -546,5 +546,60 @@
     ],
     "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R\u00b2; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
     "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "data-qa-pandera-evidently",
+    "phase": "Quality assurance (data foundation)",
+    "title": "Data-quality gate: Pandera schema + Evidently drift on Track B data",
+    "status": "done",
+    "timestamp": "2026-08-08 19:59",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "pandera-schema-validation",
+      "evidently-drift",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "check_schema() [Pandera on data/processed + news panel]",
+        "result": "PASS: 34/34 artifacts valid"
+      },
+      {
+        "cmd": "check_drift() [Evidently temporal train-vs-test]",
+        "result": "INFO: ACB train=2800 vs test=1200 -> drift.html (3.6M)"
+      },
+      {
+        "cmd": "drift artifact",
+        "result": "results/quality_gate/campaign_dataqa_2026-08-08_195809/drift.html"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass",
+      "lint": "n/a",
+      "code_review": "n/a",
+      "diff_cover": "n/a"
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "Pandera schema 34/34 valid",
+        "ok": true
+      },
+      {
+        "item": "Evidently drift html produced",
+        "ok": true
+      },
+      {
+        "item": "validates data underlying ALL Track B experiments",
+        "ok": true
+      }
+    ],
+    "result_summary": "Pandera + Evidently exercised on the data foundation shared by every Track B experiment: schema 34/34 valid (OHLCV/HAR non-neg, high>=low, monotonic dates; news panel structural cols), temporal drift report produced. A1's new common-date manifest draws from this same validated source data.",
+    "report_md": "scripts/quality_gate/README.md"
   }
 ]
