@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">Pooled LSTM, causal news, and GNN ablation architecture</title>
+  <desc id="desc">Architecture for pooled asynchronous ticker samples. The core price and news LSTM path is separated from synchronized global-date GNN research ablations. Red annotations identify leakage controls.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#40556b"/></marker>
+    <marker id="redArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#bd2c2c"/></marker>
+    <style>
+      .bg { fill:#ffffff; } .title { font:700 30px Arial,sans-serif; fill:#172b3a; } .subtitle { font:15px Arial,sans-serif; fill:#516776; }
+      .section { font:700 18px Arial,sans-serif; fill:#172b3a; } .label { font:700 15px Arial,sans-serif; fill:#172b3a; } .text { font:13px Arial,sans-serif; fill:#253b4b; } .small { font:12px Arial,sans-serif; fill:#40556b; }
+      .box { fill:#f7fafc; stroke:#8ca1b3; stroke-width:1.5; rx:10; } .core { fill:#eaf3fb; stroke:#3977a8; stroke-width:2; rx:10; } .news { fill:#f1edfb; stroke:#7962ab; stroke-width:2; rx:10; }
+      .output { fill:#edf8f1; stroke:#39845a; stroke-width:2; rx:10; } .ablation { fill:#fff7e6; stroke:#c98a23; stroke-width:2; stroke-dasharray:8 5; rx:10; } .guard { fill:#fff1f1; stroke:#bd2c2c; stroke-width:1.8; rx:8; }
+      .arrow { fill:none; stroke:#40556b; stroke-width:2.2; marker-end:url(#arrow); } .dash { fill:none; stroke:#c98a23; stroke-width:2.2; stroke-dasharray:8 5; marker-end:url(#arrow); } .red { fill:none; stroke:#bd2c2c; stroke-width:2; marker-end:url(#redArrow); }
+      .rule { stroke:#cbd6df; stroke-width:1; } .redtext { font:700 12px Arial,sans-serif; fill:#a52323; }
+    </style>
+  </defs>
+  <rect class="bg" width="1800" height="1120"/>
+  <text x="60" y="55" class="title">Pooled LSTM + Causal News Architecture with GNN Research Ablation</text>
+  <text x="60" y="82" class="subtitle">Core path pools asynchronous per-ticker samples; only the optional GNN branch uses synchronized global trading dates.</text>
+  <line x1="60" y1="102" x2="1740" y2="102" class="rule"/>
+
+  <!-- inputs and feature preparation -->
+  <text x="60" y="140" class="section">1. Per-ticker causal preparation</text>
+  <rect x="60" y="165" width="260" height="115" class="box"/>
+  <text x="82" y="196" class="label">Raw OHLCV, per ticker</text>
+  <text x="82" y="220" class="text">Irregular trading dates allowed</text>
+  <text x="82" y="242" class="small">ticker_id · date · O/H/L/C/V</text>
+  <text x="82" y="262" class="small">One independent time series each</text>
+  <rect x="370" y="165" width="280" height="115" class="core"/>
+  <text x="392" y="196" class="label">Chronological split, per ticker</text>
+  <text x="392" y="220" class="text">70% train · 15% validation · 15% test</text>
+  <text x="392" y="243" class="small">No random split; ticker chronology retained</text>
+  <rect x="700" y="165" width="270" height="115" class="core"/>
+  <text x="722" y="196" class="label">Causal price features</text>
+  <text x="722" y="220" class="text">Parkinson RV + HAR features</text>
+  <text x="722" y="243" class="small">Train-fitted winsorization/scalers</text>
+  <path d="M320 222 L370 222" class="arrow"/><path d="M650 222 L700 222" class="arrow"/>
+  <rect x="700" y="302" width="270" height="65" class="guard"/>
+  <text x="718" y="328" class="redtext">LEAKAGE BARRIER: train-only fit</text>
+  <text x="718" y="348" class="small">Statistics never fitted on validation/test.</text>
+  <path d="M835 302 L835 281" class="red"/>
+
+  <!-- news -->
+  <rect x="1040" y="145" width="350" height="155" class="news"/>
+  <text x="1062" y="176" class="label">Causal news panel, per ticker-date</text>
+  <text x="1062" y="201" class="text">Article timestamp → effective trading date</text>
+  <text x="1062" y="223" class="small">Existing ≥15:00 close rule; missing-news mask</text>
+  <text x="1062" y="245" class="small">Provenance cutoff + separate content hashes</text>
+  <text x="1062" y="267" class="small">News embedding / sequence features</text>
+  <rect x="1040" y="322" width="350" height="65" class="guard"/>
+  <text x="1060" y="348" class="redtext">LEAKAGE BARRIER: no future news</text>
+  <text x="1060" y="368" class="small">Only content available by the effective-date cutoff.</text>
+  <path d="M1215 322 L1215 301" class="red"/>
+
+  <!-- manifests -->
+  <text x="60" y="430" class="section">2. Two explicitly different sample manifests</text>
+  <rect x="60" y="455" width="480" height="125" class="core"/>
+  <text x="82" y="486" class="label">Shared pooled manifest and windows — core path</text>
+  <text x="82" y="511" class="text">Each (ticker_id, anchor date) is an asynchronous sample</text>
+  <text x="82" y="534" class="text">Price/news window: sequence = 22; target horizon = 5</text>
+  <text x="82" y="557" class="small">Chronological loaders; pooled batches retain ticker_id</text>
+  <path d="M835 280 L835 455" class="arrow"/>
+  <path d="M1215 300 L1215 410 L540 410 L540 505" class="arrow"/>
+  <rect x="590" y="455" width="430" height="125" class="ablation"/>
+  <text x="612" y="486" class="label">Global-date graph manifest — research only</text>
+  <text x="612" y="511" class="text">Synchronized global trading dates for graph tensors</text>
+  <text x="612" y="534" class="text">Nodes = available stocks; edges from permitted history</text>
+  <text x="612" y="557" class="small">Not substituted for pooled LSTM/news samples</text>
+  <path d="M835 280 L835 430 L805 430 L805 455" class="dash"/>
+  <rect x="60" y="605" width="480" height="58" class="guard"/>
+  <text x="80" y="630" class="redtext">LEAKAGE BARRIER: chronological loaders use shuffle=False</text>
+  <text x="80" y="650" class="small">No shuffle-induced violation of temporal evaluation order.</text>
+  <path d="M300 605 L300 582" class="red"/>
+
+  <!-- core model variants -->
+  <text x="60" y="710" class="section">3. Core pooled-model progression</text>
+  <rect x="60" y="735" width="275" height="125" class="core"/>
+  <text x="82" y="766" class="label">P1 · Pooled Price LSTM</text>
+  <text x="82" y="790" class="text">22-step price/HAR sequence</text>
+  <text x="82" y="813" class="text">Shared weights across tickers</text>
+  <text x="82" y="836" class="small">Price LSTM → price representation</text>
+  <rect x="390" y="735" width="325" height="125" class="core"/>
+  <text x="412" y="766" class="label">P2 · Price + News late fusion</text>
+  <text x="412" y="790" class="text">Shared Price LSTM + News LSTM</text>
+  <text x="412" y="813" class="text">Concatenate representations → head</text>
+  <text x="412" y="836" class="small">Causal news mask included in branch inputs</text>
+  <rect x="770" y="735" width="345" height="125" class="core"/>
+  <text x="792" y="766" class="label">P3 · Ticker-indexed gated fusion</text>
+  <text x="792" y="790" class="text">P2 branches + ticker-indexed gate logits</text>
+  <text x="792" y="813" class="text">Gate combines price/news contributions</text>
+  <text x="792" y="836" class="small">Primary checkpoint candidate</text>
+  <path d="M540 517 L60 517 L60 735" class="arrow"/><path d="M335 797 L390 797" class="arrow"/><path d="M715 797 L770 797" class="arrow"/>
+  <path d="M1215 387 L1215 682 L552 682 L552 735" class="arrow"/>
+
+  <!-- gnn research -->
+  <rect x="1180" y="705" width="420" height="180" class="ablation"/>
+  <text x="1202" y="736" class="label">G0/G1 · GNN branch (research ablation)</text>
+  <text x="1202" y="761" class="text">Global-date graph tensors → GNN encoder</text>
+  <text x="1202" y="784" class="text">Parallel comparison / optional graph fusion</text>
+  <text x="1202" y="807" class="small">G0: graph-only ablation · G1: graph-enhanced P3</text>
+  <text x="1202" y="830" class="small">Uses a graph-safe P3 checkpoint only</text>
+  <rect x="1180" y="907" width="420" height="60" class="guard"/>
+  <text x="1200" y="932" class="redtext">LEAKAGE BARRIER: graph-safe checkpoint</text>
+  <text x="1200" y="952" class="small">No unrestricted P3 checkpoint enters graph evaluation.</text>
+  <path d="M1375 907 L1375 886" class="red"/>
+  <path d="M1020 517 L1180 517 L1180 755" class="dash"/>
+  <path d="M1115 797 L1180 797" class="dash"/>
+
+  <!-- outputs -->
+  <text x="60" y="925" class="section">4. Prediction and evaluation</text>
+  <rect x="60" y="950" width="340" height="95" class="output"/>
+  <text x="82" y="980" class="label">Normalized prediction</text>
+  <text x="82" y="1005" class="text">Model output in target-scaled space</text>
+  <text x="82" y="1027" class="small">P1 / P2 / P3 (and ablation outputs)</text>
+  <rect x="455" y="950" width="355" height="95" class="output"/>
+  <text x="477" y="980" class="label">Inverse target transform</text>
+  <text x="477" y="1005" class="text">Use scaler selected by ticker_id</text>
+  <text x="477" y="1027" class="small">Return volatility prediction to original scale</text>
+  <rect x="865" y="950" width="500" height="95" class="output"/>
+  <text x="887" y="980" class="label">Six evaluation metrics + comparator</text>
+  <text x="887" y="1005" class="text">MSE · RMSE · MAE · R² · QLIKE · directional accuracy</text>
+  <text x="887" y="1027" class="small">P0 HAR baseline is a separate comparator (not a neural-path input)</text>
+  <path d="M942 860 L942 900 L230 900 L230 950" class="arrow"/><path d="M400 997 L455 997" class="arrow"/><path d="M810 997 L865 997" class="arrow"/>
+  <path d="M1390 885 L1390 920 L1365 920 L1365 997" class="dash"/>
+
+  <!-- legend -->
+  <rect x="1430" y="145" width="310" height="400" class="box"/>
+  <text x="1452" y="178" class="label">Legend</text>
+  <rect x="1452" y="196" width="28" height="18" class="core"/><text x="1492" y="211" class="text">Core production-evaluation path</text>
+  <rect x="1452" y="231" width="28" height="18" class="news"/><text x="1492" y="246" class="text">Causal news data / LSTM branch</text>
+  <rect x="1452" y="266" width="28" height="18" class="ablation"/><text x="1492" y="281" class="text">Research GNN ablation only</text>
+  <rect x="1452" y="301" width="28" height="18" class="guard"/><text x="1492" y="316" class="text">Data-leakage control</text>
+  <path d="M1452 348 L1480 348" class="arrow"/><text x="1492" y="353" class="text">Core data / model flow</text>
+  <path d="M1452 383 L1480 383" class="dash"/><text x="1492" y="388" class="text">Ablation-only connection</text>
+  <path d="M1452 418 L1480 418" class="red"/><text x="1492" y="423" class="text">Guard applies to target stage</text>
+  <line x1="1452" y1="450" x2="1718" y2="450" class="rule"/>
+  <text x="1452" y="478" class="small">Key boundary</text>
+  <text x="1452" y="500" class="text">Pooled samples ≠ graph tensors.</text>
+  <text x="1452" y="522" class="text">Only the GNN requires synchronized dates.</text>
+</svg>
