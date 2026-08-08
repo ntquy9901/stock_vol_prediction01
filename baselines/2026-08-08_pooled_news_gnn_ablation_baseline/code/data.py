@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 from pathlib import Path
+from types import MappingProxyType
+from typing import Mapping
 
 import numpy as np
 import pandas as pd
+
+from scaling import PreprocessorStore
 
 
 _SPLIT_NAMES = ("train", "val", "test")
@@ -38,8 +44,55 @@ class PooledSample:
 class PooledManifest:
     """One shared P0-P3 sample set with stable eligibility decisions."""
 
-    samples: dict[str, list[PooledSample]]
-    exclusions: dict[str, str]
+    samples: Mapping[str, tuple[PooledSample, ...]]
+    exclusions: Mapping[str, str]
+    ticker_to_id: Mapping[str, int]
+    preprocessing_hash: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "samples",
+            MappingProxyType({split: tuple(self.samples[split]) for split in _SPLIT_NAMES}),
+        )
+        object.__setattr__(self, "exclusions", MappingProxyType(dict(self.exclusions)))
+        object.__setattr__(self, "ticker_to_id", MappingProxyType(dict(self.ticker_to_id)))
+
+    def to_dict(self) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "version": 1,
+            "ticker_to_id": dict(self.ticker_to_id),
+            "exclusions": dict(self.exclusions),
+            "preprocessing_hash": self.preprocessing_hash,
+            "samples": {
+                split: [_sample_to_dict(sample) for sample in self.samples[split]]
+                for split in _SPLIT_NAMES
+            },
+        }
+        payload["hashes"] = _manifest_hashes(payload)
+        return payload
+
+    def save(self, path: Path | str) -> None:
+        Path(path).write_text(json.dumps(self.to_dict(), sort_keys=True), encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: Path | str, preprocessors: PreprocessorStore) -> "PooledManifest":
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        hashes = payload.pop("hashes", None)
+        if hashes != _manifest_hashes(payload):
+            raise ValueError("manifest hash validation failed")
+        preprocessing_hash = _stable_hash(preprocessors.to_dict())
+        if payload["preprocessing_hash"] != preprocessing_hash:
+            raise ValueError("manifest preprocessing hash validation failed")
+        return cls(
+            samples={
+                split: tuple(_sample_from_dict(sample) for sample in payload["samples"][split])
+                for split in _SPLIT_NAMES
+            },
+            exclusions=dict(payload["exclusions"]),
+            ticker_to_id={str(ticker): int(ticker_id) for ticker, ticker_id in payload["ticker_to_id"].items()},
+            preprocessing_hash=preprocessing_hash,
+        )
 
 
 @dataclass(frozen=True)
@@ -124,6 +177,7 @@ def build_ticker_samples(
     frame: pd.DataFrame,
     ticker: str,
     ticker_id: int,
+    feature_order: tuple[str, ...] | None = None,
     seq_length: int = 22,
     horizon: int = 5,
 ) -> list[PooledSample]:
@@ -133,9 +187,24 @@ def build_ticker_samples(
         raise ValueError("seq_length and horizon must be positive")
     if "date" not in frame or "parkinson_volatility" not in frame:
         raise ValueError("frame must contain date and parkinson_volatility")
-    feature_columns = [column for column in frame.columns if column.startswith("feature_")]
-    if not feature_columns:
+    if feature_order is None:
         feature_columns = ["parkinson_volatility"]
+    else:
+        feature_columns = [f"feature_{name}" for name in feature_order]
+        stale_columns = [
+            column
+            for column in frame.columns
+            if column.startswith("feature_") and column not in feature_columns
+        ]
+        if stale_columns:
+            raise ValueError(f"unexpected transformed feature columns: {stale_columns}")
+        if any(column not in frame for column in feature_columns):
+            raise ValueError("missing expected transformed feature columns")
+    feature_values = frame[feature_columns].to_numpy(dtype=float)
+    if feature_values.ndim != 2 or feature_values.shape[1] != len(feature_columns):
+        raise ValueError("invalid transformed feature dimension")
+    if not np.isfinite(feature_values).all():
+        raise ValueError("transformed feature values must be finite")
     model_targets = frame.get("y_model_raw", frame["parkinson_volatility"])
     eval_targets = frame.get("y_eval_raw", frame["parkinson_volatility"])
     valid_count = len(frame) - seq_length - horizon + 1
@@ -147,7 +216,7 @@ def build_ticker_samples(
         samples.append(
             PooledSample(
                 key=SampleKey(ticker_id=ticker_id, ticker=ticker, target_date=target_date),
-                x_price_raw=frame.iloc[start : start + seq_length][feature_columns].to_numpy(dtype=float),
+                x_price_raw=feature_values[start : start + seq_length],
                 x_news=np.empty((seq_length, 0), dtype=float),
                 news_mask=np.zeros(seq_length, dtype=np.int8),
                 y_raw=y_eval_raw,
@@ -160,21 +229,26 @@ def build_ticker_samples(
 
 def build_pooled_manifest(
     split_frames: SplitFrames,
-    preprocessors: object,
+    preprocessors: PreprocessorStore,
     seq_length: int = 22,
     horizon: int = 5,
 ) -> PooledManifest:
     """Transform each raw split using train-fitted state and pool eligible ticker samples."""
 
-    samples = {name: [] for name in _SPLIT_NAMES}
+    samples: dict[str, list[PooledSample]] = {name: [] for name in _SPLIT_NAMES}
     exclusions: dict[str, str] = {}
     for ticker, ticker_id in sorted(split_frames.ticker_to_id.items(), key=lambda item: item[1]):
         ticker_samples: dict[str, list[PooledSample]] = {}
         for split_name in _SPLIT_NAMES:
-            preprocessor = preprocessors.preprocessors[ticker_id]
+            preprocessor = preprocessors.get(ticker_id)
             transformed = preprocessor.transform_frame(split_frames.frames[ticker][split_name])
             ticker_samples[split_name] = build_ticker_samples(
-                transformed, ticker, ticker_id, seq_length=seq_length, horizon=horizon
+                transformed,
+                ticker,
+                ticker_id,
+                feature_order=preprocessor.feature_order,
+                seq_length=seq_length,
+                horizon=horizon,
             )
         if any(not ticker_samples[name] for name in _SPLIT_NAMES):
             exclusions[ticker] = "insufficient windows in every split"
@@ -183,4 +257,66 @@ def build_pooled_manifest(
             samples[split_name].extend(ticker_samples[split_name])
     for split_name in _SPLIT_NAMES:
         samples[split_name].sort(key=lambda sample: (sample.key.target_date, sample.key.ticker_id))
-    return PooledManifest(samples=samples, exclusions=exclusions)
+    return PooledManifest(
+        samples={split: tuple(split_samples) for split, split_samples in samples.items()},
+        exclusions=exclusions,
+        ticker_to_id=dict(split_frames.ticker_to_id),
+        preprocessing_hash=_stable_hash(preprocessors.to_dict()),
+    )
+
+
+def _sample_to_dict(sample: PooledSample) -> dict[str, object]:
+    return {
+        "ticker_id": sample.key.ticker_id,
+        "ticker": sample.key.ticker,
+        "target_date": sample.key.target_date,
+        "x_price_raw": sample.x_price_raw.tolist(),
+        "x_news": sample.x_news.tolist(),
+        "news_mask": sample.news_mask.tolist(),
+        "y_raw": sample.y_raw,
+        "y_model_raw": sample.y_model_raw,
+        "y_eval_raw": sample.y_eval_raw,
+    }
+
+
+def _sample_from_dict(value: dict[str, object]) -> PooledSample:
+    return PooledSample(
+        key=SampleKey(int(value["ticker_id"]), str(value["ticker"]), str(value["target_date"])),
+        x_price_raw=np.asarray(value["x_price_raw"], dtype=float),
+        x_news=np.asarray(value["x_news"], dtype=float),
+        news_mask=np.asarray(value["news_mask"], dtype=np.int8),
+        y_raw=float(value["y_raw"]),
+        y_model_raw=float(value["y_model_raw"]),
+        y_eval_raw=float(value["y_eval_raw"]),
+    )
+
+
+def _manifest_hashes(payload: dict[str, object]) -> dict[str, str]:
+    samples = payload["samples"]
+    return {
+        "sample_ids": _stable_hash(
+            {
+                split: [(sample["ticker_id"], sample["target_date"]) for sample in split_samples]
+                for split, split_samples in samples.items()
+            }
+        ),
+        "raw_price_inputs": _stable_hash(
+            {split: [sample["x_price_raw"] for sample in split_samples] for split, split_samples in samples.items()}
+        ),
+        "news_inputs_masks": _stable_hash(
+            {
+                split: [(sample["x_news"], sample["news_mask"]) for sample in split_samples]
+                for split, split_samples in samples.items()
+            }
+        ),
+        "raw_targets": _stable_hash(
+            {split: [sample["y_eval_raw"] for sample in split_samples] for split, split_samples in samples.items()}
+        ),
+        "preprocessing": str(payload["preprocessing_hash"]),
+        "manifest": _stable_hash(payload),
+    }
+
+
+def _stable_hash(value: object) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()

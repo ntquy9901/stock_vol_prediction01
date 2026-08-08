@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,7 @@ for _path in (str(_ROOT), str(_CODE_DIR)):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from data import SplitFrames, build_pooled_manifest, build_ticker_samples  # noqa: E402
+from data import PooledManifest, SplitFrames, build_pooled_manifest, build_ticker_samples  # noqa: E402
 from scaling import ArrayStandardizer, PreprocessorStore, TickerPreprocessor  # noqa: E402
 
 
@@ -50,7 +51,7 @@ def test_inverse_uses_explicit_ticker_id() -> None:
 
     got = store.inverse_targets(np.array([1, 0]), np.array([0.0, 0.0]))
 
-    np.testing.assert_allclose(got, [114.5, 24.5])
+    np.testing.assert_allclose(got, [125.0, 35.0])
 
 
 def test_zero_variance_uses_unit_std_and_round_trips() -> None:
@@ -91,9 +92,18 @@ def test_model_target_is_clipped_but_evaluation_target_is_untouched() -> None:
     assert samples[-1].y_eval_raw == 1e6
 
 
+def test_har_drops_split_local_warmup_rows_before_windows() -> None:
+    preprocessor = TickerPreprocessor.fit(_frame(70), ["parkinson_volatility"], "parkinson_volatility")
+    transformed = preprocessor.transform_frame(_frame(70))
+
+    assert len(transformed) == 49
+    assert transformed.iloc[0]["date"] == "2020-01-22"
+    assert len(build_ticker_samples(transformed, "AAA", 0, seq_length=22, horizon=5)) == 23
+
+
 def test_manifest_is_deterministic_and_excludes_ineligible_tickers_once() -> None:
-    eligible = {name: _frame(30, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
-    short = {name: _frame(26, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
+    eligible = {name: _frame(50, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
+    short = {name: _frame(47, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
     split_frames = SplitFrames(
         frames={"ZZZ": eligible, "AAA": eligible, "BAD": short},
         ticker_to_id={"AAA": 0, "BAD": 1, "ZZZ": 2},
@@ -112,3 +122,57 @@ def test_manifest_is_deterministic_and_excludes_ineligible_tickers_once() -> Non
     assert [(sample.key.target_date, sample.key.ticker_id) for sample in manifest.samples["train"]] == sorted(
         (sample.key.target_date, sample.key.ticker_id) for sample in manifest.samples["train"]
     )
+    with pytest.raises(TypeError):
+        manifest.exclusions["AAA"] = "changed"  # type: ignore[index]
+
+
+def test_manifest_reload_validates_preprocessing_and_tampering(tmp_path: Path) -> None:
+    frames = {name: _frame(50, offset) for name, offset in zip(("train", "val", "test"), (0, 50, 100))}
+    store = PreprocessorStore(
+        {0: TickerPreprocessor.fit(frames["train"], ["parkinson_volatility"], "parkinson_volatility")}
+    )
+    manifest = build_pooled_manifest(SplitFrames({"AAA": frames}, {"AAA": 0}), store)
+    path = tmp_path / "manifest.json"
+
+    manifest.save(path)
+    reloaded = PooledManifest.load(path, store)
+
+    assert reloaded.to_dict() == manifest.to_dict()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["exclusions"] = {"AAA": "tampered"}
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match="hash"):
+        PooledManifest.load(path, store)
+
+
+def test_windows_reject_stale_or_nonfinite_feature_columns() -> None:
+    preprocessor = TickerPreprocessor.fit(_frame(70), ["parkinson_volatility"], "parkinson_volatility")
+    transformed = preprocessor.transform_frame(_frame(70))
+    transformed["feature_stale"] = 1.0
+
+    with pytest.raises(ValueError, match="unexpected"):
+        build_ticker_samples(transformed, "AAA", 0, feature_order=preprocessor.feature_order)
+    transformed = preprocessor.transform_frame(_frame(70))
+    transformed.loc[30, "feature_har_weekly"] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        build_ticker_samples(transformed, "AAA", 0, feature_order=preprocessor.feature_order)
+
+
+def test_store_json_round_trip_preserves_feature_and_target_transforms() -> None:
+    first = TickerPreprocessor.fit(_frame(70, 10.0), ["parkinson_volatility"], "parkinson_volatility")
+    second = TickerPreprocessor.fit(_frame(70, 100.0), ["parkinson_volatility"], "parkinson_volatility")
+    store = PreprocessorStore({0: first, 1: second})
+    reloaded = PreprocessorStore.from_dict(json.loads(json.dumps(store.to_dict())))
+    values = np.array([[1.0, 2.0, 3.0]])
+
+    np.testing.assert_allclose(reloaded.transform_features(0, values), store.transform_features(0, values))
+    np.testing.assert_allclose(
+        reloaded.inverse_targets(np.array([1, 0]), np.array([0.0, 0.0])),
+        store.inverse_targets(np.array([1, 0]), np.array([0.0, 0.0])),
+    )
+
+
+def test_manifest_fails_fast_when_ticker_mapping_is_missing() -> None:
+    frames = {name: _frame(50) for name in ("train", "val", "test")}
+    with pytest.raises(ValueError, match="missing preprocessor"):
+        build_pooled_manifest(SplitFrames({"AAA": frames}, {"AAA": 0}), PreprocessorStore({}))

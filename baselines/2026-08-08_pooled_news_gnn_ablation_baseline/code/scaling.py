@@ -78,13 +78,14 @@ class TickerPreprocessor:
         lower_bound, upper_bound = mean - 3 * std, mean + 3 * std
         clipped = np.clip(raw_target, lower_bound, upper_bound)
         features = _har_features(clipped)
+        valid_rows = np.isfinite(features).all(axis=1)
         return cls(
             feature_order=(train_targets, "har_weekly", "har_monthly"),
             target_column=train_targets,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
-            feature_scaler=ArrayStandardizer().fit(features),
-            target_scaler=ArrayStandardizer().fit(clipped),
+            feature_scaler=ArrayStandardizer().fit(features[valid_rows]),
+            target_scaler=ArrayStandardizer().fit(clipped[valid_rows]),
         )
 
     def transform_frame(self, frame: pd.DataFrame) -> pd.DataFrame:
@@ -98,7 +99,11 @@ class TickerPreprocessor:
             raise ValueError("split target values must be finite")
         y_model = np.clip(y_eval, self.lower_bound, self.upper_bound)
         features = _har_features(y_model)
-        normalized = self.feature_scaler.transform(features)
+        valid_rows = np.isfinite(features).all(axis=1)
+        result = result.loc[valid_rows].copy()
+        normalized = self.feature_scaler.transform(features[valid_rows])
+        y_model = y_model[valid_rows]
+        y_eval = y_eval[valid_rows]
         result["y_model_raw"] = y_model
         result["y_eval_raw"] = y_eval
         for index, name in enumerate(self.feature_order):
@@ -134,7 +139,15 @@ class PreprocessorStore:
     preprocessors: dict[int, TickerPreprocessor]
 
     def transform_features(self, ticker_id: int, values: np.ndarray) -> np.ndarray:
-        return self._get(ticker_id).feature_scaler.transform(values)
+        return self.get(ticker_id).feature_scaler.transform(values)
+
+    def get(self, ticker_id: int) -> TickerPreprocessor:
+        """Return one train-fitted ticker preprocessor or fail before transformation."""
+
+        try:
+            return self.preprocessors[ticker_id]
+        except KeyError as error:
+            raise ValueError(f"missing preprocessor for ticker_id {ticker_id}") from error
 
     def inverse_targets(self, ticker_ids: np.ndarray, y_norm: np.ndarray) -> np.ndarray:
         ids = np.asarray(ticker_ids)
@@ -142,7 +155,7 @@ class PreprocessorStore:
         if ids.shape != normalized.shape:
             raise ValueError("ticker_ids and y_norm must have matching shapes")
         restored = [
-            self._get(int(ticker_id)).target_scaler.inverse_transform(np.array([value]))[0]
+            self.get(int(ticker_id)).target_scaler.inverse_transform(np.array([value]))[0]
             for ticker_id, value in zip(ids, normalized, strict=True)
         ]
         return np.asarray(restored, dtype=float)
@@ -162,19 +175,12 @@ class PreprocessorStore:
             }
         )
 
-    def _get(self, ticker_id: int) -> TickerPreprocessor:
-        try:
-            return self.preprocessors[ticker_id]
-        except KeyError as error:
-            raise ValueError(f"missing preprocessor for ticker_id {ticker_id}") from error
-
-
 def _har_features(clipped_values: np.ndarray) -> np.ndarray:
     series = pd.Series(clipped_values, dtype=float)
     return np.column_stack(
         (
             clipped_values,
-            series.rolling(5, min_periods=1).mean().to_numpy(),
-            series.rolling(22, min_periods=1).mean().to_numpy(),
+            series.rolling(5).mean().to_numpy(),
+            series.rolling(22).mean().to_numpy(),
         )
     )
