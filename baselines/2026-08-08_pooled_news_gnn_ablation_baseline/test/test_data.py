@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
 
 import numpy as np
@@ -18,11 +19,13 @@ for _path in (str(_ROOT), str(_CODE_DIR), str(_NEWS_HELPER_DIR)):
         sys.path.insert(0, _path)
 
 from data import (  # noqa: E402
+    NewsPanel,
     PooledManifest,
     PooledSample,
     SampleKey,
     attach_news,
     chronological_split,
+    effective_trading_date,
     load_effective_news_panel,
     load_and_split_price_data,
 )
@@ -81,6 +84,28 @@ def test_raw_records_are_frozen_and_preserve_values() -> None:
         key.ticker = "ZZZ"  # type: ignore[misc]
 
 
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"x_price_raw": np.ones(3)},
+        {"x_price_raw": np.ones((2, 1)), "x_news": np.ones((3, 1))},
+        {"news_mask": np.array([0, 2])},
+        {"news_mask": np.array([0]), "y_raw": np.nan},
+    ],
+)
+def test_pooled_sample_rejects_invalid_shapes_masks_and_targets(kwargs: dict[str, object]) -> None:
+    values: dict[str, object] = {
+        "key": SampleKey(0, "AAA", "2020-01-10"),
+        "x_price_raw": np.ones((2, 1)),
+        "x_news": np.ones((2, 1)),
+        "news_mask": np.array([0, 1]),
+        "y_raw": 1.0,
+    }
+    values.update(kwargs)
+    with pytest.raises(ValueError):
+        PooledSample(**values)  # type: ignore[arg-type]
+
+
 def test_ticker_ids_are_sorted_and_stable(tmp_path: Path) -> None:
     _frame(100, ticker="ZZZ").drop(columns="ticker").to_csv(tmp_path / "ZZZ_processed.csv", index=False)
     _frame(100, ticker="AAA").drop(columns="ticker").to_csv(tmp_path / "AAA_processed.csv", index=False)
@@ -127,14 +152,17 @@ def test_news_panel_uses_effective_dates_and_masks_missing_days(tmp_path: Path) 
 
 
 def test_after_close_timestamp_maps_to_next_effective_trading_date() -> None:
-    from vendor_data_eda.phase04_news_helpers import effective_trading_date  # noqa: PLC0415
-
-    actual = effective_trading_date(
+    exact = effective_trading_date(
         pd.Series(["2020-01-02T15:00:00+07:00"]),
         pd.Series(["2020-01-02", "2020-01-03"]),
     ).iloc[0]
+    after = effective_trading_date(
+        pd.Series(["2020-01-02T15:00:01+07:00"]),
+        pd.Series(["2020-01-02", "2020-01-03"]),
+    ).iloc[0]
 
-    assert actual.strftime("%Y-%m-%d") == "2020-01-03"
+    assert exact.strftime("%Y-%m-%d") == "2020-01-02"
+    assert after.strftime("%Y-%m-%d") == "2020-01-03"
 
 
 def test_news_panel_rejects_duplicate_nonfinite_and_mismatched_features(tmp_path: Path) -> None:
@@ -147,9 +175,34 @@ def test_news_panel_rejects_duplicate_nonfinite_and_mismatched_features(tmp_path
     with pytest.raises(ValueError, match="finite"):
         load_effective_news_panel(nonfinite)
 
+    partial = tmp_path / "partial.parquet"
+    pd.DataFrame({"ticker": ["AAA"], "date": ["2020-01-02"], "f0": [1.0], "f1": [np.nan]}).to_parquet(partial)
+    with pytest.raises(ValueError, match="finite"):
+        load_effective_news_panel(partial)
+
+    null_date = tmp_path / "null-date.parquet"
+    pd.DataFrame({"ticker": ["AAA"], "date": [None], "f0": [1.0]}).to_parquet(null_date)
+    with pytest.raises(ValueError, match="date"):
+        load_effective_news_panel(null_date)
+
+    offset = tmp_path / "offset.parquet"
+    pd.DataFrame({"ticker": ["AAA"], "date": ["2020-01-02T23:00:00+07:00"], "f0": [1.0]}).to_parquet(offset)
+    assert "2020-01-02" in {date for _ticker, date in load_effective_news_panel(offset).keys()}
+
     panel = load_effective_news_panel(_write_news_panel(tmp_path, [("AAA", "2020-01-02", [2.0, 1.0])]))
     with pytest.raises(ValueError, match="feature_cols"):
         attach_news([_sample_with_dates("AAA", ["2020-01-02"])], panel, ["f1", "f0"])
+
+
+def test_news_attachment_rejects_independent_key_coverage_mismatch() -> None:
+    panel = NewsPanel(
+        values={("AAA", "2020-01-02"): np.array([1.0, 2.0])},
+        feature_cols=("f0", "f1"),
+        provenance={},
+        eligible_keys=frozenset({("AAA", "2020-01-01")}),
+    )
+    with pytest.raises(RuntimeError, match="coverage"):
+        attach_news([_sample_with_dates("AAA", ["2020-01-01"])], panel, ["f0", "f1"])
 
 
 def test_manifest_content_hash_changes_for_targets_masks_and_tensors() -> None:
@@ -173,6 +226,16 @@ def test_manifest_content_hash_changes_for_targets_masks_and_tensors() -> None:
         changed_target.to_dict()["hashes"]["eligibility_raw_targets"]
     )
 
+    changed_model = _sample_with_dates("AAA", ["2020-01-02"], y=1.0)
+    changed_model = PooledSample(changed_model.key, changed_model.x_price_raw, changed_model.x_news,
+                                 changed_model.news_mask, changed_model.y_raw, 9.0, 1.0,
+                                 changed_model.input_dates)
+    changed_eval = PooledSample(changed_model.key, changed_model.x_price_raw, changed_model.x_news,
+                                changed_model.news_mask, changed_model.y_raw, 9.0, 8.0,
+                                changed_model.input_dates)
+    assert first.content_hash("train") != manifest(changed_model).content_hash("train")
+    assert manifest(changed_model).content_hash("train") != manifest(changed_eval).content_hash("train")
+
 
 def test_news_provenance_fit_period_cannot_exceed_train_cutoff(tmp_path: Path) -> None:
     panel_path = _write_news_panel(tmp_path, [("AAA", "2020-01-02", [1.0, 2.0])])
@@ -187,18 +250,25 @@ def test_news_provenance_fit_period_cannot_exceed_train_cutoff(tmp_path: Path) -
     with pytest.raises(ValueError, match="provenance"):
         load_effective_news_panel(panel_path, eligible_train_cutoff="2020-01-02")
 
+    with pytest.raises(ValueError, match="provenance"):
+        load_effective_news_panel(panel_path, require_provenance=True)
+
 
 @pytest.mark.smoke
 def test_real_panel_slice_and_source_timestamp_use_effective_trading_date() -> None:
     panel_path = _ROOT / "data" / "features" / "dual_group_news_panel.parquet"
-    source_path = Path("C:/luanvan/crawl_data/data/news_articles.csv")
+    source_root = Path(os.environ.get("CRAWL_DATA_ROOT", str(_ROOT.parents[2] / "crawl_data")))
+    source_path = source_root / "data" / "news_articles.csv"
     assert panel_path.exists()
     assert source_path.exists()
-    panel = load_effective_news_panel(panel_path, tickers=["ACB"])
+    with pytest.raises(ValueError, match="finite"):
+        load_effective_news_panel(panel_path, tickers=["ACB"])
+    raw_panel = pd.read_parquet(panel_path, filters=[("ticker", "in", ["ACB"])])
+    panel_dates = set(raw_panel["date"].astype(str).str[:10])
     source = pd.read_csv(source_path, usecols=["title", "pub_date"], nrows=5000)
     record = source[source["title"].fillna("").str.contains(r"\bACB\b", regex=True)].iloc[0]
     calendar = pd.read_csv(_ROOT / "data" / "processed" / "ACB_processed.csv", usecols=["date"])["date"]
     from vendor_data_eda.phase04_news_helpers import effective_trading_date  # noqa: PLC0415
 
     expected = effective_trading_date(pd.Series([record["pub_date"]]), calendar).iloc[0].strftime("%Y-%m-%d")
-    assert ("ACB", expected) in panel.keys()
+    assert expected in panel_dates
