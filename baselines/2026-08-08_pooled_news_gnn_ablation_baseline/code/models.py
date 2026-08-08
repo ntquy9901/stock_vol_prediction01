@@ -54,6 +54,11 @@ class PooledPriceNewsLSTM(nn.Module):
             self.register_parameter("gate_logits", None)
 
     def _encode_news(self, x_news: torch.Tensor, news_mask: torch.Tensor) -> torch.Tensor:
+        if news_mask.ndim != 2 or news_mask.shape != x_news.shape[:2]:
+            raise ValueError("news_mask must have shape [batch, sequence]")
+        if news_mask.device != x_news.device:
+            raise ValueError("news_mask must be on the x_news device")
+        news_mask = news_mask.to(dtype=torch.bool)
         representations = x_news.new_zeros((x_news.shape[0], self.news_lstm.hidden_size))
         valid_indices = news_mask.any(dim=1).nonzero(as_tuple=False).squeeze(-1)
         if valid_indices.numel() == 0:
@@ -67,6 +72,28 @@ class PooledPriceNewsLSTM(nn.Module):
         representations[valid_indices] = hidden[-1]
         return representations
 
+    def _validated_ticker_ids(self, ticker_ids: torch.Tensor, batch_size: int) -> torch.Tensor:
+        integer_dtypes = {
+            torch.uint8,
+            torch.int8,
+            torch.int16,
+            torch.int32,
+            torch.int64,
+            torch.uint16,
+            torch.uint32,
+            torch.uint64,
+        }
+        if ticker_ids.ndim != 1 or ticker_ids.shape[0] != batch_size:
+            raise ValueError("ticker_ids must be a 1-D tensor matching the batch size")
+        if ticker_ids.dtype not in integer_dtypes:
+            raise ValueError("ticker_ids must use a non-boolean integer dtype")
+        if ticker_ids.device != self.gate_logits.device:
+            raise ValueError("ticker_ids must be on the gate parameter device")
+        ticker_ids = ticker_ids.to(dtype=torch.long)
+        if (ticker_ids < 0).any() or (ticker_ids >= self.gate_logits.numel()).any():
+            raise ValueError("ticker_ids must be within the configured ticker range")
+        return ticker_ids
+
     def forward(
         self,
         x_price: torch.Tensor,
@@ -77,5 +104,6 @@ class PooledPriceNewsLSTM(nn.Module):
         _, (price_hidden, _) = self.price_lstm(x_price)
         news_hidden = self._encode_news(x_news, news_mask)
         if self.use_gate:
+            ticker_ids = self._validated_ticker_ids(ticker_ids, x_price.shape[0])
             news_hidden = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
         return self.head(torch.cat((price_hidden[-1], news_hidden), dim=1)).squeeze(-1)

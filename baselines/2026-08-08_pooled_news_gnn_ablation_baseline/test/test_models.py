@@ -5,6 +5,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
+import pytest
 import torch
 
 
@@ -14,6 +16,7 @@ for _path in (str(_ROOT), str(_CODE_DIR)):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
+from data import PooledSample, SampleKey  # noqa: E402
 from models import PooledPriceLSTM, PooledPriceNewsLSTM  # noqa: E402
 
 
@@ -71,6 +74,26 @@ def test_all_missing_news_is_finite_and_input_independent() -> None:
     torch.testing.assert_close(first, second)
 
 
+def test_task3_int8_news_mask_is_compacted_as_boolean_mask() -> None:
+    sample = PooledSample(
+        key=SampleKey(0, "AAA", "2020-01-31"),
+        x_price_raw=np.ones((22, 3)),
+        x_news=np.ones((22, 2)),
+        news_mask=np.array([1, 0] * 11, dtype=np.int8),
+        y_raw=1.0,
+    )
+    model = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0)
+
+    result = model(
+        torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
+        torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
+        torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
+        torch.tensor([0]),
+    )
+
+    assert result.shape == (1,)
+
+
 def test_news_encoder_compacts_internal_and_trailing_missing_timesteps() -> None:
     model = PooledPriceNewsLSTM(3, 2, 2, use_gate=False, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
     model.eval()
@@ -102,22 +125,54 @@ def test_p2_does_not_use_ticker_ids_as_a_news_gate() -> None:
     torch.testing.assert_close(first, second)
 
 
+@pytest.mark.parametrize(
+    "ticker_ids",
+    [
+        torch.tensor([True, False]),
+        torch.tensor([0.0, 1.0]),
+        torch.tensor([[0, 1]]),
+        torch.tensor([0]),
+        torch.tensor([0, 2]),
+    ],
+)
+def test_gated_model_rejects_invalid_ticker_ids(ticker_ids: torch.Tensor) -> None:
+    model = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, dropout=0.0)
+    price, news, mask = _same_inputs()
+
+    with pytest.raises(ValueError, match="ticker_ids"):
+        model(price, news, mask, ticker_ids)
+
+
+def test_gated_model_rejects_ticker_ids_on_a_different_device() -> None:
+    model = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, dropout=0.0)
+    price, news, mask = _same_inputs()
+
+    with pytest.raises(ValueError, match="ticker_ids"):
+        model(price, news, mask, torch.empty(2, dtype=torch.long, device="meta"))
+
+
 def test_gate_gradients_are_isolated_by_explicit_ticker_id() -> None:
     model = _deterministic_gated_model()
     model.train()
     price, news, mask = _same_inputs()
 
-    first_loss = model(price[:1], news[:1], mask[:1], torch.tensor([1])).square().sum()
+    ticker_ids = torch.tensor([0, 1])
+    targets = torch.tensor([0.0, 0.0])
+    first_loss = (model(price, news, mask, ticker_ids) - targets).square().sum()
     first_loss.backward()
     first_gradient = model.gate_logits.grad.detach().clone()
 
     model.zero_grad()
-    changed_loss = model(price[:1], news[:1] * 3, mask[:1], torch.tensor([1])).square().sum()
+    changed_news = news.clone()
+    changed_news[1] *= 3
+    changed_targets = torch.tensor([0.0, 1.0])
+    changed_loss = (model(price, changed_news, mask, ticker_ids) - changed_targets).square().sum()
     changed_loss.backward()
     changed_gradient = model.gate_logits.grad.detach().clone()
 
-    assert first_gradient[0].item() == 0.0
-    assert changed_gradient[0].item() == 0.0
+    assert first_gradient[0].item() != 0.0
+    assert first_gradient[1].item() != 0.0
+    torch.testing.assert_close(first_gradient[0], changed_gradient[0])
     assert first_gradient[1].item() != changed_gradient[1].item()
 
 
