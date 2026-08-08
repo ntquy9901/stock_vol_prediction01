@@ -225,6 +225,24 @@ def test_graph_g0_has_no_message_passing_and_g1_gradients_only_touch_gnn(tmp_pat
                for parameter in g1.message_passing.parameters())
 
 
+def test_graph_batched_forward_matches_independent_snapshots(tmp_path: Path) -> None:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    checkpoint = tmp_path / "graph_safe_p3.pt"
+    torch.save(_graph_safe_payload(p3), checkpoint)
+    model = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=True).eval()
+    price, news, mask = _same_inputs()
+    ticker_ids = torch.tensor([0, 1])
+    adjacency = torch.ones(2, 2)
+    with torch.no_grad():
+        expected = torch.stack([model(price, news, mask, ticker_ids, adjacency) for _ in range(2)])
+        actual = model(price.unsqueeze(0).repeat(2, 1, 1, 1),
+                      news.unsqueeze(0).repeat(2, 1, 1, 1),
+                      mask.unsqueeze(0).repeat(2, 1, 1),
+                      ticker_ids.unsqueeze(0).repeat(2, 1),
+                      adjacency.unsqueeze(0).repeat(2, 1, 1))
+    torch.testing.assert_close(actual, expected)
+
+
 def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundary(tmp_path: Path) -> None:
     from data import GraphManifest, PooledManifest
     from run_pilot import _canonical_sample_hash, build_graph_safe_p3_checkpoint

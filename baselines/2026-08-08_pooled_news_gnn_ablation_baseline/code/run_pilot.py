@@ -355,6 +355,7 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
                 str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
                 graph_manifest_hash=graph_hash,
             ), graph, graph_store, name, args.epochs, args.seed, out / name, device,
+            validation_batch_size=args.graph_batch_size,
         )
         for name in ("G0", "G1")
     }
@@ -369,6 +370,7 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 def _run_one_graph_model(
     model: GraphAblationModel, graph: GraphManifest, store: PreprocessorStore, name: str,
     epochs: int, seed: int, output: Path, device: str | torch.device = "cpu",
+    validation_batch_size: int = 32,
 ) -> dict[str, Any]:
     selected_device = resolve_graph_device(device) if isinstance(device, str) else device
     _validate_graph_run_provenance(model, graph)
@@ -381,6 +383,8 @@ def _run_one_graph_model(
     validation = [snapshot for snapshot in graph.snapshots if snapshot.split == "val"]
     if not train or not validation:
         raise ValueError("graph manifest requires non-empty train and validation snapshots")
+    if validation_batch_size < 1:
+        raise ValueError("validation_batch_size must be positive")
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     optimizer = torch.optim.Adam(trainable, weight_decay=1e-5)
     losses: list[float] = []
@@ -401,12 +405,19 @@ def _run_one_graph_model(
     records = []
     with torch.no_grad():
         validation_losses = []
-        for snapshot in validation:
-            predictions, target = _graph_prediction(model, snapshot, selected_device)
-            validation_losses.append(torch.nn.functional.mse_loss(predictions, target))
-            for node, prediction in zip(snapshot.nodes, predictions.cpu(), strict=True):
-                records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
-                                "prediction_norm": float(prediction), "target_raw": node.y_raw})
+        for start in range(0, len(validation), validation_batch_size):
+            snapshots = validation[start:start + validation_batch_size]
+            predictions, targets = _graph_prediction_batch(model, snapshots, selected_device)
+            # Keep the original per-snapshot weighting exactly, even if a future
+            # manifest contains snapshots with different node counts.
+            validation_losses.append(torch.stack([
+                torch.nn.functional.mse_loss(prediction, target)
+                for prediction, target in zip(predictions, targets, strict=True)
+            ]).mean())
+            for snapshot, snapshot_predictions in zip(snapshots, predictions.cpu(), strict=True):
+                for node, prediction in zip(snapshot.nodes, snapshot_predictions, strict=True):
+                    records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
+                                    "prediction_norm": float(prediction), "target_raw": node.y_raw})
         validation_loss = torch.stack(validation_losses).mean().item()
     evaluation = evaluate_records(records, store)
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
@@ -428,6 +439,40 @@ def _graph_prediction(
         torch.tensor([node.ticker_id for node in snapshot.nodes], dtype=torch.long, device=device),
         torch.from_numpy(snapshot.adjacency.copy()).to(device, non_blocking=non_blocking),
     ), torch.tensor([node.y_norm for node in snapshot.nodes], dtype=torch.float32, device=device)
+
+
+def _graph_prediction_batch(
+    model: GraphAblationModel, snapshots: list[Any], device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """Run validation snapshots as one graph batch without changing train updates."""
+
+    if not snapshots:
+        raise ValueError("graph snapshot batch cannot be empty")
+    first = snapshots[0]
+    if any(snapshot.x_price.shape != first.x_price.shape
+           or snapshot.x_news.shape != first.x_news.shape
+           or snapshot.news_mask.shape != first.news_mask.shape
+           or snapshot.adjacency.shape != first.adjacency.shape
+           for snapshot in snapshots[1:]):
+        predictions = []
+        targets = []
+        for snapshot in snapshots:
+            prediction, target = _graph_prediction(model, snapshot, device)
+            predictions.append(prediction)
+            targets.append(target)
+        return torch.stack(predictions), torch.stack(targets)
+    non_blocking = device.type == "cuda"
+    return model(
+        torch.from_numpy(np.stack([snapshot.x_price for snapshot in snapshots])).to(device, non_blocking=non_blocking),
+        torch.from_numpy(np.stack([snapshot.x_news for snapshot in snapshots])).to(device, non_blocking=non_blocking),
+        torch.from_numpy(np.stack([snapshot.news_mask for snapshot in snapshots])).to(
+            device, non_blocking=non_blocking),
+        torch.tensor([[node.ticker_id for node in snapshot.nodes] for snapshot in snapshots],
+                     dtype=torch.long, device=device),
+        torch.from_numpy(np.stack([snapshot.adjacency for snapshot in snapshots])).to(
+            device, non_blocking=non_blocking),
+    ), torch.tensor([[node.y_norm for node in snapshot.nodes] for snapshot in snapshots],
+                    dtype=torch.float32, device=device)
 
 
 def resolve_graph_device(requested: str) -> torch.device:
@@ -573,6 +618,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
+    parser.add_argument("--graph-batch-size", type=int, default=32,
+                        help="validation graph snapshots per CUDA batch (training remains per snapshot)")
     parser.add_argument("--output-dir", type=Path, default=_ROOT / "results" / "pooled_news_gnn_pilot")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)

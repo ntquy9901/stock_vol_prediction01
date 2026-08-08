@@ -193,6 +193,19 @@ class GraphAblationModel(nn.Module):
         self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
         ticker_ids: torch.Tensor, adjacency: torch.Tensor,
     ) -> torch.Tensor:
+        batched = x_price.ndim == 4
+        if batched:
+            if x_news.ndim != 4 or news_mask.ndim != 3 or ticker_ids.ndim != 2:
+                raise ValueError("batched graph inputs must be [batch, nodes, time, features]")
+            batch_size, node_count = x_price.shape[:2]
+            x_price = x_price.reshape(batch_size * node_count, *x_price.shape[2:])
+            x_news = x_news.reshape(batch_size * node_count, *x_news.shape[2:])
+            news_mask = news_mask.reshape(batch_size * node_count, news_mask.shape[-1])
+            ticker_ids = ticker_ids.reshape(batch_size * node_count)
+            if adjacency.ndim == 2:
+                adjacency = adjacency.unsqueeze(0).expand(batch_size, -1, -1)
+            if adjacency.ndim != 3 or adjacency.shape != (batch_size, node_count, node_count):
+                raise ValueError("batched adjacency must be [batch, nodes, nodes]")
         with torch.no_grad():
             _, (price_hidden, _) = self.price_encoder(x_price)
             news_hidden = self._news_encoder._encode_news(x_news, news_mask)
@@ -200,5 +213,10 @@ class GraphAblationModel(nn.Module):
             gated_news = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
             base = torch.cat((price_hidden[-1], gated_news), dim=1)
         if self.message_passing is not None:
-            base = base + self.message_passing(base.unsqueeze(0), adjacency).squeeze(0)
-        return self.head(base).squeeze(-1)
+            if batched:
+                base = base.reshape(batch_size, node_count, -1)
+                base = base + self.message_passing(base, adjacency)
+            else:
+                base = base + self.message_passing(base.unsqueeze(0), adjacency).squeeze(0)
+        output = self.head(base).squeeze(-1)
+        return output.reshape(batch_size, node_count) if batched else output
