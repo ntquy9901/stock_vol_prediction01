@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import random
 from hashlib import sha256
+from os import replace
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -121,13 +122,20 @@ def run_training(
     for name, loader in loaders.items():
         if isinstance(loader.sampler, RandomSampler):
             raise ValueError(f"{name} loader must use shuffle=False")
-    _set_seed(seed)
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
     preprocessors = store.to_dict()
     manifest = _manifest_payload(loaders)
     preprocessors_hash = _canonical_hash(preprocessors)
     manifest_hash = _canonical_hash(manifest)
+    state: Mapping[str, Any] | None = None
+    if resume_from is not None:
+        state = torch.load(Path(resume_from), map_location="cpu", weights_only=False)
+        _validate_resume_state(state, config_name, seed, manifest_hash, preprocessors_hash)
+        if epochs <= int(state["completed_epoch"]):
+            raise ValueError("requested epochs must exceed completed_epoch when resuming")
+
+    _set_seed(seed)
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
     _write_json(out / "preprocessors.json", preprocessors)
     _write_json(out / "sample_manifest.json", manifest)
 
@@ -150,59 +158,45 @@ def run_training(
     state_path = out / "training_state.pt"
     best_metrics: dict[str, Any] | None = None
     completed_epoch = 0
-    if resume_from is not None:
-        state = torch.load(Path(resume_from), map_location=device, weights_only=True)
-        _validate_resume_state(state, config_name, seed, manifest_hash, preprocessors_hash)
+    if state is not None:
         completed_epoch = int(state["completed_epoch"])
-        if epochs <= completed_epoch:
-            raise ValueError("requested epochs must exceed completed_epoch when resuming")
         model.load_state_dict(state["model_state"])
         optimizer.load_state_dict(state["optimizer_state"])
         train_losses = [float(value) for value in state["train_losses"]]
         val_losses = [float(value) for value in state["val_losses"]]
         best_loss = float(state["best_loss"])
         best_metrics = state["best_metrics"]
-    for _epoch in range(completed_epoch + 1, epochs + 1):
-        model.train()
-        losses: list[float] = []
-        for batch in loaders["train"]:
-            optimizer.zero_grad()
-            prediction = _forward(model, batch, device)
-            target = batch["y_norm"].to(device=device, dtype=torch.float32)
-            loss = criterion(prediction, target)
-            if not torch.isfinite(loss):
-                raise ValueError("non-finite training loss")
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-            optimizer.step()
-            losses.append(float(loss.item()))
-        train_losses.append(float(np.mean(losses)))
-        val_loss = _normalized_loss(model, loaders["val"], criterion, device)
-        val_losses.append(val_loss)
-        validation = evaluate_by_ticker(model, loaders["val"], store)
-        if val_loss < best_loss:
-            best_loss, best_metrics = val_loss, validation
-            torch.save({"config_name": config_name, "seed": seed, "model_state": model.state_dict()}, best_path)
-        torch.save(
-            {
-                "config_name": config_name,
-                "seed": seed,
-                "completed_epoch": _epoch,
-                "model_state": model.state_dict(),
-                "optimizer_state": optimizer.state_dict(),
-                "train_losses": train_losses,
-                "val_losses": val_losses,
-                "best_loss": best_loss,
-                "best_metrics": best_metrics,
-                "manifest_hash": manifest_hash,
-                "preprocessors_hash": preprocessors_hash,
-            },
-            state_path,
-        )
-        if _epoch in {5, 10}:
-            _plot_losses(train_losses, val_losses, out / f"learning_curve_epoch_{_epoch}.png")
-    curve_name = "learning_curve_partial.png" if epochs < 5 else "learning_curve_final.png"
-    _plot_losses(train_losses, val_losses, out / curve_name)
+        _restore_rng_state(state["rng_state"])
+    _save_training_state(state_path, config_name, seed, completed_epoch, model, optimizer, train_losses,
+                         val_losses, best_loss, best_metrics, manifest_hash, preprocessors_hash)
+    try:
+        for _epoch in range(completed_epoch + 1, epochs + 1):
+            model.train()
+            losses: list[float] = []
+            for batch in loaders["train"]:
+                optimizer.zero_grad()
+                prediction = _forward(model, batch, device)
+                target = batch["y_norm"].to(device=device, dtype=torch.float32)
+                loss = criterion(prediction, target)
+                if not torch.isfinite(loss):
+                    raise ValueError("non-finite training loss")
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+                optimizer.step()
+                losses.append(float(loss.item()))
+            train_losses.append(float(np.mean(losses)))
+            val_loss = _normalized_loss(model, loaders["val"], criterion, device)
+            val_losses.append(val_loss)
+            validation = evaluate_by_ticker(model, loaders["val"], store)
+            if val_loss < best_loss:
+                best_loss, best_metrics = val_loss, validation
+                torch.save({"config_name": config_name, "seed": seed, "model_state": model.state_dict()}, best_path)
+            _save_training_state(state_path, config_name, seed, _epoch, model, optimizer, train_losses,
+                                 val_losses, best_loss, best_metrics, manifest_hash, preprocessors_hash)
+            if _epoch in {5, 10}:
+                _plot_losses(train_losses, val_losses, out / f"learning_curve_epoch_{_epoch}.png")
+    finally:
+        _plot_losses(train_losses, val_losses, out / "learning_curve_partial.png")
     result_path = out / "results.json"
     _write_json(
         result_path,
@@ -246,12 +240,7 @@ def _normalized_loss(model: nn.Module, loader: Any, criterion: nn.Module, device
 def _manifest_payload(loaders: Mapping[str, Any]) -> dict[str, Any]:
     payload: dict[str, Any] = {}
     for split, loader in loaders.items():
-        dataset = loader.dataset
-        records = getattr(dataset, "records", [])
-        payload[split] = [
-            {"ticker_id": int(row["ticker_id"]), "target_date": str(row["target_date"])}
-            for row in records
-        ]
+        payload[split] = [_batch_payload(batch) for batch in loader]
     return payload
 
 
@@ -279,6 +268,36 @@ def _set_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def _save_training_state(
+    path: Path, config_name: str, seed: int, completed_epoch: int, model: nn.Module,
+    optimizer: torch.optim.Optimizer, train_losses: list[float], val_losses: list[float],
+    best_loss: float, best_metrics: dict[str, Any] | None, manifest_hash: str, preprocessors_hash: str,
+) -> None:
+    torch.save({"config_name": config_name, "seed": seed, "completed_epoch": completed_epoch,
+                "model_state": model.state_dict(), "optimizer_state": optimizer.state_dict(),
+                "train_losses": train_losses, "val_losses": val_losses, "best_loss": best_loss,
+                "best_metrics": best_metrics, "manifest_hash": manifest_hash,
+                "preprocessors_hash": preprocessors_hash, "rng_state": _rng_state()}, path)
+
+
+def _rng_state() -> dict[str, Any]:
+    return {"python": random.getstate(), "numpy": np.random.get_state(), "torch": torch.get_rng_state(),
+            "cuda": torch.cuda.get_rng_state_all() if torch.cuda.is_available() else None}
+
+
+def _restore_rng_state(state: Mapping[str, Any]) -> None:
+    random.setstate(state["python"])
+    np.random.set_state(state["numpy"])
+    torch.set_rng_state(state["torch"])
+    if torch.cuda.is_available() and state["cuda"] is not None:
+        torch.cuda.set_rng_state_all(state["cuda"])
+
+
+def _batch_payload(batch: Mapping[str, Any]) -> dict[str, Any]:
+    return {name: _as_numpy(batch[name]).tolist() if name != "target_date" else list(batch[name])
+            for name in ("ticker_id", "target_date", "x_price", "x_news", "news_mask", "y_norm", "y_raw")}
+
+
 def _validate_resume_state(
     state: Mapping[str, Any],
     config_name: str,
@@ -302,4 +321,6 @@ def _canonical_hash(value: Any) -> str:
 
 
 def _write_json(path: Path, value: Any) -> None:
-    path.write_text(json.dumps(value, indent=2, allow_nan=False), encoding="utf-8")
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, allow_nan=False), encoding="utf-8")
+    replace(temporary, path)

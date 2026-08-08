@@ -20,6 +20,7 @@ for _path in (str(_ROOT), str(_CODE)):
         sys.path.insert(0, _path)
 
 from scaling import ArrayStandardizer, PreprocessorStore, TickerPreprocessor  # noqa: E402
+import train as train_module  # noqa: E402
 from train import evaluate_records, run_training  # noqa: E402
 
 
@@ -85,20 +86,32 @@ class _TinyDataset(Dataset[dict[str, torch.Tensor | str]]):
             "target_date": str(record["target_date"]),
         }
 
+    @classmethod
+    def from_fixture(cls, path: Path) -> "_TinyDataset":
+        return cls(json.loads(path.read_text(encoding="utf-8"))["records"])
+
+
+def _fixture_loaders(path: Path) -> dict[str, DataLoader]:
+    return {
+        split: DataLoader(_TinyDataset.from_fixture(path), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+
 
 @pytest.mark.smoke
 def test_one_epoch_runner_writes_finite_screening_artifacts(tmp_path: Path) -> None:
     fixture = tmp_path / "tiny_fixture.json"
-    fixture.write_text(json.dumps({"prices": [10.0, 12.0], "news": []}), encoding="utf-8")
-    records = [
-        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
-        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)) * 2, "y_norm": 1.0, "y_raw": 12.0},
-    ]
-    loaders = {
-        "train": DataLoader(_TinyDataset(records), batch_size=2, shuffle=False),
-        "val": DataLoader(_TinyDataset(records), batch_size=2, shuffle=False),
-        "test": DataLoader(_TinyDataset(records), batch_size=2, shuffle=False),
-    }
+    fixture.write_text(
+        json.dumps({"records": [
+            {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)).tolist(),
+             "y_norm": 0.0, "y_raw": 10.0},
+            {"ticker_id": 0, "target_date": "2020-01-02", "x_price": (np.ones((22, 1)) * 2).tolist(),
+             "y_norm": 1.0, "y_raw": 12.0},
+        ]}),
+        encoding="utf-8",
+    )
+    loaders = _fixture_loaders(fixture)
+    loaders["test"] = DataLoader(_TinyDataset.from_fixture(fixture), batch_size=2, shuffle=False)
 
     result_path = run_training("P1", loaders, _store(), tmp_path / "run", epochs=1, seed=42)
 
@@ -125,7 +138,7 @@ def test_resume_continues_history_and_optimizer_to_requested_epoch(tmp_path: Pat
     )
 
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    state = torch.load(run_dir / "training_state.pt", weights_only=True)
+    state = torch.load(run_dir / "training_state.pt", weights_only=False)
     assert payload["epochs"] == state["completed_epoch"] == 2
     assert len(payload["train_losses"]) == len(state["train_losses"]) == 2
     assert state["optimizer_state"]["state"]
@@ -150,3 +163,60 @@ def test_resume_rejects_manifest_or_preprocessor_mismatch(tmp_path: Path) -> Non
         run_training(
             "P1", changed_loaders, _store(), run_dir, epochs=2, seed=42, resume_from=run_dir / "training_state.pt"
         )
+
+
+def test_resume_matches_uninterrupted_dropout_training(tmp_path: Path) -> None:
+    records = [
+        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
+        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)) * 2, "y_norm": 1.0, "y_raw": 12.0},
+    ]
+    loaders = {split: DataLoader(_TinyDataset(records), batch_size=2, shuffle=False) for split in ("train", "val")}
+    uninterrupted = tmp_path / "uninterrupted"
+    resumed = tmp_path / "resumed"
+    run_training("P1", loaders, _store(), uninterrupted, epochs=2, seed=42)
+    run_training("P1", loaders, _store(), resumed, epochs=1, seed=42)
+    run_training("P1", loaders, _store(), resumed, epochs=2, seed=42, resume_from=resumed / "training_state.pt")
+
+    expected = torch.load(uninterrupted / "training_state.pt", weights_only=False)
+    actual = torch.load(resumed / "training_state.pt", weights_only=False)
+    for key, value in expected["model_state"].items():
+        torch.testing.assert_close(actual["model_state"][key], value)
+    assert actual["train_losses"] == pytest.approx(expected["train_losses"])
+
+
+def test_resume_rejects_tensor_change_without_overwriting_artifacts(tmp_path: Path) -> None:
+    records = [
+        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
+        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)) * 2, "y_norm": 1.0, "y_raw": 12.0},
+    ]
+    loaders = {split: DataLoader(_TinyDataset(records), batch_size=2, shuffle=False) for split in ("train", "val")}
+    run_dir = tmp_path / "run"
+    run_training("P1", loaders, _store(), run_dir, epochs=1, seed=42)
+    previous_manifest = (run_dir / "sample_manifest.json").read_bytes()
+    changed = list(records)
+    changed[0] = {**changed[0], "x_price": np.zeros((22, 1)), "y_raw": 11.0}
+    changed_loaders = {
+        split: DataLoader(_TinyDataset(changed), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+
+    with pytest.raises(ValueError, match="manifest hash"):
+        run_training(
+            "P1", changed_loaders, _store(), run_dir, epochs=2, seed=42,
+            resume_from=run_dir / "training_state.pt",
+        )
+    assert (run_dir / "sample_manifest.json").read_bytes() == previous_manifest
+
+
+def test_failure_keeps_initial_checkpoint_and_partial_curve(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    records = [
+        {"ticker_id": 0, "target_date": "2020-01-01", "x_price": np.ones((22, 1)), "y_norm": 0.0, "y_raw": 10.0},
+        {"ticker_id": 0, "target_date": "2020-01-02", "x_price": np.ones((22, 1)) * 2, "y_norm": 1.0, "y_raw": 12.0},
+    ]
+    loaders = {split: DataLoader(_TinyDataset(records), batch_size=2, shuffle=False) for split in ("train", "val")}
+    monkeypatch.setattr(train_module, "_normalized_loss", lambda *args: (_ for _ in ()).throw(RuntimeError("stop")))
+
+    with pytest.raises(RuntimeError, match="stop"):
+        run_training("P1", loaders, _store(), tmp_path / "failed", epochs=1, seed=42)
+    assert (tmp_path / "failed" / "training_state.pt").exists()
+    assert (tmp_path / "failed" / "learning_curve_partial.png").exists()
