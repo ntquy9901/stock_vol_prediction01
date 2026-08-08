@@ -7,7 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 from types import MappingProxyType
-from typing import Mapping
+from typing import Iterable, Mapping
 
 import numpy as np
 import pandas as pd
@@ -38,11 +38,37 @@ class PooledSample:
     y_raw: float
     y_model_raw: float | None = None
     y_eval_raw: float | None = None
+    input_dates: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
-        object.__setattr__(self, "x_price_raw", _readonly_array(self.x_price_raw, dtype=float))
-        object.__setattr__(self, "x_news", _readonly_array(self.x_news, dtype=float))
+        object.__setattr__(self, "x_price_raw", _readonly_array(self.x_price_raw, dtype=np.float32))
+        object.__setattr__(self, "x_news", _readonly_array(self.x_news, dtype=np.float32))
         object.__setattr__(self, "news_mask", _readonly_array(self.news_mask, dtype=np.int8))
+        normalized_dates = tuple(pd.Timestamp(date).strftime("%Y-%m-%d") for date in self.input_dates)
+        if normalized_dates and len(normalized_dates) != len(self.x_price_raw):
+            raise ValueError("input_dates must match the price sequence length")
+        object.__setattr__(self, "input_dates", normalized_dates)
+
+
+@dataclass(frozen=True)
+class NewsPanel:
+    """Validated effective-trading-date news vectors keyed by ticker and date."""
+
+    values: Mapping[tuple[str, str], np.ndarray]
+    feature_cols: tuple[str, ...]
+    provenance: Mapping[str, object]
+
+    def __post_init__(self) -> None:
+        values = {
+            (str(ticker), str(date)): _readonly_array(vector, dtype=np.float32)
+            for (ticker, date), vector in self.values.items()
+        }
+        object.__setattr__(self, "values", MappingProxyType(values))
+        object.__setattr__(self, "feature_cols", tuple(self.feature_cols))
+        object.__setattr__(self, "provenance", MappingProxyType(dict(self.provenance)))
+
+    def keys(self):
+        return self.values.keys()
 
 
 @dataclass(frozen=True)
@@ -76,6 +102,20 @@ class PooledManifest:
         }
         payload["hashes"] = _manifest_hashes(payload)
         return payload
+
+    def content_hash(self, split: str) -> str:
+        """Return a deterministic digest of one split's data and preprocessing state."""
+
+        if split not in _SPLIT_NAMES:
+            raise ValueError(f"unknown split: {split}")
+        return _stable_hash(
+            {
+                "eligibility_raw_targets": _eligibility_target_hash(self.samples[split]),
+                "price_tensors": _tensor_hash(self.samples[split], "x_price_raw"),
+                "news_tensors_masks": _news_tensor_hash(self.samples[split]),
+                "preprocessing": self.preprocessing_hash,
+            }
+        )
 
     def save(self, path: Path | str) -> None:
         Path(path).write_text(json.dumps(self.to_dict(), sort_keys=True), encoding="utf-8")
@@ -227,6 +267,10 @@ def build_ticker_samples(
                 y_raw=y_eval_raw,
                 y_model_raw=float(model_targets.iloc[target_index]),
                 y_eval_raw=y_eval_raw,
+                input_dates=tuple(
+                    pd.Timestamp(date).strftime("%Y-%m-%d")
+                    for date in frame.iloc[start : start + seq_length]["date"]
+                ),
             )
         )
     return samples
@@ -281,6 +325,7 @@ def _sample_to_dict(sample: PooledSample) -> dict[str, object]:
         "y_raw": sample.y_raw,
         "y_model_raw": sample.y_model_raw,
         "y_eval_raw": sample.y_eval_raw,
+        "input_dates": list(sample.input_dates),
     }
 
 
@@ -291,32 +336,39 @@ def _sample_from_dict(value: dict[str, object]) -> PooledSample:
         x_news=np.asarray(value["x_news"], dtype=float),
         news_mask=np.asarray(value["news_mask"], dtype=np.int8),
         y_raw=float(value["y_raw"]),
-        y_model_raw=float(value["y_model_raw"]),
-        y_eval_raw=float(value["y_eval_raw"]),
+        y_model_raw=None if value["y_model_raw"] is None else float(value["y_model_raw"]),
+        y_eval_raw=None if value["y_eval_raw"] is None else float(value["y_eval_raw"]),
+        input_dates=tuple(str(date) for date in value.get("input_dates", [])),
     )
 
 
 def _manifest_hashes(payload: dict[str, object]) -> dict[str, str]:
     samples = payload["samples"]
     return {
-        "sample_ids": _stable_hash(
-            {
-                split: [(sample["ticker_id"], sample["target_date"]) for sample in split_samples]
-                for split, split_samples in samples.items()
-            }
-        ),
-        "raw_price_inputs": _stable_hash(
-            {split: [sample["x_price_raw"] for sample in split_samples] for split, split_samples in samples.items()}
-        ),
-        "news_inputs_masks": _stable_hash(
-            {
-                split: [(sample["x_news"], sample["news_mask"]) for sample in split_samples]
-                for split, split_samples in samples.items()
-            }
-        ),
-        "raw_targets": _stable_hash(
-            {split: [sample["y_eval_raw"] for sample in split_samples] for split, split_samples in samples.items()}
-        ),
+        "eligibility_raw_targets": _stable_hash({
+            split: [
+                (sample["ticker_id"], sample["ticker"], sample["target_date"],
+                 sample["input_dates"],
+                 sample["y_raw"] if sample["y_eval_raw"] is None else sample["y_eval_raw"])
+                for sample in split_samples
+            ]
+            for split, split_samples in samples.items()
+        }),
+        "price_tensors": _stable_hash({
+            split: [
+                _canonical_array_hash(np.asarray(sample["x_price_raw"], dtype=np.float32))
+                for sample in split_samples
+            ]
+            for split, split_samples in samples.items()
+        }),
+        "news_tensors_masks": _stable_hash({
+            split: [
+                (_canonical_array_hash(np.asarray(sample["x_news"], dtype=np.float32)),
+                 _canonical_array_hash(np.asarray(sample["news_mask"], dtype=np.int8)))
+                for sample in split_samples
+            ]
+            for split, split_samples in samples.items()
+        }),
         "preprocessing": str(payload["preprocessing_hash"]),
         "manifest": _stable_hash(payload),
     }
@@ -329,5 +381,139 @@ def _stable_hash(value: object) -> str:
 
 def _readonly_array(values: np.ndarray, dtype: type[np.floating] | type[np.int8]) -> np.ndarray:
     array = np.array(values, dtype=dtype, copy=True)
+    if not np.isfinite(array).all():
+        raise ValueError("sample arrays must be finite")
     array.setflags(write=False)
     return array
+
+
+def load_effective_news_panel(
+    path: Path | str,
+    eligible_train_cutoff: str | Mapping[str, str] | None = None,
+    tickers: Iterable[str] | None = None,
+) -> NewsPanel:
+    """Load a precomputed, causally aligned news panel without refitting it."""
+
+    panel_path = Path(path)
+    selected_tickers = None if tickers is None else sorted({str(ticker) for ticker in tickers})
+    frame = pd.read_parquet(
+        panel_path,
+        filters=None if selected_tickers is None else [("ticker", "in", selected_tickers)],
+    )
+    required = {"ticker", "date"}
+    if not required.issubset(frame.columns):
+        raise ValueError("news panel must contain ticker and date columns")
+    feature_cols = tuple(sorted(column for column in frame.columns if column not in required))
+    if not feature_cols:
+        raise ValueError("news panel must contain feature columns")
+    normalized = frame.copy()
+    normalized["ticker"] = normalized["ticker"].astype(str).str.strip()
+    if (normalized["ticker"] == "").any():
+        raise ValueError("news panel ticker must not be empty")
+    try:
+        normalized["date"] = pd.to_datetime(normalized["date"], errors="raise").dt.strftime("%Y-%m-%d")
+    except (TypeError, ValueError) as error:
+        raise ValueError("news panel dates must be parseable") from error
+    if normalized.duplicated(["ticker", "date"]).any():
+        raise ValueError("news panel (ticker, date) keys must be unique")
+    values = normalized.loc[:, feature_cols].to_numpy(dtype=np.float32)
+    missing_rows = np.isnan(values).all(axis=1)
+    if np.isinf(values).any():
+        raise ValueError("news panel features must be finite")
+    values = np.nan_to_num(values, nan=0.0)
+    provenance_path = panel_path.with_suffix(".provenance.json")
+    provenance = json.loads(provenance_path.read_text(encoding="utf-8")) if provenance_path.exists() else {}
+    _validate_news_provenance(provenance, eligible_train_cutoff)
+    return NewsPanel(
+        values={
+            (str(row.ticker), str(row.date)): values[index]
+            for index, row in enumerate(normalized.loc[:, ["ticker", "date"]].itertuples(index=False))
+            if not missing_rows[index]
+        },
+        feature_cols=feature_cols,
+        provenance=provenance,
+    )
+
+
+def attach_news(
+    samples: list[PooledSample], panel: NewsPanel, feature_cols: list[str] | tuple[str, ...]
+) -> list[PooledSample]:
+    """Attach fixed-width effective-date news vectors to causal input dates."""
+
+    if tuple(feature_cols) != panel.feature_cols:
+        raise ValueError("feature_cols must match the panel's stable sorted feature order")
+    attached: list[PooledSample] = []
+    matched = 0
+    eligible_panel_keys = 0
+    for sample in samples:
+        if len(sample.input_dates) != len(sample.x_price_raw):
+            raise ValueError("samples must retain input_dates for causal news alignment")
+        news = np.zeros((len(sample.input_dates), len(panel.feature_cols)), dtype=np.float32)
+        mask = np.zeros(len(sample.input_dates), dtype=np.int8)
+        for index, date in enumerate(sample.input_dates):
+            key = (sample.key.ticker, date)
+            vector = panel.values.get(key)
+            if key in panel.values:
+                eligible_panel_keys += 1
+            if vector is not None:
+                news[index] = vector
+                mask[index] = 1
+                matched += 1
+        attached.append(
+            PooledSample(sample.key, sample.x_price_raw, news, mask, sample.y_raw,
+                         sample.y_model_raw, sample.y_eval_raw, sample.input_dates)
+        )
+    if samples and eligible_panel_keys and not matched:
+        raise RuntimeError("news panel keys were eligible but lookup matched none")
+    return attached
+
+
+def _validate_news_provenance(
+    provenance: Mapping[str, object], eligible_train_cutoff: str | Mapping[str, str] | None
+) -> None:
+    if eligible_train_cutoff is None:
+        return
+    if not provenance:
+        raise ValueError("learned news provenance is required for a training cutoff")
+    fit_end = provenance.get("fit_period_end")
+    if fit_end is None and isinstance(provenance.get("news_pca"), Mapping):
+        fit_end = provenance["news_pca"].get("fit_period_end")
+    if fit_end is None:
+        raise ValueError("learned news provenance must include fit_period_end")
+    cutoff_values = (
+        eligible_train_cutoff.values()
+        if isinstance(eligible_train_cutoff, Mapping)
+        else [eligible_train_cutoff]
+    )
+    cutoff = min(pd.Timestamp(value).normalize() for value in cutoff_values)
+    if pd.Timestamp(fit_end).normalize() > cutoff:
+        raise ValueError("learned news fit period exceeds eligible pooled training cutoff")
+
+
+def _canonical_array_hash(values: np.ndarray) -> str:
+    array = np.ascontiguousarray(values.astype(values.dtype.newbyteorder("<"), copy=False))
+    return hashlib.sha256(
+        _stable_json({"dtype": array.dtype.str, "shape": array.shape}) + array.tobytes(order="C")
+    ).hexdigest()
+
+
+def _eligibility_target_hash(samples: tuple[PooledSample, ...]) -> str:
+    return _stable_hash([
+        (sample.key.ticker_id, sample.key.ticker, sample.key.target_date, sample.input_dates,
+         sample.y_raw if sample.y_eval_raw is None else sample.y_eval_raw)
+        for sample in samples
+    ])
+
+
+def _tensor_hash(samples: tuple[PooledSample, ...], name: str) -> str:
+    return _stable_hash([_canonical_array_hash(getattr(sample, name)) for sample in samples])
+
+
+def _news_tensor_hash(samples: tuple[PooledSample, ...]) -> str:
+    return _stable_hash([
+        (_canonical_array_hash(sample.x_news), _canonical_array_hash(sample.news_mask)) for sample in samples
+    ])
+
+
+def _stable_json(value: object) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
