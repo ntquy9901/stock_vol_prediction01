@@ -1,0 +1,41 @@
+{
+  "model": "Parallel LSTM-GNN (LSTM-ONLY ablation: identity adjacency, no news)",
+  "timestamp": "2026-08-08_144044",
+  "seed": 123,
+  "architecture": "Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion",
+  "graph_method": "identity (no cross-stock edges) \u2014 LSTM-only ablation of price-only backbone",
+  "ablation": {
+    "type": "lstm_only_identity_adjacency_no_news",
+    "reference_run": "graph_method='knn', train_parallel_enhanced.py, 20 epochs (price-only backbone)",
+    "description": "Same architecture/data/hyperparameters/protocol as the news-free price-only backbone; adjacency replaced with torch.eye at every forward call so the GAT branch cannot pass messages across stocks (per-node transform only, same parameter count). No news branch anywhere. Fills the (no graph, no news) cell.",
+    "sanity_check": null
+  },
+  "config": {
+    "num_stocks": 30,
+    "learning_rate": 0.001,
+    "batch_size": 11,
+    "num_epochs_trained": 20,
+    "best_epoch": 15,
+    "patience": 20,
+    "weight_decay": 1e-05
+  },
+  "training_summary": {
+    "num_epochs_trained": 20,
+    "best_epoch": 15,
+    "best_val_loss": 0.9148808121681213,
+    "total_time_minutes": 15.144755935668945
+  },
+  "test_metrics": {
+    "mse": 8.067828275670763e-06,
+    "rmse": 0.0028403922749632247,
+    "mae": 0.0007988154538907111,
+    "r2": 0.7876083850860596,
+    "qlike": 0.47505900263786316,
+    "directional_accuracy": 48.321538740700426
+  },
+  "provenance": {
+    "git_sha": "860db5d1ab5ea364f24e43cfbd882a50b15b8e19",
+    "git_dirty": true,
+    "timestamp": "2026-08-08T07:55:56.545259+00:00"
+  }
+}
