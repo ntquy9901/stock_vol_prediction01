@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from torch import nn
 from torch.utils.data import DataLoader, Dataset
 
 
@@ -322,6 +323,31 @@ def test_manifest_dataset_batches_without_changing_sample_values() -> None:
     assert torch.equal(batch["x_price"][0], torch.ones((22, 2)))
     assert torch.equal(batch["x_news"][0], torch.zeros((22, 3)))
     assert float(batch["y_norm"][0]) == pytest.approx(0.0)
+
+
+def test_normalized_loss_weights_nondivisible_final_batch_by_sample_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Echo(nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.scale = nn.Parameter(torch.tensor(1.0))
+
+        def forward(self, x_price: torch.Tensor) -> torch.Tensor:
+            return x_price[:, 0, 0] * self.scale
+
+    def batch(values: list[float]) -> dict[str, torch.Tensor]:
+        return {
+            "x_price": torch.tensor(values, dtype=torch.float32).reshape(-1, 1, 1),
+            "y_norm": torch.zeros(len(values)),
+        }
+
+    loader = [batch([1.0, 1.0]), batch([3.0])]
+    monkeypatch.setattr(
+        train_module, "_forward", lambda _model, values, _device: values["x_price"][:, 0, 0]
+    )
+    weighted = train_module._normalized_loss(_Echo(), loader, nn.MSELoss(), torch.device("cpu"))
+    assert weighted == pytest.approx((1.0 + 1.0 + 9.0) / 3.0)
 
 
 
