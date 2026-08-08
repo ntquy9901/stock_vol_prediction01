@@ -26,5 +26,5 @@ no secrets or unrelated edits in the reviewed files.
 ## Impact and risks
 
 - Runtime behavior and experiment outputs are unaffected.
-- The memory snapshot records Task 2 as under correction after review round 1; subsequent progress
-  must update the snapshot or the SDD ledger remains the more current execution record.
+- The memory snapshot records Task 2 as review-clean after three correction rounds and Task 3 as in
+  progress. The SDD ledger remains the authoritative fine-grained execution record.

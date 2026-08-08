@@ -55,14 +55,14 @@
    - Verification: 5 focused tests passed; Ruff passed.
    - Independent review: PASS for spec compliance and task quality; no findings.
 2. Task 2 — train-only preprocessing, scaler invariants, HAR/window manifest:
-   - Commit: `1e3174cdd15d1015d385acfde2d9126625d0683f`
-   - Verification reported by implementer: Task 1-2 suite 12 passed; Ruff and diff checks passed.
-   - Independent review: CHANGES_REQUIRED (round 1).
-   - Blocking corrections in progress: use full-window HAR and drop split-local warm-up rows;
-     persist and validate the shared P0-P3 manifest; select only the persisted feature order and
-     reject stale/non-finite columns. Review also requested preprocessing JSON round-trip coverage
-     and typed missing-ticker errors.
-3. Tasks 3-10 remain pending: datasets/loaders, pooled baselines, news branch, runner, graph-safe checkpoint, GNN ablations, pilot execution, and final validation/reporting.
+   - Commits: `1e3174c`, `42b550f`, `c621221`, `2a540fa`.
+   - Verification: Task 1-2 suite 24 passed; focused Ruff and diff checks passed.
+   - Independent review: PASS for spec compliance and task quality after three correction rounds.
+   - Corrections include full-window split-local HAR, persisted/hash-validated immutable manifests,
+     exact feature-order enforcement, JSON round trips, finite/shape validation, read-only copied
+     sample tensors, typed missing mappings, and strict integer ticker IDs.
+3. Task 3 — causal news alignment and manifest hashes: implementation in progress.
+4. Tasks 4-10 remain pending: datasets/loaders, pooled baselines, news branch, runner, graph-safe checkpoint, GNN ablations, pilot execution, and final validation/reporting.
 
 ## Working rules and preservation notes
 
@@ -73,5 +73,6 @@
 
 ## Immediate continuation
 
-Wait for the Task 2 correction commit, generate a delta review package, and repeat independent
-review. Advance to Task 3 only after both spec-compliance and task-quality verdicts pass.
+Complete Task 3 with RED/GREEN evidence and independent spec/quality review. Advance to Task 4 only
+after causal effective-date alignment, real-panel smoke coverage, and deterministic content hashes
+pass review.
