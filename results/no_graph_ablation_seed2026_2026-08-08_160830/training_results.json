@@ -1,0 +1,47 @@
+{
+  "model": "Parallel LSTM-GNN (NO-GRAPH ablation, identity adjacency)",
+  "timestamp": "2026-08-08_160830",
+  "seed": 2026,
+  "architecture": "Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion",
+  "graph_method": "identity (no cross-stock edges) \u2014 ablation of knn backbone",
+  "ablation": {
+    "type": "no_graph_identity_adjacency",
+    "reference_run": "graph_method='knn', train_parallel_enhanced.py, 20 epochs",
+    "description": "Same architecture/data/hyperparameters/protocol as the HAR-only knn backbone; adjacency replaced with torch.eye at every forward call so the GAT branch cannot pass messages across stocks (per-node transform only, same parameter count).",
+    "sanity_check": null
+  },
+  "config": {
+    "num_stocks": 30,
+    "learning_rate": 0.001,
+    "batch_size": 11,
+    "num_epochs_trained": 40,
+    "best_epoch": 34,
+    "patience": 20,
+    "weight_decay": 1e-05
+  },
+  "training_summary": {
+    "num_epochs_trained": 40,
+    "best_epoch": 34,
+    "best_val_loss": 0.8840513825416565,
+    "total_time_minutes": 16.580646018187206
+  },
+  "resumed_from": {
+    "resume_checkpoint": "results/no_graph_ablation_seed2026_2026-08-05_232845/best_no_graph_model.pth",
+    "resume_results_dir": "results/no_graph_ablation_seed2026_2026-08-05_232845",
+    "start_epoch": 20,
+    "epochs_this_run": 20
+  },
+  "test_metrics": {
+    "mse": 7.025913419056451e-06,
+    "rmse": 0.0026506439630883004,
+    "mae": 0.0007606251747347414,
+    "r2": 0.8150376081466675,
+    "qlike": 0.4449239671230316,
+    "directional_accuracy": 48.15822899655235
+  },
+  "provenance": {
+    "git_sha": "48a14bbac7f5e0ba6ba87295f233de099f23bb6e",
+    "git_dirty": true,
+    "timestamp": "2026-08-08T09:25:12.007509+00:00"
+  }
+}
