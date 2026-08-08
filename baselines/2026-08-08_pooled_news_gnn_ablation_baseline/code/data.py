@@ -709,32 +709,34 @@ def common_trading_dates(
     return _transform_full_frames(price_frames, preprocessors)[1]
 
 
-def restrict_manifest_to_common_dates(
+def restrict_train_to_common_dates(
     manifest: PooledManifest, common_dates: Iterable[str]
 ) -> PooledManifest:
-    """Keep only pooled samples whose entire window lies on globally-common trading dates.
+    """Restrict ONLY the training samples to windows lying on globally-common trading dates.
 
-    This is the A1 sample-set operation: the per-ticker split, train-fitted scalers/winsor
-    bounds, sequence length, horizon, and any attached news are all carried through unchanged;
-    only the training-sample SET is reduced to the common-date intersection.
+    This is the A1 sample-set operation. Validation and test are left as the full pooled
+    held-out sets, so the pooled and common-date regimes are scored on an identical evaluation
+    set and the comparison isolates the effect of the training-sample SET alone. The per-ticker
+    split, train-fitted scalers/winsor bounds, sequence length, horizon, and any attached news
+    are all carried through unchanged.
 
     Windows remain per-ticker contiguous in that ticker's own trading days (the horizon gap is
     counted in per-ticker days, as in build_pooled_manifest); the common axis only decides which
-    whole windows survive. It is not a re-windowing onto a shared, gap-free common-date grid.
+    whole training windows survive. It is not a re-windowing onto a shared, gap-free common grid.
     """
 
     common = frozenset(common_dates)
-    filtered: dict[str, tuple[PooledSample, ...]] = {}
-    for split in _SPLIT_NAMES:
-        kept = tuple(
-            sample
-            for sample in manifest.samples[split]
-            if sample.key.target_date in common and set(sample.input_dates) <= common
-        )
-        if not kept:
-            raise ValueError(f"common-date restriction removed all {split} samples")
-        filtered[split] = kept
-    return PooledManifest(filtered, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
+    kept = tuple(
+        sample
+        for sample in manifest.samples["train"]
+        if sample.key.target_date in common and set(sample.input_dates) <= common
+    )
+    if not kept:
+        raise ValueError("common-date restriction removed all train samples")
+    return PooledManifest(
+        {"train": kept, "val": manifest.samples["val"], "test": manifest.samples["test"]},
+        manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash,
+    )
 
 
 def build_graph_manifest(

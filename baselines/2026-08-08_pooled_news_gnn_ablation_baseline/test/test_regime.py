@@ -24,7 +24,7 @@ from data import (  # noqa: E402
     SplitFrames,
     chronological_split,
     common_trading_dates,
-    restrict_manifest_to_common_dates,
+    restrict_train_to_common_dates,
 )
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 import run_pilot  # noqa: E402
@@ -75,39 +75,40 @@ def _axis_sample(ticker_id: int, target_date: str, input_dates: list[str]) -> Po
     )
 
 
-def test_restrict_manifest_keeps_only_windows_within_axis() -> None:
+def test_restrict_train_keeps_only_in_axis_windows_and_leaves_eval_untouched() -> None:
     common = {"2020-01-02", "2020-01-03", "2020-01-06", "2020-01-07"}
     keep = _axis_sample(0, "2020-01-07", ["2020-01-02", "2020-01-03"])
-    drop_input = _axis_sample(0, "2020-01-07", ["2020-01-01", "2020-01-03"])
-    drop_target = _axis_sample(0, "2020-01-08", ["2020-01-02", "2020-01-03"])
-    val = _axis_sample(0, "2020-01-06", ["2020-01-02"])
-    test = _axis_sample(0, "2020-01-03", ["2020-01-02"])
+    drop_input = _axis_sample(0, "2020-01-07", ["2020-01-01", "2020-01-03"])  # input outside axis
+    drop_target = _axis_sample(0, "2020-01-08", ["2020-01-02", "2020-01-03"])  # target outside axis
+    # val/test intentionally reference out-of-axis dates: they must be preserved verbatim.
+    val = _axis_sample(0, "2020-01-20", ["2020-01-19"])
+    test = _axis_sample(0, "2020-01-30", ["2020-01-29"])
     manifest = PooledManifest(
         {"train": (keep, drop_input, drop_target), "val": (val,), "test": (test,)},
         {}, {"AAA": 0}, "pre",
     )
 
-    restricted = restrict_manifest_to_common_dates(manifest, common)
+    restricted = restrict_train_to_common_dates(manifest, common)
 
     assert restricted.samples["train"] == (keep,)
-    assert restricted.samples["val"] == (val,)
-    assert restricted.samples["test"] == (test,)
-    # Provenance carried through unchanged: no scaler/id/exclusion mutation.
+    # Held-out splits are the full pooled sets -- identical evaluation set across regimes.
+    assert restricted.samples["val"] == manifest.samples["val"]
+    assert restricted.samples["test"] == manifest.samples["test"]
     assert restricted.ticker_to_id == manifest.ticker_to_id
     assert restricted.preprocessing_hash == manifest.preprocessing_hash
 
 
-def test_restrict_manifest_raises_when_a_split_is_emptied() -> None:
+def test_restrict_train_raises_when_train_is_emptied() -> None:
     common = {"2020-01-02"}
     manifest = PooledManifest(
-        {"train": (_axis_sample(0, "2020-01-02", ["2020-01-02"]),),
-         "val": (_axis_sample(0, "2020-01-09", ["2020-01-09"]),),
+        {"train": (_axis_sample(0, "2020-01-09", ["2020-01-09"]),),
+         "val": (_axis_sample(0, "2020-01-02", ["2020-01-02"]),),
          "test": (_axis_sample(0, "2020-01-02", ["2020-01-02"]),)},
         {}, {"AAA": 0}, "pre",
     )
 
     with pytest.raises(ValueError, match="common-date"):
-        restrict_manifest_to_common_dates(manifest, common)
+        restrict_train_to_common_dates(manifest, common)
 
 
 def _two_ticker_splits() -> SplitFrames:
@@ -136,12 +137,13 @@ def test_common_date_regime_reuses_scalers_and_reduces_samples(monkeypatch: pyte
     # Leakage guard: the common-date regime MUST reuse the pooled per-ticker
     # train-fitted scalers/winsor bounds -- no refit on the smaller subset.
     assert common.store.to_dict() == pooled.store.to_dict()
-    # Only the training-sample SET changes; common-date is a strict subset.
+    # Only the training-sample SET changes; common-date train is a strict subset.
     pooled_train = _sample_keys(pooled.manifest, "train")
     common_train = _sample_keys(common.manifest, "train")
     assert common_train < pooled_train
-    for split in ("train", "val", "test"):
-        assert _sample_keys(common.manifest, split) <= _sample_keys(pooled.manifest, split)
+    # Held-out splits are identical across regimes -> identical evaluation set.
+    for split in ("val", "test"):
+        assert common.manifest.content_hash(split) == pooled.manifest.content_hash(split)
     assert common.smoke_filter["regime"] == "common-date"
 
 

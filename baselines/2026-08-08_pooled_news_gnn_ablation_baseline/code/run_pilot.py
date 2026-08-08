@@ -34,7 +34,7 @@ from data import (  # noqa: E402
     common_trading_dates,
     load_and_split_price_data,
     load_effective_news_panel,
-    restrict_manifest_to_common_dates,
+    restrict_train_to_common_dates,
 )
 from models import GraphAblationModel, PooledPriceNewsLSTM  # noqa: E402
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
@@ -655,15 +655,17 @@ def build_screening_inputs(
         }
         manifest = PooledManifest(attached, manifest.exclusions, manifest.ticker_to_id, manifest.preprocessing_hash)
     if regime == "common-date":
-        # Reuse the graph common-date axis to keep, per ticker, only anchors whose window
+        # Reuse the graph common-date axis to keep, per ticker, only TRAIN anchors whose window
         # sits on globally-common trading dates.  Restriction runs AFTER scaler fitting and
         # (optional) news attachment, so the per-ticker scalers, winsor bounds, and the news
-        # panel are byte-identical to the pooled regime -- only the training-sample SET differs.
+        # panel are byte-identical to the pooled regime.  Validation/test stay the full pooled
+        # held-out sets, so both regimes are scored on an identical evaluation set and only the
+        # training-sample SET differs.
         full_frames = {
             ticker: np_concat_frames(splits.frames[ticker][name] for name in ("train", "val", "test"))
             for ticker in splits.frames
         }
-        manifest = restrict_manifest_to_common_dates(manifest, common_trading_dates(full_frames, store))
+        manifest = restrict_train_to_common_dates(manifest, common_trading_dates(full_frames, store))
     loaders = {
         split: DataLoader(
             _ManifestDataset(manifest.samples[split], store),
