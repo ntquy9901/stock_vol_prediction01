@@ -144,10 +144,21 @@ class GraphAblationModel(nn.Module):
         self.gate_logits.requires_grad_(False)
 
     @classmethod
-    def from_p3_checkpoint(cls, path: str, use_gnn: bool) -> "GraphAblationModel":
+    def from_p3_checkpoint(
+        cls, path: str, use_gnn: bool, graph_train_end_date: str | None = None,
+        graph_manifest_hash: str | None = None,
+    ) -> "GraphAblationModel":
         checkpoint = torch.load(path, map_location="cpu", weights_only=False)
-        if not checkpoint.get("graph_safe"):
+        if not checkpoint.get("graph_safe") or not checkpoint.get("training_sample_hash"):
             raise ValueError("P3 checkpoint is not graph-safe")
+        checkpoint_boundary = checkpoint.get("graph_train_end_date")
+        max_training_date = checkpoint.get("max_training_target_date")
+        if not checkpoint_boundary or not max_training_date or max_training_date > checkpoint_boundary:
+            raise ValueError("graph-safe P3 checkpoint has invalid training provenance")
+        if graph_train_end_date is not None and checkpoint_boundary != graph_train_end_date:
+            raise ValueError("graph-safe P3 checkpoint graph train boundary differs")
+        if graph_manifest_hash is not None and checkpoint.get("graph_manifest_hash") != graph_manifest_hash:
+            raise ValueError("graph-safe P3 checkpoint graph manifest hash differs")
         state = checkpoint.get("model_state")
         if not isinstance(state, dict):
             raise ValueError("P3 checkpoint has no model_state")

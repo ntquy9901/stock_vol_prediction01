@@ -192,8 +192,7 @@ def test_forward_has_no_hidden_state_from_preceding_batch() -> None:
 def test_graph_pair_loads_byte_identical_frozen_p3_encoders_and_head(tmp_path: Path) -> None:
     p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
     checkpoint = tmp_path / "graph_safe_p3.pt"
-    torch.save({"model_state": p3.state_dict(), "graph_safe": True,
-                "max_training_target_date": "2020-03-31"}, checkpoint)
+    torch.save(_graph_safe_payload(p3), checkpoint)
 
     g0 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
     g1 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=True)
@@ -208,8 +207,7 @@ def test_graph_pair_loads_byte_identical_frozen_p3_encoders_and_head(tmp_path: P
 def test_graph_g0_has_no_message_passing_and_g1_gradients_only_touch_gnn(tmp_path: Path) -> None:
     p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
     checkpoint = tmp_path / "graph_safe_p3.pt"
-    torch.save({"model_state": p3.state_dict(), "graph_safe": True,
-                "max_training_target_date": "2020-03-31"}, checkpoint)
+    torch.save(_graph_safe_payload(p3), checkpoint)
     g0 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=False)
     g1 = GraphAblationModel.from_p3_checkpoint(checkpoint, use_gnn=True)
     price, news, mask = _same_inputs()
@@ -237,7 +235,11 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
     graph = GraphManifest((), {"AAA": 0}, "2020-03-31", "2020-04-30",
                           {"snapshots": "x", "node_vocabulary": "x", "adjacency": "x", "tensors": "x"})
 
-    checkpoint = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, seed=42)
+    warm_start = tmp_path / "p3.pt"
+    p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0)
+    torch.save({"config_name": "P3", "model_state": p3.state_dict()}, warm_start)
+    checkpoint = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, seed=42,
+                                                 warm_start_checkpoint=warm_start)
     payload = torch.load(checkpoint, weights_only=False)
 
     assert payload["graph_safe"] is True
@@ -246,5 +248,43 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
     assert (tmp_path / "graph_safe_p3_checkpoint.txt").read_text(encoding="utf-8").strip() == str(checkpoint)
 
 
+def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Path) -> None:
+    from data import GraphManifest, GraphNode, GraphSnapshot
+    from run_pilot import _run_one_graph_model, parse_args
+
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    def snapshot(split: str, date: str) -> GraphSnapshot:
+        return GraphSnapshot(
+            date, split, tuple(f"2020-01-{day:02d}" for day in range(1, 23)),
+            (GraphNode(0, "AAA", split, 1.0), GraphNode(1, "BBB", split, 1.1)),
+            np.ones((2, 22, 3)), np.ones((2, 22, 2)), np.ones((2, 22)), np.eye(2),
+        )
+    graph = GraphManifest((snapshot("train", "2020-01-27"), snapshot("val", "2020-02-27")),
+                          {"AAA": 0, "BBB": 1}, "2020-01-31", "2020-02-28",
+                          {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
+    checkpoint = tmp_path / "safe.pt"
+    payload = _graph_safe_payload(p3)
+    payload["max_training_target_date"] = graph.train_end_date
+    payload["graph_train_end_date"] = graph.train_end_date
+    payload["graph_manifest_hash"] = graph.content_hash("train")
+    torch.save(payload, checkpoint)
+    args = parse_args(["--phase", "graph", "--p3-checkpoint", str(checkpoint), "--epochs", "1"])
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+
+    result = _run_one_graph_model(model, graph, "G1", args.epochs, args.seed, tmp_path / "G1")
+
+    assert args.phase == "graph"
+    assert result["graph_hash"] == graph.content_hash("val")
+    assert (tmp_path / "G1" / "results.json").exists()
+
+
 def _state_bytes(module: torch.nn.Module) -> bytes:
     return b"".join(value.detach().cpu().numpy().tobytes() for value in module.state_dict().values())
+
+
+def _graph_safe_payload(p3: PooledPriceNewsLSTM) -> dict[str, object]:
+    return {"model_state": p3.state_dict(), "graph_safe": True, "training_sample_hash": "samples",
+            "max_training_target_date": "2020-03-31", "graph_train_end_date": "2020-03-31",
+            "graph_manifest_hash": "manifest"}

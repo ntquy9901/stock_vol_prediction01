@@ -29,6 +29,7 @@ from data import (  # noqa: E402
     load_effective_news_panel,
     load_and_split_price_data,
 )
+from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 
 
 def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_windows() -> None:
@@ -40,9 +41,14 @@ def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_window
         for ticker, offset in (("AAA", 0), ("BBB", 10))
     }
 
-    manifest = build_graph_manifest(frames, NewsPanel({}, (), {}), seq_length=22, horizon=5)
+    store = PreprocessorStore({
+        index: TickerPreprocessor.fit(frame, ["parkinson_volatility"], "parkinson_volatility")
+        for index, frame in enumerate(frames.values())
+    })
+    manifest = build_graph_manifest(frames, NewsPanel({}, (), {}), store, seq_length=22, horizon=5)
 
-    assert manifest.train_end_date == dates[83].strftime("%Y-%m-%d")
+    # Split the shared date axis after split-local HAR has removed its 21-day warm-up.
+    assert manifest.train_end_date == dates[89].strftime("%Y-%m-%d")
     assert all(len({node.split for node in snapshot.nodes}) == 1 for snapshot in manifest.snapshots)
     assert all(
         all(date <= snapshot.target_date for date in snapshot.input_dates)
@@ -50,6 +56,7 @@ def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_window
         for snapshot in manifest.snapshots
     )
     assert set(manifest.hashes) >= {"snapshots", "node_vocabulary", "adjacency", "tensors"}
+    assert manifest.snapshots[0].x_price.shape[-1] == 3
 
 
 def _frame(size: int, ticker: str = "AAA") -> pd.DataFrame:

@@ -672,6 +672,7 @@ def _stable_json(value: object) -> bytes:
 def build_graph_manifest(
     price_frames: Mapping[str, pd.DataFrame],
     news_panel: NewsPanel,
+    preprocessors: PreprocessorStore,
     seq_length: int = 22,
     horizon: int = 5,
 ) -> GraphManifest:
@@ -696,8 +697,10 @@ def build_graph_manifest(
         frame["date"] = pd.to_datetime(frame["date"], errors="raise").dt.strftime("%Y-%m-%d")
         if not np.isfinite(frame["parkinson_volatility"].to_numpy(dtype=float)).all():
             raise ValueError("graph price values must be finite")
-        normalized[ticker] = frame.set_index("date", drop=False)
-        date_sets.append(set(frame["date"]))
+        ticker_id = sorted(price_frames).index(ticker)
+        transformed = preprocessors.get(ticker_id).transform_frame(frame)
+        normalized[ticker] = transformed.set_index("date", drop=False)
+        date_sets.append(set(transformed["date"]))
     common_dates = sorted(set.intersection(*date_sets))
     if not common_dates:
         raise ValueError("graph price frames have no common dates")
@@ -719,7 +722,10 @@ def build_graph_manifest(
                 for ticker in ordered_tickers
             )
             price = np.stack([
-                normalized[ticker].loc[list(input_dates), "parkinson_volatility"].to_numpy(dtype=np.float32)[:, None]
+                normalized[ticker].loc[
+                    list(input_dates),
+                    [f"feature_{name}" for name in preprocessors.get(ticker_to_id[ticker]).feature_order],
+                ].to_numpy(dtype=np.float32)
                 for ticker in ordered_tickers
             ])
             news, mask = _graph_news_tensors(ordered_tickers, input_dates, news_panel)

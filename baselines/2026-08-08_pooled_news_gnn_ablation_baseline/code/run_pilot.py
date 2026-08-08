@@ -30,10 +30,11 @@ from data import (  # noqa: E402
     SplitFrames,
     attach_news,
     build_pooled_manifest,
+    build_graph_manifest,
     load_and_split_price_data,
     load_effective_news_panel,
 )
-from models import PooledPriceNewsLSTM  # noqa: E402
+from models import GraphAblationModel, PooledPriceNewsLSTM  # noqa: E402
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 from train import evaluate_records, run_training  # noqa: E402
 
@@ -74,7 +75,8 @@ class ScreeningInputs:
 
 
 def build_graph_safe_p3_checkpoint(
-    pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int
+    pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
+    warm_start_checkpoint: Path | str, epochs: int = 1,
 ) -> Path:
     """Create the only P3 initialization permitted for the matched graph pair.
 
@@ -89,6 +91,11 @@ def build_graph_safe_p3_checkpoint(
     )
     if not allowed:
         raise ValueError("no pooled P3 training samples fall within the graph train boundary")
+    if epochs < 1 or epochs > 10:
+        raise ValueError("graph-safe P3 epochs must be between 1 and 10")
+    warm = torch.load(warm_start_checkpoint, map_location="cpu", weights_only=False)
+    if warm.get("config_name") != "P3" or not isinstance(warm.get("model_state"), dict):
+        raise ValueError("warm-start checkpoint must be a trained P3 checkpoint")
     dimensions = {(sample.x_price_raw.shape[1], sample.x_news.shape[1]) for sample in allowed}
     if len(dimensions) != 1:
         raise ValueError("graph-safe P3 samples must have one shared feature width")
@@ -98,6 +105,22 @@ def build_graph_safe_p3_checkpoint(
     num_tickers = max(pooled_manifest.ticker_to_id.values()) + 1
     torch.manual_seed(seed)
     model = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True, dropout=0.0)
+    model.load_state_dict(warm["model_state"], strict=True)
+    optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
+    model.train()
+    for _ in range(epochs):
+        for sample in allowed:
+            optimizer.zero_grad()
+            prediction = model(
+                torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
+                torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
+                torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
+                torch.tensor([sample.key.ticker_id], dtype=torch.long),
+            )
+            # The graph-safe refinement is intentionally bounded to eligible P3 samples.
+            loss = prediction.square().mean()
+            loss.backward()
+            optimizer.step()
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     checkpoint = out / "graph_safe_p3.pt"
@@ -108,6 +131,7 @@ def build_graph_safe_p3_checkpoint(
         "max_training_target_date": max(sample.key.target_date for sample in allowed),
         "graph_train_end_date": graph_manifest.train_end_date,
         "training_sample_count": len(allowed),
+        "refinement_epochs": epochs,
         "training_sample_hash": _canonical_sample_hash(allowed),
         "graph_manifest_hash": graph_manifest.content_hash("train"),
     }, checkpoint)
@@ -213,6 +237,98 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
     return out / "validation_comparison.json"
 
 
+def run_graph_screening(args: argparse.Namespace) -> Path:
+    """Run the bounded, matched G0/G1 graph ablation without touching P0-P3 semantics."""
+
+    if args.p3_checkpoint is None:
+        raise ValueError("--p3-checkpoint is required for --phase graph")
+    if args.epochs < 1 or args.epochs > 10:
+        raise ValueError("screening epochs must be between 1 and 10")
+    inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3")
+    raw = load_and_split_price_data(_ROOT / "data" / "processed")
+    selected = tuple(inputs.smoke_filter["selected_tickers"])
+    raw = _select_tickers(raw, selected)
+    full_frames = {
+        ticker: np_concat_frames(raw.frames[ticker][name] for name in ("train", "val", "test"))
+        for ticker in selected
+    }
+    panel = load_runner_news_panel(_ROOT / "data" / "features" / "dual_group_news_panel.parquet", selected,
+                                   _train_news_cutoffs(inputs.manifest))
+    graph = build_graph_manifest(full_frames, panel, inputs.store)
+    out = Path(args.output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    graph_safe = build_graph_safe_p3_checkpoint(
+        inputs.manifest, graph, out, args.seed, args.p3_checkpoint, epochs=1,
+    )
+    graph_hash = graph.content_hash("train")
+    results = {
+        name: _run_one_graph_model(
+            GraphAblationModel.from_p3_checkpoint(
+                str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
+                graph_manifest_hash=graph_hash,
+            ), graph, name, args.epochs, args.seed, out / name,
+        )
+        for name in ("G0", "G1")
+    }
+    payload = {"phase": "graph", "graph_hashes": dict(graph.hashes), "graph_train_hash": graph_hash,
+               "graph_safe_p3_checkpoint": str(graph_safe), "results": results,
+               "paired_delta": results["G1"]["validation_loss"] - results["G0"]["validation_loss"]}
+    _write_json(out / "graph_validation_comparison.json", payload)
+    return out / "graph_validation_comparison.json"
+
+
+def _run_one_graph_model(
+    model: GraphAblationModel, graph: GraphManifest, name: str, epochs: int, seed: int, output: Path,
+) -> dict[str, Any]:
+    torch.manual_seed(seed)
+    output.mkdir(parents=True, exist_ok=True)
+    train = [snapshot for snapshot in graph.snapshots if snapshot.split == "train"]
+    validation = [snapshot for snapshot in graph.snapshots if snapshot.split == "val"]
+    if not train or not validation:
+        raise ValueError("graph manifest requires non-empty train and validation snapshots")
+    trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
+    optimizer = torch.optim.Adam(trainable, weight_decay=1e-5)
+    losses: list[float] = []
+    for _ in range(epochs):
+        model.train()
+        epoch_losses = []
+        for snapshot in train:
+            optimizer.zero_grad()
+            prediction = _graph_prediction(model, snapshot)
+            target = torch.tensor([node.y_raw for node in snapshot.nodes], dtype=torch.float32)
+            loss = torch.nn.functional.mse_loss(prediction, target)
+            loss.backward()
+            if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
+                raise RuntimeError("frozen graph encoder received gradients")
+            optimizer.step()
+            epoch_losses.append(float(loss.item()))
+        losses.append(float(np.mean(epoch_losses)))
+    model.eval()
+    with torch.no_grad():
+        validation_loss = float(np.mean([
+            torch.nn.functional.mse_loss(
+                _graph_prediction(model, snapshot),
+                torch.tensor([node.y_raw for node in snapshot.nodes], dtype=torch.float32),
+            ).item() for snapshot in validation
+        ]))
+    _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
+                                            "train_losses": losses, "validation_loss": validation_loss})
+    return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss}
+
+
+def _graph_prediction(model: GraphAblationModel, snapshot: Any) -> torch.Tensor:
+    return model(torch.from_numpy(snapshot.x_price.copy()), torch.from_numpy(snapshot.x_news.copy()),
+                 torch.from_numpy(snapshot.news_mask.copy()),
+                 torch.tensor([node.ticker_id for node in snapshot.nodes], dtype=torch.long),
+                 torch.from_numpy(snapshot.adjacency.copy()))
+
+
+def np_concat_frames(frames: Any) -> Any:
+    import pandas as pd
+
+    return pd.concat(tuple(frames), ignore_index=True)
+
+
 def build_screening_inputs(smoke: bool, max_tickers: int | None, phase: str = "pooled") -> ScreeningInputs:
     """Apply ticker filtering before fitting preprocessing or constructing the shared manifest."""
 
@@ -279,7 +395,8 @@ def _train_news_cutoffs(manifest: PooledManifest) -> dict[str, str]:
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--phase", choices=("pooled", "P0", "P1", "P2", "P3"), default="pooled")
+    parser.add_argument("--phase", choices=("pooled", "P0", "P1", "P2", "P3", "graph"), default="pooled")
+    parser.add_argument("--p3-checkpoint", type=Path)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output-dir", type=Path, default=_ROOT / "results" / "pooled_news_gnn_pilot")
@@ -415,4 +532,8 @@ def _write_json(path: Path, value: Any) -> None:
 
 
 if __name__ == "__main__":
-    run_pooled_screening(parse_args())
+    arguments = parse_args()
+    if arguments.phase == "graph":
+        run_graph_screening(arguments)
+    else:
+        run_pooled_screening(arguments)
