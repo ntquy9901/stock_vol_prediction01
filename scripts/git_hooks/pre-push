@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Pre-push quality gate — runs automatically before every `git push`.
+# Enforces (blocks push on failure): pytest, Pandera data-schema.
+# Reports (warns; ratchets toward 100%): diff-coverage on changed lines, ruff.
+# Activate once per clone:  git config core.hooksPath scripts/git_hooks
+#
+# Env knobs:
+#   QG_MIN_COVER   diff-coverage %% floor that BLOCKS the push (default 80; target 100)
+#   QG_SKIP=1      emergency bypass (records intent; use only when justified)
+set -uo pipefail
+
+if [ "${QG_SKIP:-0}" = "1" ]; then
+  echo "[pre-push] QG_SKIP=1 set — quality gate bypassed. Justify this in your report." >&2
+  exit 0
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT" || exit 1
+MIN_COVER="${QG_MIN_COVER:-80}"
+FAIL=0
+
+PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
+if [ -d "$PILOT/test" ]; then
+  TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"
+else
+  TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"
+fi
+
+echo "[pre-push] 1/4 pytest (+coverage) on $TESTDIR"
+if ! python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-report=xml:.qg_coverage.xml -q; then
+  echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1
+fi
+
+echo "[pre-push] 2/4 diff-coverage on changed lines (floor ${MIN_COVER}%)"
+BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
+if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ]; then
+  if ! diff-cover .qg_coverage.xml --compare-branch="$BASE" --fail-under="$MIN_COVER" 2>&1 | tail -12; then
+    echo "[pre-push] BLOCK: diff-coverage below ${MIN_COVER}% (target 100%)." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push] WARN: diff-cover not available — coverage NOT verified." >&2
+fi
+
+echo "[pre-push] 3/4 ruff on changed code"
+CHANGED=$(git diff --name-only "$BASE"...HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
+if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
+  ruff check $CHANGED 2>&1 | tail -5 || { echo "[pre-push] WARN: ruff findings on changed files." >&2; }
+fi
+
+echo "[pre-push] 4/4 data-quality gate (Pandera + Evidently) if data/manifest touched"
+DATA_TOUCHED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -iE 'data|manifest|scaling|dataset|panel' || true)
+if [ -n "$DATA_TOUCHED" ]; then
+  python - <<'PY' || { echo "[pre-push] BLOCK: Pandera schema failed." >&2; exit 3; }
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path.cwd()))
+try:
+    from scripts.quality_gate.run_quality_gate import check_schema, check_drift, PROJECT_ROOT
+except Exception as e:
+    print(f"[pre-push] data-quality gate unavailable: {e}"); sys.exit(0)
+s = check_schema(); print(f"[pre-push]   Pandera SCHEMA: {s.status}: {s.detail}")
+import datetime
+out = PROJECT_ROOT / "results" / "quality_gate" / ("prepush_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
+d = check_drift(out); print(f"[pre-push]   Evidently DRIFT: {d.status}: {d.detail}")
+sys.exit(0 if s.status != "FAIL" else 3)
+PY
+else
+  echo "[pre-push]   N/A (no data/manifest change)"
+fi
+
+rm -f .qg_coverage.xml
+if [ "$FAIL" -ne 0 ]; then
+  echo "[pre-push] QUALITY GATE FAILED — push blocked. Fix, or QG_SKIP=1 with justification." >&2
+  exit 1
+fi
+echo "[pre-push] quality gate passed."
+exit 0
