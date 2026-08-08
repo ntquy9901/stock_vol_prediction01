@@ -38,9 +38,10 @@ G1: H_base --> GNN(H_base, adjacency) -----> prediction head
 
 The first pilot reuses the established common-date graph subset to minimize implementation scope.
 That subset has its own global-date 70/15/15 split, so a graph snapshot cannot mix per-ticker split
-labels. Dynamic union-calendar graphs are out of scope. G0 and G1 start from byte-identical
-pretrained encoder/head weights, use identical batches and optimizer settings, and freeze the
-encoders; only G1 adds trainable message-passing parameters.
+labels. Dynamic union-calendar graphs are out of scope. G0 and G1 start from a byte-identical
+graph-safe P3 checkpoint trained only on pooled samples whose target dates do not exceed the graph
+training boundary. They use identical batches and optimizer settings and freeze all pretrained P3
+components in evaluation mode; only G1 adds trainable message-passing parameters.
 
 ## 2. Components
 
@@ -153,7 +154,7 @@ Fail before training on:
 - news records after the forecast-origin cutoff;
 - zero news coverage caused by a mapping error;
 - non-finite features, targets, losses, predictions, or metrics;
-- denormalized prediction floor rate above 1%;
+- denormalized nonpositive-prediction rate above 1%;
 - G0/G1 graph manifest mismatch.
 
 Legitimate no-news days are represented by the mask and do not fail.

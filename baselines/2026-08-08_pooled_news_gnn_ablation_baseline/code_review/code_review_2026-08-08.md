@@ -58,3 +58,25 @@ placeholder or `[NEEDS CLARIFICATION]` marker remains.
 
 Specification review passed after the corrections above. Implementation and experimental results
 remain pending user review of the written specification.
+
+## Implementation-plan review
+
+Blind Hunter and Edge Case Hunter subsequently reviewed `design/implementation_plan.md`. The plan
+was corrected to:
+
+- prevent graph validation/test leakage by training a graph-safe P3 checkpoint only through the
+  global graph-training boundary;
+- bootstrap baseline-local imports without colliding with Python's `code` module;
+- make winsorization, HAR generation, scaler fitting, and window creation order explicit;
+- preserve separate model and untouched evaluation targets;
+- add exact final-window arithmetic and eligibility checks;
+- verify learned-news provenance against one real source timestamp;
+- separate manifest key/target, price, news, and preprocessing hashes;
+- apply positivity flooring only inside QLIKE while reporting nonpositive predictions;
+- test masked News LSTM behavior, all frozen graph components, and graph-runner I/O test-first;
+- add the missing 10-epoch, three-seed confirmation and one-time test-evaluation task;
+- measure diff coverage against pre-implementation commit `0edc36f`.
+
+The suggestion to shuffle pooled training remained rejected because `shuffle=False` was explicitly
+approved as the conservative pilot protocol. The final plan contains no unresolved critical/high
+review finding.

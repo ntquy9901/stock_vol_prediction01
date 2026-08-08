@@ -116,10 +116,10 @@ signs of successive target changes and successive prediction changes; ties retai
 headline value is the unweighted macro mean across eligible tickers, with an observation-weighted
 value reported as a secondary diagnostic.
 
-Denormalized predictions are floored to the same positive epsilon used by
-`src.common.evaluation.evaluate_predictions` before all raw-scale metrics. The unfloored prediction
-and floor rate are saved; a floor rate above 1% fails the screening gate rather than hiding an
-invalid output distribution.
+MSE, RMSE, MAE, R-squared, and directional accuracy use unfloored denormalized predictions. Only
+QLIKE applies the positive epsilon policy from `src.common.evaluation.qlike_loss`. The nonpositive
+prediction rate is saved; a rate above 1% fails the screening gate rather than hiding an invalid
+output distribution.
 
 Every run saves:
 
@@ -139,9 +139,10 @@ Every run saves:
 - No sample ID overlaps across train, validation, and test.
 - P0-P3 sample manifests are identical within each split.
 - G0-G1 graph manifests are identical within each split.
-- G0 and G1 start from byte-identical encoder/head weights, use the same batches and optimizer
-  settings, and freeze the pretrained encoders during this pilot; only G1's message-passing
-  parameters are additional trainable parameters.
+- G0 and G1 start from a byte-identical graph-safe P3 checkpoint trained only on pooled samples
+  whose target dates do not exceed the graph-training boundary. They use the same batches and
+  optimizer settings and freeze all pretrained P3 components in evaluation mode; only G1's
+  message-passing parameters are additional trainable parameters.
 - Changing validation/test values cannot change train-fitted scaler or outlier parameters.
 - Scale/inverse-transform round trips reconstruct unmodified values within numerical tolerance.
 - Pooled inverse transformation and gate lookup select parameters by `ticker_id`.
