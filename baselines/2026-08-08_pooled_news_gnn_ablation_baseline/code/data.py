@@ -753,6 +753,9 @@ def build_graph_manifest(
     preprocessors: PreprocessorStore,
     seq_length: int = 22,
     horizon: int = 5,
+    adjacency: str = "dense",
+    top_k: int = 8,
+    corr_threshold: float = 0.7,
 ) -> GraphManifest:
     """Build matched graph snapshots on the price-date intersection only.
 
@@ -762,6 +765,7 @@ def build_graph_manifest(
 
     if seq_length <= 0 or horizon <= 0:
         raise ValueError("seq_length and horizon must be positive")
+    _validate_adjacency_config(adjacency, top_k, corr_threshold)
     if len(price_frames) < 2:
         raise ValueError("graph ablation requires at least two ticker frames")
     ordered_tickers = sorted(price_frames)
@@ -798,7 +802,8 @@ def build_graph_manifest(
             ])
             news, mask = _graph_news_tensors(ordered_tickers, input_dates, news_panel)
             snapshots.append(GraphSnapshot(target_date, split, input_dates, nodes, price, news, mask,
-                                           _correlation_adjacency(price[:, :, 0])))
+                                           _correlation_adjacency(price[:, :, 0], adjacency, top_k,
+                                                                  corr_threshold)))
     if not snapshots:
         raise ValueError(
             "graph manifest produced no snapshots: the common date axis is too short for "
@@ -812,6 +817,7 @@ def build_graph_manifest(
             _canonical_array_hash(snapshot.x_price), _canonical_array_hash(snapshot.x_news),
             _canonical_array_hash(snapshot.news_mask),
         ) for snapshot in snapshots]),
+        **_adjacency_hash_fields(adjacency, top_k, corr_threshold),
     }
     return GraphManifest(tuple(snapshots), ticker_to_id, common_dates[counts[0] - 1],
                          common_dates[counts[0] + counts[1] - 1], hashes)
@@ -839,10 +845,76 @@ def _graph_news_tensors(
     return news, mask
 
 
-def _correlation_adjacency(values: np.ndarray) -> np.ndarray:
+_ADJACENCY_MODES = ("dense", "knn", "threshold")
+
+
+def _validate_adjacency_config(mode: str, top_k: int, corr_threshold: float) -> None:
+    """Reject unknown modes or out-of-range sparsification hyperparameters at entry."""
+
+    if mode not in _ADJACENCY_MODES:
+        raise ValueError(f"adjacency must be one of {_ADJACENCY_MODES}, got {mode!r}")
+    if mode == "knn" and top_k < 1:
+        raise ValueError("knn adjacency requires top_k >= 1")
+    if mode == "threshold" and not 0.0 <= float(corr_threshold) < 1.0:
+        raise ValueError("threshold adjacency requires corr_threshold in [0, 1)")
+
+
+def _adjacency_hash_fields(mode: str, top_k: int, corr_threshold: float) -> dict[str, object]:
+    """Manifest-hash fields that fold the adjacency mode in for non-dense variants.
+
+    Dense adds nothing so its manifest hash stays byte-identical to earlier runs; knn /
+    threshold add their label (and hyperparameter) so a sparse manifest can never be
+    cross-used with a dense one even when the sparsified arrays happen to coincide.
+    """
+
+    if mode == "dense":
+        return {}
+    fields: dict[str, object] = {"adjacency_mode": mode}
+    if mode == "knn":
+        fields["adjacency_top_k"] = int(top_k)
+    else:
+        fields["adjacency_corr_threshold"] = float(corr_threshold)
+    return fields
+
+
+def _sparsify_correlation(
+    correlation: np.ndarray, mode: str, top_k: int, corr_threshold: float
+) -> np.ndarray:
+    """Trim a dense signed-correlation matrix to GAT-hybrid-style sparse edges.
+
+    Ranking/thresholding uses |corr| (edge strength) but the retained entries keep their
+    SIGNED value.  ``knn`` keeps mutually-nearest neighbours (edge i-j survives only when j
+    is in row i's top-k AND i is in row j's top-k), which is symmetric and bounds every row
+    to <= k off-diagonal neighbours.  ``threshold`` zeros every off-diagonal |corr| <= tau.
+    The diagonal (self-loop) is passed through unchanged in both cases.
+    """
+
+    node_count = correlation.shape[0]
+    if node_count <= 1:
+        return correlation.astype(np.float32)
+    magnitude = np.abs(correlation).astype(np.float32)
+    np.fill_diagonal(magnitude, -1.0)  # never rank/keep the self-loop as a neighbour
+    if mode == "threshold":
+        keep = magnitude > float(corr_threshold)
+    else:
+        neighbours = min(top_k, node_count - 1)
+        order = np.argsort(-magnitude, axis=1, kind="stable")[:, :neighbours]
+        directed = np.zeros((node_count, node_count), dtype=bool)
+        np.put_along_axis(directed, order, True, axis=1)
+        keep = directed & directed.T  # mutual k-NN -> symmetric, degree <= k
+    result = np.where(keep, correlation, 0.0).astype(np.float32)
+    np.fill_diagonal(result, np.diag(correlation))
+    return result
+
+
+def _correlation_adjacency(
+    values: np.ndarray, mode: str = "dense", top_k: int = 8, corr_threshold: float = 0.7
+) -> np.ndarray:
     correlation = np.corrcoef(values)
     correlation = np.nan_to_num(correlation, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
     np.fill_diagonal(correlation, 1.0)
+    if mode != "dense":
+        correlation = _sparsify_correlation(correlation, mode, top_k, corr_threshold)
     return correlation
 
 
@@ -867,6 +939,9 @@ def _graph_snapshot_hash(snapshot: GraphSnapshot) -> dict[str, object]:
 def build_masked_graph_manifest(
     pooled_manifest: PooledManifest,
     preprocessors: PreprocessorStore,
+    adjacency: str = "dense",
+    top_k: int = 8,
+    corr_threshold: float = 0.7,
 ) -> GraphManifest:
     """Build availability-aware masked snapshots over the FULL date union, not the intersection.
 
@@ -878,6 +953,7 @@ def build_masked_graph_manifest(
     splits and the graph-safe P3 boundary (``train_end_date``) stays the max train target date.
     """
 
+    _validate_adjacency_config(adjacency, top_k, corr_threshold)
     ticker_to_id = dict(sorted(pooled_manifest.ticker_to_id.items(), key=lambda item: item[1]))
     node_count = len(ticker_to_id)
     if node_count < 2:
@@ -928,7 +1004,8 @@ def build_masked_graph_manifest(
                 nodes.append(GraphNode(ticker_id, ticker, split, y_raw, y_norm))
             snapshots.append(GraphSnapshot(
                 target_date, split, (), tuple(nodes), price, news, mask,
-                _masked_correlation_adjacency(price, presence), presence,
+                _masked_correlation_adjacency(price, presence, adjacency, top_k, corr_threshold),
+                presence,
             ))
         if grouped:
             split_max_date[split] = max(grouped)
@@ -945,13 +1022,22 @@ def build_masked_graph_manifest(
             _canonical_array_hash(snapshot.x_price), _canonical_array_hash(snapshot.x_news),
             _canonical_array_hash(snapshot.news_mask), _canonical_array_hash(snapshot.presence_mask),
         ) for snapshot in snapshots]),
+        **_adjacency_hash_fields(adjacency, top_k, corr_threshold),
     }
     return GraphManifest(tuple(snapshots), ticker_to_id, split_max_date["train"],
                          split_max_date["val"], hashes)
 
 
-def _masked_correlation_adjacency(price: np.ndarray, presence: np.ndarray) -> np.ndarray:
-    """Correlation adjacency over PRESENT tickers only; absent rows/cols stay zero."""
+def _masked_correlation_adjacency(
+    price: np.ndarray, presence: np.ndarray, mode: str = "dense", top_k: int = 8,
+    corr_threshold: float = 0.7,
+) -> np.ndarray:
+    """Correlation adjacency over PRESENT tickers only; absent rows/cols stay zero.
+
+    When ``mode`` is ``knn`` or ``threshold`` the dense present-node correlation is
+    sparsified (top-k / |corr|>tau) on the PRESENT subgraph before placement, so absent
+    nodes remain edgeless and the self-loop stays 1.
+    """
 
     node_count = price.shape[0]
     adjacency = np.zeros((node_count, node_count), dtype=np.float32)
@@ -962,6 +1048,8 @@ def _masked_correlation_adjacency(price: np.ndarray, presence: np.ndarray) -> np
         with np.errstate(invalid="ignore", divide="ignore"):
             correlation = np.corrcoef(price[present, :, 0])
         correlation = np.nan_to_num(correlation, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
+        if mode != "dense":
+            correlation = _sparsify_correlation(correlation, mode, top_k, corr_threshold)
         adjacency[np.ix_(present, present)] = correlation
     for index in present:
         adjacency[index, index] = 1.0

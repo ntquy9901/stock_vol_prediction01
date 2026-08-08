@@ -346,11 +346,25 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
     return out / "validation_comparison.json"
 
 
+_MAX_GRAPH_EPOCHS = 50
+
+
+def _validate_graph_epochs(epochs: int) -> None:
+    """Bound graph G0/G1 training length.
+
+    The pooled P0-P3 screening keeps the 1-10 experimentation cap. The graph ablation trains
+    only the small message-passing head and is run to convergence, so it permits longer,
+    user-approved runs (e.g. 15 epochs) while still rejecting runaway lengths.
+    """
+
+    if epochs < 1 or epochs > _MAX_GRAPH_EPOCHS:
+        raise ValueError(f"graph screening epochs must be between 1 and {_MAX_GRAPH_EPOCHS}")
+
+
 def run_graph_screening(args: argparse.Namespace) -> Path:
     """Run the bounded, matched G0/G1 graph ablation without touching P0-P3 semantics."""
 
-    if args.epochs < 1 or args.epochs > 10:
-        raise ValueError("screening epochs must be between 1 and 10")
+    _validate_graph_epochs(args.epochs)
     horizon = args.horizon
     if args.batch_size == 256:
         inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3", horizon=horizon)
@@ -381,12 +395,13 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
         graph_pooled.exclusions, graph_pooled.ticker_to_id, graph_pooled.preprocessing_hash,
     )
     graph_mode = getattr(args, "graph", "intersection")
-    if graph_mode == "masked":
-        # Availability-aware: one snapshot per date over PRESENT tickers only, trained on the
-        # full date union instead of the 26% synchronized-date intersection.  No imputation.
-        graph = build_masked_graph_manifest(graph_pooled, graph_store)
-    else:
-        graph = build_graph_manifest(full_frames, panel, graph_store, horizon=graph_horizon)
+    adjacency = getattr(args, "adjacency", "dense")
+    top_k = getattr(args, "top_k", 8)
+    corr_threshold = getattr(args, "corr_threshold", 0.7)
+    graph = _build_graph_manifest_for_mode(
+        graph_mode, graph_pooled, graph_store, full_frames, panel, graph_horizon,
+        adjacency, top_k, corr_threshold,
+    )
     _validate_graph_manifest(graph)
     out = Path(args.output_dir) / f"h{horizon}"
     out.mkdir(parents=True, exist_ok=True)
@@ -413,7 +428,9 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
         split: sum(1 for snapshot in graph.snapshots if snapshot.split == split)
         for split in ("train", "val", "test")
     }
-    payload = {"phase": "graph", "graph_mode": graph_mode, "horizon": horizon,
+    payload = {"phase": "graph", "graph_mode": graph_mode,
+               "adjacency": _adjacency_config(adjacency, top_k, corr_threshold),
+               "edge_density": _edge_density_stats(graph), "horizon": horizon,
                "graph_hashes": dict(graph.hashes), "graph_train_hash": graph_hash,
                "snapshot_count": len(graph.snapshots), "distinct_date_count": len(snapshot_dates),
                "split_snapshot_counts": split_snapshot_counts,
@@ -422,6 +439,99 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
                "paired_delta": results["G1"]["validation_loss"] - results["G0"]["validation_loss"]}
     _write_json(out / "graph_validation_comparison.json", payload)
     return out / "graph_validation_comparison.json"
+
+
+def _edge_density_stats(graph: GraphManifest) -> dict[str, float | int]:
+    """Off-diagonal edge counts per PRESENT node row, aggregated over all snapshots."""
+
+    per_row: list[int] = []
+    for snapshot in graph.snapshots:
+        adjacency = snapshot.adjacency
+        node_count = adjacency.shape[0]
+        presence = (snapshot.presence_mask if snapshot.presence_mask is not None
+                    else np.ones(node_count, dtype=np.int8))
+        present = np.flatnonzero(presence)
+        for index in present:
+            row = adjacency[index, present].copy()
+            row[np.flatnonzero(present == index)] = 0.0  # drop the self-loop
+            per_row.append(int(np.count_nonzero(row)))
+    counts = np.asarray(per_row, dtype=float)
+    return {
+        "avg_offdiag_nonzeros_per_present_row": float(counts.mean()),
+        "max_offdiag_nonzeros_per_present_row": int(counts.max()),
+        "min_offdiag_nonzeros_per_present_row": int(counts.min()),
+        "present_row_count": int(counts.size),
+    }
+
+
+def _graph_validation_loss(
+    model: GraphAblationModel, validation: list[Any], device: torch.device, validation_batch_size: int,
+) -> float:
+    """Present-node-weighted validation MSE for one epoch's learning-curve point."""
+
+    model.eval()
+    loss_sum = torch.zeros((), device=device)
+    snapshot_count = 0
+    with torch.no_grad():
+        for start in range(0, len(validation), validation_batch_size):
+            snapshots = validation[start:start + validation_batch_size]
+            predictions, targets, presence = _graph_prediction_batch(model, snapshots, device)
+            loss_sum = loss_sum + _mean_snapshot_mse(predictions, targets, presence) * len(snapshots)
+            snapshot_count += len(snapshots)
+    return (loss_sum / snapshot_count).item()
+
+
+def _plot_learning_curve(train_losses: list[float], validation_losses: list[float], path: Path) -> None:
+    """Plot train vs validation loss for convergence / overfitting inspection (best-effort)."""
+
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        epochs = range(1, len(train_losses) + 1)
+        figure, axis = plt.subplots(figsize=(6, 4))
+        axis.plot(epochs, train_losses, marker="o", label="train")
+        axis.plot(epochs, validation_losses, marker="s", label="validation")
+        axis.set_xlabel("epoch")
+        axis.set_ylabel("MSE (normalized scale)")
+        axis.set_title(path.parent.name)
+        axis.legend()
+        figure.tight_layout()
+        figure.savefig(path, dpi=120)
+        plt.close(figure)
+    except Exception:  # noqa: BLE001 - plotting is best-effort; a backend or IO error must not fail training
+        return
+
+
+def _adjacency_config(adjacency: str, top_k: int, corr_threshold: float) -> dict[str, Any]:
+    """Payload record of the adjacency mode and its active hyperparameter."""
+
+    config: dict[str, Any] = {"mode": adjacency}
+    if adjacency == "knn":
+        config["top_k"] = top_k
+    elif adjacency == "threshold":
+        config["corr_threshold"] = corr_threshold
+    return config
+
+
+def _build_graph_manifest_for_mode(
+    graph_mode: str, graph_pooled: PooledManifest, graph_store: PreprocessorStore,
+    full_frames: Mapping[str, Any], panel: Any, horizon: int,
+    adjacency: str, top_k: int, corr_threshold: float,
+) -> GraphManifest:
+    """Build the masked (variable-node union) or intersection (fixed-node) graph manifest.
+
+    Both paths receive the same edge-sparsity config so ``--adjacency`` applies identically;
+    masked is availability-aware over PRESENT tickers, intersection is the synchronized-date
+    fixed-node graph.
+    """
+
+    if graph_mode == "masked":
+        return build_masked_graph_manifest(graph_pooled, graph_store, adjacency=adjacency,
+                                           top_k=top_k, corr_threshold=corr_threshold)
+    return build_graph_manifest(full_frames, panel, graph_store, horizon=horizon,
+                                adjacency=adjacency, top_k=top_k, corr_threshold=corr_threshold)
 
 
 def _run_one_graph_model(
@@ -448,6 +558,7 @@ def _run_one_graph_model(
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     optimizer = torch.optim.Adam(trainable, weight_decay=1e-5)
     losses: list[float] = []
+    validation_losses: list[float] = []
     for _ in range(epochs):
         model.train()
         # Training keeps its deterministic chronological (unshuffled) snapshot order; snapshots
@@ -468,6 +579,12 @@ def _run_one_graph_model(
             epoch_loss_sum = epoch_loss_sum + loss.detach() * len(snapshots)
             epoch_snapshot_count += len(snapshots)
         losses.append((epoch_loss_sum / epoch_snapshot_count).item())
+        # Per-epoch validation loss lets the learning curve expose convergence and any
+        # train-vs-validation divergence (overfitting) rather than a single end-of-run point.
+        validation_losses.append(
+            _graph_validation_loss(model, validation, selected_device, validation_batch_size)
+        )
+    _plot_learning_curve(losses, validation_losses, output / "learning_curve.png")
     model.eval()
     records = []
     with torch.no_grad():
@@ -496,7 +613,9 @@ def _run_one_graph_model(
         validation_loss = (validation_loss_sum / validation_snapshot_count).item()
     evaluation = evaluate_records(records, store)
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
-                                            "train_losses": losses, "validation_loss": validation_loss,
+                                            "train_losses": losses,
+                                            "validation_losses": validation_losses,
+                                            "validation_loss": validation_loss,
                                             "runtime": _graph_runtime_metadata(str(device), selected_device),
                                             "train_snapshot_count": len(train),
                                             "validation_snapshot_count": len(validation),
@@ -780,6 +899,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--graph", choices=("intersection", "masked"), default="intersection",
                         help="graph construction: fixed-node date intersection (default) or "
                              "availability-aware masked variable-node union")
+    parser.add_argument("--adjacency", choices=("dense", "knn", "threshold"), default="dense",
+                        help="edge sparsity on the present-node subgraph: dense full correlation "
+                             "(default), GAT-hybrid-style knn top-k, or |corr|>tau threshold")
+    parser.add_argument("--top-k", type=int, default=8,
+                        help="knn neighbours per present node (mutual, undirected)")
+    parser.add_argument("--corr-threshold", type=float, default=0.7,
+                        help="threshold adjacency keeps edges with |corr| > this value")
     parser.add_argument("--horizon", type=int, default=5, choices=(1, 5, 10, 22),
                         help="forecast horizon in trading days (5 is the primary target)")
     parser.add_argument("--p3-checkpoint", type=Path)
@@ -799,6 +925,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         # The graph manifest is common-date by construction; a non-default regime here would
         # be silently ignored, so reject it rather than run a misleadingly-labelled ablation.
         parser.error("--regime applies only to pooled P0-P3 phases; --phase graph is common-date by construction")
+    if args.phase != "graph" and args.adjacency != "dense":
+        # Sparse adjacency only shapes the graph edge set; it would be silently ignored on the
+        # pooled P0-P3 path, so reject it rather than run a misleadingly-labelled screening.
+        parser.error("--adjacency applies only to --phase graph")
     return args
 
 
