@@ -391,7 +391,7 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
                 str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
                 graph_manifest_hash=graph_hash,
             ), graph, graph_store, name, args.epochs, args.seed, out / name, device,
-            validation_batch_size=args.graph_batch_size,
+            validation_batch_size=args.graph_batch_size, train_batch_size=args.graph_train_batch_size,
         )
         for name in ("G0", "G1")
     }
@@ -407,7 +407,7 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 def _run_one_graph_model(
     model: GraphAblationModel, graph: GraphManifest, store: PreprocessorStore, name: str,
     epochs: int, seed: int, output: Path, device: str | torch.device = "cpu",
-    validation_batch_size: int = 32,
+    validation_batch_size: int = 32, train_batch_size: int = 32,
 ) -> dict[str, Any]:
     selected_device = resolve_graph_device(device) if isinstance(device, str) else device
     _validate_graph_run_provenance(model, graph)
@@ -423,22 +423,31 @@ def _run_one_graph_model(
         raise ValueError("graph manifest requires non-empty train and validation snapshots")
     if validation_batch_size < 1:
         raise ValueError("validation_batch_size must be positive")
+    if train_batch_size < 1:
+        raise ValueError("train_batch_size must be positive")
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     optimizer = torch.optim.Adam(trainable, weight_decay=1e-5)
     losses: list[float] = []
     for _ in range(epochs):
         model.train()
-        epoch_losses = []
-        for snapshot in train:
+        # Training keeps its deterministic chronological (unshuffled) snapshot order; snapshots
+        # are stacked into equal-weighted mini-batches so one optimizer.step covers many graphs,
+        # for both G0 and G1 identically. This is an approved R10 SGD re-baseline (one step per
+        # batch instead of per snapshot); at train_batch_size=1 it matches the per-snapshot loop.
+        epoch_loss_sum = torch.zeros((), device=selected_device)
+        epoch_snapshot_count = 0
+        for start in range(0, len(train), train_batch_size):
+            snapshots = train[start:start + train_batch_size]
             optimizer.zero_grad()
-            prediction, target = _graph_prediction(model, snapshot, selected_device)
-            loss = torch.nn.functional.mse_loss(prediction, target)
+            predictions, targets = _graph_prediction_batch(model, snapshots, selected_device)
+            loss = _mean_snapshot_mse(predictions, targets)
             loss.backward()
             if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
                 raise RuntimeError("frozen graph encoder received gradients")
             optimizer.step()
-            epoch_losses.append(loss.detach())
-        losses.append(torch.stack(epoch_losses).mean().item())
+            epoch_loss_sum = epoch_loss_sum + loss.detach() * len(snapshots)
+            epoch_snapshot_count += len(snapshots)
+        losses.append((epoch_loss_sum / epoch_snapshot_count).item())
     model.eval()
     records = []
     with torch.no_grad():
@@ -461,7 +470,8 @@ def _run_one_graph_model(
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
                                             "train_losses": losses, "validation_loss": validation_loss,
                                             "runtime": _graph_runtime_metadata(str(device), selected_device),
-                                            "validation_metrics": evaluation["metrics"]})
+                                            "validation_metrics": evaluation["metrics"],
+                                            "nonpositive_prediction_rate": evaluation["nonpositive_prediction_rate"]})
     return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
             "validation_metrics": evaluation["metrics"]}
 
@@ -688,7 +698,9 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     parser.add_argument("--graph-batch-size", type=int, default=32,
-                        help="validation graph snapshots per CUDA batch (training remains per snapshot)")
+                        help="validation graph snapshots per batch")
+    parser.add_argument("--graph-train-batch-size", type=int, default=32,
+                        help="training graph snapshots per optimizer step (mini-batched, unshuffled)")
     parser.add_argument("--output-dir", type=Path, default=_ROOT / "results" / "pooled_news_gnn_pilot")
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)
