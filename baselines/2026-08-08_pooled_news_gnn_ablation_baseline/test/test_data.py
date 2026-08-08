@@ -273,8 +273,11 @@ def test_real_panel_slice_and_source_timestamp_use_effective_trading_date(tmp_pa
     source_path = source_root / "data" / "news_articles.csv"
     assert panel_path.exists()
     assert source_path.exists()
-    with pytest.raises(ValueError, match="finite"):
-        load_effective_news_panel(panel_path, tickers=["ACB"])
+    panel_without_provenance = _write_news_panel(
+        tmp_path, [("ACB", "2020-01-01", [1.0, 2.0])]
+    )
+    with pytest.raises(ValueError, match="provenance"):
+        load_effective_news_panel(panel_without_provenance, tickers=["ACB"], require_provenance=True)
     source = pd.read_csv(source_path, usecols=["title", "pub_date"], nrows=5000)
     record = source[source["title"].fillna("").str.contains(r"\bACB\b", regex=True)].iloc[0]
     calendar = pd.read_csv(_ROOT / "data" / "processed" / "ACB_processed.csv", usecols=["date"])["date"]
