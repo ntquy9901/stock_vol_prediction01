@@ -296,10 +296,36 @@ def test_runner_news_loader_converts_sparse_panel_cells_to_zero_vectors(tmp_path
     pd.DataFrame({"ticker": ["AAA"], "date": ["2020-01-01"], "f0": [np.nan], "f1": [2.0]}).to_parquet(
         panel_path, index=False
     )
+    panel_path.with_suffix(".provenance.json").write_text(
+        '{"fit_period_end": "2019-12-31", "missing_value_policy": "zero_fill"}', encoding="utf-8"
+    )
 
-    panel = run_pilot.load_runner_news_panel(panel_path, ["AAA"])
+    panel = run_pilot.load_runner_news_panel(panel_path, ["AAA"], {"AAA": "2020-01-01"})
 
     np.testing.assert_allclose(panel.values[("AAA", "2020-01-01")], [0.0, 2.0])
+
+
+def test_runner_news_loader_keeps_all_nan_row_absent_with_stable_feature_order(tmp_path: Path) -> None:
+    panel_path = tmp_path / "panel.parquet"
+    pd.DataFrame({
+        "ticker": ["AAA", "AAA"], "date": ["2020-01-01", "2020-01-02"],
+        "z_feature": [np.nan, 3.0], "a_feature": [np.nan, 2.0],
+    }).to_parquet(panel_path, index=False)
+    panel_path.with_suffix(".provenance.json").write_text(
+        '{"fit_period_end": "2019-12-31", "missing_value_policy": "zero_fill"}', encoding="utf-8"
+    )
+    sample = PooledSample(
+        SampleKey(0, "AAA", "2020-01-03"), np.ones((2, 3)), np.zeros((2, 0)), np.zeros(2, dtype=np.int8),
+        1.0, 1.0, 1.0, ("2020-01-01", "2020-01-02"),
+    )
+
+    panel = run_pilot.load_runner_news_panel(panel_path, ["AAA"], {"AAA": "2020-01-01"})
+    attached = run_pilot.attach_news([sample], panel, panel.feature_cols)[0]
+
+    assert panel.feature_cols == ("a_feature", "z_feature")
+    assert ("AAA", "2020-01-01") not in panel.values
+    np.testing.assert_array_equal(attached.news_mask, [0, 1])
+    np.testing.assert_allclose(attached.x_news, [[0.0, 0.0], [2.0, 3.0]])
 
 
 def test_smoke_filter_limits_each_split_before_manifest_building() -> None:

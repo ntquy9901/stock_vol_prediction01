@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 import numpy as np
-import pandas as pd
 from sklearn.linear_model import LinearRegression
 import torch
 from torch.utils.data import DataLoader, Dataset
@@ -27,11 +26,11 @@ for _path in (str(_ROOT), str(_CODE)):
 from data import (  # noqa: E402
     PooledManifest,
     PooledSample,
-    NewsPanel,
     SplitFrames,
     attach_news,
     build_pooled_manifest,
     load_and_split_price_data,
+    load_effective_news_panel,
 )
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 from train import evaluate_records, run_training  # noqa: E402
@@ -189,7 +188,11 @@ def build_screening_inputs(smoke: bool, max_tickers: int | None) -> ScreeningInp
     }
     store = PreprocessorStore(preprocessors)
     manifest = build_pooled_manifest(splits, store)
-    panel = load_runner_news_panel(_ROOT / "data" / "features" / "dual_group_news_panel.parquet", selected)
+    panel = load_runner_news_panel(
+        _ROOT / "data" / "features" / "dual_group_news_panel.parquet",
+        selected,
+        _train_news_cutoffs(manifest),
+    )
     attached = {
         split: tuple(attach_news(manifest.samples[split], panel, panel.feature_cols))
         for split in ("train", "val", "test")
@@ -205,22 +208,28 @@ def build_screening_inputs(smoke: bool, max_tickers: int | None) -> ScreeningInp
     })
 
 
-def load_runner_news_panel(path: Path | str, tickers: Sequence[str]) -> NewsPanel:
-    """Load sparse cached news features, treating absent source-group cells as zero features."""
+def load_runner_news_panel(
+    path: Path | str, tickers: Sequence[str], train_cutoffs: Mapping[str, str]
+):
+    """Use the Task 3 loader so date, feature, missing-value, and provenance gates are shared."""
 
-    frame = pd.read_parquet(path, filters=[("ticker", "in", list(tickers))])
-    required = {"ticker", "date"}
-    if not required.issubset(frame.columns):
-        raise ValueError("news panel must contain ticker and date")
-    feature_cols = tuple(column for column in frame.columns if column not in required)
-    if not feature_cols or frame.duplicated(["ticker", "date"]).any():
-        raise ValueError("news panel must have unique rows and feature columns")
-    numeric = frame.loc[:, feature_cols].apply(pd.to_numeric, errors="raise").fillna(0.0)
-    values = {
-        (str(row.ticker), str(pd.Timestamp(row.date).date())): numeric.iloc[offset].to_numpy(dtype=np.float32)
-        for offset, (_, row) in enumerate(frame.loc[:, ["ticker", "date"]].iterrows())
-    }
-    return NewsPanel(values, feature_cols, {"source": str(path), "sparse_cells_filled_with_zero": True})
+    return load_effective_news_panel(
+        path,
+        eligible_train_cutoff=train_cutoffs,
+        tickers=tickers,
+        require_provenance=True,
+    )
+
+
+def _train_news_cutoffs(manifest: PooledManifest) -> dict[str, str]:
+    cutoffs: dict[str, str] = {}
+    for sample in manifest.samples["train"]:
+        if not sample.input_dates:
+            raise ValueError("pooled training samples must retain causal input dates")
+        cutoffs[sample.key.ticker] = max(cutoffs.get(sample.key.ticker, ""), sample.input_dates[-1])
+    if not cutoffs:
+        raise ValueError("pooled training manifest has no news provenance cutoff")
+    return cutoffs
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
