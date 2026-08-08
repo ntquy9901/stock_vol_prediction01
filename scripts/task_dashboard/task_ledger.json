@@ -472,5 +472,79 @@
     ],
     "result_summary": "HEADLINE = NEGATIVE. ~7.6x more data (73k vs 9.6k) but validation moves <1% with mixed sign; HAR on par/ahead of deep models under BOTH regimes. Pooling does NOT create a HAR-beating regime. Track B premise NOT supported at 5-ep/3-seed/h5 screening (df=2 low power; n>=5 needed). Positive still standing: deep beats HAR on QLIKE.",
     "report_md": "docs/reports/2026-08-08_1819_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "t1.2-parsimony-pooled",
+    "phase": "Track B / Phase 1",
+    "title": "Parsimony on pooled: news helps, gate inert, HAR beaten only on QLIKE",
+    "status": "done",
+    "timestamp": "2026-08-08 18:31",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "5e9ba5a"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest docs/reports/test_t12_parsimony_pooled.py -q",
+        "result": "6 passed"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "News P2 vs P1",
+        "result": "rmse t=-4.81, qlike t=-6.94, 3/3 seeds improve -> news HELPS (significant)"
+      },
+      {
+        "cmd": "Gate P3 vs P2",
+        "result": "0/3 improve, qlike t=1.05 -> gate INERT (null)"
+      },
+      {
+        "cmd": "P2 vs HAR",
+        "result": "rmse tie (t=1.1), qlike t=-59.5 -> news recovers RMSE + crushes QLIKE"
+      }
+    ],
+    "quality_gate": {
+      "tests": "pass",
+      "lint": "pass",
+      "code_review": "reproducible script output verified",
+      "diff_cover": "not run (tooling gap)"
+    },
+    "code_review": {
+      "layers": [
+        "reproduced-analysis"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "reuse A1 pooled cells (no wasted runs)",
+        "ok": true
+      },
+      {
+        "item": "6 tests pass",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "parsimony verdict table",
+        "ok": true
+      },
+      {
+        "item": "n>=5 (follow-up)",
+        "ok": false
+      }
+    ],
+    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R\u00b2; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
+    "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
   }
 ]
