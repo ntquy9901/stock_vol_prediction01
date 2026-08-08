@@ -74,6 +74,48 @@ class ScreeningInputs:
     smoke_filter: Mapping[str, Any]
 
 
+def build_graph_bound_p3_warm_start(
+    pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str,
+    seed: int, store: PreprocessorStore, epochs: int = 1,
+) -> Path:
+    """Train a fresh P3 only on graph-bound samples and attest its exact provenance."""
+
+    allowed = tuple(sample for sample in pooled_manifest.samples["train"]
+                    if sample.key.target_date <= graph_manifest.train_end_date)
+    if not allowed:
+        raise ValueError("no pooled P3 training samples fall within the graph train boundary")
+    if epochs < 1 or epochs > 10:
+        raise ValueError("graph-bound P3 epochs must be between 1 and 10")
+    price_dim, news_dim = allowed[0].x_price_raw.shape[1], allowed[0].x_news.shape[1]
+    if news_dim == 0:
+        raise ValueError("graph-bound P3 requires attached news features")
+    torch.manual_seed(seed)
+    model = PooledPriceNewsLSTM(price_dim, news_dim, max(pooled_manifest.ticker_to_id.values()) + 1,
+                                 use_gate=True, dropout=0.0)
+    optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
+    for _ in range(epochs):
+        for sample in allowed:
+            optimizer.zero_grad()
+            prediction = model(torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
+                               torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
+                               torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
+                               torch.tensor([sample.key.ticker_id], dtype=torch.long))
+            raw_target = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
+            target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([raw_target]))
+            torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32)).backward()
+            optimizer.step()
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    path = out / "graph_bound_p3_warm_start.pt"
+    torch.save({"config_name": "P3", "seed": seed, "model_state": model.state_dict(),
+                "graph_bound_warm_start": True,
+                "max_training_target_date": max(sample.key.target_date for sample in allowed),
+                "graph_train_end_date": graph_manifest.train_end_date,
+                "training_sample_hash": _canonical_sample_hash(allowed),
+                "graph_manifest_hash": graph_manifest.content_hash("train")}, path)
+    return path
+
+
 def build_graph_safe_p3_checkpoint(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
     warm_start_checkpoint: Path | str, store: PreprocessorStore, epochs: int = 1,
@@ -250,8 +292,6 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
 def run_graph_screening(args: argparse.Namespace) -> Path:
     """Run the bounded, matched G0/G1 graph ablation without touching P0-P3 semantics."""
 
-    if args.p3_checkpoint is None:
-        raise ValueError("--p3-checkpoint is required for --phase graph")
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
     inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3")
@@ -274,9 +314,11 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     )
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    graph_safe = build_graph_safe_p3_checkpoint(
-        graph_pooled, graph, out, args.seed, args.p3_checkpoint, graph_store, epochs=1,
+    warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
+        graph_pooled, graph, out, args.seed, graph_store, epochs=1,
     )
+    graph_safe = build_graph_safe_p3_checkpoint(graph_pooled, graph, out, args.seed, warm_start,
+                                                 graph_store, epochs=1)
     graph_hash = graph.content_hash("train")
     results = {
         name: _run_one_graph_model(

@@ -280,6 +280,25 @@ def test_unrestricted_task6_style_p3_checkpoint_is_rejected_not_relabelled(tmp_p
     assert not (tmp_path / "graph_bound_p3_warm_start.pt").exists()
 
 
+def test_fresh_graph_bound_p3_producer_attests_restricted_samples(tmp_path: Path) -> None:
+    from data import GraphManifest, PooledManifest
+    from run_pilot import build_graph_bound_p3_warm_start
+
+    sample = PooledSample(SampleKey(0, "AAA", "2020-01-31"), np.ones((22, 3)), np.ones((22, 2)),
+                          np.ones(22, dtype=np.int8), 1.0)
+    pooled = PooledManifest({"train": (sample,), "val": (), "test": ()}, {}, {"AAA": 0}, "preprocessing")
+    graph = GraphManifest((), {"AAA": 0}, "2020-03-31", "2020-04-30",
+                          {"snapshots": "x", "node_vocabulary": "x", "adjacency": "x", "tensors": "x"})
+    processor = TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )
+
+    path = build_graph_bound_p3_warm_start(pooled, graph, tmp_path, 42, PreprocessorStore({0: processor}))
+
+    assert torch.load(path, weights_only=False)["graph_bound_warm_start"] is True
+
+
 def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Path) -> None:
     from data import GraphManifest, GraphNode, GraphSnapshot
     from run_pilot import _run_one_graph_model, parse_args
