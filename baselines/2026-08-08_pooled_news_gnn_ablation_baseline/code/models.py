@@ -128,17 +128,36 @@ class _ResidualMessagePassing(nn.Module):
         super().__init__()
         self.projection = nn.Linear(hidden_dim, hidden_dim, bias=False)
 
-    def forward(self, node_features: torch.Tensor, adjacency: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, node_features: torch.Tensor, adjacency: torch.Tensor,
+        presence_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         if adjacency.ndim == 2:
             adjacency = adjacency.unsqueeze(0).expand(node_features.shape[0], -1, -1)
         if adjacency.ndim != 3 or adjacency.shape[:2] != node_features.shape[:2]:
             raise ValueError("adjacency must be [nodes, nodes] or [batch, nodes, nodes]")
+        present: torch.Tensor | None = None
+        if presence_mask is not None:
+            if presence_mask.shape != node_features.shape[:2]:
+                raise ValueError("presence_mask must be [batch, nodes]")
+            present = presence_mask.to(dtype=torch.bool)
+            # Absent nodes contribute nothing and are never attended to (zero their
+            # features and any incoming edge), so present outputs cannot depend on them.
+            node_features = node_features * present.unsqueeze(-1)
+            adjacency = adjacency * present.unsqueeze(1).to(adjacency.dtype)
         topology = adjacency != 0
-        if not topology.any(dim=-1).all():
-            raise ValueError("each graph node requires a self-loop or neighbor")
+        needs_neighbor = topology.any(dim=-1)
+        if present is not None:
+            needs_neighbor = needs_neighbor | ~present
+        if not needs_neighbor.all():
+            raise ValueError("each present graph node requires a self-loop or neighbor")
         weights = torch.softmax(
             adjacency.to(node_features.dtype).masked_fill(~topology, float("-inf")), dim=-1,
         )
+        if present is not None:
+            # Absent rows have an all -inf logit row (NaN after softmax); zero them so
+            # absent nodes emit nothing and the NaN never reaches the aggregation.
+            weights = weights.masked_fill(~present.unsqueeze(-1), 0.0)
         return self.projection(torch.bmm(weights, node_features))
 
 
@@ -250,6 +269,7 @@ class GraphAblationModel(nn.Module):
     def forward(
         self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
         ticker_ids: torch.Tensor, adjacency: torch.Tensor,
+        presence_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         batched = x_price.ndim == 4
         if batched:
@@ -264,6 +284,11 @@ class GraphAblationModel(nn.Module):
                 adjacency = adjacency.unsqueeze(0).expand(batch_size, -1, -1)
             if adjacency.ndim != 3 or adjacency.shape != (batch_size, node_count, node_count):
                 raise ValueError("batched adjacency must be [batch, nodes, nodes]")
+            if presence_mask is not None and presence_mask.shape != (batch_size, node_count):
+                raise ValueError("batched presence_mask must be [batch, nodes]")
+        elif presence_mask is not None and (presence_mask.ndim != 1
+                                            or presence_mask.shape[0] != x_price.shape[0]):
+            raise ValueError("presence_mask must be a 1-D vector over nodes")
         with torch.no_grad():
             _, (price_hidden, _) = self.price_encoder(x_price)
             news_hidden = self._news_encoder._encode_news(x_news, news_mask)
@@ -273,9 +298,10 @@ class GraphAblationModel(nn.Module):
         if self.message_passing is not None:
             if batched:
                 base = base.reshape(batch_size, node_count, -1)
-                base = base + self.message_passing(base, adjacency)
+                base = base + self.message_passing(base, adjacency, presence_mask)
             else:
-                base = base + self.message_passing(base.unsqueeze(0), adjacency).squeeze(0)
+                batch_presence = None if presence_mask is None else presence_mask.unsqueeze(0)
+                base = base + self.message_passing(base.unsqueeze(0), adjacency, batch_presence).squeeze(0)
         output = self.head(base).squeeze(-1)
         if batched:
             output = output.reshape(batch_size, node_count)
