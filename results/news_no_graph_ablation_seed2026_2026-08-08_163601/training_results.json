@@ -1,0 +1,92 @@
+{
+  "model": "PerTickerGatedNewsBaseline (NEWS + NO-GRAPH ablation, identity adjacency)",
+  "timestamp": "2026-08-08_163601",
+  "seed": 2026,
+  "architecture": "HAR(LSTM+GNN) + per-ticker-gated news -> concat fusion",
+  "graph_method": "identity (no cross-stock edges) — ablation of the FULL (news+knn) model",
+  "ablation": {
+    "type": "news_no_graph_identity_adjacency",
+    "reference_run": "FULL per-ticker news gate, baselines/2026-07-26_per_ticker_news_gate_baseline/code/train_per_ticker_gate.py, graph_method='knn', 10+10=20 epochs",
+    "description": "Same FULL news model / data / hyperparameters / 10+10 resume-chained 20-epoch protocol; the k-NN adjacency is replaced with torch.eye at every forward call so the GAT branch cannot pass messages across stocks (per-node transform only, same parameter count). News branch fully present. This is the genuinely-missing (news, no graph) cell of the 2x2 grid.",
+    "sanity_check": null
+  },
+  "config": {
+    "num_stocks": 33,
+    "learning_rate": 0.005,
+    "gate_lr": 0.05,
+    "batch_size": 32,
+    "weight_decay": 1e-05,
+    "d_news": 64,
+    "dropout": 0.5,
+    "graph_method": "knn",
+    "num_epochs_trained": 20,
+    "epochs_per_leg": 10,
+    "num_legs": 2,
+    "final_leg_best_epoch": 18
+  },
+  "training_summary": {
+    "num_epochs_trained": 20,
+    "final_leg_best_epoch": 18,
+    "final_leg_best_val_loss": 0.8848583102226257,
+    "total_time_minutes": 8.946357508500418
+  },
+  "final_gate_values": {
+    "ACB": 0.4845230281352997,
+    "BCM": 0.48136579990386963,
+    "BID": 0.49029263854026794,
+    "BVH": 0.48739296197891235,
+    "CTG": 0.4973171353340149,
+    "FPT": 0.4948698580265045,
+    "GAS": 0.4693451225757599,
+    "GVR": 0.5082880258560181,
+    "HDB": 0.46720173954963684,
+    "HPG": 0.48055151104927063,
+    "LPB": 0.4881880283355713,
+    "MBB": 0.4775242805480957,
+    "MSN": 0.47497808933258057,
+    "MWG": 0.49322378635406494,
+    "NVL": 0.4913659393787384,
+    "PDR": 0.48122408986091614,
+    "PLX": 0.502821147441864,
+    "POW": 0.48264259099960327,
+    "SAB": 0.5161212682723999,
+    "SHB": 0.46849724650382996,
+    "SSB": 0.471492201089859,
+    "SSI": 0.48180243372917175,
+    "STB": 0.48190852999687195,
+    "TCB": 0.47432711720466614,
+    "TPB": 0.4638146758079529,
+    "VCB": 0.4945821464061737,
+    "VHM": 0.508709728717804,
+    "VIB": 0.47345706820487976,
+    "VIC": 0.4956033527851105,
+    "VJC": 0.5014168620109558,
+    "VNM": 0.4898136258125305,
+    "VPB": 0.4690622389316559,
+    "VRE": 0.4859451651573181
+  },
+  "validation_metrics": {
+    "mse": 5.267988399282331e-06,
+    "rmse": 0.0022952098813141973,
+    "mae": 0.0006529575912281871,
+    "r2": 0.7444792985916138,
+    "qlike": 0.645439863204956,
+    "directional_accuracy": 47.80941949616648,
+    "directional_accuracy_flat_biased": 69.47368421052632,
+    "directional_accuracy_per_stock": 47.80941949616648
+  },
+  "test_metrics": {
+    "mse": 6.7680689426197205e-06,
+    "rmse": 0.002601551256965682,
+    "mae": 0.0007646419107913971,
+    "r2": 0.8218255639076233,
+    "qlike": 0.43863922357559204,
+    "directional_accuracy": 48.33968426782798,
+    "directional_accuracy_per_stock": 48.33968426782798
+  },
+  "provenance": {
+    "git_sha": "cbbf75e3d7c88095627ffcd6fb8a0702f0a65db9",
+    "git_dirty": true,
+    "timestamp": "2026-08-08T09:44:59.261609+00:00"
+  }
+}
