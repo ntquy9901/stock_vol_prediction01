@@ -1,7 +1,7 @@
 # Pooled LSTM, News, and GNN Ablation Pilot — Current Context
 
 **Updated:** 2026-08-08
-**Status:** Implementation in progress in an isolated worktree
+**Status:** Pilot implementation complete through GPU and batching optimization; full GNN 5-epoch result is partial (G0 complete, G1 safety-blocked).
 
 ## Research decision
 
@@ -61,8 +61,25 @@
    - Corrections include full-window split-local HAR, persisted/hash-validated immutable manifests,
      exact feature-order enforcement, JSON round trips, finite/shape validation, read-only copied
      sample tensors, typed missing mappings, and strict integer ticker IDs.
-3. Task 3 — causal news alignment and manifest hashes: implementation in progress.
-4. Tasks 4-10 remain pending: datasets/loaders, pooled baselines, news branch, runner, graph-safe checkpoint, GNN ablations, pilot execution, and final validation/reporting.
+3. Tasks 3-7 — causal news alignment, datasets/loaders, pooled baselines, news branch, runner and graph ablation: completed in the pilot worktree.
+4. GPU path commit `387262e`: graph CLI supports `--device auto|cpu|cuda`, validates provenance before device transfer, records CUDA metadata, and preserves snapshot order. Independent review PASS; 83 tests and Ruff passed.
+5. Pooled batching commits (worktree equivalents `24d5f68`, `c92020c`): default batch 256, cached normalized targets, pinned/non-blocking CUDA transfers, and sample-weighted loss aggregation. Independent review PASS.
+6. Graph validation batching commits (worktree equivalents `3297004`, `417d556`): validation-only batching, per-snapshot weighting corrected for short final batches; training remains one-update-per-snapshot. Independent review PASS.
+7. Final pilot worktree verification: 87 tests passed, Ruff passed, `git diff --check` passed. Summary: `docs/reports/2026-08-08_1320_summaryOfUpdate_report.md`.
+
+## Verified pilot results
+
+- Full 33-ticker GNN CUDA 5-epoch run: approximately 18m44s on RTX 4060 (`torch 2.6.0+cu124`). G0: RMSE `0.0026032073`, QLIKE `0.82523848`, DirAcc `49.3902%`, R² `0.70135174`.
+- G1 was blocked by the existing safety guard because nonpositive predictions were `1.78%` (threshold `1%`). Checkpoints were preserved; do not treat G1 as a completed result.
+- Three-ticker batching benchmarks did not show end-to-end speedup because preprocessing dominates. Graph batched validation metrics matched serial validation; larger pools may benefit.
+- Earlier full 33-ticker references: P0 HAR RMSE `0.0014845167`, P1 pooled LSTM RMSE `0.0014670183`; do not claim G0 currently beats these baselines.
+
+## Current continuation point
+
+- Active implementation branch: `feature/pooled-news-gnn-pilot` in `C:\luanvan\stock_vol_prediction01\.worktrees\pooled-news-gnn-pilot`.
+- Latest optimization commits on that branch: `24d5f68`, `c92020c`, `3297004`, `417d556`, report `298464f`.
+- Untracked `temp/` and task report files are user-owned experiment artifacts; preserve them.
+- Next research action: investigate positivity parameterization/safety handling for G1, then rerun G1 for 5 epochs. Do not increase beyond 10 epochs without explicit approval. Consider preprocessing/index caching before claiming batching speedup.
 
 ## Working rules and preservation notes
 

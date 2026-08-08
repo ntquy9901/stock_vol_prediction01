@@ -6,6 +6,17 @@
 **Last Updated:** 2026-08-08 (Added pooled LSTM/news/GNN ablation pilot state; the 2026-08-02
 Feature Categories/MODELS_TO_COMPARE correction remains applicable.)
 
+## Current Handoff State (2026-08-08)
+
+- Active pilot worktree: `.worktrees/pooled-news-gnn-pilot`, branch `feature/pooled-news-gnn-pilot`.
+- Pooled P1/P2/P3 use all eligible per-ticker chronological windows; common-date alignment is reserved for graph tensors and legacy aligned news/gate comparisons.
+- GPU graph path is commit `387262e`; it supports `--device auto|cpu|cuda`, validates provenance before transfers, and was independently reviewed PASS.
+- Pooled batching uses default batch size 256, cached normalized targets, pinned/non-blocking CUDA transfer, and sample-weighted loss aggregation. Graph validation batching is validation-only; graph training remains one update per snapshot.
+- Latest integrated optimization commits: `24d5f68`, `c92020c`, `3297004`, `417d556`; summary report `docs/reports/2026-08-08_1320_summaryOfUpdate_report.md`.
+- Verification after integration: 87 baseline tests passed, Ruff passed, and `git diff --check` passed.
+- Full 33-ticker CUDA GNN 5-epoch run completed G0 only (RMSE `0.0026032073`, QLIKE `0.82523848`, DirAcc `49.3902%`, R² `0.70135174`). G1 was safety-blocked by `1.78%` nonpositive predictions versus the `1%` threshold; checkpoints remain available.
+- Next continuation: fix or redesign positivity parameterization for G1, then rerun 5 epochs. Preserve split/scaler/provenance rules and do not exceed 10 epochs without explicit approval.
+
 ---
 
 ## 🎯 PROJECT OVERVIEW
