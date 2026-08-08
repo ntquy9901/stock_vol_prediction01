@@ -1,0 +1,47 @@
+{
+  "model": "Parallel LSTM-GNN (k-NN graph, k=4)",
+  "timestamp": "2026-08-06_060944",
+  "seed": 42,
+  "k_neighbors": 4,
+  "architecture": "Parallel (LSTM temporal + GNN spatial) -> Concatenation fusion",
+  "graph_method": "knn",
+  "sensitivity_check": {
+    "type": "knn_k_sweep",
+    "reference_run": "graph_method='knn', k=8, train_parallel_enhanced.py, 20 epochs (results/parallel_lstm_gnn_knn_2026-08-03_230722)",
+    "k_lever": "LSTMGATConfig.top_k_neighbors patched in-process; config.py unchanged",
+    "edge_verification": {
+      "num_stocks": 33,
+      "offdiag_nonzero_edges_batch0": 214,
+      "avg_offdiag_degree_batch0": 6.484848484848484
+    }
+  },
+  "config": {
+    "num_stocks": 30,
+    "top_k_neighbors": 4,
+    "learning_rate": 0.001,
+    "batch_size": 11,
+    "num_epochs_trained": 20,
+    "best_epoch": 18,
+    "patience": 20,
+    "weight_decay": 1e-05
+  },
+  "training_summary": {
+    "num_epochs_trained": 20,
+    "best_epoch": 18,
+    "best_val_loss": 0.8911870121955872,
+    "total_time_minutes": 32.04388049840927
+  },
+  "test_metrics": {
+    "mse": 7.739433385722805e-06,
+    "rmse": 0.0027819837141368755,
+    "mae": 0.0007930570864118636,
+    "r2": 0.7962536811828613,
+    "qlike": 0.44611257314682007,
+    "directional_accuracy": 48.44855743059336
+  },
+  "provenance": {
+    "git_sha": "bbad0e2a43eb08ae4ef2d3c1412dd0329a442cbb",
+    "git_dirty": true,
+    "timestamp": "2026-08-05T23:41:55.170011+00:00"
+  }
+}
