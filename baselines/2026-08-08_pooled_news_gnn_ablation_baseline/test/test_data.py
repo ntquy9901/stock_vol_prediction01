@@ -152,6 +152,8 @@ def test_news_panel_uses_effective_dates_and_masks_missing_days(tmp_path: Path) 
 
 
 def test_after_close_timestamp_maps_to_next_effective_trading_date() -> None:
+    from vendor_data_eda.phase04_news_helpers import effective_trading_date as vendor_effective_trading_date
+
     exact = effective_trading_date(
         pd.Series(["2020-01-02T15:00:00+07:00"]),
         pd.Series(["2020-01-02", "2020-01-03"]),
@@ -161,7 +163,17 @@ def test_after_close_timestamp_maps_to_next_effective_trading_date() -> None:
         pd.Series(["2020-01-02", "2020-01-03"]),
     ).iloc[0]
 
-    assert exact.strftime("%Y-%m-%d") == "2020-01-02"
+    vendor_exact = vendor_effective_trading_date(
+        pd.Series(["2020-01-02T15:00:00+07:00"]),
+        pd.Series(["2020-01-02", "2020-01-03"]),
+    ).iloc[0]
+    vendor_after = vendor_effective_trading_date(
+        pd.Series(["2020-01-02T15:00:01+07:00"]),
+        pd.Series(["2020-01-02", "2020-01-03"]),
+    ).iloc[0]
+
+    assert exact.strftime("%Y-%m-%d") == vendor_exact.strftime("%Y-%m-%d") == "2020-01-03"
+    assert after.strftime("%Y-%m-%d") == vendor_after.strftime("%Y-%m-%d") == "2020-01-03"
     assert after.strftime("%Y-%m-%d") == "2020-01-03"
 
 

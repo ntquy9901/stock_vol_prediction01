@@ -448,7 +448,7 @@ def effective_trading_date(news_dt: pd.Series, trading_dates: Iterable[object], 
         if timestamp.tzinfo is not None:
             timestamp = timestamp.tz_convert("Asia/Ho_Chi_Minh").tz_localize(None)
         candidate = timestamp.normalize()
-        if timestamp.time() > time(close_hour, 0):
+        if timestamp.time() >= time(close_hour, 0):
             candidate += pd.Timedelta(days=1)
         eligible = next((pd.Timestamp(day) for day in calendar if pd.Timestamp(day) >= candidate), pd.NaT)
         output.append(eligible)
