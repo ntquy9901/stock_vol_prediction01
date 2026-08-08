@@ -1,6 +1,6 @@
 # Pooled LSTM, News, and GNN Ablation Pilot — Current Context
 
-**Updated:** 2026-08-08  
+**Updated:** 2026-08-08
 **Status:** Implementation in progress in an isolated worktree
 
 ## Research decision
