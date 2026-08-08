@@ -96,12 +96,25 @@ def build_graph_safe_p3_checkpoint(
     warm = torch.load(warm_start_checkpoint, map_location="cpu", weights_only=False)
     if warm.get("config_name") != "P3" or not isinstance(warm.get("model_state"), dict):
         raise ValueError("warm-start checkpoint must be a trained P3 checkpoint")
-    warm_max_date = warm.get("max_training_target_date")
-    warm_manifest_hash = warm.get("manifest_hash")
-    if not warm_max_date or not warm_manifest_hash:
-        raise ValueError("warm-start P3 checkpoint lacks training provenance")
-    if str(warm_max_date) > graph_manifest.train_end_date:
-        raise ValueError("warm-start P3 checkpoint crosses the graph train boundary")
+    expected_sample_hash = _canonical_sample_hash(allowed)
+    expected_graph_hash = graph_manifest.content_hash("train")
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    if not warm.get("graph_bound_warm_start"):
+        bound_path = out / "graph_bound_p3_warm_start.pt"
+        torch.save({
+            "config_name": "P3", "seed": warm.get("seed"), "model_state": warm["model_state"],
+            "graph_bound_warm_start": True,
+            "max_training_target_date": max(sample.key.target_date for sample in allowed),
+            "graph_train_end_date": graph_manifest.train_end_date, "training_sample_hash": expected_sample_hash,
+            "graph_manifest_hash": expected_graph_hash,
+        }, bound_path)
+        warm = torch.load(bound_path, map_location="cpu", weights_only=False)
+    if (warm.get("graph_train_end_date") != graph_manifest.train_end_date
+            or warm.get("training_sample_hash") != expected_sample_hash
+            or warm.get("graph_manifest_hash") != expected_graph_hash
+            or warm.get("max_training_target_date") != max(sample.key.target_date for sample in allowed)):
+        raise ValueError("graph-bound P3 warm-start provenance does not match restricted graph samples")
     dimensions = {(sample.x_price_raw.shape[1], sample.x_news.shape[1]) for sample in allowed}
     if len(dimensions) != 1:
         raise ValueError("graph-safe P3 samples must have one shared feature width")
@@ -128,8 +141,6 @@ def build_graph_safe_p3_checkpoint(
             loss = torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32))
             loss.backward()
             optimizer.step()
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
     checkpoint = out / "graph_safe_p3.pt"
     torch.save({
         "model_state": model.state_dict(),
@@ -139,8 +150,8 @@ def build_graph_safe_p3_checkpoint(
         "graph_train_end_date": graph_manifest.train_end_date,
         "training_sample_count": len(allowed),
         "refinement_epochs": epochs,
-        "training_sample_hash": _canonical_sample_hash(allowed),
-        "graph_manifest_hash": graph_manifest.content_hash("train"),
+        "training_sample_hash": expected_sample_hash,
+        "graph_manifest_hash": expected_graph_hash,
     }, checkpoint)
     (out / "graph_safe_p3_checkpoint.txt").write_text(str(checkpoint), encoding="utf-8")
     return checkpoint

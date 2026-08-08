@@ -255,6 +255,32 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
     assert (tmp_path / "graph_safe_p3_checkpoint.txt").read_text(encoding="utf-8").strip() == str(checkpoint)
 
 
+def test_task6_style_p3_checkpoint_is_bound_to_current_graph_samples_before_refinement(tmp_path: Path) -> None:
+    from data import GraphManifest, PooledManifest
+    from run_pilot import build_graph_safe_p3_checkpoint
+
+    sample = PooledSample(SampleKey(0, "AAA", "2020-01-31"), np.ones((22, 3)), np.ones((22, 2)),
+                          np.ones(22, dtype=np.int8), 1.0)
+    pooled = PooledManifest({"train": (sample,), "val": (), "test": ()}, {}, {"AAA": 0}, "preprocessing")
+    graph = GraphManifest((), {"AAA": 0}, "2020-03-31", "2020-04-30",
+                          {"snapshots": "x", "node_vocabulary": "x", "adjacency": "x", "tensors": "x"})
+    p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0)
+    task6_best = tmp_path / "best.pt"
+    torch.save({"config_name": "P3", "seed": 42, "model_state": p3.state_dict()}, task6_best)
+    processor = TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )
+
+    build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, 42, task6_best,
+                                   PreprocessorStore({0: processor}))
+    bound = torch.load(tmp_path / "graph_bound_p3_warm_start.pt", weights_only=False)
+
+    assert bound["graph_train_end_date"] == graph.train_end_date
+    assert bound["training_sample_hash"]
+    assert bound["graph_manifest_hash"] == graph.content_hash("train")
+
+
 def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Path) -> None:
     from data import GraphManifest, GraphNode, GraphSnapshot
     from run_pilot import _run_one_graph_model, parse_args
