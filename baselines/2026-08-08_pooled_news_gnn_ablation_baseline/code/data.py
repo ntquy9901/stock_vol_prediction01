@@ -735,6 +735,11 @@ def build_graph_manifest(
             news, mask = _graph_news_tensors(ordered_tickers, input_dates, news_panel)
             snapshots.append(GraphSnapshot(target_date, split, input_dates, nodes, price, news, mask,
                                            _correlation_adjacency(price[:, :, 0])))
+    if not snapshots:
+        raise ValueError(
+            "graph manifest produced no snapshots: the common date axis is too short for "
+            f"seq_length={seq_length} and horizon={horizon}"
+        )
     hashes = {
         "node_vocabulary": _stable_hash(ticker_to_id),
         "snapshots": _stable_hash([_graph_snapshot_hash(snapshot) for snapshot in snapshots]),

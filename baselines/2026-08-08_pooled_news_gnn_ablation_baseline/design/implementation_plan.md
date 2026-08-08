@@ -4,8 +4,10 @@
 > (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
 > checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build and run a leakage-controlled horizon-5 pilot comparing pooled HAR, Price LSTM,
-Price+News, Price+News+Gate, and a matched GNN OFF/ON ablation.
+**Goal:** Build and run a leakage-controlled multi-horizon pilot comparing pooled HAR, Price LSTM,
+Price+News, Price+News+Gate, and a matched GNN OFF/ON ablation. The forecast horizon is a run
+parameter `h in {1, 5, 10, 22}` trading days (`--horizon`, default `h=5`, primary); one horizon per
+run, with outputs namespaced by `h{N}`.
 
 **Architecture:** P0-P3 share one deterministic per-ticker pooled sample manifest and train-only
 preprocessing. G0-G1 reuse frozen P3 encoders on a separately split common-date graph manifest and
@@ -16,7 +18,9 @@ diff-cover, ruff, existing `src.common` evaluation/HAR utilities.
 
 ## Global Constraints
 
-- Forecast horizon is 5 trading observations and input length is 22 observations.
+- Forecast horizon is a run parameter `h in {1, 5, 10, 22}` trading observations (default `h=5`,
+  primary) and input length is 22 observations. The pooled and graph manifests within one run share
+  the same horizon.
 - Pooled data is split per ticker chronologically 70%/15%/15% before HAR/window generation.
 - All loaders use `shuffle=False`; pooled samples sort by `(target_date, ticker_id)`.
 - Price, target, outlier, and learned-news preprocessing parameters fit train data only.

@@ -306,6 +306,121 @@ def test_cli_smoke_options_are_bounded_and_recorded(tmp_path: Path) -> None:
     assert args.epochs == 1
 
 
+def test_cli_horizon_option_parses_supported_values_and_defaults_to_five() -> None:
+    assert run_pilot.parse_args([]).horizon == 5
+    for value in ("1", "5", "10", "22"):
+        assert run_pilot.parse_args(["--horizon", value]).horizon == int(value)
+    with pytest.raises(SystemExit):
+        run_pilot.parse_args(["--horizon", "3"])
+
+
+def test_build_screening_inputs_threads_horizon_into_pooled_manifest(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    frame = pd.DataFrame({
+        "date": pd.date_range("2020-01-01", periods=100),
+        "parkinson_volatility": np.linspace(1.0, 5.0, 100),
+    })
+    splits = SplitFrames({"AAA": {name: frame.copy() for name in ("train", "val", "test")}}, {"AAA": 0})
+    monkeypatch.setattr(run_pilot, "load_and_split_price_data", lambda _path: splits)
+    captured: dict[str, object] = {}
+    real_builder = run_pilot.build_pooled_manifest
+
+    def spy(split_frames: object, preprocessors: object, **kwargs: object) -> object:
+        captured["horizon"] = kwargs.get("horizon")
+        return real_builder(split_frames, preprocessors, **kwargs)
+
+    monkeypatch.setattr(run_pilot, "build_pooled_manifest", spy)
+
+    run_pilot.build_screening_inputs(smoke=False, max_tickers=1, phase="P1", horizon=10)
+
+    assert captured["horizon"] == 10
+
+
+def test_pooled_screening_namespaces_outputs_by_horizon(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    manifest = _har_manifest()
+    loaders = {
+        split: DataLoader(run_pilot._ManifestDataset(manifest.samples[split], _store()), batch_size=2, shuffle=False)
+        for split in ("train", "val")
+    }
+
+    def build_inputs(smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5) -> run_pilot.ScreeningInputs:
+        return run_pilot.ScreeningInputs(manifest, _store(), loaders, {})
+
+    def train(*args: object, **_kwargs: object) -> Path:
+        output_dir = Path(args[3])
+        output_dir.mkdir(parents=True, exist_ok=True)
+        result = output_dir / "results.json"
+        result.write_text(json.dumps({"validation_metrics": {
+            "mse": 1.0, "rmse": 1.0, "mae": 1.0, "r2": 0.0, "qlike": 1.0, "directional_accuracy": 50.0,
+        }}), encoding="utf-8")
+        return result
+
+    monkeypatch.setattr(run_pilot, "build_screening_inputs", build_inputs)
+    monkeypatch.setattr(run_pilot, "run_training", train)
+    args = run_pilot.parse_args([
+        "--phase", "P1", "--epochs", "1", "--output-dir", str(tmp_path), "--horizon", "1",
+    ])
+
+    run_pilot.run_pooled_screening(args)
+
+    metadata = json.loads((tmp_path / "h1" / "screening_metadata.json").read_text(encoding="utf-8"))
+    assert metadata["horizon"] == 1
+
+
+def test_assert_matched_horizon_rejects_pooled_graph_mismatch() -> None:
+    run_pilot._assert_matched_horizon(22, 22)
+    with pytest.raises(ValueError, match="horizon"):
+        run_pilot._assert_matched_horizon(5, 22)
+
+
+def test_shared_horizon_22_keeps_graph_and_pooled_targets_within_train_boundary(tmp_path: Path) -> None:
+    from data import NewsPanel, PooledManifest, build_graph_manifest
+    from run_pilot import build_graph_bound_p3_warm_start, build_graph_safe_p3_checkpoint
+
+    dates = pd.date_range("2020-01-01", periods=150, freq="B")
+    frames = {
+        ticker: pd.DataFrame({"date": dates, "parkinson_volatility": np.arange(150, dtype=float) + offset + 1})
+        for ticker, offset in (("AAA", 0), ("BBB", 10))
+    }
+    graph_store = PreprocessorStore({
+        index: TickerPreprocessor.fit(frame, ["parkinson_volatility"], "parkinson_volatility")
+        for index, frame in enumerate(frames.values())
+    })
+    graph = build_graph_manifest(frames, NewsPanel({}, (), {}), graph_store, seq_length=22, horizon=22)
+
+    # (a) at horizon 22 the graph still yields train snapshots, none crossing the train boundary.
+    train_targets = [snapshot.target_date for snapshot in graph.snapshots if snapshot.split == "train"]
+    assert train_targets
+    assert all(target <= graph.train_end_date for target in train_targets)
+    assert all(
+        snapshot.target_date > graph.train_end_date for snapshot in graph.snapshots if snapshot.split != "train"
+    )
+
+    # (b) the graph-safe P3 checkpoint keeps only pooled train samples at or before the boundary.
+    def sample(date: str) -> PooledSample:
+        return PooledSample(SampleKey(0, "AAA", date), np.ones((22, 3)), np.ones((22, 2)),
+                            np.ones(22, dtype=np.int8), 1.0)
+
+    pooled = PooledManifest(
+        {"train": (sample(graph.train_end_date), sample(graph.val_end_date)), "val": (), "test": ()},
+        {}, {"AAA": 0}, "preprocessing",
+    )
+    checkpoint_store = PreprocessorStore({0: TickerPreprocessor(
+        ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
+        ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
+    )})
+    warm_start = build_graph_bound_p3_warm_start(pooled, graph, tmp_path, 42, checkpoint_store)
+    safe = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, 42, warm_start, checkpoint_store)
+    payload = torch.load(safe, weights_only=False)
+
+    assert payload["training_sample_count"] == 1
+    assert payload["max_training_target_date"] == graph.train_end_date
+    assert graph.val_end_date > graph.train_end_date
+
+
 def test_manifest_dataset_batches_without_changing_sample_values() -> None:
     sample = PooledSample(
         SampleKey(0, "AAA", "2020-01-01"),
@@ -428,7 +543,9 @@ def test_p1_runner_forwards_phase_to_price_only_input_builder(
     }
     captured: list[str] = []
 
-    def build_inputs(smoke: bool, max_tickers: int | None, phase: str) -> run_pilot.ScreeningInputs:
+    def build_inputs(
+        smoke: bool, max_tickers: int | None, phase: str, horizon: int = 5
+    ) -> run_pilot.ScreeningInputs:
         captured.append(phase)
         return run_pilot.ScreeningInputs(manifest, _store(), loaders, {})
 

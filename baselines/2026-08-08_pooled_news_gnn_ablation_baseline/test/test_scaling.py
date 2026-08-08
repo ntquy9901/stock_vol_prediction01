@@ -64,11 +64,14 @@ def test_zero_variance_uses_unit_std_and_round_trips() -> None:
     )
 
 
-def test_window_count_and_final_target_are_exact() -> None:
-    samples = build_ticker_samples(_frame(70), "AAA", 0, seq_length=22, horizon=5)
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_window_count_and_final_target_are_exact(horizon: int) -> None:
+    frame = _frame(70)
+    samples = build_ticker_samples(frame, "AAA", 0, seq_length=22, horizon=horizon)
 
-    assert len(samples) == 70 - 22 - 5 + 1
-    assert samples[-1].key.target_date == "2020-03-10"
+    assert len(samples) == 70 - 22 - horizon + 1
+    final_target_index = (len(samples) - 1) + 22 + horizon - 1
+    assert samples[-1].key.target_date == frame["date"].iloc[final_target_index]
 
 
 def test_extreme_validation_and_test_values_cannot_change_train_bounds() -> None:
@@ -81,12 +84,13 @@ def test_extreme_validation_and_test_values_cannot_change_train_bounds() -> None
     ).to_dict()
 
 
-def test_model_target_is_clipped_but_evaluation_target_is_untouched() -> None:
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_model_target_is_clipped_but_evaluation_target_is_untouched(horizon: int) -> None:
     train = _frame(70)
     preprocessor = TickerPreprocessor.fit(train, ["parkinson_volatility"], "parkinson_volatility")
     test = _frame(70)
     test.loc[69, "parkinson_volatility"] = 1e6
-    samples = build_ticker_samples(preprocessor.transform_frame(test), "AAA", 0, seq_length=22, horizon=5)
+    samples = build_ticker_samples(preprocessor.transform_frame(test), "AAA", 0, seq_length=22, horizon=horizon)
 
     assert samples[-1].y_model_raw == pytest.approx(preprocessor.upper_bound)
     assert samples[-1].y_eval_raw == 1e6
@@ -101,9 +105,12 @@ def test_har_drops_split_local_warmup_rows_before_windows() -> None:
     assert len(build_ticker_samples(transformed, "AAA", 0, seq_length=22, horizon=5)) == 23
 
 
-def test_manifest_is_deterministic_and_excludes_ineligible_tickers_once() -> None:
-    eligible = {name: _frame(50, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
-    short = {name: _frame(47, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_manifest_is_deterministic_and_excludes_ineligible_tickers_once(horizon: int) -> None:
+    # Eligible frames keep >=1 window per split even at horizon 22; the short frame
+    # keeps 0 windows even at horizon 1, so exclusion is horizon-stable.
+    eligible = {name: _frame(70, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
+    short = {name: _frame(43, offset) for name, offset in zip(("train", "val", "test"), (0, 40, 80))}
     split_frames = SplitFrames(
         frames={"ZZZ": eligible, "AAA": eligible, "BAD": short},
         ticker_to_id={"AAA": 0, "BAD": 1, "ZZZ": 2},
@@ -116,7 +123,7 @@ def test_manifest_is_deterministic_and_excludes_ineligible_tickers_once() -> Non
         }
     )
 
-    manifest = build_pooled_manifest(split_frames, preprocessors, seq_length=22, horizon=5)
+    manifest = build_pooled_manifest(split_frames, preprocessors, seq_length=22, horizon=horizon)
 
     assert manifest.exclusions == {"BAD": "insufficient windows in every split"}
     assert [(sample.key.target_date, sample.key.ticker_id) for sample in manifest.samples["train"]] == sorted(

@@ -2,10 +2,12 @@
 
 ## 1. Objective
 
-Determine, with a short horizon-5 pilot, whether a full-history pooled LSTM can outperform HAR on
-the same pooled targets and whether news, a per-ticker news gate, and GNN message passing adds
-measurable validation value. The pooled-versus-common-panel data effect is reported descriptively;
-it is not treated as a causal architecture comparison in this pilot.
+Determine, with a short multi-horizon pilot, whether a full-history pooled LSTM can outperform HAR
+on the same pooled targets and whether news, a per-ticker news gate, and GNN message passing adds
+measurable validation value. The forecast horizon is a run parameter `h in {1, 5, 10, 22}` trading
+days, with `h=5` the primary target; each horizon is a self-contained run. The pooled-versus-common-panel
+data effect is reported descriptively; it is not treated as a causal architecture comparison in this
+pilot.
 
 The pilot is a screening experiment. It does not establish a final paper result.
 
@@ -31,7 +33,8 @@ differ.
 
 ## 3. Data contract
 
-- Forecast horizon: 5 trading days.
+- Forecast horizon: a run parameter `h in {1, 5, 10, 22}` trading days (`--horizon`, default 5).
+  One horizon per run; the pooled and graph manifests within a run must share the same horizon.
 - Input sequence length: 22 observations.
 - Universe: the same fixed project ticker vocabulary used for the pilot; the ordered
   `ticker -> ticker_id` mapping is resolved once from the sorted eligible price-file stems, saved
@@ -46,7 +49,7 @@ differ.
 - Use `shuffle=False` for train, validation, and test loaders.
 - P0-P3 must consume identical ordered sample IDs `(ticker_id, target_date)`.
 - Eligibility is resolved once before model-specific tensors are built. A ticker is eligible only
-  if each split can produce at least one 22-observation, horizon-5 window after split-local HAR
+  if each split can produce at least one 22-observation, horizon-`h` window after split-local HAR
   generation. Excluded tickers and reasons are persisted and cannot change between P0-P3.
 - The shared P0-P3 manifest stores hashes of sample IDs, raw price inputs, news inputs/masks, raw
   targets, and preprocessing versions; model-specific code may not remove samples.
@@ -58,7 +61,8 @@ differ.
   forecast origin, defined as 15:00 Asia/Ho_Chi_Minh on the final input trading date. Records with
   unknown/unparseable timestamps or `published_at` after that instant are excluded. Missing news is
   a zero vector with `news_mask=0`; an all-missing sequence must produce a finite representation.
-- `target_date` is the fifth subsequent trading observation after the final input observation.
+- `target_date` is the `h`-th subsequent trading observation after the final input observation
+  (`h=5` primary).
 
 ## 4. Scaling contract
 

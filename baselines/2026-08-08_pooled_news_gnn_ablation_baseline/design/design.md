@@ -148,7 +148,9 @@ Required adversarial review covers blind defects, edge cases, and acceptance-cri
 Fail before training on:
 
 - invalid, duplicate, or unsorted ticker dates;
-- empty split or insufficient history for a 22-step, horizon-5 window;
+- empty split or insufficient history for a 22-step, horizon-`h` window (`h in {1, 5, 10, 22}`);
+- a graph run whose pooled and graph manifests are built at different horizons;
+- a common date axis too short to yield any graph snapshot at the requested horizon;
 - sample overlap or manifest mismatch;
 - missing ticker/scaler/gate mapping;
 - news records after the forecast-origin cutoff;
@@ -161,8 +163,9 @@ Legitimate no-news days are represented by the mask and do not fail.
 
 ## 7. Simplicity and anti-abstraction gates
 
-- **Simplicity Gate: pass.** The implementation is isolated to one baseline and supports only the
-  approved horizon-5 pilot matrix.
+- **Simplicity Gate: pass.** The implementation is isolated to one baseline and supports the
+  approved pilot matrix at a single run-selected horizon `h in {1, 5, 10, 22}` (`--horizon`,
+  default `h=5`, primary). Outputs are namespaced by `h{N}` so horizons do not overwrite each other.
 - **Anti-Abstraction Gate: pass.** It directly uses PyTorch, pandas, NumPy, existing evaluation
   utilities, and the established GNN component. It does not introduce a generic training framework,
   registry, or configuration hierarchy.

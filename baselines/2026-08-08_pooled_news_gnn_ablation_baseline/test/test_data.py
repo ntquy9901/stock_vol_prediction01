@@ -32,7 +32,8 @@ from data import (  # noqa: E402
 from scaling import PreprocessorStore, TickerPreprocessor  # noqa: E402
 
 
-def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_windows() -> None:
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_windows(horizon: int) -> None:
     from data import build_graph_manifest
 
     dates = pd.date_range("2020-01-01", periods=120, freq="B")
@@ -45,18 +46,40 @@ def test_graph_manifest_uses_one_global_date_split_without_cross_boundary_window
         index: TickerPreprocessor.fit(frame, ["parkinson_volatility"], "parkinson_volatility")
         for index, frame in enumerate(frames.values())
     })
-    manifest = build_graph_manifest(frames, NewsPanel({}, (), {}), store, seq_length=22, horizon=5)
+    manifest = build_graph_manifest(frames, NewsPanel({}, (), {}), store, seq_length=22, horizon=horizon)
 
-    # Split the shared date axis after split-local HAR has removed its 21-day warm-up.
+    # The shared date axis is split after split-local HAR has removed its 21-day warm-up
+    # and BEFORE any windowing, so the train boundary is independent of the horizon.
     assert manifest.train_end_date == dates[89].strftime("%Y-%m-%d")
     assert all(len({node.split for node in snapshot.nodes}) == 1 for snapshot in manifest.snapshots)
-    assert all(
-        all(date <= snapshot.target_date for date in snapshot.input_dates)
-        and all(node.split == snapshot.split for node in snapshot.nodes)
-        for snapshot in manifest.snapshots
-    )
+    for snapshot in manifest.snapshots:
+        assert all(date <= snapshot.target_date for date in snapshot.input_dates)
+        assert all(node.split == snapshot.split for node in snapshot.nodes)
+        if snapshot.split == "train":
+            assert snapshot.target_date <= manifest.train_end_date
+        elif snapshot.split == "val":
+            assert manifest.train_end_date < snapshot.target_date <= manifest.val_end_date
+        else:
+            assert snapshot.target_date > manifest.val_end_date
     assert set(manifest.hashes) >= {"snapshots", "node_vocabulary", "adjacency", "tensors"}
     assert manifest.snapshots[0].x_price.shape[-1] == 3
+
+
+def test_graph_manifest_raises_loudly_when_horizon_leaves_no_snapshots() -> None:
+    from data import NewsPanel, build_graph_manifest
+
+    dates = pd.date_range("2020-01-01", periods=51, freq="B")
+    frames = {
+        ticker: pd.DataFrame({"date": dates, "parkinson_volatility": np.arange(51, dtype=float) + offset + 1})
+        for ticker, offset in (("AAA", 0), ("BBB", 5))
+    }
+    store = PreprocessorStore({
+        index: TickerPreprocessor.fit(frame, ["parkinson_volatility"], "parkinson_volatility")
+        for index, frame in enumerate(frames.values())
+    })
+
+    with pytest.raises(ValueError, match="snapshot"):
+        build_graph_manifest(frames, NewsPanel({}, (), {}), store, seq_length=22, horizon=22)
 
 
 def _frame(size: int, ticker: str = "AAA") -> pd.DataFrame:

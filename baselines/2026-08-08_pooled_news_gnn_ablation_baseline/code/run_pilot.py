@@ -276,14 +276,16 @@ def run_pooled_screening(args: argparse.Namespace) -> Path:
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
     if args.batch_size == 256:
-        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase)
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase, horizon=args.horizon)
     else:
-        inputs = build_screening_inputs(args.smoke, args.max_tickers, args.phase, args.batch_size)
+        inputs = build_screening_inputs(
+            args.smoke, args.max_tickers, args.phase, args.batch_size, horizon=args.horizon
+        )
     manifest = assert_shared_manifest({name: inputs.manifest for name in _phase_configs(args.phase)})
-    out = Path(args.output_dir)
+    out = Path(args.output_dir) / f"h{args.horizon}"
     out.mkdir(parents=True, exist_ok=True)
     _write_json(out / "screening_metadata.json", {
-        "phase": args.phase, "epochs": args.epochs, "seed": args.seed,
+        "phase": args.phase, "horizon": args.horizon, "epochs": args.epochs, "seed": args.seed,
         "smoke_filter": dict(inputs.smoke_filter),
         "manifest_hashes": {split: manifest.content_hash(split) for split in ("train", "val", "test")},
     })
@@ -318,10 +320,11 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
 
     if args.epochs < 1 or args.epochs > 10:
         raise ValueError("screening epochs must be between 1 and 10")
+    horizon = args.horizon
     if args.batch_size == 256:
-        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3")
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3", horizon=horizon)
     else:
-        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3", args.batch_size)
+        inputs = build_screening_inputs(args.smoke, args.max_tickers, "P3", args.batch_size, horizon=horizon)
     raw = load_and_split_price_data(_ROOT / "data" / "processed")
     selected = tuple(inputs.smoke_filter["selected_tickers"])
     raw = _select_tickers(raw, selected)
@@ -332,16 +335,23 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     panel = load_runner_news_panel(_ROOT / "data" / "features" / "dual_group_news_panel.parquet", selected,
                                    _train_news_cutoffs(inputs.manifest))
     graph_store = _fit_graph_preprocessors(full_frames)
-    graph = build_graph_manifest(full_frames, panel, graph_store)
+    graph_horizon = horizon
+    pooled_horizon = horizon
+    graph = build_graph_manifest(full_frames, panel, graph_store, horizon=graph_horizon)
     _validate_graph_manifest(graph)
     device = resolve_graph_device(args.device)
-    graph_pooled = build_pooled_manifest(raw, graph_store)
+    graph_pooled = build_pooled_manifest(raw, graph_store, horizon=pooled_horizon)
+    # The pooled and graph manifests are hashed independently, so a horizon mismatch
+    # between them would not be caught by any content-hash check: it would silently
+    # train the graph-safe P3 checkpoint on targets a different number of steps ahead
+    # than the graph snapshots it initializes.  Reject it explicitly.
+    _assert_matched_horizon(pooled_horizon, graph_horizon)
     graph_pooled = PooledManifest(
         {split: tuple(attach_news(graph_pooled.samples[split], panel, panel.feature_cols))
          for split in ("train", "val", "test")},
         graph_pooled.exclusions, graph_pooled.ticker_to_id, graph_pooled.preprocessing_hash,
     )
-    out = Path(args.output_dir)
+    out = Path(args.output_dir) / f"h{horizon}"
     out.mkdir(parents=True, exist_ok=True)
     warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
         graph_pooled, graph, out, args.seed, graph_store, epochs=1, device=device,
@@ -359,7 +369,8 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
         )
         for name in ("G0", "G1")
     }
-    payload = {"phase": "graph", "graph_hashes": dict(graph.hashes), "graph_train_hash": graph_hash,
+    payload = {"phase": "graph", "horizon": horizon, "graph_hashes": dict(graph.hashes),
+               "graph_train_hash": graph_hash,
                "graph_safe_p3_checkpoint": str(graph_safe), "runtime": _graph_runtime_metadata(args.device, device),
                "results": results,
                "paired_delta": results["G1"]["validation_loss"] - results["G0"]["validation_loss"]}
@@ -487,6 +498,21 @@ def _mean_snapshot_mse(predictions: torch.Tensor, targets: torch.Tensor) -> torc
     ]).mean()
 
 
+def _assert_matched_horizon(pooled_horizon: int, graph_horizon: int) -> None:
+    """Reject a graph run whose pooled and graph manifests use different horizons.
+
+    Content hashes are computed independently for the two manifests and are never
+    compared to each other, so a horizon mismatch is a silent leakage risk rather
+    than a hash failure.  This guard enforces the single-horizon invariant explicitly.
+    """
+
+    if pooled_horizon != graph_horizon:
+        raise ValueError(
+            f"pooled horizon {pooled_horizon} must equal graph horizon {graph_horizon} "
+            "within one graph run"
+        )
+
+
 def resolve_graph_device(requested: str) -> torch.device:
     """Resolve the graph runner's bounded device choice without silent CUDA fallback."""
 
@@ -548,7 +574,8 @@ def _fit_graph_preprocessors(full_frames: Mapping[str, Any]) -> PreprocessorStor
 
 
 def build_screening_inputs(
-    smoke: bool, max_tickers: int | None, phase: str = "pooled", batch_size: int = 256
+    smoke: bool, max_tickers: int | None, phase: str = "pooled", batch_size: int = 256,
+    horizon: int = 5,
 ) -> ScreeningInputs:
     """Apply ticker filtering before fitting preprocessing or constructing the shared manifest."""
 
@@ -556,6 +583,8 @@ def build_screening_inputs(
         raise ValueError("max_tickers must be positive")
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
+    if horizon < 1:
+        raise ValueError("horizon must be positive")
     requested = 3 if smoke and max_tickers is None else max_tickers
     raw_splits = load_and_split_price_data(_ROOT / "data" / "processed")
     selected = sorted(raw_splits.ticker_to_id)[:requested] if requested else sorted(raw_splits.ticker_to_id)
@@ -569,7 +598,7 @@ def build_screening_inputs(
         for ticker, ticker_id in splits.ticker_to_id.items()
     }
     store = PreprocessorStore(preprocessors)
-    manifest = build_pooled_manifest(splits, store)
+    manifest = build_pooled_manifest(splits, store, horizon=horizon)
     if any(config_name in {"P2", "P3"} for config_name in _phase_configs(phase)):
         panel = load_runner_news_panel(
             _ROOT / "data" / "features" / "dual_group_news_panel.parquet",
@@ -595,7 +624,7 @@ def build_screening_inputs(
     }
     return ScreeningInputs(manifest, store, loaders, {
         "enabled": smoke, "max_tickers": requested, "selected_tickers": selected,
-        "rows_per_split": _SMOKE_ROWS_PER_SPLIT if smoke else None,
+        "rows_per_split": _SMOKE_ROWS_PER_SPLIT if smoke else None, "horizon": horizon,
     })
 
 
@@ -626,6 +655,8 @@ def _train_news_cutoffs(manifest: PooledManifest) -> dict[str, str]:
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--phase", choices=("pooled", "P0", "P1", "P2", "P3", "graph"), default="pooled")
+    parser.add_argument("--horizon", type=int, default=5, choices=(1, 5, 10, 22),
+                        help="forecast horizon in trading days (5 is the primary target)")
     parser.add_argument("--p3-checkpoint", type=Path)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
