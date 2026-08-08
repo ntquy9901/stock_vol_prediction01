@@ -717,6 +717,10 @@ def restrict_manifest_to_common_dates(
     This is the A1 sample-set operation: the per-ticker split, train-fitted scalers/winsor
     bounds, sequence length, horizon, and any attached news are all carried through unchanged;
     only the training-sample SET is reduced to the common-date intersection.
+
+    Windows remain per-ticker contiguous in that ticker's own trading days (the horizon gap is
+    counted in per-ticker days, as in build_pooled_manifest); the common axis only decides which
+    whole windows survive. It is not a re-windowing onto a shared, gap-free common-date grid.
     """
 
     common = frozenset(common_dates)

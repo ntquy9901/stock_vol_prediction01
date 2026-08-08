@@ -726,7 +726,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)
     parser.add_argument("--batch-size", type=int, default=256)
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if args.phase == "graph" and args.regime != "pooled":
+        # The graph manifest is common-date by construction; a non-default regime here would
+        # be silently ignored, so reject it rather than run a misleadingly-labelled ablation.
+        parser.error("--regime applies only to pooled P0-P3 phases; --phase graph is common-date by construction")
+    return args
 
 
 def _select_tickers(raw: SplitFrames, selected: Sequence[str]) -> SplitFrames:

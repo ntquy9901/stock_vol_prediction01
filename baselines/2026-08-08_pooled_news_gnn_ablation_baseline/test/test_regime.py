@@ -152,6 +152,43 @@ def test_parse_args_regime_defaults_to_pooled_and_rejects_unknown() -> None:
         run_pilot.parse_args(["--regime", "bogus"])
 
 
+def test_parse_args_rejects_common_date_regime_for_graph_phase() -> None:
+    assert run_pilot.parse_args(["--phase", "graph"]).regime == "pooled"
+    with pytest.raises(SystemExit):
+        run_pilot.parse_args(["--phase", "graph", "--regime", "common-date"])
+
+
+def test_common_date_news_path_is_byte_identical_to_pooled_per_key(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from data import NewsPanel  # noqa: PLC0415
+
+    splits = _two_ticker_splits()
+    # One real news key on an early AAA trading day plus an all-zero elsewhere: the point is
+    # that whatever news a surviving sample carries must match the pooled sample of the same key.
+    panel = NewsPanel({("AAA", "2018-03-01"): np.array([1.0, 2.0])}, ("f0", "f1"), {})
+    monkeypatch.setattr(run_pilot, "load_and_split_price_data", lambda _path: splits)
+    monkeypatch.setattr(run_pilot, "load_runner_news_panel", lambda *_a, **_k: panel)
+
+    pooled = run_pilot.build_screening_inputs(smoke=False, max_tickers=2, phase="P2", regime="pooled")
+    common = run_pilot.build_screening_inputs(smoke=False, max_tickers=2, phase="P2", regime="common-date")
+
+    assert common.store.to_dict() == pooled.store.to_dict()
+    pooled_by_key = {
+        (s.key.ticker_id, s.key.target_date): s for split in ("train", "val", "test")
+        for s in pooled.manifest.samples[split]
+    }
+    common_count = 0
+    for split in ("train", "val", "test"):
+        for sample in common.manifest.samples[split]:
+            twin = pooled_by_key[(sample.key.ticker_id, sample.key.target_date)]
+            assert sample.x_news.shape[-1] == 2  # news width preserved, not dropped
+            np.testing.assert_array_equal(sample.x_news, twin.x_news)
+            np.testing.assert_array_equal(sample.news_mask, twin.news_mask)
+            common_count += 1
+    assert common_count > 0
+
+
 def _tiny_store() -> PreprocessorStore:
     scaler = TickerPreprocessor(
         ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
