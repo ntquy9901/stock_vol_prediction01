@@ -243,6 +243,18 @@ def test_graph_batched_forward_matches_independent_snapshots(tmp_path: Path) -> 
     torch.testing.assert_close(actual, expected)
 
 
+def test_batched_validation_loss_weights_non_divisible_batches_equally() -> None:
+    from run_pilot import _mean_snapshot_mse
+
+    predictions = torch.zeros(3, 2)
+    targets = torch.tensor([[1.0, 1.0], [2.0, 2.0], [4.0, 4.0]])
+    first_batch = _mean_snapshot_mse(predictions[:2], targets[:2])
+    second_batch = _mean_snapshot_mse(predictions[2:], targets[2:])
+    weighted = (first_batch * 2 + second_batch) / 3
+
+    torch.testing.assert_close(_mean_snapshot_mse(predictions, targets), weighted)
+
+
 def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundary(tmp_path: Path) -> None:
     from data import GraphManifest, PooledManifest
     from run_pilot import _canonical_sample_hash, build_graph_safe_p3_checkpoint

@@ -404,21 +404,21 @@ def _run_one_graph_model(
     model.eval()
     records = []
     with torch.no_grad():
-        validation_losses = []
+        validation_loss_sum = torch.zeros((), device=selected_device)
+        validation_snapshot_count = 0
         for start in range(0, len(validation), validation_batch_size):
             snapshots = validation[start:start + validation_batch_size]
             predictions, targets = _graph_prediction_batch(model, snapshots, selected_device)
             # Keep the original per-snapshot weighting exactly, even if a future
             # manifest contains snapshots with different node counts.
-            validation_losses.append(torch.stack([
-                torch.nn.functional.mse_loss(prediction, target)
-                for prediction, target in zip(predictions, targets, strict=True)
-            ]).mean())
+            batch_loss = _mean_snapshot_mse(predictions, targets)
+            validation_loss_sum = validation_loss_sum + batch_loss * len(snapshots)
+            validation_snapshot_count += len(snapshots)
             for snapshot, snapshot_predictions in zip(snapshots, predictions.cpu(), strict=True):
                 for node, prediction in zip(snapshot.nodes, snapshot_predictions, strict=True):
                     records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
                                     "prediction_norm": float(prediction), "target_raw": node.y_raw})
-        validation_loss = torch.stack(validation_losses).mean().item()
+        validation_loss = (validation_loss_sum / validation_snapshot_count).item()
     evaluation = evaluate_records(records, store)
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
                                             "train_losses": losses, "validation_loss": validation_loss,
@@ -473,6 +473,17 @@ def _graph_prediction_batch(
             device, non_blocking=non_blocking),
     ), torch.tensor([[node.y_norm for node in snapshot.nodes] for snapshot in snapshots],
                     dtype=torch.float32, device=device)
+
+
+def _mean_snapshot_mse(predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+    """Return equal-weighted snapshot MSE, independent of validation batch size."""
+
+    if predictions.shape != targets.shape or predictions.ndim != 2 or not predictions.shape[0]:
+        raise ValueError("predictions and targets must be non-empty [batch, nodes] tensors")
+    return torch.stack([
+        torch.nn.functional.mse_loss(prediction, target)
+        for prediction, target in zip(predictions, targets, strict=True)
+    ]).mean()
 
 
 def resolve_graph_device(requested: str) -> torch.device:
