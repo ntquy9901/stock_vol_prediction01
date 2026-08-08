@@ -3,8 +3,8 @@
 **Project:** Multi-horizon volatility forecasting for VN30 stocks
 **Focus:** 5-day ahead forecasts (Phase 1)
 **Methodology:** HAR-R with Parkinson volatility, enhanced with LSTM, GNN, TimesFM
-**Last Updated:** 2026-08-02 (Corrected stale Feature Categories/MODELS_TO_COMPARE claims per
-`docs/report_2026-08-01/BAO_CAO_TONG_HOP.md`'s code audit — see paper-readiness audit report)
+**Last Updated:** 2026-08-08 (Added pooled LSTM/news/GNN ablation pilot state; the 2026-08-02
+Feature Categories/MODELS_TO_COMPARE correction remains applicable.)
 
 ---
 
@@ -622,6 +622,14 @@ regex+rebuild fix). Full detail: `memory/project_vn30_ticker_universe_mismatch.m
 2. Choose architecture (MSGCA recommended)
 3. Implement per-stock per-date crawler
 4. Train with 6 features (3 HAR + 3 sentiment)
+
+### 2026-08-08 - Pooled LSTM, News, and GNN Ablation Pilot
+
+The active implementation context, architectural decisions, leakage controls, worktree/commit state,
+and continuation point are recorded in
+`memory/project_pooled_news_gnn_pilot_2026-08-08.md`. The core decision is to use all eligible
+per-ticker trading observations for pooled LSTM/news experiments and reserve synchronized global
+dates for GNN tensor construction. GNN remains an ablation component.
 
 ### 2026-06-19 - Standardization Update
 **Changes:**

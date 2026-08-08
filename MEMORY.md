@@ -1,6 +1,6 @@
 # Memory Index - Stock Volatility Prediction VN30
 
-**Last Updated:** 2026-06-29
+**Last Updated:** 2026-08-08
 **Purpose:** Index of project memory files for future reference
 
 ---
@@ -8,6 +8,10 @@
 ## Memory Files
 
 ### Project Memory
+- **[Pooled LSTM, News, and GNN Pilot](memory/project_pooled_news_gnn_pilot_2026-08-08.md)** - Current architecture decisions, leakage invariants, worktree/commit state, and implementation continuation point
+  - Date: 2026-08-08
+  - Key: pooled asynchronous price samples for LSTM/news; synchronized dates only for graph tensors; GNN retained for ablation
+
 - **[Sentiment Research Status](memory/project_sentiment_research_status.md)** - Current status of sentiment analysis integration research (deferred, baseline incomplete)
   - Date: 2026-06-28
   - Key: Date-based organization is standard, no Vietnamese dataset yet, baseline first
