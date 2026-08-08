@@ -1,0 +1,54 @@
+{
+  "phase": "graph",
+  "graph_mode": "masked",
+  "horizon": 5,
+  "graph_hashes": {
+    "graph_mode": "masked",
+    "node_vocabulary": "7c9ccb65fda0316d2c0197345b0476603a9840dbef5ea475943a09be7726b33f",
+    "snapshots": "ecd9b032655e29dfd86d96fb44dfeeb4bc0938588fe97dd1b5ff1baded53638b",
+    "adjacency": "915b031c4298c02634978fc2fa1ee0cd5d5dc238c7afc962bfaf132958e2eeef",
+    "tensors": "767e6cb83185751e324c32c03756d34c18047271a0fa78c586a9d54a9fa72a45"
+  },
+  "graph_train_hash": "006a16054a60f98ce1228af3d661764ac995f8a903cf7ff86052b055d2cc7cd4",
+  "snapshot_count": 6470,
+  "distinct_date_count": 4941,
+  "split_snapshot_counts": {
+    "train": 4523,
+    "val": 1237,
+    "test": 710
+  },
+  "graph_safe_p3_checkpoint": "results\\pooled_news_gnn_masked_g0g1_2026-08-08_212959_seed42\\h5\\graph_safe_p3.pt",
+  "runtime": {
+    "requested": "cuda",
+    "selected": "cuda",
+    "torch_version": "2.6.0+cu124",
+    "cuda_version": "12.4"
+  },
+  "results": {
+    "G0": {
+      "graph_hash": "6fdf5e4ab46440c072c044cdb1cab86399cfeec62a9c61c98f6852c375bf3764",
+      "validation_loss": 0.8401381373405457,
+      "validation_metrics": {
+        "mse": 2.1447999630311396e-06,
+        "rmse": 0.0014645135585002755,
+        "mae": 0.0004627842737392771,
+        "r2": 0.7422356252430169,
+        "qlike": 0.5093398027380812,
+        "directional_accuracy": 48.85010251494806
+      }
+    },
+    "G1": {
+      "graph_hash": "6fdf5e4ab46440c072c044cdb1cab86399cfeec62a9c61c98f6852c375bf3764",
+      "validation_loss": 0.8425496220588684,
+      "validation_metrics": {
+        "mse": 2.1255255306292293e-06,
+        "rmse": 0.001457918218086745,
+        "mae": 0.00045618991098568323,
+        "r2": 0.7445520473348248,
+        "qlike": 0.5082187344080021,
+        "directional_accuracy": 49.091782821074055
+      }
+    }
+  },
+  "paired_delta": 0.002411484718322754
+}

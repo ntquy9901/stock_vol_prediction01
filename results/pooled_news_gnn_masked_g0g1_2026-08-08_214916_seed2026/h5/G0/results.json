@@ -1,0 +1,30 @@
+{
+  "config_name": "G0",
+  "graph_hash": "6fdf5e4ab46440c072c044cdb1cab86399cfeec62a9c61c98f6852c375bf3764",
+  "train_losses": [
+    0.935371994972229,
+    0.9353348612785339,
+    0.933866560459137,
+    0.9337181448936462,
+    0.9334670901298523
+  ],
+  "validation_loss": 0.8398388028144836,
+  "runtime": {
+    "requested": "cuda",
+    "selected": "cuda",
+    "torch_version": "2.6.0+cu124",
+    "cuda_version": "12.4"
+  },
+  "train_snapshot_count": 4523,
+  "validation_snapshot_count": 1237,
+  "present_validation_node_count": 14418,
+  "validation_metrics": {
+    "mse": 2.143967035558791e-06,
+    "rmse": 0.001464229160875712,
+    "mae": 0.0004627229093253905,
+    "r2": 0.7423357273657455,
+    "qlike": 0.5087466025082316,
+    "directional_accuracy": 48.647618935614474
+  },
+  "nonpositive_prediction_rate": 0.0
+}
