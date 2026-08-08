@@ -1,0 +1,22 @@
+{
+  "backbone": {
+    "42": "results\\parallel_lstm_gnn_knn_seed42_2026-08-08_062812",
+    "123": "results\\parallel_lstm_gnn_knn_seed123_2026-08-08_070133",
+    "2026": "results\\parallel_lstm_gnn_knn_seed2026_2026-08-08_072754"
+  },
+  "full": {
+    "42": "results\\per_ticker_gate_2026-08-08_080538",
+    "123": "results\\per_ticker_gate_2026-08-08_141440",
+    "2026": "results\\per_ticker_gate_2026-08-08_144454"
+  },
+  "no_graph": {
+    "42": "results\\no_graph_ablation_seed42_2026-08-08_151148",
+    "123": "results\\no_graph_ablation_seed123_2026-08-08_152925",
+    "2026": "results\\no_graph_ablation_seed2026_2026-08-08_160830"
+  },
+  "no_gate": {
+    "42": "results\\dual_group_news_2026-08-08_163057",
+    "123": "results\\dual_group_news_2026-08-08_164533",
+    "2026": "results\\dual_group_news_2026-08-08_165636"
+  }
+}
