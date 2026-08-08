@@ -727,5 +727,64 @@
     ],
     "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated \u2014 it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
     "report_md": "scripts/git_hooks/README.md"
+  },
+  {
+    "id": "research-gnn-sparse-data",
+    "phase": "Research (informs Track B decision)",
+    "title": "Deep research: sparse/irregular-node GNN methods for stocks w/ different histories",
+    "status": "done",
+    "timestamp": "2026-08-08 20:59",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "web-research",
+      "verification-before-completion",
+      "no-fake-citation"
+    ],
+    "evidence": [
+      {
+        "cmd": "report file",
+        "result": "195 lines, 8 method families + ranked recs + comparison table + verified refs"
+      },
+      {
+        "cmd": "citation check",
+        "result": "21 core citations web-verified; 3 marked [unverified], not relied on"
+      },
+      {
+        "cmd": "data-quality gate",
+        "result": "N/A (research doc, no data/code change)"
+      }
+    ],
+    "quality_gate": {
+      "tests": "n/a (doc)",
+      "lint": "n/a",
+      "code_review": "n/a (research)",
+      "diff_cover": "n/a (no code)"
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "8 method families researched",
+        "ok": true
+      },
+      {
+        "item": "real verified citations",
+        "ok": true
+      },
+      {
+        "item": "ranked recs for VN30",
+        "ok": true
+      },
+      {
+        "item": "informs paper Limitations",
+        "ok": true
+      }
+    ],
+    "result_summary": "The 26% intersection ceiling is an ARTIFACT of a fixed 33-node set, not intrinsic to GNNs -> graph-null IS confounded with data scarcity (confirms the concern). Rank-1 fix: masked availability-aware message-passing (per-day present-ticker adjacency + presence mask; dataloader/collate change, no leakage, trains on full ~4,900-date union). Rank-2: long-history panel-selection (bias, diagnostic only). NOT imputation (leaks/fabricates). Literature gap = paper contribution: no surveyed financial-GNN paper trains on per-day variable stock set with masking.",
+    "report_md": "docs/reports/2026-08-08_gnn_sparse_data_research.md"
   }
 ]
