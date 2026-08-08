@@ -390,46 +390,87 @@
     "id": "t1.1-a1-pooled-vs-commondate",
     "phase": "Track B / Phase 1 (HEADLINE)",
     "title": "A1: pooled vs common-date (does pooling give the data advantage vs HAR)",
-    "status": "running",
+    "status": "done",
     "timestamp": "2026-08-08 17:25",
     "branch": "feature/pooled-news-gnn-pilot",
-    "commits": [],
+    "commits": [
+      "a14482d",
+      "064d82d",
+      "13350d7",
+      "bdceadb"
+    ],
     "skills_applied": [
       "TDD-red-green",
       "systematic-debugging",
-      "verification-before-completion"
+      "verification-before-completion",
+      "adversarial-review"
     ],
-    "evidence": [],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "125 passed"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "P0 HAR seed42",
+        "result": "rmse 0.001485 r2 0.7351 qlike 0.5167"
+      },
+      {
+        "cmd": "P1 pooled vs commondate",
+        "result": "0.001499 vs 0.001489 -> common-date better; pooling does NOT help P1"
+      },
+      {
+        "cmd": "P2 pooled vs commondate",
+        "result": "0.001490 vs 0.001502 -> pooling helps P2 slightly"
+      },
+      {
+        "cmd": "leakage fix",
+        "result": "restrict TRAIN only; val/test identical across regimes (commit 13350d7)"
+      }
+    ],
     "quality_gate": {
-      "tests": "pending",
-      "lint": "pending",
-      "code_review": "pending",
+      "tests": "pass",
+      "lint": "pass",
+      "code_review": "adversarial: no CRITICAL/HIGH, 3 LOW resolved",
       "diff_cover": "not run (tooling gap)"
     },
     "code_review": {
-      "layers": [],
-      "findings_fixed": 0,
+      "layers": [
+        "adversarial-subagent"
+      ],
+      "findings_fixed": 3,
       "findings_deferred": 0
     },
     "dod": [
       {
         "item": "common-date manifest (TDD)",
-        "ok": false
+        "ok": true
       },
       {
-        "item": "leakage: scalers not refit",
-        "ok": false
+        "item": "scalers not refit (tested)",
+        "ok": true
       },
       {
-        "item": "P1/P2 pooled vs common-date, 3 seeds",
-        "ok": false
+        "item": "val/test identical across regimes",
+        "ok": true
+      },
+      {
+        "item": "6 GPU cells 3 seeds",
+        "ok": true
       },
       {
         "item": "A1 verdict table",
+        "ok": true
+      },
+      {
+        "item": "n>=5 + longer epochs (follow-up)",
         "ok": false
       }
     ],
-    "result_summary": "In flight: implementing common-date-restricted manifest + running P1/P2 pooled vs common-date (3 seeds, GPU) to test the headline pooling-advantage claim.",
-    "report_md": ""
+    "result_summary": "HEADLINE = NEGATIVE. ~7.6x more data (73k vs 9.6k) but validation moves <1% with mixed sign; HAR on par/ahead of deep models under BOTH regimes. Pooling does NOT create a HAR-beating regime. Track B premise NOT supported at 5-ep/3-seed/h5 screening (df=2 low power; n>=5 needed). Positive still standing: deep beats HAR on QLIKE.",
+    "report_md": "docs/reports/2026-08-08_1819_summaryOfUpdate_report.md"
   }
 ]
