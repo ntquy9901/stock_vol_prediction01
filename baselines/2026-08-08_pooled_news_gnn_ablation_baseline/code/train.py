@@ -113,8 +113,8 @@ def run_training(
 ) -> Path:
     """Train P1-P3 with validation-only screening selection and durable local artifacts."""
 
-    if epochs < 1 or epochs > 10:
-        raise ValueError("screening epochs must be between 1 and 10")
+    if epochs < 1 or epochs > 20:
+        raise ValueError("screening epochs must be between 1 and 20")
     if config_name not in {"P1", "P2", "P3"}:
         raise ValueError("config_name must be P1, P2, or P3")
     if not {"train", "val"}.issubset(loaders):

@@ -299,8 +299,8 @@ def assert_shared_manifest(manifests: Mapping[str, PooledManifest]) -> PooledMan
 def run_pooled_screening(args: argparse.Namespace) -> Path:
     """Build one filtered manifest, run selected P0-P3 configurations, and compare validation."""
 
-    if args.epochs < 1 or args.epochs > 10:
-        raise ValueError("screening epochs must be between 1 and 10")
+    if args.epochs < 1 or args.epochs > 20:
+        raise ValueError("screening epochs must be between 1 and 20")
     if args.batch_size == 256:
         inputs = build_screening_inputs(
             args.smoke, args.max_tickers, args.phase, horizon=args.horizon, regime=args.regime
