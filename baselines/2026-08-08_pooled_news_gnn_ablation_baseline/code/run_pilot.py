@@ -85,9 +85,41 @@ class ScreeningInputs:
     smoke_filter: Mapping[str, Any]
 
 
+def _pooled_training_batches(
+    samples: Sequence[PooledSample], store: PreprocessorStore, device: torch.device, batch_size: int,
+):
+    """Yield stacked ``[batch, time, feature]`` pooled tensors and per-ticker normalized targets.
+
+    Grouping the previously per-sample warm-start / graph-safe training into mini-batches is a
+    deliberate SGD re-baseline (approved R10 semantics): it reproduces the historical per-sample
+    loop exactly at ``batch_size == 1`` and otherwise averages the gradient over the batch. Each
+    sample keeps its own ticker's target scaler, so the leakage/scaler contract is unchanged.
+    """
+
+    non_blocking = device.type == "cuda"
+    for start in range(0, len(samples), batch_size):
+        chunk = samples[start:start + batch_size]
+        x_price = torch.from_numpy(np.stack([sample.x_price_raw for sample in chunk])).to(
+            device, non_blocking=non_blocking)
+        x_news = torch.from_numpy(np.stack([sample.x_news for sample in chunk])).to(
+            device, non_blocking=non_blocking)
+        news_mask = torch.from_numpy(np.stack([sample.news_mask for sample in chunk])).to(
+            device, non_blocking=non_blocking)
+        ticker_ids = torch.tensor([sample.key.ticker_id for sample in chunk], dtype=torch.long,
+                                  device=device)
+        targets = torch.tensor([
+            float(store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([
+                sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
+            ]))[0])
+            for sample in chunk
+        ], dtype=torch.float32, device=device)
+        yield x_price, x_news, news_mask, ticker_ids, targets
+
+
 def build_graph_bound_p3_warm_start(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str,
     seed: int, store: PreprocessorStore, epochs: int = 1, device: torch.device | None = None,
+    train_batch_size: int = 256,
 ) -> Path:
     """Train a fresh P3 only on graph-bound samples and attest its exact provenance."""
 
@@ -97,6 +129,8 @@ def build_graph_bound_p3_warm_start(
         raise ValueError("no pooled P3 training samples fall within the graph train boundary")
     if epochs < 1 or epochs > 10:
         raise ValueError("graph-bound P3 epochs must be between 1 and 10")
+    if train_batch_size < 1:
+        raise ValueError("graph-bound P3 train_batch_size must be positive")
     price_dim, news_dim = allowed[0].x_price_raw.shape[1], allowed[0].x_news.shape[1]
     if news_dim == 0:
         raise ValueError("graph-bound P3 requires attached news features")
@@ -107,17 +141,12 @@ def build_graph_bound_p3_warm_start(
                                  use_gate=True, dropout=0.0).to(selected_device)
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
     for _ in range(epochs):
-        for sample in allowed:
+        for x_price, x_news, news_mask, ticker_ids, targets in _pooled_training_batches(
+            allowed, store, selected_device, train_batch_size,
+        ):
             optimizer.zero_grad()
-            prediction = model(torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0).to(selected_device),
-                               torch.from_numpy(sample.x_news.copy()).unsqueeze(0).to(selected_device),
-                               torch.from_numpy(sample.news_mask.copy()).unsqueeze(0).to(selected_device),
-                               torch.tensor([sample.key.ticker_id], dtype=torch.long, device=selected_device))
-            raw_target = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
-            target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([raw_target]))
-            torch.nn.functional.mse_loss(
-                prediction, torch.tensor(target, dtype=torch.float32, device=selected_device),
-            ).backward()
+            prediction = model(x_price, x_news, news_mask, ticker_ids)
+            torch.nn.functional.mse_loss(prediction, targets).backward()
             optimizer.step()
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -134,7 +163,7 @@ def build_graph_bound_p3_warm_start(
 def build_graph_safe_p3_checkpoint(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
     warm_start_checkpoint: Path | str, store: PreprocessorStore, epochs: int = 1,
-    device: torch.device | None = None,
+    device: torch.device | None = None, train_batch_size: int = 256,
 ) -> Path:
     """Create the only P3 initialization permitted for the matched graph pair.
 
@@ -151,6 +180,8 @@ def build_graph_safe_p3_checkpoint(
         raise ValueError("no pooled P3 training samples fall within the graph train boundary")
     if epochs < 1 or epochs > 10:
         raise ValueError("graph-safe P3 epochs must be between 1 and 10")
+    if train_batch_size < 1:
+        raise ValueError("graph-safe P3 train_batch_size must be positive")
     warm = torch.load(warm_start_checkpoint, map_location="cpu", weights_only=False)
     if warm.get("config_name") != "P3" or not isinstance(warm.get("model_state"), dict):
         raise ValueError("warm-start checkpoint must be a trained P3 checkpoint")
@@ -181,19 +212,12 @@ def build_graph_safe_p3_checkpoint(
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
     model.train()
     for _ in range(epochs):
-        for sample in allowed:
+        for x_price, x_news, news_mask, ticker_ids, targets in _pooled_training_batches(
+            allowed, store, selected_device, train_batch_size,
+        ):
             optimizer.zero_grad()
-            prediction = model(
-                torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0).to(selected_device),
-                torch.from_numpy(sample.x_news.copy()).unsqueeze(0).to(selected_device),
-                torch.from_numpy(sample.news_mask.copy()).unsqueeze(0).to(selected_device),
-                torch.tensor([sample.key.ticker_id], dtype=torch.long, device=selected_device),
-            )
-            target_raw = sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw
-            target = store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([target_raw]))
-            loss = torch.nn.functional.mse_loss(
-                prediction, torch.tensor(target, dtype=torch.float32, device=selected_device),
-            )
+            prediction = model(x_price, x_news, news_mask, ticker_ids)
+            loss = torch.nn.functional.mse_loss(prediction, targets)
             loss.backward()
             optimizer.step()
     checkpoint = out / "graph_safe_p3.pt"
@@ -355,9 +379,11 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     out.mkdir(parents=True, exist_ok=True)
     warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
         graph_pooled, graph, out, args.seed, graph_store, epochs=1, device=device,
+        train_batch_size=args.batch_size,
     )
     graph_safe = build_graph_safe_p3_checkpoint(graph_pooled, graph, out, args.seed, warm_start,
-                                                 graph_store, epochs=1, device=device)
+                                                 graph_store, epochs=1, device=device,
+                                                 train_batch_size=args.batch_size)
     graph_hash = graph.content_hash("train")
     results = {
         name: _run_one_graph_model(

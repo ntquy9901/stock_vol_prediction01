@@ -602,6 +602,186 @@ def test_run_one_graph_model_positivity_gate_passes_for_negative_prone_head(tmp_
     assert all(np.isfinite(value) for value in metrics.values())
 
 
+# --- Batched training (T0.2) -------------------------------------------------
+
+
+def _boundary_pooled_and_graph(price_scale: float = 1.0):
+    """Two pooled train samples at or before the graph boundary, plus a tiny graph."""
+
+    from data import GraphManifest, PooledManifest
+
+    def sample(date: str, value: float) -> PooledSample:
+        return PooledSample(SampleKey(0, "AAA", date), np.full((22, 3), value, dtype=np.float32),
+                            np.full((22, 2), value, dtype=np.float32), np.ones(22, dtype=np.int8), 1.0)
+
+    pooled = PooledManifest(
+        {"train": (sample("2020-01-31", price_scale), sample("2020-02-28", price_scale * 2.0)),
+         "val": (), "test": ()},
+        {}, {"AAA": 0}, "preprocessing",
+    )
+    graph = GraphManifest((), {"AAA": 0}, "2020-03-31", "2020-04-30",
+                          {"snapshots": "x", "node_vocabulary": "x", "adjacency": "x", "tensors": "x"})
+    return pooled, graph
+
+
+def test_warm_start_train_batch_size_one_matches_per_sample_reference(tmp_path: Path) -> None:
+    from run_pilot import _seed_graph_device, build_graph_bound_p3_warm_start
+
+    pooled, graph = _boundary_pooled_and_graph()
+    store = PreprocessorStore({0: _target_preprocessor(1.0, 1.0)})
+    allowed = pooled.samples["train"]
+
+    # Inline reproduction of the historical per-sample warm-start loop.
+    device = torch.device("cpu")
+    _seed_graph_device(42, device)
+    reference = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0).to(device)
+    optimizer = torch.optim.Adam(reference.parameters(), weight_decay=1e-5)
+    for sample in allowed:
+        optimizer.zero_grad()
+        prediction = reference(
+            torch.from_numpy(sample.x_price_raw.copy()).unsqueeze(0),
+            torch.from_numpy(sample.x_news.copy()).unsqueeze(0),
+            torch.from_numpy(sample.news_mask.copy()).unsqueeze(0),
+            torch.tensor([sample.key.ticker_id], dtype=torch.long),
+        )
+        target = store.get(0).target_scaler.transform(np.asarray([sample.y_raw]))
+        torch.nn.functional.mse_loss(prediction, torch.tensor(target, dtype=torch.float32)).backward()
+        optimizer.step()
+
+    path = build_graph_bound_p3_warm_start(pooled, graph, tmp_path, 42, store, train_batch_size=1)
+    produced = torch.load(path, weights_only=False)["model_state"]
+
+    for key, value in reference.state_dict().items():
+        torch.testing.assert_close(produced[key], value)
+
+
+def test_warm_start_rejects_nonpositive_train_batch_size(tmp_path: Path) -> None:
+    from run_pilot import build_graph_bound_p3_warm_start
+
+    pooled, graph = _boundary_pooled_and_graph()
+    store = PreprocessorStore({0: _target_preprocessor(1.0, 1.0)})
+
+    with pytest.raises(ValueError, match="train_batch_size"):
+        build_graph_bound_p3_warm_start(pooled, graph, tmp_path, 42, store, train_batch_size=0)
+
+
+def test_graph_safe_batched_checkpoint_preserves_provenance_and_is_finite(tmp_path: Path) -> None:
+    from run_pilot import build_graph_bound_p3_warm_start, build_graph_safe_p3_checkpoint
+
+    pooled, graph = _boundary_pooled_and_graph()
+    store = PreprocessorStore({0: _target_preprocessor(1.0, 1.0)})
+    warm = build_graph_bound_p3_warm_start(pooled, graph, tmp_path, 42, store, train_batch_size=2)
+    safe = build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, 42, warm, store, train_batch_size=2)
+    payload = torch.load(safe, weights_only=False)
+
+    assert payload["graph_safe"] is True
+    assert payload["graph_train_end_date"] == graph.train_end_date
+    assert payload["max_training_target_date"] == "2020-02-28"
+    assert payload["training_sample_count"] == 2
+    assert payload["graph_manifest_hash"] == graph.content_hash("train")
+    assert all(torch.isfinite(tensor).all() for tensor in payload["model_state"].values())
+
+
+def _trainable_graph(num_snapshots: int = 6):
+    from data import GraphManifest, GraphNode, GraphSnapshot
+
+    input_dates = tuple(f"2020-01-{day:02d}" for day in range(1, 23))
+    snapshots = []
+    for index in range(num_snapshots):
+        value = 0.2 + 0.1 * index
+        snapshots.append(GraphSnapshot(
+            f"2020-01-{index + 5:02d}", "train", input_dates,
+            (GraphNode(0, "AAA", "train", 1.0, value), GraphNode(1, "BBB", "train", 1.1, -value)),
+            np.full((2, 22, 3), value, dtype=np.float64), np.full((2, 22, 2), value, dtype=np.float64),
+            np.ones((2, 22)), np.eye(2),
+        ))
+    for offset, index in enumerate(range(num_snapshots, num_snapshots + 3)):
+        value = 0.15 + 0.05 * offset
+        snapshots.append(GraphSnapshot(
+            f"2020-03-{offset + 1:02d}", "val", input_dates,
+            (GraphNode(0, "AAA", "val", 1.0, value), GraphNode(1, "BBB", "val", 1.1, -value)),
+            np.full((2, 22, 3), value, dtype=np.float64), np.full((2, 22, 2), value, dtype=np.float64),
+            np.ones((2, 22)), np.eye(2),
+        ))
+    graph = GraphManifest(tuple(snapshots), {"AAA": 0, "BBB": 1}, "2020-01-31", "2020-03-31",
+                          {"snapshots": "s", "node_vocabulary": "n", "adjacency": "a", "tensors": "t"})
+    return graph
+
+
+def _graph_safe_checkpoint_for(graph, tmp_path: Path, negative_head: bool = False) -> Path:
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    if negative_head:
+        with torch.no_grad():
+            for parameter in p3.head.parameters():
+                parameter.zero_()
+            p3.head[-1].bias.fill_(-50.0)
+    checkpoint = tmp_path / "safe.pt"
+    payload = _graph_safe_payload(p3)
+    payload["max_training_target_date"] = graph.train_end_date
+    payload["graph_train_end_date"] = graph.train_end_date
+    payload["graph_manifest_hash"] = graph.content_hash("train")
+    torch.save(payload, checkpoint)
+    return checkpoint
+
+
+def test_graph_training_reduces_loss_with_batched_snapshots(tmp_path: Path) -> None:
+    from run_pilot import _run_one_graph_model
+
+    graph = _trainable_graph()
+    checkpoint = _graph_safe_checkpoint_for(graph, tmp_path)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+    store = PreprocessorStore({0: _target_preprocessor(1e-2, 1e-2), 1: _target_preprocessor(1e-2, 1e-2)})
+
+    _run_one_graph_model(model, graph, store, "G1", epochs=8, seed=42, output=tmp_path / "G1",
+                         device="cpu", train_batch_size=3)
+
+    losses = json.loads((tmp_path / "G1" / "results.json").read_text(encoding="utf-8"))["train_losses"]
+    assert len(losses) == 8
+    assert losses[-1] < losses[0]
+
+
+def test_graph_training_positivity_gate_holds_on_batched_run(tmp_path: Path) -> None:
+    from run_pilot import _run_one_graph_model
+
+    graph = _trainable_graph()
+    checkpoint = _graph_safe_checkpoint_for(graph, tmp_path, negative_head=True)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+    store = PreprocessorStore({0: _target_preprocessor(1e-3, 1e-3), 1: _target_preprocessor(1e-3, 1e-3)})
+
+    result = _run_one_graph_model(model, graph, store, "G1", epochs=2, seed=42, output=tmp_path / "G1",
+                                  device="cpu", train_batch_size=4)
+
+    payload = json.loads((tmp_path / "G1" / "results.json").read_text(encoding="utf-8"))
+    assert all(np.isfinite(value) for value in result["validation_metrics"].values())
+    assert payload["nonpositive_prediction_rate"] <= 0.01
+
+
+def test_run_one_graph_model_rejects_nonpositive_train_batch_size(tmp_path: Path) -> None:
+    from run_pilot import _run_one_graph_model
+
+    graph = _trainable_graph()
+    checkpoint = _graph_safe_checkpoint_for(graph, tmp_path)
+    model = GraphAblationModel.from_p3_checkpoint(
+        checkpoint, True, graph.train_end_date, graph.content_hash("train"),
+    )
+    store = PreprocessorStore({0: _target_preprocessor(1e-2, 1e-2), 1: _target_preprocessor(1e-2, 1e-2)})
+
+    with pytest.raises(ValueError, match="train_batch_size"):
+        _run_one_graph_model(model, graph, store, "G1", epochs=1, seed=42, output=tmp_path / "G1",
+                             device="cpu", train_batch_size=0)
+
+
+def test_graph_cli_parses_graph_train_batch_size() -> None:
+    from run_pilot import parse_args
+
+    assert parse_args([]).graph_train_batch_size == 32
+    assert parse_args(["--graph-train-batch-size", "8"]).graph_train_batch_size == 8
+
+
 def _state_bytes(module: torch.nn.Module) -> bytes:
     return b"".join(value.detach().cpu().numpy().tobytes() for value in module.state_dict().values())
 
