@@ -101,15 +101,7 @@ def build_graph_safe_p3_checkpoint(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     if not warm.get("graph_bound_warm_start"):
-        bound_path = out / "graph_bound_p3_warm_start.pt"
-        torch.save({
-            "config_name": "P3", "seed": warm.get("seed"), "model_state": warm["model_state"],
-            "graph_bound_warm_start": True,
-            "max_training_target_date": max(sample.key.target_date for sample in allowed),
-            "graph_train_end_date": graph_manifest.train_end_date, "training_sample_hash": expected_sample_hash,
-            "graph_manifest_hash": expected_graph_hash,
-        }, bound_path)
-        warm = torch.load(bound_path, map_location="cpu", weights_only=False)
+        raise ValueError("warm-start checkpoint must be a verified graph-bound P3 source")
     if (warm.get("graph_train_end_date") != graph_manifest.train_end_date
             or warm.get("training_sample_hash") != expected_sample_hash
             or warm.get("graph_manifest_hash") != expected_graph_hash

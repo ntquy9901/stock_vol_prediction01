@@ -226,7 +226,7 @@ def test_graph_g0_has_no_message_passing_and_g1_gradients_only_touch_gnn(tmp_pat
 
 def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundary(tmp_path: Path) -> None:
     from data import GraphManifest, PooledManifest
-    from run_pilot import build_graph_safe_p3_checkpoint
+    from run_pilot import _canonical_sample_hash, build_graph_safe_p3_checkpoint
 
     def sample(date: str) -> PooledSample:
         return PooledSample(SampleKey(0, "AAA", date), np.ones((22, 3)), np.ones((22, 2)),
@@ -238,8 +238,10 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
 
     warm_start = tmp_path / "p3.pt"
     p3 = PooledPriceNewsLSTM(3, 2, 1, use_gate=True, dropout=0.0)
-    torch.save({"config_name": "P3", "model_state": p3.state_dict(),
-                "max_training_target_date": "2020-01-31", "manifest_hash": "boundary-safe"}, warm_start)
+    torch.save({"config_name": "P3", "model_state": p3.state_dict(), "graph_bound_warm_start": True,
+                "max_training_target_date": "2020-01-31", "graph_train_end_date": graph.train_end_date,
+                "training_sample_hash": _canonical_sample_hash((pooled.samples["train"][0],)),
+                "graph_manifest_hash": graph.content_hash("train")}, warm_start)
     preprocessor = TickerPreprocessor(
         ("parkinson_volatility", "har_weekly", "har_monthly"), "parkinson_volatility", 0.0, 2.0,
         ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
@@ -255,7 +257,7 @@ def test_graph_safe_checkpoint_excludes_pooled_targets_after_graph_train_boundar
     assert (tmp_path / "graph_safe_p3_checkpoint.txt").read_text(encoding="utf-8").strip() == str(checkpoint)
 
 
-def test_task6_style_p3_checkpoint_is_bound_to_current_graph_samples_before_refinement(tmp_path: Path) -> None:
+def test_unrestricted_task6_style_p3_checkpoint_is_rejected_not_relabelled(tmp_path: Path) -> None:
     from data import GraphManifest, PooledManifest
     from run_pilot import build_graph_safe_p3_checkpoint
 
@@ -272,13 +274,10 @@ def test_task6_style_p3_checkpoint_is_bound_to_current_graph_samples_before_refi
         ArrayStandardizer(np.zeros(3), np.ones(3)), ArrayStandardizer(np.array([1.0]), np.array([1.0])),
     )
 
-    build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, 42, task6_best,
-                                   PreprocessorStore({0: processor}))
-    bound = torch.load(tmp_path / "graph_bound_p3_warm_start.pt", weights_only=False)
-
-    assert bound["graph_train_end_date"] == graph.train_end_date
-    assert bound["training_sample_hash"]
-    assert bound["graph_manifest_hash"] == graph.content_hash("train")
+    with pytest.raises(ValueError, match="verified graph-bound"):
+        build_graph_safe_p3_checkpoint(pooled, graph, tmp_path, 42, task6_best,
+                                       PreprocessorStore({0: processor}))
+    assert not (tmp_path / "graph_bound_p3_warm_start.pt").exists()
 
 
 def test_graph_cli_parser_and_one_batch_runner_emit_paired_artifact(tmp_path: Path) -> None:
