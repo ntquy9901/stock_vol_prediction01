@@ -191,3 +191,16 @@ baselines/2026-08-08_pooled_news_gnn_ablation_baseline/
 ```
 
 Implementation files are created only after the written specification is reviewed.
+
+## 9. Addendum 2026-08-08: G1 positivity parameterization
+
+Diagnostic evidence (`temp/agent_g1_positivity_diagnostic_output/positivity_diagnostic.json`) showed
+G1's message-passing widens the normalized-prediction variance so 1.78% of validation predictions
+denormalized to nonpositive volatility, tripping the <=1% safety guard. Decision: `GraphAblationModel`
+applies a denormalized-scale positive floor `raw_pos = eps*softplus(raw/eps) + eps` (eps = 1e-6),
+identity for the bulk (spread preserved, no collapse), renormalized so the evaluation/inverse-transform
+path is unchanged. The floor uses the existing train-fitted per-ticker target mean/std (no new
+statistic, scaler/manifest/provenance unchanged) and is applied identically to G0 and G1. A whole-output
+softplus-at-head was rejected: Parkinson volatility (~1e-3) sits in softplus's constant-offset region and
+would require abandoning normalized-MSE training (also changing G0), and a normalized-space soft-clamp
+would distort near-threshold predictions and bias the G0/G1 comparison.

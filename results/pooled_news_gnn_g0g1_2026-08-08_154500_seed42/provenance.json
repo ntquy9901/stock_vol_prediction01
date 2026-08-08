@@ -1,0 +1,14 @@
+{
+  "experiment": "pooled_news_gnn_graph_ablation_G0_vs_G1",
+  "git_sha": "8055413f78acae1ddc56ea0e8cf3405dcee63036",
+  "branch": "feature/pooled-news-gnn-pilot",
+  "seed": 42,
+  "epochs": 5,
+  "tickers": 33,
+  "device": "cuda",
+  "interpreter": ".venv_gpu_encode (torch 2.6.0+cu124, CUDA 12.4)",
+  "command": "run_pilot.py --phase graph --epochs 5 --seed 42 --device cuda --output-dir results/pooled_news_gnn_g0g1_2026-08-08_154500_seed42",
+  "created_utc": "2026-08-08T09:21:06.518708Z",
+  "positivity_fix": "GraphAblationModel denormalized positive floor raw_pos=eps*softplus(raw/eps)+eps, eps=1e-6",
+  "note": "G0/G1 use the common-date-aligned graph validation basis; P0(HAR)/P1 use per-ticker windows, so cross-comparison with P0/P1 is indicative, not matched."
+}
