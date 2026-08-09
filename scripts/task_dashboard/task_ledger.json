@@ -1,6 +1,7 @@
 [
   {
     "id": "quality-gate",
+    "task_type": "code",
     "phase": "Cross-cutting - Quality tooling",
     "title": "Post-code quality gate (pandera/evidently/ruff/pytest)",
     "status": "done",
@@ -20,10 +21,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "pass",
-      "diff_cover": "skip"
+      "tests": {
+        "status": "pass",
+        "detail": "13 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer, 4 findings fixed"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "skip (pre-tooling; diff-cover not yet installed)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "is the gate itself (pandera+evidently)"
+      }
     },
     "code_review": {
       "layers": 3,
@@ -53,6 +70,7 @@
   },
   {
     "id": "task-7",
+    "task_type": "code",
     "phase": "Phase 1 - Headline Track B experiments",
     "title": "Pooled news-GNN G0/G1 graph ablation + G1 positivity fix",
     "status": "done",
@@ -74,10 +92,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "pass",
-      "diff_cover": "skip"
+      "tests": {
+        "status": "pass",
+        "detail": "92 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer, 0 findings"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "skip (pre-tooling)"
+      },
+      "data_quality": {
+        "status": "miss",
+        "detail": "model/data change, gate not run"
+      }
     },
     "code_review": {
       "layers": 3,
@@ -107,6 +141,7 @@
   },
   {
     "id": "roadmap",
+    "task_type": "doc",
     "phase": "Planning - Unified roadmap",
     "title": "Unified Track A+B roadmap (architecture based on Track B)",
     "status": "done",
@@ -130,10 +165,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a",
-      "lint": "n/a",
-      "code_review": "pass",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "focused (1L) planning review"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "doc"
+      }
     },
     "code_review": {
       "layers": 1,
@@ -155,6 +206,7 @@
   },
   {
     "id": "t0.1-multihorizon",
+    "task_type": "code",
     "phase": "Phase 0 - Foundations",
     "title": "T0.1 Multi-horizon --horizon knob (1/5/10/22)",
     "status": "done",
@@ -191,10 +243,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "focused adversarial: horizon threaded on all paths, guard raises",
-      "diff_cover": "not run (tooling gap)"
+      "tests": {
+        "status": "pass",
+        "detail": "110 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "focused adversarial only - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "not run (tooling gap)"
+      },
+      "data_quality": {
+        "status": "miss",
+        "detail": "manifest/horizon path, gate not run"
+      }
     },
     "code_review": {
       "layers": [
@@ -234,6 +302,7 @@
   },
   {
     "id": "task-dashboard",
+    "task_type": "code",
     "phase": "Infra (Track A+B)",
     "title": "Task-evidence ledger + HTML dashboard",
     "status": "done",
@@ -263,10 +332,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "adversarial escaping test passed",
-      "diff_cover": "not run (tooling gap)"
+      "tests": {
+        "status": "pass",
+        "detail": "9 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "focused (adversarial escaping) - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "not run (tooling gap)"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data touched"
+      }
     },
     "code_review": {
       "layers": [
@@ -298,6 +383,7 @@
   },
   {
     "id": "t0.2-batch-graph",
+    "task_type": "code",
     "phase": "Track B / Phase 0",
     "title": "Batch graph path (R10 approved) + ~10x speedup + G0/G1 re-baseline",
     "status": "done",
@@ -345,10 +431,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "focused adversarial: frozen no-grad + positivity gate + byte-identical hash verified",
-      "diff_cover": "not run (tooling gap)"
+      "tests": {
+        "status": "pass",
+        "detail": "117 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "focused adversarial - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "not run (tooling gap)"
+      },
+      "data_quality": {
+        "status": "miss",
+        "detail": "graph builder/data, gate not run"
+      }
     },
     "code_review": {
       "layers": [
@@ -388,6 +490,7 @@
   },
   {
     "id": "t1.1-a1-pooled-vs-commondate",
+    "task_type": "code",
     "phase": "Track B / Phase 1 (HEADLINE)",
     "title": "A1: pooled vs common-date (does pooling give the data advantage vs HAR)",
     "status": "done",
@@ -432,10 +535,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "adversarial: no CRITICAL/HIGH, 3 LOW resolved",
-      "diff_cover": "not run (tooling gap)"
+      "tests": {
+        "status": "pass",
+        "detail": "125 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "focused (adversarial-subagent, 3 LOW fixed) - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "not run (tooling gap)"
+      },
+      "data_quality": {
+        "status": "miss",
+        "detail": "new common-date manifest, gate not run"
+      }
     },
     "code_review": {
       "layers": [
@@ -475,6 +594,7 @@
   },
   {
     "id": "t1.2-parsimony-pooled",
+    "task_type": "code",
     "phase": "Track B / Phase 1",
     "title": "Parsimony on pooled: news helps, gate inert, HAR beaten only on QLIKE",
     "status": "done",
@@ -510,10 +630,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "reproducible script output verified",
-      "diff_cover": "not run (tooling gap)"
+      "tests": {
+        "status": "pass",
+        "detail": "6 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "focused (reproduced-analysis) - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "miss",
+        "detail": "not run (tooling gap)"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "reuses A1 cells, no new data"
+      }
     },
     "code_review": {
       "layers": [
@@ -544,11 +680,12 @@
         "ok": false
       }
     ],
-    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R\u00b2; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
+    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R²; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
     "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
   },
   {
     "id": "data-qa-pandera-evidently",
+    "task_type": "code",
     "phase": "Quality assurance (data foundation)",
     "title": "Data-quality gate: Pandera schema + Evidently drift on Track B data",
     "status": "done",
@@ -575,10 +712,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "n/a",
-      "code_review": "n/a",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "pass",
+        "detail": "tests + drift"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "not run"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "not run"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "not run"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 + evidently drift"
+      }
     },
     "code_review": {
       "layers": [],
@@ -604,6 +757,7 @@
   },
   {
     "id": "consolidated-metrics",
+    "task_type": "doc",
     "phase": "Reporting",
     "title": "Consolidated metrics table (Track A + Track B, 3 clusters)",
     "status": "done",
@@ -628,10 +782,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a (doc)",
-      "lint": "n/a",
-      "code_review": "n/a",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "doc"
+      }
     },
     "code_review": {
       "layers": [],
@@ -661,6 +831,7 @@
   },
   {
     "id": "quality-enforcement",
+    "task_type": "code",
     "phase": "Quality assurance (enforcement)",
     "title": "Enforce gate always-run: diff-cover installed + pre-push hook + honest code-review note",
     "status": "done",
@@ -679,7 +850,7 @@
       },
       {
         "cmd": "diff-cover on Track B changed lines vs merge-base",
-        "result": "87% (176/1459 uncovered) \u2014 FAILS C0=100 target; debt logged"
+        "result": "87% (176/1459 uncovered) — FAILS C0=100 target; debt logged"
       },
       {
         "cmd": "pre-push hook fired live on push",
@@ -691,10 +862,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass",
-      "lint": "pass",
-      "code_review": "honest: gate is git-automatable; code-review is NOT (stays CLAUDE.md process rule)",
-      "diff_cover": "NOW RUN: 87% Track B (debt), floor 80 enforced, target 100"
+      "tests": {
+        "status": "pass",
+        "detail": "13 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "self-review only - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "87% (hook, floor 80, target 100 per CLAUDE.md C0)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook fired (pandera/evidently)"
+      }
     },
     "code_review": {
       "layers": [
@@ -721,15 +908,16 @@
         "ok": false
       },
       {
-        "item": "code-review not git-automatable \u2014 honest note",
+        "item": "code-review not git-automatable — honest note",
         "ok": true
       }
     ],
-    "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated \u2014 it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
+    "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated — it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
     "report_md": "scripts/git_hooks/README.md"
   },
   {
     "id": "research-gnn-sparse-data",
+    "task_type": "research",
     "phase": "Research (informs Track B decision)",
     "title": "Deep research: sparse/irregular-node GNN methods for stocks w/ different histories",
     "status": "done",
@@ -756,10 +944,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a (doc)",
-      "lint": "n/a",
-      "code_review": "n/a (research)",
-      "diff_cover": "n/a (no code)"
+      "tests": {
+        "status": "na",
+        "detail": "research doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "research"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "research"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
     },
     "code_review": {
       "layers": [],
@@ -789,8 +993,9 @@
   },
   {
     "id": "t-pooled-20ep",
+    "task_type": "code",
     "phase": "Track B / longer-training check",
-    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) \u2014 does longer training beat HAR?",
+    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) — does longer training beat HAR?",
     "status": "done",
     "timestamp": "2026-08-08 22:00",
     "branch": "feature/pooled-news-gnn-pilot",
@@ -807,7 +1012,7 @@
     "evidence": [
       {
         "cmd": "pytest scripts/pooled_20ep_analysis/ (from repo root, AFTER conftest fix)",
-        "result": "5 passed (agent's original passed only from inside the dir \u2014 verification caught it)"
+        "result": "5 passed (agent's original passed only from inside the dir — verification caught it)"
       },
       {
         "cmd": "20ep 3-seed means",
@@ -823,10 +1028,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass (after conftest fix)",
-      "lint": "pass",
-      "code_review": "verification caught 3 real issues (see below), all fixed except history bloat",
-      "diff_cover": "enforced via pre-push hook (now runs on worktrees)"
+      "tests": {
+        "status": "pass",
+        "detail": "5 passed (after conftest fix)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "verification-caught 3 issues, 2 fixed"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced (floor 80)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook (pandera/evidently)"
+      }
     },
     "code_review": {
       "layers": [
@@ -853,7 +1074,7 @@
         "ok": true
       },
       {
-        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) \u2014 flagged",
+        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) — flagged",
         "ok": true
       },
       {
@@ -861,13 +1082,14 @@
         "ok": false
       }
     ],
-    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R\u00b2 (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
+    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R² (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
     "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
   },
   {
     "id": "masked-gnn-rerun",
+    "task_type": "code",
     "phase": "Track B / graph confound resolution",
-    "title": "Masked availability-aware GNN \u2014 does graph help with 3.8x more data?",
+    "title": "Masked availability-aware GNN — does graph help with 3.8x more data?",
     "status": "done",
     "timestamp": "2026-08-08 22:03",
     "branch": "feature/masked-gnn",
@@ -894,7 +1116,7 @@
         "result": "masked 4,941 dates / 4,523 train snapshots vs intersection 1,296/900 = 3.8x more"
       },
       {
-        "cmd": "masked G0/G1 3-seed \u0394(G1-G0 vloss)",
+        "cmd": "masked G0/G1 3-seed Δ(G1-G0 vloss)",
         "result": "+0.001039 mean (G1 marginally WORSE 2/3 seeds); nonpos 0.0 all"
       },
       {
@@ -903,10 +1125,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass (134)",
-      "lint": "pass",
-      "code_review": "6 targeted masking tests + self-review; 3-layer /code-review NOT run (follow-up)",
-      "diff_cover": "enforced by hook (passed floor 80)"
+      "tests": {
+        "status": "pass",
+        "detail": "134 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "self+tests; 3-layer deferred (superseded by b-review-masked-gnn)"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced (floor 80)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 + drift"
+      }
     },
     "code_review": {
       "layers": [
@@ -941,11 +1179,12 @@
         "ok": false
       }
     ],
-    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1\u2248G0, mean \u0394 +0.001, marginally worse). So the graph-null is a CLEAN, genuine null \u2014 NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
+    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1≈G0, mean Δ +0.001, marginally worse). So the graph-null is a CLEAN, genuine null — NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
     "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   },
   {
     "id": "a-history-rewrite",
+    "task_type": "git-op",
     "phase": "Repo hygiene",
     "title": "(a) Purge ~76MB manifests from public git history (fresh-clone filter-repo + force-push)",
     "status": "done",
@@ -974,10 +1213,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a",
-      "lint": "n/a",
-      "code_review": "n/a (git op)",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "git op"
+      }
     },
     "code_review": {
       "layers": [],
@@ -1011,6 +1266,7 @@
   },
   {
     "id": "b-review-masked-gnn",
+    "task_type": "code",
     "phase": "Track B / QA",
     "title": "(b) 3-layer code-review of masked-GNN",
     "status": "done",
@@ -1043,10 +1299,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass (135)",
-      "lint": "pass",
-      "code_review": "3-layer done",
-      "diff_cover": "hook-enforced"
+      "tests": {
+        "status": "pass",
+        "detail": "135 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance)"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook (pandera/evidently)"
+      }
     },
     "code_review": {
       "layers": [
@@ -1080,6 +1352,7 @@
   },
   {
     "id": "research-har-benchmark",
+    "task_type": "research",
     "phase": "Research (paper baselines)",
     "title": "Literature: which models beat HAR + standard benchmark/baseline suite",
     "status": "done",
@@ -1108,10 +1381,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a (research)",
-      "lint": "n/a",
-      "code_review": "n/a",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "na",
+        "detail": "research doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "research"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "research"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
     },
     "code_review": {
       "layers": [],
@@ -1141,6 +1430,7 @@
   },
   {
     "id": "final-architecture-svg",
+    "task_type": "code",
     "phase": "Paper artifacts",
     "title": "Final combined architecture diagram (SVG, matplotlib)",
     "status": "done",
@@ -1171,10 +1461,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "n/a (diagram)",
-      "lint": "pass",
-      "code_review": "self (label read-back + reproducibility)",
-      "diff_cover": "n/a"
+      "tests": {
+        "status": "na",
+        "detail": "diagram generator (no logic branches)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "warn",
+        "detail": "self only - 3-layer required"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "plot script"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
     },
     "code_review": {
       "layers": [
@@ -1206,6 +1512,7 @@
   },
   {
     "id": "knn-sparse-adjacency",
+    "task_type": "code",
     "phase": "Track B / graph (pivotal)",
     "title": "GAT-hybrid knn-8 sparse adjacency on masked graph @ 15-epoch convergence",
     "status": "done",
@@ -1253,10 +1560,26 @@
       }
     ],
     "quality_gate": {
-      "tests": "pass (154)",
-      "lint": "pass",
-      "code_review": "agent 3-layer (1 HIGH fixed) + parent numeric verification",
-      "diff_cover": "C0=100% (agent)"
+      "tests": {
+        "status": "pass",
+        "detail": "154 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "agent 3-layer (Blind/EdgeCase/Acceptance), 1 HIGH fixed"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "C0=100% on changed lines (agent)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 + drift"
+      }
     },
     "code_review": {
       "layers": [
