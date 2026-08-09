@@ -30,7 +30,10 @@ test QLIKE from 0.5648 to 0.5599, significant across three seeds ($t=-7.69$ val,
 per-ticker gate delivers no consistent benefit and marginally raises test QLIKE. Enabling the
 cross-stock graph (G1 vs P3) yields no statistically significant improvement at any horizon: a
 Diebold-Mariano test on test QLIKE is not significant for h1, h5, h10, or h22 (verdict B, graph
-null). Classical econometric baselines confirm the picture: HAR and HARQ tie the deep models on the
+null). A targeted sweep confirms the parsimony finding: neither the base graph nor five research-backed
+enhancements (QLIKE-loss training, HAR + graph-residual, directed spillover edges, learned adjacency,
+omit-self-loop) beats a well-specified HAR at a Diebold-Mariano-significant level. Classical econometric
+baselines confirm the picture: HAR and HARQ tie the deep models on the
 level metrics (test QLIKE 0.5793 / 0.5737, $R^2$ 0.767), while GARCH-family models are far worse
 (test QLIKE 1.76-1.87, $R^2 \approx 0$). We present G1 as the proposed architecture and report a
 rigorous parsimony finding: on sparse daily VN30 data, news content improves the forecast but
@@ -547,11 +550,30 @@ volatility-spillover edges in place of symmetric correlation, richer HAR-family 
 universe [10,14,15]. The three realistic on-data levers for this project are (i) training and
 evaluating on a QLIKE objective, the single decisive lever in the most rigorous GNN-vs-HAR study, (ii)
 augmenting the node with range-estimator, overnight, and HAR-residual-decomposition features, and (iii)
-replacing correlation k-NN edges with a directed Diebold-Yilmaz spillover adjacency. A targeted sweep of
-these levers to test whether any lets the graph beat HAR on this panel is in progress. *[Placeholder,
-to be updated with the sweep outcome: as of this draft the beat-HAR sweep has not returned a
-configuration that clears the HAR/HARQ QLIKE tie on the held-out test at a Diebold-Mariano-significant
-level; the parsimony finding stands pending that result.]*
+replacing correlation k-NN edges with a directed Diebold-Yilmaz spillover adjacency.
+
+We ran that targeted sweep on the identical consistent basis (same 14,418 validation / 14,464 test
+observations, leakage-safe masked k-NN-8 graph, three seeds), evaluating a leaner price-only GAT and
+five research-backed levers against the pooled-HAR anchor P0 (test QLIKE 0.5676): (C1) a QLIKE-loss GAT
+on the news backbone, (C2) an additive HAR + graph-residual decomposition, (C3) directed
+Diebold-Yilmaz volatility-spillover edges, (C5) spillover with an omitted self-loop under a $k$-sweep,
+and (C6) a learned dynamic adjacency. No configuration beats the anchor at a Diebold-Mariano-significant
+level on QLIKE. The best, C2, reaches test QLIKE 0.5662 but its per-seed sign is inconsistent and the
+across-seed paired-$t$ is far from significant ($p=0.562$), so it statistically ties P0 rather than
+beating it, and it ties P0 on RMSE as well. The QLIKE-loss GAT (C1, test QLIKE 0.5730) improves on the
+MSE-trained backbone and beats the classical per-ticker HAR (0.5793) and ties P0 on RMSE, but is
+significantly worse than the pooled-HAR anchor on QLIKE (paired-$t$ $p=0.027$). The directed-spillover,
+omit-self, and learned-adjacency variants (C3 0.5908, C5 0.5748, C6 0.5903) are significantly worse than
+P0 on QLIKE. A separate leaner check, a price-only GAT on the P1 backbone, beats HAR on only one of six
+held-out test metrics (MAE) and is directionally, though not significantly, worse on squared-error loss
+(Diebold-Mariano $p=0.19$-$0.25$). Two further levers were not run: HAR-RV-X range/overnight node
+features (C4) require a multi-feature backbone beyond the pooled preprocessor's single-feature contract,
+and news-as-edge co-mention (C7) is infeasible on the per-ticker news panel, which carries no
+article-level multi-ticker structure. Neither the base graph nor any of the five targeted enhancements
+beats a well-specified HAR, which strengthens rather than weakens the parsimony conclusion: the
+cross-stock graph adds no measurable value even under the levers the literature credits for closing the
+HAR gap. Source: `docs/reports/2026-08-10_0412_beat_har_sweep_results.md` (C1-C6),
+`docs/reports/2026-08-10_0130_gat_price_har_quick.md` (price-only GAT).
 
 ---
 
@@ -687,4 +709,6 @@ In *ACM ICAIF* (2022). arXiv:2112.09015.
 `docs/reports/classical_baselines_h5_2026-08-09_182129.json`; diagnosis
 `docs/reports/2026-08-09_2148_old_gat_vs_new_g1_diagnosis.md`; beat-HAR conditions research
 `docs/reports/2026-08-09_2209_gnn_volatility_beat_har_research.md`; hybrid combinations research
-`docs/reports/2026-08-09_2214_gnn_hybrid_combinations_research.md`.*
+`docs/reports/2026-08-09_2214_gnn_hybrid_combinations_research.md`; beat-HAR sweep (C1-C6)
+`docs/reports/2026-08-10_0412_beat_har_sweep_results.md`; price-only GAT check
+`docs/reports/2026-08-10_0130_gat_price_har_quick.md`.*

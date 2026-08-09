@@ -93,7 +93,10 @@ test observations. News content carries the forecast gain: adding the news branc
 significantly on validation ($t=\newsValT$) and held-out test ($t=\newsTestT$), and the parsimonious
 news backbone (P2) attains the lowest test QLIKE in the study (\PtwoTestQ). The per-ticker gate raises
 QLIKE and earns no place. Enabling the cross-stock graph (G1 vs P3) yields no statistically significant
-QLIKE improvement at any of four horizons under a Diebold--Mariano test (verdict B, graph null). HAR and
+QLIKE improvement at any of four horizons under a Diebold--Mariano test (verdict B, graph null). A
+targeted sweep confirms this: neither the base graph nor five research-backed enhancements (QLIKE-loss
+training, HAR $+$ graph-residual, directed spillover edges, learned adjacency, omit-self-loop) beats a
+well-specified HAR at a Diebold--Mariano-significant level. HAR and
 HARQ tie the deep models on the level metrics (test QLIKE \HARtestQ{} and \HARQtestQ, $R^2\approx0.767$),
 while GARCH-family models are far worse (test QLIKE $1.76$--$1.87$, $R^2\approx0$). We present G1 as the
 proposed architecture and report a rigorous parsimony finding: news content improves the forecast but
@@ -505,10 +508,30 @@ volatility-spillover edges, richer HAR-family node features (semivariance, reali
 and range estimators), and a large cross-sectional universe~\cite{zhang2025gnnhar,audrino2025,bpq2016}. The
 three realistic on-data levers are (i)~a QLIKE training objective, (ii)~range-estimator, overnight, and
 HAR-residual node features, and (iii)~a directed Diebold--Yilmaz spillover adjacency in place of
-correlation $k$-NN. A targeted sweep of these levers is in progress.
-\emph{[Placeholder, to be updated with the sweep outcome: as of this draft the beat-HAR sweep has not
-returned a configuration that clears the HAR/HARQ QLIKE tie on the held-out test at a
-Diebold--Mariano-significant level; the parsimony finding stands pending that result.]}
+correlation $k$-NN. We ran that targeted sweep on the identical consistent basis (same \nval{}
+validation / \ntest{} test observations, leakage-safe masked $k$-NN-8 graph, three seeds), evaluating a
+leaner price-only GAT and five research-backed levers against the pooled-HAR anchor P0 (test QLIKE
+$0.5676$): (C1)~a QLIKE-loss GAT on the news backbone, (C2)~an additive HAR $+$ graph-residual
+decomposition, (C3)~directed Diebold--Yilmaz volatility-spillover edges, (C5)~spillover with an omitted
+self-loop under a $k$-sweep, and (C6)~a learned dynamic adjacency. No configuration beats the anchor at a
+Diebold--Mariano-significant level on QLIKE. The best, C2, reaches test QLIKE $0.5662$ but its per-seed
+sign is inconsistent and the across-seed paired-$t$ is far from significant ($p=0.562$), so it
+statistically ties P0 rather than beating it, and ties P0 on RMSE. The QLIKE-loss GAT (C1, test QLIKE
+$0.5730$) improves on the MSE-trained backbone and beats the classical per-ticker HAR ($0.5793$) and ties
+P0 on RMSE, but is significantly worse than the pooled-HAR anchor on QLIKE (paired-$t$ $p=0.027$). The
+directed-spillover, omit-self, and learned-adjacency variants (C3 $0.5908$, C5 $0.5748$, C6 $0.5903$) are
+significantly worse than P0 on QLIKE. A separate leaner check, a price-only GAT on the P1 backbone, beats
+HAR on only one of six held-out test metrics (MAE) and is directionally, though not significantly, worse
+on squared-error loss (Diebold--Mariano $p=0.19$--$0.25$). Two further levers were not run: HAR-RV-X
+range/overnight node features (C4) need a multi-feature backbone beyond the pooled preprocessor's
+single-feature contract, and news-as-edge co-mention (C7) is infeasible on the per-ticker news panel.
+Neither the base graph nor any of the five targeted enhancements beats a well-specified HAR, which
+strengthens rather than weakens the parsimony conclusion: the cross-stock graph adds no measurable value
+even under the levers the literature credits for closing the HAR gap.
+% Sweep numbers (C1-C6) trace to docs/reports/2026-08-10_0412_beat_har_sweep_results.md and
+% results/beat_har_sweep_2026-08-10_0130/analysis.json; price-only GAT to
+% docs/reports/2026-08-10_0130_gat_price_har_quick.md. C2 QLIKE 0.5662 (paired-t p=0.562, ties P0);
+% C1 0.5730 (p=0.027); C3 0.5908; C5 best-k16 0.5748; C6 0.5903; P0 anchor 0.5676. No DM-significant win.
 
 % ======================================================================
 \section{Related Work}

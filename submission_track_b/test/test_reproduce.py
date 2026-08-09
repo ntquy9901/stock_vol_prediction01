@@ -118,3 +118,51 @@ def test_g1_final_imports():
     assert hasattr(g1_final, "train_g1")
     assert hasattr(g1_final, "infer_g1")
     assert hasattr(g1_final, "build_graph_context")
+
+
+def test_cmd_infer_missing_checkpoint_returns_one(tmp_path, monkeypatch):
+    # The offline guard: no checkpoint -> print guidance, return 1 (no data needed).
+    monkeypatch.setattr(reproduce, "_CHECKPOINTS", tmp_path / "checkpoints")
+    assert reproduce.cmd_infer() == 1
+
+
+def test_main_view_dispatch(tmp_path, monkeypatch):
+    monkeypatch.setattr(reproduce, "_OUTPUT", tmp_path / "output")
+    assert reproduce.main(["view"]) == 0
+    assert reproduce.main(["results"]) == 0
+
+
+def test_main_infer_dispatch_no_checkpoint(tmp_path, monkeypatch):
+    monkeypatch.setattr(reproduce, "_CHECKPOINTS", tmp_path / "checkpoints")
+    assert reproduce.main(["infer"]) == 1
+
+
+def test_main_unrecognised_returns_two():
+    assert reproduce.main(["bogus"]) == 2
+
+
+def test_main_empty_enters_menu_and_quits(monkeypatch):
+    # main([]) -> _menu(); feed "0" to quit immediately.
+    monkeypatch.setattr("builtins.input", lambda *_: "0")
+    assert reproduce.main([]) == 0
+
+
+def test_menu_view_then_quit(tmp_path, monkeypatch):
+    monkeypatch.setattr(reproduce, "_OUTPUT", tmp_path / "output")
+    responses = iter(["1", "0"])
+    monkeypatch.setattr("builtins.input", lambda *_: next(responses))
+    assert reproduce._menu() == 0
+
+
+def test_menu_unrecognised_then_quit(monkeypatch):
+    responses = iter(["99", "0"])
+    monkeypatch.setattr("builtins.input", lambda *_: next(responses))
+    assert reproduce._menu() == 0
+
+
+def test_menu_eof_returns_zero(monkeypatch):
+    def _raise_eof(*_):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", _raise_eof)
+    assert reproduce._menu() == 0
