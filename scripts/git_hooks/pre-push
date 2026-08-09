@@ -19,6 +19,19 @@ cd "$ROOT" || exit 1
 MIN_COVER="${QG_MIN_COVER:-80}"
 FAIL=0
 
+# Main repo root (scripts/ lives here even when pushing from a feature-branch
+# worktree that lacks scripts/). Resolved from the hook's own location.
+HOOK_SELF="${BASH_SOURCE[0]:-$0}"
+MAINROOT="$(cd "$(dirname "$HOOK_SELF")/../.." && pwd)"
+
+# Captured gate outcomes -> a per-commit JSON the dashboard overlays (real run
+# wins over hand-entry). See scripts/task_dashboard/gate_results/.
+TESTS_OK=1
+DIFF_PCT=""
+RUFF_STATUS="na"
+STATUSF="$ROOT/.qg_gate_status"
+rm -f "$STATUSF"
+
 # --- TDD gate (step 0): implementation code must ship WITH a test change ---
 # Proxy for test-first: you cannot push new implementation .py without touching a
 # test. Does not prove test-was-written-first, but makes "code with no test"
@@ -44,13 +57,16 @@ fi
 
 echo "[pre-push] 1/4 pytest (+coverage) on $TESTDIR"
 if ! python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-report=xml:.qg_coverage.xml -q; then
-  echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1
+  echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1; TESTS_OK=0
 fi
 
 echo "[pre-push] 2/4 diff-coverage on changed lines (floor ${MIN_COVER}%)"
 BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
 if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ]; then
-  if ! diff-cover .qg_coverage.xml --compare-branch="$BASE" --fail-under="$MIN_COVER" 2>&1 | tail -12; then
+  DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$BASE" --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
+  echo "$DCOUT" | tail -12
+  DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
+  if [ "$DCRC" -ne 0 ]; then
     echo "[pre-push] BLOCK: diff-coverage below ${MIN_COVER}% (target 100%)." >&2; FAIL=1
   fi
 else
@@ -60,17 +76,15 @@ fi
 echo "[pre-push] 3/4 ruff on changed code"
 CHANGED=$(git diff --name-only "$BASE"...HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
 if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
-  ruff check $CHANGED 2>&1 | tail -5 || { echo "[pre-push] WARN: ruff findings on changed files." >&2; }
+  if ruff check $CHANGED 2>&1 | tail -5; then RUFF_STATUS="pass"; else RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff findings on changed files." >&2; fi
 fi
 
 echo "[pre-push] 4/4 data-quality gate (Pandera + Evidently) if data/manifest touched"
 DATA_TOUCHED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -iE 'data|manifest|scaling|dataset|panel' || true)
 if [ -n "$DATA_TOUCHED" ]; then
   # scripts/quality_gate lives in the MAIN repo root (not in feature-branch
-  # worktrees), so resolve it from the hook's own absolute location, not the cwd.
-  HOOK_SELF="${BASH_SOURCE[0]:-$0}"
-  MAINROOT="$(cd "$(dirname "$HOOK_SELF")/../.." && pwd)"
-  MAINROOT="$MAINROOT" python - <<'PY' || { echo "[pre-push] BLOCK: Pandera schema failed." >&2; exit 3; }
+  # worktrees), so resolve it from the hook's own absolute location (MAINROOT).
+  MAINROOT="$MAINROOT" QG_STATUSF="$STATUSF" python - <<'PY' || { echo "[pre-push] BLOCK: Pandera schema failed." >&2; FAIL=1; }
 import os, sys, pathlib
 sys.path.insert(0, os.environ.get("MAINROOT", str(pathlib.Path.cwd())))
 try:
@@ -81,13 +95,49 @@ s = check_schema(); print(f"[pre-push]   Pandera SCHEMA: {s.status}: {s.detail}"
 import datetime
 out = PROJECT_ROOT / "results" / "quality_gate" / ("prepush_" + datetime.datetime.now().strftime("%Y%m%d_%H%M%S"))
 d = check_drift(out); print(f"[pre-push]   Evidently DRIFT: {d.status}: {d.detail}")
+sf = os.environ.get("QG_STATUSF")
+if sf:
+    pathlib.Path(sf).write_text(f"{s.status}\n{d.status}\n", encoding="utf-8")
 sys.exit(0 if s.status != "FAIL" else 3)
 PY
 else
   echo "[pre-push]   N/A (no data/manifest change)"
 fi
 
-rm -f .qg_coverage.xml
+# --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
+SHORT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+GATE_DIR="$MAINROOT/scripts/task_dashboard/gate_results"
+QG_COMMIT="$SHORT_SHA" QG_BRANCH="$BRANCH" QG_TESTS="$TESTS_OK" QG_DIFF="$DIFF_PCT" \
+QG_RUFF="$RUFF_STATUS" QG_STATUSF="$STATUSF" QG_GATEDIR="$GATE_DIR" QG_FAIL="$FAIL" \
+python - <<'PY' || echo "[pre-push] WARN: could not write gate-result JSON." >&2
+import os, json, datetime, pathlib
+gate_dir = pathlib.Path(os.environ["QG_GATEDIR"]); gate_dir.mkdir(parents=True, exist_ok=True)
+pandera, evid = "na", "na"
+sf = os.environ.get("QG_STATUSF")
+if sf and os.path.exists(sf):
+    lines = pathlib.Path(sf).read_text(encoding="utf-8").splitlines()
+    if lines:
+        pandera = "pass" if lines[0] == "PASS" else ("fail" if lines[0] == "FAIL" else "na")
+    if len(lines) > 1:
+        evid = lines[1].lower()
+diff = os.environ.get("QG_DIFF") or ""
+payload = {
+    "commit": os.environ["QG_COMMIT"],
+    "branch": os.environ.get("QG_BRANCH"),
+    "timestamp": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+    "tests_passed": os.environ.get("QG_TESTS") == "1",
+    "diff_cover_pct": float(diff) if diff else None,
+    "ruff": os.environ.get("QG_RUFF", "na"),
+    "pandera": pandera,
+    "evidently": evid,
+    "overall": "fail" if os.environ.get("QG_FAIL", "0") != "0" else "pass",
+}
+(gate_dir / (payload["commit"] + ".json")).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+print(f"[pre-push] wrote gate result {gate_dir / (payload['commit'] + '.json')}")
+PY
+
+rm -f .qg_coverage.xml "$STATUSF"
 if [ "$FAIL" -ne 0 ]; then
   echo "[pre-push] QUALITY GATE FAILED — push blocked. Fix, or QG_SKIP=1 with justification." >&2
   exit 1

@@ -191,6 +191,80 @@ def test_write_report(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     assert "SCHEMA" in text
 
 
+def test_write_gate_json(tmp_path: Path) -> None:
+    import json
+
+    results = [
+        rqg.CheckResult("TESTS", rqg.PASS, "13 passed"),
+        rqg.CheckResult("LINT", rqg.PASS, "no lint errors"),
+        rqg.CheckResult("SCHEMA", rqg.PASS, "34/34 valid"),
+        rqg.CheckResult("DRIFT", rqg.INFO, "ACB ref=2800/cur=1200"),
+    ]
+    out_dir = tmp_path / "gate_results"
+    path = rqg.write_gate_json(
+        results,
+        out_dir,
+        commit="abc1234",
+        branch="master",
+        diff_cover_pct=87.0,
+        timestamp="2020-01-01T00:00",
+    )
+    assert path.exists()
+    assert path.name == "abc1234.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["commit"] == "abc1234"
+    assert data["tests_passed"] is True
+    assert data["diff_cover_pct"] == 87.0
+    assert data["ruff"] == "pass"
+    assert data["pandera"] == "pass"
+    assert data["overall"] == "pass"
+
+
+def test_main_writes_gate_json(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import json
+    import subprocess as _sp
+
+    monkeypatch.setattr(rqg, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(rqg, "check_lint", lambda: rqg.CheckResult("LINT", rqg.PASS, "ok"))
+    monkeypatch.setattr(rqg, "check_tests", lambda: rqg.CheckResult("TESTS", rqg.PASS, "ok"))
+    monkeypatch.setattr(rqg, "check_schema", lambda: rqg.CheckResult("SCHEMA", rqg.PASS, "ok"))
+    monkeypatch.setattr(sys, "argv", ["run_quality_gate.py", "--fast"])
+
+    def _fake_git(cmd, *a, **k):
+        val = "deadbee" if "--short" in cmd else "master"
+        return _sp.CompletedProcess(cmd, 0, stdout=val + "\n", stderr="")
+
+    monkeypatch.setattr(_sp, "run", _fake_git)
+
+    rc = rqg.main()
+    assert rc == 0
+    gate_json = tmp_path / "scripts" / "task_dashboard" / "gate_results" / "deadbee.json"
+    assert gate_json.exists()
+    data = json.loads(gate_json.read_text(encoding="utf-8"))
+    assert data["commit"] == "deadbee"
+    assert data["branch"] == "master"
+    assert data["overall"] == "pass"
+
+
+def test_main_gate_json_failure_is_swallowed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A crash while emitting the gate JSON must never fail the gate itself.
+    import subprocess as _sp
+
+    monkeypatch.setattr(rqg, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(rqg, "check_lint", lambda: rqg.CheckResult("LINT", rqg.PASS, "ok"))
+    monkeypatch.setattr(rqg, "check_tests", lambda: rqg.CheckResult("TESTS", rqg.PASS, "ok"))
+    monkeypatch.setattr(rqg, "check_schema", lambda: rqg.CheckResult("SCHEMA", rqg.PASS, "ok"))
+    monkeypatch.setattr(sys, "argv", ["run_quality_gate.py", "--fast"])
+
+    def _boom(*a, **k):
+        raise RuntimeError("git exploded")
+
+    monkeypatch.setattr(_sp, "run", _boom)
+    assert rqg.main() == 0  # gate still passes despite JSON emission crashing
+
+
 # ---------------------------------------------------------------------------
 # Fixed-behaviour regression tests (review findings 2026-08-08)
 # ---------------------------------------------------------------------------

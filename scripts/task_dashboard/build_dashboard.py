@@ -20,11 +20,37 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 DEFAULT_LEDGER = HERE / "task_ledger.json"
 DEFAULT_OUT = HERE.parent.parent / "docs" / "reports" / "task_dashboard.html"
+DEFAULT_GATE_RESULTS = HERE / "gate_results"
 
 STATUS_ORDER = ["done", "running", "blocked", "planned"]
 STATUS_ICON = {"done": "✔", "running": "◐", "blocked": "✖", "planned": "○"}
-GATE_ICON = {"pass": "✔", "skip": "—", "fail": "✖", "n/a": "—"}
-GATE_FIELDS = [("tests", "Tests"), ("lint", "Lint"), ("code_review", "Review"), ("diff_cover", "Diff-cover")]
+
+# Gate status vocabulary. A gate value may be a canonical token string, a
+# {status, detail} object, or legacy free-text prose; all resolve to one of
+# these statuses via ``_resolve_gate``.
+GATE_ICON = {"pass": "✔", "warn": "⚠", "fail": "✖", "miss": "✖", "na": "—"}
+GATE_FIELDS = [
+    ("tests", "Tests"),
+    ("lint", "Lint"),
+    ("code_review", "Review"),
+    ("diff_cover", "Diff-cover"),
+    ("data_quality", "Data-quality"),
+]
+
+# Which gates a task_type must have run (status ``pass``) to count as fully
+# gated. ``data_quality`` is required only when it is applicable (its status is
+# not ``na``) — enforced separately in ``validate_task``.
+REQUIRED_GATES = {
+    "code": ["tests", "lint", "code_review", "diff_cover"],
+    "doc": [],
+    "research": [],
+    "git-op": [],
+}
+DATA_GATE = "data_quality"
+
+# diff-coverage floor the pre-push hook enforces (QG_MIN_COVER default). A real
+# run at/above this counts as gate-run; below it is a coverage failure.
+_COVER_FLOOR = 80.0
 
 
 def load_ledger(path: Path) -> list[dict]:
@@ -62,6 +88,166 @@ def _norm_status(status: object) -> str:
     return s if s in STATUS_ORDER else "planned"
 
 
+# --- Gate resolution -------------------------------------------------------
+# Canonical string tokens that map directly onto a gate status.
+_GATE_TOKENS = {
+    "pass": "pass",
+    "passed": "pass",
+    "warn": "warn",
+    "fail": "fail",
+    "failed": "fail",
+    "miss": "miss",
+    "n/a": "na",
+    "na": "na",
+    "skip": "na",
+    "skipped": "na",
+}
+
+
+def _derive_status(text: str) -> str:
+    """Best-effort status for legacy free-text prose (never collapse to dash)."""
+    low = text.strip().lower()
+    if not low:
+        return "na"
+    if low.startswith("n/a") or low.startswith("na ") or "not applicable" in low:
+        return "na"
+    if "fail" in low:
+        return "fail"
+    if low.startswith("pass") or "passed" in low:
+        return "pass"
+    # Anything else is real content (a number, a note): show it with a warn icon
+    # rather than silently downgrading it to the muted "—" dash.
+    return "warn"
+
+
+def _resolve_gate(value: object) -> tuple[str, str]:
+    """Resolve a gate cell to ``(status, detail_text)``.
+
+    Handles three shapes: a ``{status, detail}`` object, a canonical token
+    string, and legacy free-text prose. A non-empty value never resolves to a
+    bare dash with no text.
+    """
+    if isinstance(value, dict):
+        raw_status = str(value.get("status", "")).strip().lower()
+        detail = str(value.get("detail", "")).strip()
+        status = raw_status if raw_status in GATE_ICON else _GATE_TOKENS.get(
+            raw_status, _derive_status(detail or raw_status)
+        )
+        return status, detail
+    s = str(value).strip()
+    low = s.lower()
+    if low in _GATE_TOKENS:
+        return _GATE_TOKENS[low], s
+    return _derive_status(s), s
+
+
+def _task_type(task: dict) -> str:
+    t = str(task.get("task_type", "")).strip().lower()
+    return t if t in REQUIRED_GATES else ""
+
+
+def validate_task(task: dict) -> tuple[bool, list[str]]:
+    """Return ``(is_incomplete, missing_gates)`` for a task.
+
+    A task_type with required gates (currently only ``code``) is incomplete when
+    any required gate does not resolve to ``pass``, or when the data-quality gate
+    is an explicit ``miss``/``fail``. Doc/research/git-op tasks (no required
+    gates) are never flagged incomplete.
+    """
+    ttype = _task_type(task)
+    required = REQUIRED_GATES.get(ttype, [])
+    if not required:
+        return False, []
+    gate = task.get("quality_gate", {})
+    gate = gate if isinstance(gate, dict) else {}
+    missing: list[str] = []
+    for key in required:
+        status, _ = _resolve_gate(gate.get(key, "na"))
+        if status != "pass":
+            missing.append(key)
+    data_status, _ = _resolve_gate(gate.get(DATA_GATE, "na"))
+    if data_status in ("miss", "fail"):
+        missing.append(DATA_GATE)
+    return (len(missing) > 0), missing
+
+
+# --- Timestamp ordering ----------------------------------------------------
+_TS_FORMATS = (
+    "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%dT%H:%M",
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%Y-%m-%d",
+)
+
+
+def _parse_ts(value: object) -> datetime:
+    s = str(value).strip()
+    for fmt in _TS_FORMATS:
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            continue
+    return datetime.min
+
+
+# --- Per-commit gate-result overlay ---------------------------------------
+def load_gate_results(dir_path: Path) -> dict[str, dict]:
+    """Load ``gate_results/<short-sha>.json`` files into a ``{sha: payload}`` map.
+
+    Missing dir -> empty map. Unreadable/invalid files are skipped, not fatal.
+    """
+    dir_path = Path(dir_path)
+    out: dict[str, dict] = {}
+    if not dir_path.is_dir():
+        return out
+    for jf in sorted(dir_path.glob("*.json")):
+        try:
+            payload = json.loads(jf.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(payload, dict):
+            out[jf.stem] = payload
+    return out
+
+
+def _overlay_gate(task: dict, gate_results: dict[str, dict]) -> dict:
+    """Return a task copy whose quality_gate is overlaid with real run values.
+
+    For any of the task's commits that has a gate-result JSON, the machine
+    statuses win over hand-entered values (hand-entry is fallback only).
+    """
+    commits = task.get("commits")
+    if not gate_results or not isinstance(commits, list):
+        return task
+    matched = [gate_results[c] for c in commits if isinstance(c, str) and c in gate_results]
+    if not matched:
+        return task
+    payload = max(matched, key=lambda p: str(p.get("timestamp", "")))
+    gate = dict(task.get("quality_gate", {}) if isinstance(task.get("quality_gate"), dict) else {})
+
+    if "tests_passed" in payload:
+        ok = bool(payload["tests_passed"])
+        gate["tests"] = {"status": "pass" if ok else "fail", "detail": f"hook: {'passed' if ok else 'failed'}"}
+    if payload.get("diff_cover_pct") is not None:
+        pct = float(payload["diff_cover_pct"])
+        # A real diff-cover run counts as gate-run; below the enforced floor (80)
+        # it is a genuine coverage failure. Target remains 100% per CLAUDE.md C0.
+        gate["diff_cover"] = {"status": "pass" if pct >= _COVER_FLOOR else "fail",
+                              "detail": f"hook: {pct:g}%"}
+    if payload.get("ruff"):
+        gate["lint"] = {"status": "pass" if str(payload["ruff"]).lower() == "pass" else "warn",
+                        "detail": f"hook: ruff {payload['ruff']}"}
+    if payload.get("pandera"):
+        p = str(payload["pandera"]).lower()
+        gate["data_quality"] = {"status": "pass" if p == "pass" else ("fail" if p == "fail" else "na"),
+                                "detail": f"hook: pandera {payload['pandera']}"}
+
+    new_task = dict(task)
+    new_task["quality_gate"] = gate
+    return new_task
+
+
 def _render_badge(status: object) -> str:
     s = _norm_status(status)
     return (
@@ -70,7 +256,7 @@ def _render_badge(status: object) -> str:
     )
 
 
-def _render_overview(counts: dict[str, int]) -> str:
+def _render_overview(counts: dict[str, int], fully_gated: int = 0, total_code: int = 0) -> str:
     total = sum(counts.values())
     tiles = "".join(
         f'<div class="tile st-{s}-tile"><div class="tile-n">{counts[s]}</div>'
@@ -97,24 +283,40 @@ def _render_overview(counts: dict[str, int]) -> str:
         f'{STATUS_ICON[s]} {s} ({counts[s]})</span>'
         for s in STATUS_ORDER
     )
+    incomplete_code = total_code - fully_gated
+    kpi_cls = "kpi-ok" if incomplete_code == 0 else "kpi-warn"
+    gate_kpi = (
+        f'<div class="gate-kpi {kpi_cls}">Code tasks fully gated: '
+        f'<strong>{fully_gated} / {total_code}</strong>'
+        + (f' &middot; <span class="kpi-flag">{incomplete_code} INCOMPLETE</span>' if incomplete_code else "")
+        + "</div>"
+    )
     return (
         '<section class="overview">'
         f'<div class="tiles">{tiles}</div>'
         f'{bar}'
         f'<div class="legend">{legend}</div>'
+        f'{gate_kpi}'
         "</section>"
     )
 
 
-def _render_gate_row(gate: dict) -> str:
+def _render_gate_row(gate: dict, missing: list[str] | None = None) -> str:
+    gate = gate if isinstance(gate, dict) else {}
+    missing = missing or []
     cells = []
     for key, label in GATE_FIELDS:
-        raw = str(gate.get(key, "n/a")).lower() if isinstance(gate, dict) else "n/a"
-        state = raw if raw in GATE_ICON else "n/a"
+        status, detail = _resolve_gate(gate.get(key, "na"))
+        # A required-but-not-run gate is flagged MISS even if its own value was a
+        # bland "n/a" — the validator decides, the cell shows it red.
+        if key in missing and status not in ("miss", "fail"):
+            status = "miss"
+            detail = detail or "required, not run"
+        text = f"{label}: {_esc(detail)}" if detail else label
         cells.append(
-            f'<span class="gate gate-{state}">'
-            f'<span class="ic" aria-hidden="true">{GATE_ICON[state]}</span>'
-            f'{label}: {_esc(raw)}</span>'
+            f'<span class="gate gate-{status}">'
+            f'<span class="ic" aria-hidden="true">{GATE_ICON[status]}</span>'
+            f'{text}</span>'
         )
     return f'<div class="gate-row">{"".join(cells)}</div>'
 
@@ -200,40 +402,58 @@ def _render_task_card(task: dict) -> str:
     tid = _esc(task.get("id", ""))
     summary = _esc(task.get("result_summary", ""))
     status = _norm_status(task.get("status", "planned"))
+    incomplete, missing = validate_task(task)
+    phase = task.get("phase")
+    phase_tag = f'<span class="phase-tag">{_esc(phase)}</span>' if phase else ""
+    incomplete_badge = (
+        f'<span class="incomplete-badge" title="missing required gate(s): '
+        f'{_esc(", ".join(missing))}">INCOMPLETE</span>'
+        if incomplete else ""
+    )
     body = "".join(
         [
             f'<p class="summary">{summary}</p>' if summary else "",
             _render_chips(task.get("skills_applied")),
-            _render_gate_row(task.get("quality_gate", {})),
+            _render_gate_row(task.get("quality_gate", {}), missing),
             _render_review(task.get("code_review")),
             _render_dod(task.get("dod")),
             _render_evidence(task.get("evidence")),
             _render_meta(task),
         ]
     )
+    card_cls = f"task-card card-{status}" + (" card-incomplete" if incomplete else "")
     return (
-        f'<article class="task-card card-{status}">'
+        f'<article class="{card_cls}">'
         f'<header class="card-head">{_render_badge(task.get("status", "planned"))}'
+        f'{incomplete_badge}'
         f'<h3 class="card-title">{title}</h3>'
+        f'{phase_tag}'
         f'<span class="card-id">{tid}</span></header>'
         f"{body}</article>"
     )
 
 
-def _group_by_phase(tasks: list[dict]) -> list[tuple[str, list[dict]]]:
-    groups: dict[str, list[dict]] = {}
-    order: list[str] = []
-    for task in tasks:
-        phase = str(task.get("phase", "Unassigned")) if isinstance(task, dict) else "Unassigned"
-        if phase not in groups:
-            groups[phase] = []
-            order.append(phase)
-        groups[phase].append(task)
-    return [(phase, groups[phase]) for phase in order]
+def _order_newest_first(tasks: list[dict]) -> list[dict]:
+    """Sort tasks newest-first by timestamp; ties fall back to reverse ledger order."""
+    indexed = list(enumerate(tasks))
+    indexed.sort(key=lambda pair: (_parse_ts(pair[1].get("timestamp", "")), pair[0]), reverse=True)
+    return [t for _, t in indexed]
 
 
-def build_html(tasks: list[dict]) -> str:
-    """Render the full self-contained dashboard HTML string."""
+def _gated_kpi(tasks: list[dict]) -> tuple[int, int]:
+    """Return ``(fully_gated_code, total_code)`` counts."""
+    code = [t for t in tasks if _task_type(t) == "code"]
+    fully = sum(1 for t in code if not validate_task(t)[0])
+    return fully, len(code)
+
+
+def build_html(tasks: list[dict], gate_results: dict[str, dict] | None = None) -> str:
+    """Render the full self-contained dashboard HTML string.
+
+    ``gate_results`` overlays real per-commit gate output onto matching tasks
+    (real run wins over hand-entry).
+    """
+    tasks = [_overlay_gate(t, gate_results) for t in tasks if isinstance(t, dict)]
     counts = status_counts(tasks)
     generated = datetime.now().strftime("%Y-%m-%d %H:%M")
     if not tasks:
@@ -244,14 +464,10 @@ def build_html(tasks: list[dict]) -> str:
             "<code>python scripts/task_dashboard/build_dashboard.py</code>.</p></section>"
         )
     else:
-        phase_blocks = []
-        for phase, phase_tasks in _group_by_phase(tasks):
-            cards = "".join(_render_task_card(t) for t in phase_tasks)
-            phase_blocks.append(
-                f'<section class="phase"><h2 class="phase-title">{_esc(phase)}'
-                f'<span class="phase-count">{len(phase_tasks)}</span></h2>{cards}</section>'
-            )
-        content = _render_overview(counts) + "".join(phase_blocks)
+        ordered = _order_newest_first(tasks)
+        cards = "".join(_render_task_card(t) for t in ordered)
+        fully, total_code = _gated_kpi(tasks)
+        content = _render_overview(counts, fully, total_code) + f'<section class="tasks">{cards}</section>'
 
     return _PAGE.format(css=_CSS, js=_JS, content=content, generated=_esc(generated), total=sum(counts.values()))
 
@@ -262,21 +478,21 @@ _CSS = """
   --page:#f9f9f7; --surface-1:#fcfcfb; --text-primary:#0b0b0b; --text-secondary:#52514e;
   --muted:#898781; --grid:#e1e0d9; --baseline:#c3c2b7; --border:rgba(11,11,11,0.10);
   --st-done:#0ca30c; --st-running:#fab219; --st-blocked:#d03b3b; --st-planned:#898781;
-  --chip-bg:#eef1f4; --chip-ink:#2a3138; --ev-bg:#f4f4f1;
+  --chip-bg:#eef1f4; --chip-ink:#2a3138; --ev-bg:#f4f4f1; --incomplete-bg:#fdf2f2;
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --page:#0d0d0d; --surface-1:#1a1a19; --text-primary:#ffffff; --text-secondary:#c3c2b7;
   --muted:#898781; --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
   --st-done:#0ca30c; --st-running:#fab219; --st-blocked:#d03b3b; --st-planned:#898781;
-  --chip-bg:#26262a; --chip-ink:#d7d7cf; --ev-bg:#121211;
+  --chip-bg:#26262a; --chip-ink:#d7d7cf; --ev-bg:#121211; --incomplete-bg:#2a1414;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     color-scheme:dark;
     --page:#0d0d0d; --surface-1:#1a1a19; --text-primary:#ffffff; --text-secondary:#c3c2b7;
     --muted:#898781; --grid:#2c2c2a; --baseline:#383835; --border:rgba(255,255,255,0.10);
-    --chip-bg:#26262a; --chip-ink:#d7d7cf; --ev-bg:#121211;
+    --chip-bg:#26262a; --chip-ink:#d7d7cf; --ev-bg:#121211; --incomplete-bg:#2a1414;
   }
 }
 *{box-sizing:border-box}
@@ -340,8 +556,20 @@ h1{font-size:22px;margin:0;}
 .gate{display:inline-flex;align-items:center;gap:5px;font-size:12px;border-radius:6px;
   padding:3px 9px;border:1px solid var(--border);}
 .gate .ic{font-size:11px;}
-.gate-pass{color:var(--st-done);} .gate-fail{color:var(--st-blocked);}
-.gate-skip,.gate-na{color:var(--muted);}
+.gate-pass{color:var(--st-done);}
+.gate-fail,.gate-miss{color:var(--st-blocked);border-color:var(--st-blocked);}
+.gate-warn{color:var(--st-running);}
+.gate-na{color:var(--muted);}
+.card-incomplete{border-color:var(--st-blocked);border-left-color:var(--st-blocked);
+  background:var(--incomplete-bg);}
+.incomplete-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+  letter-spacing:0.04em;padding:3px 9px;border-radius:20px;background:var(--st-blocked);color:#fff;}
+.phase-tag{font-size:11px;color:var(--text-secondary);background:var(--chip-bg);
+  border-radius:20px;padding:2px 9px;}
+.gate-kpi{margin-top:12px;font-size:13px;color:var(--text-secondary);
+  border-top:1px solid var(--grid);padding-top:10px;}
+.gate-kpi strong{font-variant-numeric:tabular-nums;color:var(--text-primary);}
+.kpi-flag{color:var(--st-blocked);font-weight:600;}
 .review{font-size:12px;color:var(--text-secondary);margin:8px 0;}
 .sub{font-size:12px;font-weight:600;color:var(--text-secondary);margin:12px 0 6px;
   text-transform:uppercase;letter-spacing:0.03em;}
@@ -416,7 +644,8 @@ _PAGE = """<!DOCTYPE html>
 def main(ledger_path: Path = DEFAULT_LEDGER, out_path: Path = DEFAULT_OUT) -> Path:
     """Read the ledger and write the dashboard HTML. Returns the output path."""
     tasks = load_ledger(ledger_path)
-    html_str = build_html(tasks)
+    gate_results = load_gate_results(DEFAULT_GATE_RESULTS)
+    html_str = build_html(tasks, gate_results)
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html_str, encoding="utf-8")

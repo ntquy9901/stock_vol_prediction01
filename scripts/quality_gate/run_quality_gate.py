@@ -279,6 +279,51 @@ def write_report(results: list[CheckResult], timestamp: str) -> Path:
     return path
 
 
+def write_gate_json(
+    results: list[CheckResult],
+    out_dir: Path,
+    commit: str,
+    branch: str | None = None,
+    diff_cover_pct: float | None = None,
+    timestamp: str | None = None,
+) -> Path:
+    """Write a machine-readable per-commit gate result the dashboard can overlay.
+
+    Emits ``<out_dir>/<commit>.json`` with a flat schema (tests_passed,
+    diff_cover_pct, ruff, pandera, evidently, overall) so future dashboard rows
+    are sourced from real runs, not hand-entry.
+    """
+    import json
+
+    by_name = {r.name: r for r in results}
+
+    def _status(name: str) -> str | None:
+        r = by_name.get(name)
+        return r.status if r else None
+
+    tests = _status("TESTS")
+    lint = _status("LINT")
+    schema = _status("SCHEMA")
+    drift = _status("DRIFT")
+
+    payload = {
+        "commit": commit,
+        "branch": branch,
+        "timestamp": timestamp or datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "tests_passed": (tests == PASS) if tests is not None else None,
+        "diff_cover_pct": diff_cover_pct,
+        "ruff": "pass" if lint == PASS else ("fail" if lint == FAIL else "na"),
+        "pandera": "pass" if schema == PASS else ("fail" if schema == FAIL else "na"),
+        "evidently": (drift or "na").lower(),
+        "overall": "fail" if gate_failed(results) else "pass",
+    }
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{commit}.json"
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return path
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Post-code quality gate.")
     parser.add_argument(
@@ -291,6 +336,28 @@ def main() -> int:
     print_summary(results)
     report_path = write_report(results, timestamp)
     print(f"Report written: {report_path}")
+
+    # Also emit a per-commit gate-result JSON the task dashboard overlays. Best
+    # effort: skip silently if HEAD is unavailable. diff-cover % is not measured
+    # here (the pre-push hook is the primary source for that), so it is left null.
+    try:
+        import subprocess
+
+        commit = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], cwd=str(PROJECT_ROOT),
+            capture_output=True, text=True, timeout=10,
+        ).stdout.strip()
+        branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=str(PROJECT_ROOT),
+            capture_output=True, text=True, timeout=10,
+        ).stdout.strip()
+        if commit:
+            gate_dir = PROJECT_ROOT / "scripts" / "task_dashboard" / "gate_results"
+            json_path = write_gate_json(results, gate_dir, commit=commit, branch=branch or None)
+            print(f"Gate result written: {json_path}")
+    except Exception as exc:  # noqa: BLE001 - JSON emission must never fail the gate
+        print(f"(gate-result JSON not written: {exc})")
+
     return 1 if gate_failed(results) else 0
 
 

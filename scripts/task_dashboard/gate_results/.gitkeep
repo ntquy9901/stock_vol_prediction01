@@ -1,0 +1,2 @@
+# Per-commit gate-result JSONs (<short-sha>.json) written by scripts/git_hooks/pre-push.
+# The dashboard overlays these onto matching ledger tasks (real run wins over hand-entry).

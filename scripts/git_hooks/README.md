@@ -21,6 +21,7 @@ location, so the data-quality step works even from a worktree that lacks `script
 | diff-coverage on changed lines | BLOCKS if below `QG_MIN_COVER` (default 80; **target 100** per CLAUDE.md C0) |
 | ruff on changed `.py` | Reports findings (warn) |
 | Pandera schema + Evidently drift | Runs + BLOCKS on schema fail **when data/manifest/pipeline files changed** (per the DoD data-quality rule); `N/A` otherwise |
+| Per-commit gate JSON | After the checks, writes `scripts/task_dashboard/gate_results/<short-sha>.json` (`tests_passed`, `diff_cover_pct`, `ruff`, `pandera`, `evidently`, `overall`). The dashboard overlays this onto any ledger task whose `commits` include that sha, so gate cells are sourced from the REAL run, not hand-entry (hand-entry is fallback only). |
 
 ## What it does NOT enforce (not automatable in a git hook)
 - **Code review** (3-layer adversarial `/code-review`) — remains a CLAUDE.md process rule the author must run; the hook cannot perform an LLM review.
