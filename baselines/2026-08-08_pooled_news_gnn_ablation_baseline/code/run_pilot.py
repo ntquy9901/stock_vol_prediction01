@@ -612,6 +612,7 @@ def _run_one_graph_model(
                                     "prediction_norm": float(prediction), "target_raw": node.y_raw})
         validation_loss = (validation_loss_sum / validation_snapshot_count).item()
     evaluation = evaluate_records(records, store)
+    _write_graph_predictions(records, evaluation, output / "predictions.json")
     _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
                                             "train_losses": losses,
                                             "validation_losses": validation_losses,
@@ -1056,6 +1057,25 @@ def _write_comparison_csv(path: Path, comparison: Mapping[str, Any]) -> None:
 
 def _write_json(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, allow_nan=False), encoding="utf-8")
+
+
+def _write_graph_predictions(
+    records: Sequence[Mapping[str, Any]], evaluation: Mapping[str, Any], path: Path
+) -> None:
+    """Persist per-observation raw target/prediction pairs for a Diebold-Mariano test.
+
+    ``evaluation['predictions_raw']`` / ``['targets_raw']`` are produced in the same order as
+    ``records`` (present validation nodes), so the aligned rows let a later DM test build the
+    per-observation loss differential between G0 and G1 on the identical (date, node) set.
+    """
+    rows = [
+        {"ticker_id": int(record["ticker_id"]), "target_date": str(record["target_date"]),
+         "target_raw": float(target), "prediction_raw": float(prediction)}
+        for record, target, prediction in zip(
+            records, evaluation["targets_raw"], evaluation["predictions_raw"], strict=True
+        )
+    ]
+    _write_json(path, rows)
 
 
 if __name__ == "__main__":
