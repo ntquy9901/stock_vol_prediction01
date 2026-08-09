@@ -1,0 +1,153 @@
+{
+  "timestamp": "2026-08-10_003120",
+  "horizon": 5,
+  "graph_epochs": 20,
+  "backbone_epochs": 5,
+  "seeds": [
+    42
+  ],
+  "adjacency": {
+    "mode": "knn",
+    "top_k": 8
+  },
+  "edge_density": {
+    "avg_offdiag_nonzeros_per_present_row": 5.87349373945127,
+    "max_offdiag_nonzeros_per_present_row": 8,
+    "min_offdiag_nonzeros_per_present_row": 0,
+    "present_row_count": 101908
+  },
+  "snapshot_count": 6470,
+  "basis": "masked manifest, leakage-safe graph-bound train, shared per-ticker scalers, positivity floor, identical val/test observations",
+  "model": "GAT on price-only P1 backbone (news OFF, gate OFF) + knn-8 message passing",
+  "per_seed": [
+    {
+      "seed": 42,
+      "P0_HAR": {
+        "validation_metrics": {
+          "mse": 2.1681011329623894e-06,
+          "rmse": 0.0014724473277378683,
+          "mae": 0.0004736662800402553,
+          "r2": 0.7394352654882794,
+          "qlike": 0.5096367290276891,
+          "directional_accuracy": 48.51921615568613
+        },
+        "test_metrics": {
+          "mse": 5.240843759559379e-06,
+          "rmse": 0.002289288920070898,
+          "mae": 0.0006026564470419397,
+          "r2": 0.7667883702522676,
+          "qlike": 0.5676248787964389,
+          "directional_accuracy": 48.527452513289184
+        }
+      },
+      "GAT_P1": {
+        "validation_metrics": {
+          "mse": 2.1155537290124534e-06,
+          "rmse": 0.001454494320721966,
+          "mae": 0.0004606918508753416,
+          "r2": 0.7457504692171696,
+          "qlike": 0.5051980133617366,
+          "directional_accuracy": 48.68668601875426
+        },
+        "test_metrics": {
+          "mse": 5.3039041523254165e-06,
+          "rmse": 0.002303020658249816,
+          "mae": 0.000599571439883877,
+          "r2": 0.7639822539770639,
+          "qlike": 0.5722154129632221,
+          "directional_accuracy": 48.15055956340173
+        }
+      },
+      "comparison": {
+        "validation": {
+          "mse": {
+            "gat_price": 2.1155537290124534e-06,
+            "har": 2.1681011329623894e-06,
+            "delta_gat_minus_har": -5.254740394993605e-08,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.001454494320721966,
+            "har": 0.0014724473277378683,
+            "delta_gat_minus_har": -1.7953007015902205e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "mae": {
+            "gat_price": 0.0004606918508753416,
+            "har": 0.0004736662800402553,
+            "delta_gat_minus_har": -1.2974429164913691e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.7457504692171696,
+            "har": 0.7394352654882794,
+            "delta_gat_minus_har": 0.006315203728890162,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5051980133617366,
+            "har": 0.5096367290276891,
+            "delta_gat_minus_har": -0.004438715665952442,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.68668601875426,
+            "har": 48.51921615568613,
+            "delta_gat_minus_har": 0.16746986306812772,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          }
+        },
+        "test": {
+          "mse": {
+            "gat_price": 5.3039041523254165e-06,
+            "har": 5.240843759559379e-06,
+            "delta_gat_minus_har": 6.306039276603773e-08,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.002303020658249816,
+            "har": 0.002289288920070898,
+            "delta_gat_minus_har": 1.3731738178918065e-05,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "mae": {
+            "gat_price": 0.000599571439883877,
+            "har": 0.0006026564470419397,
+            "delta_gat_minus_har": -3.085007158062773e-06,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.7639822539770639,
+            "har": 0.7667883702522676,
+            "delta_gat_minus_har": -0.002806116275203774,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5722154129632221,
+            "har": 0.5676248787964389,
+            "delta_gat_minus_har": 0.004590534166783233,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.15055956340173,
+            "har": 48.527452513289184,
+            "delta_gat_minus_har": -0.3768929498874556,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          }
+        }
+      }
+    }
+  ]
+}

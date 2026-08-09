@@ -1,0 +1,283 @@
+{
+  "timestamp": "2026-08-10_005412",
+  "horizon": 5,
+  "graph_epochs": 20,
+  "backbone_epochs": 5,
+  "seeds": [
+    123,
+    2026
+  ],
+  "adjacency": {
+    "mode": "knn",
+    "top_k": 8
+  },
+  "edge_density": {
+    "avg_offdiag_nonzeros_per_present_row": 5.87349373945127,
+    "max_offdiag_nonzeros_per_present_row": 8,
+    "min_offdiag_nonzeros_per_present_row": 0,
+    "present_row_count": 101908
+  },
+  "snapshot_count": 6470,
+  "basis": "masked manifest, leakage-safe graph-bound train, shared per-ticker scalers, positivity floor, identical val/test observations",
+  "model": "GAT on price-only P1 backbone (news OFF, gate OFF) + knn-8 message passing",
+  "per_seed": [
+    {
+      "seed": 123,
+      "P0_HAR": {
+        "validation_metrics": {
+          "mse": 2.1681011329623894e-06,
+          "rmse": 0.0014724473277378683,
+          "mae": 0.0004736662800402553,
+          "r2": 0.7394352654882794,
+          "qlike": 0.5096367290276891,
+          "directional_accuracy": 48.51921615568613
+        },
+        "test_metrics": {
+          "mse": 5.240843759559379e-06,
+          "rmse": 0.002289288920070898,
+          "mae": 0.0006026564470419397,
+          "r2": 0.7667883702522676,
+          "qlike": 0.5676248787964389,
+          "directional_accuracy": 48.527452513289184
+        }
+      },
+      "GAT_P1": {
+        "validation_metrics": {
+          "mse": 2.117674536852984e-06,
+          "rmse": 0.00145522319142219,
+          "mae": 0.0004614439575102945,
+          "r2": 0.745495588241593,
+          "qlike": 0.5056806154269261,
+          "directional_accuracy": 48.81045608206758
+        },
+        "test_metrics": {
+          "mse": 5.310592454886736e-06,
+          "rmse": 0.0023044722725358915,
+          "mae": 0.0005999561671766779,
+          "r2": 0.7636846320649955,
+          "qlike": 0.5722076249838308,
+          "directional_accuracy": 48.112670290464834
+        }
+      },
+      "comparison": {
+        "validation": {
+          "mse": {
+            "gat_price": 2.117674536852984e-06,
+            "har": 2.1681011329623894e-06,
+            "delta_gat_minus_har": -5.042659610940563e-08,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.00145522319142219,
+            "har": 0.0014724473277378683,
+            "delta_gat_minus_har": -1.7224136315678292e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "mae": {
+            "gat_price": 0.0004614439575102945,
+            "har": 0.0004736662800402553,
+            "delta_gat_minus_har": -1.2222322529960793e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.745495588241593,
+            "har": 0.7394352654882794,
+            "delta_gat_minus_har": 0.006060322753313585,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5056806154269261,
+            "har": 0.5096367290276891,
+            "delta_gat_minus_har": -0.003956113600762978,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.81045608206758,
+            "har": 48.51921615568613,
+            "delta_gat_minus_har": 0.2912399263814507,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          }
+        },
+        "test": {
+          "mse": {
+            "gat_price": 5.310592454886736e-06,
+            "har": 5.240843759559379e-06,
+            "delta_gat_minus_har": 6.974869532735756e-08,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.0023044722725358915,
+            "har": 0.002289288920070898,
+            "delta_gat_minus_har": 1.51833524649936e-05,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "mae": {
+            "gat_price": 0.0005999561671766779,
+            "har": 0.0006026564470419397,
+            "delta_gat_minus_har": -2.700279865261836e-06,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.7636846320649955,
+            "har": 0.7667883702522676,
+            "delta_gat_minus_har": -0.0031037381872721648,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5722076249838308,
+            "har": 0.5676248787964389,
+            "delta_gat_minus_har": 0.004582746187391962,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.112670290464834,
+            "har": 48.527452513289184,
+            "delta_gat_minus_har": -0.41478222282434984,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          }
+        }
+      }
+    },
+    {
+      "seed": 2026,
+      "P0_HAR": {
+        "validation_metrics": {
+          "mse": 2.1681011329623894e-06,
+          "rmse": 0.0014724473277378683,
+          "mae": 0.0004736662800402553,
+          "r2": 0.7394352654882794,
+          "qlike": 0.5096367290276891,
+          "directional_accuracy": 48.51921615568613
+        },
+        "test_metrics": {
+          "mse": 5.240843759559379e-06,
+          "rmse": 0.002289288920070898,
+          "mae": 0.0006026564470419397,
+          "r2": 0.7667883702522676,
+          "qlike": 0.5676248787964389,
+          "directional_accuracy": 48.527452513289184
+        }
+      },
+      "GAT_P1": {
+        "validation_metrics": {
+          "mse": 2.1248677563133748e-06,
+          "rmse": 0.0014576926137953004,
+          "mae": 0.0004625082808663816,
+          "r2": 0.7446310993621372,
+          "qlike": 0.5057786075144631,
+          "directional_accuracy": 48.711258432230714
+        },
+        "test_metrics": {
+          "mse": 5.304343305608622e-06,
+          "rmse": 0.002303115999164745,
+          "mae": 0.0006003776742461847,
+          "r2": 0.7639627121518189,
+          "qlike": 0.5722109470403305,
+          "directional_accuracy": 48.02719226801282
+        }
+      },
+      "comparison": {
+        "validation": {
+          "mse": {
+            "gat_price": 2.1248677563133748e-06,
+            "har": 2.1681011329623894e-06,
+            "delta_gat_minus_har": -4.323337664901466e-08,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.0014576926137953004,
+            "har": 0.0014724473277378683,
+            "delta_gat_minus_har": -1.4754713942567894e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "mae": {
+            "gat_price": 0.0004625082808663816,
+            "har": 0.0004736662800402553,
+            "delta_gat_minus_har": -1.115799917387366e-05,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.7446310993621372,
+            "har": 0.7394352654882794,
+            "delta_gat_minus_har": 0.0051958338738578025,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5057786075144631,
+            "har": 0.5096367290276891,
+            "delta_gat_minus_har": -0.003858121513225954,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.711258432230714,
+            "har": 48.51921615568613,
+            "delta_gat_minus_har": 0.1920422765445835,
+            "higher_is_better": true,
+            "verdict": "beats_HAR"
+          }
+        },
+        "test": {
+          "mse": {
+            "gat_price": 5.304343305608622e-06,
+            "har": 5.240843759559379e-06,
+            "delta_gat_minus_har": 6.349954604924327e-08,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "rmse": {
+            "gat_price": 0.002303115999164745,
+            "har": 0.002289288920070898,
+            "delta_gat_minus_har": 1.3827079093847033e-05,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "mae": {
+            "gat_price": 0.0006003776742461847,
+            "har": 0.0006026564470419397,
+            "delta_gat_minus_har": -2.278772795754995e-06,
+            "higher_is_better": false,
+            "verdict": "beats_HAR"
+          },
+          "r2": {
+            "gat_price": 0.7639627121518189,
+            "har": 0.7667883702522676,
+            "delta_gat_minus_har": -0.002825658100448769,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          },
+          "qlike": {
+            "gat_price": 0.5722109470403305,
+            "har": 0.5676248787964389,
+            "delta_gat_minus_har": 0.004586068243891628,
+            "higher_is_better": false,
+            "verdict": "worse_than_HAR"
+          },
+          "directional_accuracy": {
+            "gat_price": 48.02719226801282,
+            "har": 48.527452513289184,
+            "delta_gat_minus_har": -0.5002602452763654,
+            "higher_is_better": true,
+            "verdict": "worse_than_HAR"
+          }
+        }
+      }
+    }
+  ]
+}
