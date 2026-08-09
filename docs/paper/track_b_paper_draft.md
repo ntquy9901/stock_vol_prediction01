@@ -1,9 +1,8 @@
 # A News-Augmented Cross-Stock Graph LSTM for VN30 Volatility Forecasting: A Component Ablation from HAR to Masked Message-Passing
 
 *Track-B draft, 2026-08-09. Every number in this draft is read from a committed result artifact
-(`results/*/results.json`, aggregate JSONs) or a cited consolidation report. Provenance appears in
-Section 6 and in the per-table source lines. Numbers still awaiting a final multi-seed / Diebold-Mariano
-re-run are marked with the superscript "†" and listed explicitly in Section 10.*
+(`results/*/results.json`, aggregate JSONs, the graph verdict JSON) or a cited consolidation report.
+Provenance appears in Section 6 and in the per-table source lines.*
 
 ---
 
@@ -24,15 +23,16 @@ G0 graph-off, G1 graph-on) on the same 14,418 validation observations, so each s
 component's contribution. News content carries the forecast gain: adding the news branch lowers
 validation QLIKE from 0.51098 to 0.50843 and RMSE from 0.0014985 to 0.0014859, significant across
 three seeds on MSE, RMSE, MAE, and $R^2$ ($|t|>10$). The per-ticker gate is inert (all $|t|<0.6$).
-Enabling the cross-stock graph (G1 vs G0) moves the seed-42 metrics marginally in G1's favour (RMSE
-0.0014645 to 0.0014579, QLIKE 0.5093 to 0.5082), and a sparse k-nearest-neighbour adjacency gives the
-largest lift, but the training-loss delta changes sign across seeds, so the graph's marginal
-contribution is not yet statistically confirmed. A multi-seed and Diebold-Mariano test is being
-finalized. We present G1 as the proposed architecture and report its graph component honestly: on this
-sparse daily VN30 panel the cross-stock graph adds at most a small increment over a strong
-news-augmented backbone. Directional accuracy stays near 48.5% for every model because the day-to-day
-change in daily Parkinson volatility is anti-persistent (lag-1 sign autocorrelation $-0.30$, negative
-for all 33 tickers), a structural ceiling rather than a model defect.
+Enabling the cross-stock graph (G1 vs G0) changes the validation metrics within noise (three-seed
+k-nearest-neighbour: RMSE 0.00146158 to 0.00145569, QLIKE 0.509512 to 0.509197) and yields no
+statistically significant improvement: the validation-loss paired $t$-test is significant ($p=0.019$,
+G1 below G0 on all three seeds), but a Diebold-Mariano test on QLIKE is not significant on any seed
+($p=0.43$ to $0.74$), and on held-out test QLIKE the graph is slightly worse (0.573077 to 0.575919).
+We present G1 as the proposed architecture and report a rigorous parsimony finding: on sparse daily
+VN30 data, news content improves the forecast but cross-stock graph propagation does not. Directional
+accuracy stays near 48.5% for every model because the day-to-day change in daily Parkinson volatility
+is anti-persistent (lag-1 sign autocorrelation $-0.30$, negative for all 33 tickers), a structural
+ceiling rather than a model defect.
 
 **Keywords:** volatility forecasting; graph neural networks; financial news; PhoBERT; pooled panel;
 emerging markets.
@@ -83,14 +83,15 @@ paper makes four contributions.
    the same 14,418 validation observations, so the paper isolates where the forecast quality comes
    from (Section 6).
 
-3. **News content earns its place; the gate is inert; the cross-stock graph adds at most a small,
-   not-yet-confirmed increment.** The news branch improves MSE, RMSE, MAE, and $R^2$ with paired
-   $t$-tests significant across seeds. The gate moves nothing. Enabling the graph moves the seed-42
-   metrics marginally toward the full model, largest under a sparse adjacency, but the multi-seed
-   training-loss delta is sign-inconsistent, so we report the graph contribution as small and pending
-   a Diebold-Mariano confirmation rather than overclaim it (Sections 6 and 7).
+3. **News content earns its place; the gate is inert; the cross-stock graph adds nothing
+   statistically significant.** The news branch improves MSE, RMSE, MAE, and $R^2$ with paired
+   $t$-tests significant across seeds. The gate moves nothing. Enabling the graph changes the
+   validation metrics within noise and gives no significant QLIKE improvement under a
+   Diebold-Mariano test, and it is slightly worse on held-out test QLIKE, so we report a rigorous
+   parsimony finding: news content helps, graph propagation does not on sparse daily VN30 data
+   (Sections 6 and 7).
 
-4. **Direction is near-random by construction.** No model beats 49.1% directional accuracy, and
+4. **Direction is near-random by construction.** No model reaches 49% directional accuracy, and
    model-free forecasters reach the same ceiling, because the daily Parkinson target's day-to-day
    change is anti-persistent (Sections 6 and 8).
 
@@ -217,11 +218,11 @@ lets one stock's news reach another on a panel where a fixed-node graph would be
 adjacency per date over the present tickers and mask absent nodes and edges, so message-passing
 aggregates over present neighbours only. This recovers the union timeline, and the masked validation
 set contains exactly the same 14,418 present-node observations as the pooled backbone validation set,
-which makes the graph on/off comparison fair against the ladder. We compare three adjacencies of
-decreasing density: dense (average 18.6 off-diagonal edges), k-nearest-neighbour with $k=8$ (average
-5.9 edges), and a 0.7 correlation threshold (average 1.1 edges). A positivity floor clamps
-denormalized predictions away from non-positive volatility before QLIKE, which reports a
-non-positive-prediction rate of 0.0 on the masked manifest.
+which makes the graph on/off comparison fair against the ladder. We compare two adjacencies:
+k-nearest-neighbour with $k=8$ (average 5.9 off-diagonal edges), the headline choice, and a dense
+adjacency (average 18.6 edges) as a robustness check. A positivity floor clamps denormalized
+predictions away from non-positive volatility before QLIKE, which reports a non-positive-prediction
+rate of 0.0 on the masked manifest.
 
 **The ablation ladder.** The ladder removes one component of G1 at a time, from the top down, so each
 rung isolates a contribution.
@@ -237,19 +238,21 @@ rung isolates a contribution.
   straight to the head. G0 is the exact graph-off control for G1.
 - **G1 (full model):** G0 with cross-stock message-passing enabled.
 
-G0 and G1 wrap a frozen P3 backbone and add only the message-passing projection as trainable
-parameters, so their difference isolates cross-stock propagation cleanly. Because the wrapped backbone
-is a graph-safe P3 trained on graph-bound samples, the G0/G1 absolute metrics sit slightly apart from
-the P3 rung, and we read G0 and G1 against each other rather than against P3. End-to-end joint training
-of the graph layer with the backbone is future work; the present G1 trains the message-passing layer
-on frozen encoders, a conservative choice that avoids retraining the news gains into the graph.
+G0 and G1 wrap a frozen screening-configuration P3 backbone, trained on a leakage-safe graph-bound set
+(5 epochs, dropout 0.2), and add only the message-passing projection as trainable parameters, so their
+difference isolates cross-stock propagation cleanly. Because that backbone uses a graph-bound train
+scope, the G0/G1 absolute levels sit slightly apart from the pooled P0-P3 rungs; we therefore read G1
+against G0 within the shared-backbone pair (the clean comparison) and treat cross-family levels
+against the ladder as indicative. End-to-end joint training of the graph layer with the backbone is
+future work; the present G1 trains the message-passing layer on frozen encoders, a conservative choice
+that avoids retraining the news gains into the graph.
 
 **Training.** The deep models use Adam, batch size 256, dropout 0.2, weight decay $10^{-5}$, and
 gradient clipping at 1.0, with best-validation checkpoint selection. On the pooled manifest each epoch
 runs 286 optimizer updates (73,026 samples / batch 256), so the backbone reaches its validation basin
 at epoch 5 to 6; a root-cause analysis attributes this fast convergence to the pooled data volume and
-the learning rate, not to under-regularization [rc]. We report best-checkpoint metrics at three seeds
-(42, 123, 2026).
+the learning rate, not to under-regularization [rc]. The graph layer trains for 15 epochs on the
+frozen backbone. We report results at three seeds (42, 123, 2026).
 
 ---
 
@@ -266,17 +269,18 @@ Directional accuracy compares the sign of the predicted change against the sign 
 change, computed per ticker over time and averaged across tickers, so a difference never crosses a
 ticker boundary.
 
-**Horizon and evaluation set.** The primary horizon is five trading days. The ladder and graph results
-in Section 6 are validation-set metrics at the best checkpoint. Absolute values are comparable only
-within a matched evaluation set; the ladder (P0 to P3) and the graph (G0/G1) both report on the same
-14,418 pooled validation observations, so they are cross-comparable, while the common-date A1
-comparison uses its own eval set and is read only within itself.
+**Horizon and evaluation set.** The primary horizon is five trading days. The backbone ladder results
+are validation-set metrics at the best checkpoint; the graph comparison reports both validation and
+held-out test. Absolute values are comparable only within a matched evaluation set: the ladder
+(P0 to P3) and the graph pair (G0/G1) both report validation on the same 14,418 pooled observations,
+so they are cross-comparable, while the common-date A1 comparison uses its own eval set and is read
+only within itself.
 
 **Seeds and significance.** We repeat every deep configuration on three seeds (42, 123, 2026) and
 report the mean, standard deviation, and a paired $t$-test across seeds. With three seeds the
-two-sided 5% threshold at two degrees of freedom is $|t|>4.30$. Three seeds is the minimum for a
-paired $t$-test, a caveat we carry into the graph result. A Diebold-Mariano test on the graph
-forecasts is being finalized to complement the paired $t$-test on the sparse adjacency (Section 10).
+two-sided 5% threshold at two degrees of freedom is $|t|>4.30$. We complement the paired $t$-test on
+the validation loss with a Diebold-Mariano test on the QLIKE loss of the graph forecasts, which tests
+forecast-accuracy equality directly on the held-out observations rather than on the seed-level means.
 
 ---
 
@@ -327,31 +331,35 @@ metric, with all $|t|<0.6$ and $p>0.6$. The gate buys no measurable accuracy at 
 effect: it recovers the RMSE the price-only LSTM loses against HAR and improves QLIKE and $R^2$. The
 per-ticker gate is inert. The strong news-augmented backbone (P3) is what the graph layer builds on.
 
-### 6.2 The proposed model: enabling the cross-stock graph
+### 6.2 The proposed model: the cross-stock graph adds no significant improvement
 
-Table 3 completes the ladder with the graph on/off comparison that yields the proposed model. G0 and
-G1 wrap the same frozen P3 backbone and evaluate on the same 14,418 present-node validation
-observations as the ladder, so their difference isolates cross-stock message-passing. On the fair
-masked comparison the full model G1 moves every reported metric marginally in its favour over the
-graph-off control G0: RMSE 0.0014645 to 0.0014579, MSE 2.145e-06 to 2.126e-06, QLIKE 0.5093 to 0.5082,
-$R^2$ 0.7422 to 0.7446, and DirAcc 48.85 to 49.09. The seed-42 metric shift favours the graph. The
-evidence does not yet clear the significance bar, however: the training-space validation-loss delta
-(G1 − G0) changes sign across the three seeds (+0.00241, +0.00076, $-0.00006$), so a consistent graph
-benefit is not established at three seeds. We therefore present G1 as the proposed full architecture
-while reporting its graph component as a small, not-yet-confirmed increment over an already-strong
+Table 3 completes the ladder with the graph on/off comparison that yields the proposed model G1. G0
+and G1 wrap the same frozen graph-safe P3 backbone and evaluate on the same 14,418 present-node
+validation observations as the ladder, so their difference isolates cross-stock message-passing. We
+report three seeds at G1's headline k-nearest-neighbour adjacency (k=8), on both the validation set
+and the held-out test set.
+
+The graph moves the validation metrics within noise. Across three seeds, k-NN-8 message-passing lowers
+validation RMSE from 0.00146158 to 0.00145569, QLIKE from 0.509512 to 0.509197, and raises $R^2$ from
+0.743267 to 0.745333, all changes in the fourth significant figure. The validation-loss paired
+$t$-test is significant ($p=0.019$, G1 below G0 on all three seeds), but a Diebold-Mariano test on the
+QLIKE loss is not significant on any seed ($p=0.74$, $0.60$, $0.43$). The held-out test set settles the
+question on the loss the volatility literature weights most: G1's test QLIKE is worse than G0's
+(0.573077 to 0.575919), while test RMSE and $R^2$ move by less than their fourth significant figure.
+Cross-stock message-passing yields no statistically significant forecast improvement over the
 news-augmented backbone.
 
-**Table 3. Proposed model G1 vs graph-off control G0, fair masked comparison, seed 42.** Frozen-P3
-wrapper, availability-aware masked manifest, same 14,418 validation observations as the ladder,
-non-positive-prediction rate 0.0. G1 adds a residual message-passing layer over the cross-stock
-adjacency. Source:
-`results/pooled_news_gnn_masked_g0g1_2026-08-08_212959_seed42/h5/{G0,G1}/results.json`; three-seed
-RMSE and the val-loss deltas from the same run family (`_212959/_214227/_214916`).
+**Table 3. Proposed model G1 vs graph-off control G0, k-NN-8 adjacency, three-seed mean (42/123/2026).**
+Masked manifest with positivity, same 14,418 validation observations as the ladder; test on the
+held-out split. Frozen graph-safe screening-P3 backbone; G1 adds a residual message-passing layer.
+Source: `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{md,json}`.
 
-| Config | MSE ↓ | RMSE ↓ | $R^2$ ↑ | QLIKE ↓ | DirAcc % ↑ |
-|---|---|---|---|---|---|
-| G0 graph-off (control) | 2.145e-06 | 0.0014645 | 0.7422 | 0.5093 | 48.85 |
-| **G1 full model (graph-on)** | **2.126e-06** | **0.0014579** | **0.7446** | **0.5082** | **49.09** |
+| Split | Config | MSE ↓ | RMSE ↓ | MAE ↓ | $R^2$ ↑ | QLIKE ↓ | DirAcc % ↑ |
+|---|---|---|---|---|---|---|---|
+| VAL | G0 graph-off | 2.13622e-06 | 0.00146158 | 0.000463869 | 0.743267 | 0.509512 | 48.577 |
+| VAL | G1 graph-on | 2.11902e-06 | 0.00145569 | 0.00046206 | 0.745333 | 0.509197 | 48.677 |
+| TEST | G0 graph-off | 5.31786e-06 | 0.00230605 | 0.000599182 | 0.763361 | 0.573077 | 47.774 |
+| TEST | G1 graph-on | 5.31318e-06 | 0.00230503 | 0.000599781 | 0.763569 | 0.575919 | 48.259 |
 
 An earlier intersection-panel run (before the masked manifest and positivity floor) showed G1 worse
 than G0 with a QLIKE blow-up to 4.38. That run is not comparable to the ladder: it evaluated on a
@@ -359,30 +367,25 @@ smaller common-date population and lacked the positivity floor, so its gap is an
 evaluation basis, not a graph effect [lineage]. We report only the fair masked comparison as evidence
 on message-passing.
 
-### 6.3 Adjacency ablation: a sparse graph gives the largest lift
+### 6.3 The null holds across adjacencies
 
-Table 4 sweeps the adjacency density at a 15-epoch converged budget on seed 42. Every enabled graph
-improves on G0, and the sparse k-nearest-neighbour adjacency (k-NN-8) gives the largest lift
-(validation-loss delta $-0.00253$, best on five of six metrics), ahead of the dense adjacency
-($-0.00127$). The threshold-0.7 adjacency is so sparse (average 1.1 off-diagonal edges) that it
-collapses back to G0 (delta 0.0). The pattern suggests a moderately sparse graph carries the
-cross-stock signal a dense one dilutes and a near-empty one loses. This is a single-seed observation.
-The k-NN-8 seed-123 run directory is empty and the seed-2026 run does not yet exist, and no
-Diebold-Mariano output has been produced, so the sparse-graph lift is a hint pending multi-seed and
-Diebold-Mariano confirmation (Section 10). We adopt k-NN-8 as G1's adjacency on this evidence and flag
-the confirmation as the one open item before the graph contribution is a settled claim.
+We repeated the comparison with a dense adjacency (average 18.6 off-diagonal edges) to check whether
+the null depends on the k-NN-8 choice. It does not. The dense adjacency lowers validation loss on only
+two of three seeds, and its paired $t$-test is not significant ($p=0.282$); its test QLIKE is likewise
+worse than G0's (0.573077 to 0.576181). Both a sparse k-NN-8 graph and a dense graph return the same
+verdict: no significant improvement, and a small regression on held-out test QLIKE. Table 4 summarizes
+the significance evidence. The finding is a property of the sparse daily VN30 data, not of one
+adjacency choice.
 
-**Table 4. Adjacency ablation, masked manifest, seed 42, 15-epoch converged.**† $\Delta$ is the
-validation-loss delta (G1 − G0); negative means the graph helps. G0 is identical across modes because
-the adjacency is irrelevant when message-passing is off. Source:
-`results/pooled_news_gnn_masked_{dense,knn8,thr07}_seed42_2026-08-08_230837/h5/graph_validation_comparison.json`.
+**Table 4. Graph significance summary across adjacencies, three seeds.** Validation-loss paired
+$t$-test across seeds and per-seed Diebold-Mariano QLIKE $p$-values; test QLIKE change (G1 − G0).
+Verdict B denotes no significant graph improvement. Source:
+`docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{md,json}`.
 
-| Config | MSE ↓ | RMSE ↓ | $R^2$ ↑ | QLIKE ↓ | DirAcc % ↑ | $\Delta$ val-loss |
-|---|---|---|---|---|---|---|
-| G0 graph-off | 2.14947e-06 | 0.0014661 | 0.74167 | 0.51009 | 48.706 | — |
-| G1 dense (18.6 edges) | 2.13264e-06 | 0.0014604 | 0.74370 | 0.50647 | **49.098** | $-0.00127$ |
-| **G1 k-NN-8 (5.9 edges, adopted)**† | **2.12864e-06** | **0.0014590** | **0.74418** | **0.50646** | 48.712 | **$-0.00253$**† |
-| G1 thr-0.7 (1.1 edges) | 2.14886e-06 | 0.0014659 | 0.74175 | 0.50980 | 48.457 | 0.00000 |
+| Adjacency | Seeds with G1 < G0 (val-loss) | Val-loss paired-$t$ $p$ | DM QLIKE $p$ (per seed) | Test QLIKE (G1 − G0) | Verdict |
+|---|---|---|---|---|---|
+| k-NN-8 (headline) | 3/3 | 0.019 | 0.74 / 0.60 / 0.43 | +0.0028 (worse) | B (null) |
+| dense | 2/3 | 0.282 | 0.60 / 0.998 / 0.74 | +0.0031 (worse) | B (null) |
 
 ### 6.4 A1 data-design ablation: pooling recovers the timeline without changing the metrics
 
@@ -407,7 +410,7 @@ fixed-node graph would see.
 
 ### 6.5 Direction is near-random for every model
 
-Directional accuracy sits at 48.5% to 48.7% across the backbone ladder and near 48.5% to 49.1% across
+Directional accuracy sits at 48.5% to 48.7% across the backbone ladder and near 48.6% to 48.9% across
 the graph configurations, at or below the 50% no-skill line. No paired test separates any
 configuration on direction. The near-random result is a property of the target, not of any model, as
 Section 8 explains.
@@ -419,22 +422,22 @@ Section 8 explains.
 **What each component contributes.** The ladder gives a clean attribution. Temporal learning (P1)
 trades raw error for a proportional-loss gain over HAR. News content (P2) is the decisive component:
 it recovers the raw-error gap and improves QLIKE, MSE, and $R^2$ significantly across seeds. The
-per-ticker gate (P3) adds nothing measurable. The cross-stock graph (G1) moves the seed-42 metrics in
-the full model's favour and is largest under a sparse adjacency, but its multi-seed evidence is not
-yet conclusive. The proposed model G1 is therefore justified as an architecture that unifies the three
-informative signals (temporal, textual, cross-stock), with the honest caveat that the graph's marginal
-lift over the news-augmented backbone is small and awaiting confirmation.
+per-ticker gate (P3) adds nothing measurable. The cross-stock graph (G1) changes the validation
+metrics within noise, gives no significant improvement under a Diebold-Mariano test, and is slightly
+worse on held-out test QLIKE. The proposed model G1 unifies temporal, textual, and cross-stock
+structure, and the rigorous finding is that only the first two carry a measurable forecast gain on
+this panel.
 
-**Why the graph's marginal lift is small, and why that is still informative.** Two structural facts
-bound the graph contribution. First, the message-passing layer aggregates news that has already
-entered each node's own representation, so the marginal information a neighbour adds on a daily panel
-is small once a stock's own news and price history are encoded. Second, VN30's listing-date imbalance
-thins the early-year neighbourhoods even under masking. The masked formulation is what lets us say
-this cleanly: it removes the data-volume confound that would otherwise mask a genuine graph signal, so
-a small measured lift is a statement about the signal, not about starvation. The sparse k-NN-8
-adjacency giving the largest lift (Table 4) is consistent with a weak-but-real cross-stock signal that
-a dense graph over-smooths; the pending Diebold-Mariano test will decide whether that lift is
-significant or a parsimony argument for dropping the graph.
+**Why the graph adds nothing, and why the null is clean.** Two structural facts bound the graph
+contribution. First, the message-passing layer aggregates news that has already entered each node's
+own representation, so the marginal information a neighbour adds on a daily panel is small once a
+stock's own news and price history are encoded. Second, VN30's listing-date imbalance thins the
+early-year neighbourhoods even under masking. The masked formulation is what makes the null clean: it
+removes the data-volume confound that a synchronized-intersection graph would suffer, so the null
+speaks to the cross-stock signal itself, not to data starvation. Multi-seed evaluation with a
+Diebold-Mariano test, run on both a sparse and a dense adjacency, corroborates it. The contribution is
+therefore a rigorous parsimony result for sparse daily cross-stock news: the graph mechanism does not
+pay its way, and a news-augmented per-stock model is the appropriate architecture.
 
 **News-content value.** News recovers the raw-error gap that the price-only LSTM opens against HAR and
 improves the proportional QLIKE loss that risk and option desks weigh most. This is the paper's
@@ -466,41 +469,21 @@ completeness.
 Five limitations bound the claims. First, the 33-ticker universe is a fixed, point-in-time VN30-like
 set: it keeps long-history names that later left the index and excludes two short-history current
 members (BSR, VPL), so it is not the live index. Second, the study covers a single market at daily
-frequency; the news-content result and the graph finding may not transfer to higher frequencies or to
+frequency; the news-content result and the graph null may not transfer to higher frequencies or to
 markets with balanced listing histories. Third, three seeds is the minimum for a paired $t$-test, so
-the gate null and the graph result rest on low power, and a multi-seed extension plus the pending
-Diebold-Mariano test are needed before the graph contribution is a settled claim. Fourth, the proposed
-graph layer trains on a frozen graph-safe P3 backbone rather than end-to-end, so its absolute metrics
-are not directly rankable against the P3 rung, and joint training may change the graph's contribution;
-we read the graph on/off contrast within the G0/G1 pair only. Fifth, low directional accuracy is a
-structural property of the anti-persistent daily target, not a tunable model deficiency, so a
-direction-focused deployment would need a different target construction.
+the gate null rests on low power; the graph null is stronger because a Diebold-Mariano test on the
+held-out QLIKE corroborates it beyond the seed-level means, and the held-out test QLIKE is a small
+regression rather than an improvement. Fourth, the graph layer trains on a frozen graph-safe P3
+screening backbone rather than end-to-end, so the clean comparison is G1 versus G0 within the
+shared-backbone pair; absolute levels against the pooled P0-P3 ladder are indicative only because the
+graph backbone uses a different train scope, and joint end-to-end training may change the graph's
+contribution. Fifth, low directional accuracy is a structural property of the anti-persistent daily
+target, not a tunable model deficiency, so a direction-focused deployment would need a different
+target construction.
 
 ---
 
-## 10. Numbers Pending Final Re-Run
-
-The following values are current best evidence and are marked "†" in the tables above. A final re-run
-may update them before submission.
-
-- **The adopted k-NN-8 graph lift is single-seed (Table 4).** Only seed 42 is on disk. The k-NN-8
-  seed-123 run directory is empty (no `graph_validation_comparison.json`) and the seed-2026 run does
-  not yet exist. The $\Delta$ val-loss $-0.00253$ and the "best on five of six metrics" claim are
-  seed-42 only. Until the two remaining seeds land, the graph contribution to the proposed G1 is a
-  hint, not a confirmed gain.
-- **Diebold-Mariano test not yet produced.** No Diebold-Mariano output artifact was found under the
-  masked-graph runs. The G1-vs-G0 comparison (Table 3) and the k-NN-8 lift (Table 4) rest on paired
-  $t$-tests and validation-loss deltas until the Diebold-Mariano confirmation lands.
-- **Graph three-seed metrics are RMSE and val-loss only.** Table 3 reports the full six metrics for
-  seed 42; the seed-123 and seed-2026 masked runs contribute RMSE and validation-loss deltas. A full
-  six-metric three-seed table for the proposed G1 is pending.
-
-Every other number in this draft is a committed three-seed aggregate (ladder, Tables 1, 2, 5) or a
-committed seed-42 result (Table 3), read from the cited artifact.
-
----
-
-## 11. Conclusion
+## 10. Conclusion
 
 We propose a pooled news-augmented cross-stock graph LSTM (G1) for five-day-ahead VN30 volatility that
 unifies temporal, textual, and cross-stock structure on a panel where a fixed-node graph is
@@ -509,14 +492,14 @@ and an availability-aware masked adjacency lets the graph propagate news between
 per-day observations rather than a 26% intersection. A six-step ablation ladder attributes the model's
 quality: temporal learning trades raw error for proportional-loss gain, news content carries a QLIKE,
 RMSE, and $R^2$ gain significant across seeds, the per-ticker gate is inert, and enabling the
-cross-stock graph moves the metrics in the full model's favour, largest under a sparse adjacency,
-though its multi-seed lift is small and awaits a Diebold-Mariano confirmation. We therefore report the
-graph as the paper's architectural novelty and its marginal contribution honestly, as a small
-increment over an already-strong news-augmented backbone rather than a demonstrated improvement.
-Directional accuracy stays near chance for every forecaster because the daily Parkinson target's
-day-to-day change is anti-persistent, a structural ceiling rather than a model defect. For a
-Vietnamese emerging market, the pooled masked-graph design shows how to build and honestly evaluate a
-cross-stock volatility forecaster where the standard synchronized-panel approach cannot run.
+cross-stock graph changes the metrics within noise with no significant improvement under a
+Diebold-Mariano test on either a sparse or a dense adjacency, and a small regression on held-out test
+QLIKE. The paper's second contribution is therefore a rigorous parsimony finding: on sparse daily VN30
+data, news content improves the forecast while cross-stock graph propagation does not. Directional
+accuracy stays near chance for every forecaster because the daily Parkinson target's day-to-day change
+is anti-persistent, a structural ceiling rather than a model defect. For a Vietnamese emerging market,
+the pooled masked-graph design shows how to build and honestly evaluate a cross-stock volatility
+forecaster where the standard synchronized-panel approach cannot run.
 
 ---
 
@@ -576,7 +559,8 @@ In *ACM ICAIF* (2022). arXiv:2112.09015.
 [20] Forecasting realized volatility with spillover effects: perspectives from graph neural networks.
 *International Journal of Forecasting* (2024).
 
-*Internal provenance references (not for the reference list): [rc]
+*Internal provenance references (not for the reference list): graph verdict
+`docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{md,json}`; [rc]
 `docs/reports/2026-08-09_pooled_convergence_rootcause.md`; [lineage]
 `docs/reports/2026-08-09_1003_g0g1_vs_p2p3_lineage.md`; sparse-graph method survey
 `docs/reports/2026-08-08_gnn_sparse_data_research.md`; consolidated metrics
