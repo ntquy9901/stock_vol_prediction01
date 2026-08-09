@@ -61,6 +61,24 @@ def test_variant_detects_significant_qlike_win(tmp_path):
     assert summary["beats_P0_qlike_dm"] is True
 
 
+def test_parse_key_handles_string_and_dict():
+    # P0 results.json stores "ticker_id:target_date" strings
+    assert analyze._parse_key("22:2020-09-28") == (22, "2020-09-28")
+    assert analyze._parse_key({"ticker_id": 3, "target_date": "2021-01-05"}) == (3, "2021-01-05")
+
+
+def test_read_p0_parses_string_keyed_results(tmp_path):
+    out = tmp_path / "P0"
+    for split in ("val", "test"):
+        (out / split).mkdir(parents=True)
+        payload = {"ordered_validation_keys": ["0:2022-01-01", "1:2022-01-01"],
+                   "targets_raw": [1e-4, 2e-4], "predictions_raw": [1.1e-4, 1.9e-4]}
+        (out / split / "results.json").write_text(json.dumps(payload), encoding="utf-8")
+    result = analyze._read_p0(out)
+    assert result["test"][(0, "2022-01-01")] == (1e-4, 1.1e-4)
+    assert result["val"][(1, "2022-01-01")] == (2e-4, 1.9e-4)
+
+
 def test_variant_no_win_when_worse(tmp_path):
     rng = np.random.default_rng(1)
     n = 300

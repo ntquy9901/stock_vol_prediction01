@@ -45,28 +45,43 @@ def _se_vec(target: np.ndarray, pred: np.ndarray) -> np.ndarray:
     return (target - pred) ** 2
 
 
-def compute_p0_predictions(device_name: str, ts: str) -> dict[str, dict[tuple[int, str], tuple[float, float]]]:
-    """Recompute P0 pooled-HAR val/test per-observation (target_raw, prediction_raw) on the basis."""
+def _parse_key(key: object) -> tuple[int, str]:
+    """Ordered-key entries are either 'ticker_id:target_date' strings or dicts."""
 
+    if isinstance(key, dict):
+        return int(key["ticker_id"]), str(key["target_date"])
+    ticker_id, target_date = str(key).split(":", 1)
+    return int(ticker_id), target_date
+
+
+def _read_p0(out: Path) -> dict[str, dict[tuple[int, str], tuple[float, float]]]:
+    result: dict[str, dict[tuple[int, str], tuple[float, float]]] = {}
+    for split in ("val", "test"):
+        payload = json.loads((out / split / "results.json").read_text(encoding="utf-8"))
+        keys = payload["ordered_validation_keys"]
+        targets = payload["targets_raw"]
+        preds = payload["predictions_raw"]
+        result[split] = {
+            _parse_key(k): (float(t), float(p))
+            for k, t, p in zip(keys, targets, preds, strict=True)
+        }
+    return result
+
+
+def compute_p0_predictions(device_name: str, ts: str) -> dict[str, dict[tuple[int, str], tuple[float, float]]]:
+    """P0 pooled-HAR val/test per-observation (target_raw, prediction_raw); reuse cached P0 if present."""
+
+    out = Path(_ROOT) / "results" / f"beat_har_sweep_{ts}" / "P0"
+    if (out / "val" / "results.json").exists() and (out / "test" / "results.json").exists():
+        return _read_p0(out)
     from ladder_consistent import build_basis, run_har_rung
     from run_pilot import resolve_graph_device
 
     device = resolve_graph_device(device_name)
     stamp = Path(_ROOT) / "temp" / f"beat_har_p0_{ts}"
     pooled, graph, graph_store, allowed = build_basis(device, stamp)
-    out = Path(_ROOT) / "results" / f"beat_har_sweep_{ts}" / "P0"
     run_har_rung(pooled, allowed, graph_store, out)
-    result: dict[str, dict[tuple[int, str], tuple[float, float]]] = {}
-    for split, sub in (("val", "val"), ("test", "test")):
-        payload = json.loads((out / sub / "results.json").read_text(encoding="utf-8"))
-        keys = payload["ordered_validation_keys"]
-        targets = payload["targets_raw"]
-        preds = payload["predictions_raw"]
-        result[split] = {
-            (int(k["ticker_id"]), str(k["target_date"])): (float(t), float(p))
-            for k, t, p in zip(keys, targets, preds, strict=True)
-        }
-    return result
+    return _read_p0(out)
 
 
 def _load_config_predictions(path: Path) -> dict[tuple[int, str], tuple[float, float]]:
