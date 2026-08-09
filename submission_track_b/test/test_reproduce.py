@@ -40,11 +40,32 @@ def test_fmt_metric_formatting():
 
 def test_load_validation_metrics_has_all_configs_and_metrics():
     metrics = reproduce._load_validation_metrics()
-    assert set(metrics) == {"P0", "P1", "P2", "P3", "G0", "G1"}
+    assert set(metrics) == {"P0", "P1", "P2", "P3", "G1"}
     for config, values in metrics.items():
         assert set(values) == set(reproduce._METRICS), config
         for value in values.values():
             assert isinstance(value, float)
+
+
+def test_no_separate_g0_row():
+    # The ladder collapsed G0: P3 is exactly G1 with the graph disabled.
+    assert "G0" not in dict((c, r) for c, _, r in reproduce._LADDER)
+    assert [c for c, _, _ in reproduce._LADDER] == ["P0", "P1", "P2", "P3", "G1"]
+
+
+def test_classical_baselines_loaded():
+    classical = reproduce._load_classical_test()
+    assert {"HAR", "HARQ", "GARCH"}.issubset(set(classical))
+    # HAR/HARQ tie the deep models near ~0.57-0.58; GARCH is far worse (>1).
+    assert 0.5 < classical["HAR"]["qlike"] < 0.65
+    assert classical["GARCH"]["qlike"] > 1.0
+
+
+def test_g1_test_matches_ladder_json():
+    # Full-precision consistency: view's G1 test QLIKE must equal the canonical ladder JSON.
+    g1 = reproduce._load_g1_test_metrics()
+    assert abs(g1["qlike"] - 0.5759260895226245) < 1e-12
+    assert abs(g1["rmse"] - 0.0023052718907185933) < 1e-15
 
 
 def test_table_lines_label_g1_as_final():

@@ -8,13 +8,16 @@ Usage (no typing needed on Windows: double-click the .bat launchers):
     python reproduce.py infer      # evaluate the FINAL model (G1) on the test split
     python reproduce.py train      # train the FINAL model (G1) and save a checkpoint
 
-Model ladder (see PAPER_MAP.md):
-    P0  HAR pooled linear                 (ablation)
-    P1  Price LSTM                        (ablation)
-    P2  Price + News                      (ablation)
-    P3  Price + News + per-ticker gate    (ablation; graph backbone)
-    G0  Backbone, graph message-passing OFF   (ablation)
-    G1  Backbone + graph message-passing ON   >>> FINAL / PROPOSED MODEL <<<
+Model ladder (see PAPER_MAP.md) - a single-basis nested ablation:
+    P0  HAR pooled linear                     (ablation)
+    P1  Price LSTM                            (ablation)
+    P2  Price + News                          (ablation; best test QLIKE in the study)
+    P3  Price + News + per-ticker gate        (ablation; == G1 with the graph disabled)
+    G1  P3 backbone + cross-stock graph       >>> FINAL / PROPOSED MODEL <<<
+
+There is no separate G0 row: P3 is exactly G1 read out with the message-passing residual
+disabled (graph-off determinism 0.0), so the graph ablation is G1 vs P3. Every rung and every
+classical baseline is scored on the same 14,418 validation / 14,464 test observations.
 """
 
 from __future__ import annotations
@@ -42,10 +45,12 @@ _LADDER = (
     ("P0", "HAR pooled linear", "ablation"),
     ("P1", "Price LSTM", "ablation"),
     ("P2", "Price + News", "ablation"),
-    ("P3", "Price + News + gate", "ablation"),
-    ("G0", "Backbone, graph OFF", "ablation"),
-    ("G1", "Backbone+graph kNN-8", "FINAL / PROPOSED"),
+    ("P3", "Price+News+gate (=G1 graph off)", "ablation"),
+    ("G1", "Backbone + graph kNN-8", "FINAL / PROPOSED"),
 )
+
+# Classical econometric baselines (display order); GARCH family on a 32/33-ticker subset.
+_CLASSICAL = ("Persistence", "EWMA", "HAR", "HARQ", "logHAR", "GARCH", "GJR-GARCH", "EGARCH")
 
 
 def _fmt(name: str, value: float) -> str:
@@ -58,73 +63,115 @@ def _fmt(name: str, value: float) -> str:
     return f"{value:.4f}"
 
 
+def _ladder_json() -> dict:
+    path = _RESULTS / "ladder_consistent_h5.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _rung_mean(rung: dict, name: str) -> float:
+    """Read the 3-seed mean of one metric from a rung block."""
+    return float(rung[name]["mean"])
+
+
 def _load_validation_metrics() -> dict[str, dict[str, float]]:
-    """Read P0-G1 validation metrics from the saved screening JSONs (no data needed)."""
-
-    metrics: dict[str, dict[str, float]] = {}
-
-    pooled_path = _RESULTS / "pooled_20ep_aggregate.json"
-    pooled = json.loads(pooled_path.read_text(encoding="utf-8"))["aggregated"]
-    for config in ("P0", "P1", "P2", "P3"):
-        # each metric stored as [mean, std] across 3 seeds; take the mean.
-        metrics[config] = {name: float(pooled[config][name][0]) for name in _METRICS}
-
-    graph_path = _RESULTS / "g0g1_graph_validation_comparison.json"
-    graph = json.loads(graph_path.read_text(encoding="utf-8"))["results"]
-    for config in ("G0", "G1"):
-        vm = graph[config]["validation_metrics"]
-        metrics[config] = {name: float(vm[name]) for name in _METRICS}
-    return metrics
-
-
-def _graph_significance_note() -> str:
-    """One-line parsimony note from the canonical G0/G1 verdict JSON (empty if absent)."""
-
-    graph_path = _RESULTS / "g0g1_graph_validation_comparison.json"
-    payload = json.loads(graph_path.read_text(encoding="utf-8"))
-    return str(payload.get("significance_note", "")).strip()
+    """P0-G1 validation 3-seed means from the consistent-ladder JSON (no data needed)."""
+    val = _ladder_json()["rung_metrics"]["val"]
+    return {cfg: {name: _rung_mean(val[cfg], name) for name in _METRICS}
+            for cfg, _, _ in _LADDER}
 
 
 def _load_g1_test_metrics() -> dict[str, float] | None:
-    """Return the paper's G1 held-out TEST metrics (3-seed mean) from the canonical JSON.
+    """G1 held-out TEST 3-seed means from the consistent-ladder JSON."""
+    test = _ladder_json()["rung_metrics"]["test"]
+    if "G1" not in test:
+        return None
+    return {name: _rung_mean(test["G1"], name) for name in _METRICS}
 
-    This is shipped with the bundle, so the reviewer sees the paper's test numbers with no
-    data and no training. (A reviewer's own `train`/`infer` run prints its own test metrics
-    to the console; this row is the paper value.)
-    """
 
-    graph_path = _RESULTS / "g0g1_graph_validation_comparison.json"
-    payload = json.loads(graph_path.read_text(encoding="utf-8"))
-    test = payload.get("held_out_test_3seed_mean", {}).get("G1")
-    if test:
-        return {name: float(test[name]) for name in _METRICS}
-    return None
+def _load_test_metrics() -> dict[str, dict[str, float]]:
+    """Full P0-G1 held-out TEST 3-seed means."""
+    test = _ladder_json()["rung_metrics"]["test"]
+    return {cfg: {name: _rung_mean(test[cfg], name) for name in _METRICS}
+            for cfg, _, _ in _LADDER}
+
+
+def _load_classical_test() -> dict[str, dict[str, float]]:
+    """Classical econometric baselines, held-out TEST, from classical_baselines_h5.json."""
+    path = _RESULTS / "classical_baselines_h5.json"
+    test = json.loads(path.read_text(encoding="utf-8"))["rung_metrics"]["test"]
+    return {name: {m: float(test[name][m]["mean"]) for m in _METRICS} for name in _CLASSICAL}
+
+
+def _graph_significance_note() -> str:
+    """One-line parsimony note derived from the ladder graph verdict (verdict B = null)."""
+    data = _ladder_json()
+    verdict = data["graph_effect_verdict"]["test"]
+    if verdict["verdict"] == "B":
+        p = verdict["paired_p"]
+        return ("graph adds no significant gain over P3 - held-out test paired-t "
+                f"p={p:.3f} (n.s.), Diebold-Mariano QLIKE not significant; the simpler "
+                "ablation is preferred (parsimony)")
+    return ""
+
+
+def _multihorizon_note() -> list[str]:
+    """Short multi-horizon graph verdict summary from the per-horizon ladder JSONs."""
+    lines = ["Multi-horizon graph verdict (G1 vs P3, held-out test QLIKE):"]
+    horizons = [("h1", "ladder_consistent_h1.json"),
+                ("h5", "ladder_consistent_h5.json"),
+                ("h10", "ladder_consistent_h10.json"),
+                ("h22", "ladder_consistent_h22.json")]
+    for label, fname in horizons:
+        path = _RESULTS / fname
+        if not path.exists():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        v = data["graph_effect_verdict"]["test"]
+        test = data["rung_metrics"]["test"]
+        p3q = float(test["P3"]["qlike"]["mean"])
+        g1q = float(test["G1"]["qlike"]["mean"])
+        lines.append(f"  {label:>3}: P3 {p3q:.4f} -> G1 {g1q:.4f}  (delta {g1q - p3q:+.5f}, "
+                     f"paired-t p={v['paired_p']:.3f}, verdict {v['verdict']} = null)")
+    lines.append("  Verdict B (graph null) at all four horizons.")
+    return lines
 
 
 def _table_lines(val: dict[str, dict[str, float]], g1_test: dict[str, float] | None) -> list[str]:
-    header = f"{'Model':<6}{'Description':<24}{'Role':<18}"
+    header = f"{'Model':<6}{'Description':<34}{'Role':<18}"
     header += "".join(f"{_METRIC_LABELS[name]:>12}" for name in _METRICS)
     lines = [header, "-" * len(header)]
     for config, label, role in _LADDER:
-        row = f"{config:<6}{label:<24}{role:<18}"
+        row = f"{config:<6}{label:<34}{role:<18}"
         row += "".join(f"{_fmt(name, val[config][name]):>12}" for name in _METRICS)
         lines.append(row)
     lines.append("")
-    lines.append("Scope: metrics above are VALIDATION means.")
-    lines.append("  * P0-P3 = pooled ablation family (pooled validation set, 3-seed mean).")
-    lines.append("  * G0-G1 = graph ablation family (masked manifest, screening-P3 backbone,")
-    lines.append("    k-NN-8 adjacency for G1, 3-seed mean over the same 14,418 val obs).")
-    lines.append("    The P-family and G-family are two separate studies (different evaluation sets).")
-    lines.append("  * G1 is the FINAL / PROPOSED model.")
+    lines.append("Scope: metrics above are VALIDATION 3-seed means (seeds 42/123/2026).")
+    lines.append("  * Single-basis nested ladder: same 14,418 val / 14,464 test obs across all rows.")
+    lines.append("  * P3 == G1 with the cross-stock graph disabled (graph-off determinism 0.0);")
+    lines.append("    there is no separate G0 row. The graph ablation is G1 vs P3.")
+    lines.append("  * G1 is the FINAL / PROPOSED model; P2 (news backbone) has the lowest test QLIKE.")
     note = _graph_significance_note()
     if note:
-        lines.append(f"  * Parsimony finding: {note}")
+        lines.append(f"  * Parsimony finding: {note}.")
     lines.append("")
     if g1_test is not None:
-        trow = f"{'G1':<6}{'TEST (paper 3-seed)':<24}{'FINAL / PROPOSED':<18}"
+        trow = f"{'G1':<6}{'TEST (paper 3-seed)':<34}{'FINAL / PROPOSED':<18}"
         trow += "".join(f"{_fmt(name, g1_test[name]):>12}" for name in _METRICS)
-        lines.append("G1 held-out TEST metrics (paper, 3-seed mean; note QLIKE >= G0 - graph does not help):")
+        lines.append("G1 held-out TEST metrics (paper, 3-seed mean; QLIKE ~= P3 - graph does not help):")
         lines.append(trow)
+        lines.append("")
+    # Classical econometric baselines, held-out test.
+    classical = _load_classical_test()
+    lines.append("Classical econometric baselines - held-out TEST (same obs; GARCH family on 32/33 tickers):")
+    chead = f"{'Baseline':<12}" + "".join(f"{_METRIC_LABELS[name]:>12}" for name in _METRICS)
+    lines.append(chead)
+    lines.append("-" * len(chead))
+    for name in _CLASSICAL:
+        row = f"{name:<12}" + "".join(f"{_fmt(m, classical[name][m]):>12}" for m in _METRICS)
+        lines.append(row)
+    lines.append("  HAR/HARQ tie the deep models on level metrics; GARCH family is far worse.")
+    lines.append("")
+    lines.extend(_multihorizon_note())
     return lines
 
 
@@ -144,7 +191,7 @@ def _write_summary_png(val: dict[str, dict[str, float]], path: Path) -> None:
         axis.set_title(title)
         axis.tick_params(axis="x", labelrotation=0)
         axis.grid(axis="y", linestyle=":", alpha=0.5)
-    fig.suptitle("Track-B P0->G1 validation ladder (G1 = final/proposed, red)", fontsize=13)
+    fig.suptitle("Track-B P0->P1->P2->P3->G1 validation ladder (G1 = final/proposed, red)", fontsize=13)
     fig.tight_layout(rect=(0, 0, 1, 0.94))
     fig.savefig(path, dpi=120)
     plt.close(fig)
@@ -159,15 +206,16 @@ def cmd_view() -> int:
     lines = _table_lines(val, g1_test)
 
     print("=" * 96)
-    print("TRACK-B RESULTS  -  P0->G1 model ladder  (G1 = FINAL / PROPOSED model)")
+    print("TRACK-B RESULTS  -  P0->P1->P2->P3->G1 model ladder  (G1 = FINAL / PROPOSED model)")
     print("=" * 96)
     for line in lines:
         print(line)
 
     md_path = _OUTPUT / "results_table.md"
-    md = ["# Track-B Results - P0->G1 ladder", "",
-          "Source JSONs: `results/pooled_20ep_aggregate.json` (P0-P3, 3-seed mean),",
-          "`results/g0g1_graph_validation_comparison.json` (G0-G1, seed 42).", "",
+    md = ["# Track-B Results - P0->P1->P2->P3->G1 ladder", "",
+          "Source JSONs: `results/ladder_consistent_h5.json` (P0-G1, 3-seed val+test means),",
+          "`results/classical_baselines_h5.json` (classical baselines), and",
+          "`results/ladder_consistent_h{1,10,22}.json` (multi-horizon graph verdict).", "",
           "```", *lines, "```", ""]
     md_path.write_text("\n".join(md), encoding="utf-8")
 

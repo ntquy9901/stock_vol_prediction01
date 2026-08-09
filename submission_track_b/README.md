@@ -26,18 +26,22 @@ On macOS/Linux use the matching `.sh` scripts (`./view_results.sh`, etc.).
 |-----|-----------------------------------------|-------------------------|
 | P0  | HAR pooled linear                       | ablation                |
 | P1  | Price LSTM                              | ablation                |
-| P2  | Price + News                            | ablation                |
-| P3  | Price + News + per-ticker gate          | ablation (graph backbone) |
-| G0  | Backbone, graph message-passing OFF     | ablation                |
-| **G1** | **Backbone + graph message-passing ON (k-NN-8 adjacency)** | **FINAL / PROPOSED MODEL** |
+| P2  | Price + News                            | ablation (best test QLIKE) |
+| P3  | Price + News + per-ticker gate (= G1 with the graph disabled) | ablation |
+| **G1** | **P3 backbone + cross-stock graph message-passing (k-NN-8 adjacency)** | **FINAL / PROPOSED MODEL** |
 
-`G1` is the proposed model. `P0-P3` and `G0` are the ablations that motivate it.
+`G1` is the proposed model. This is a **single-basis nested ladder**: `P3` is exactly `G1` read
+out with the message-passing residual disabled (graph-off determinism 0.0), so there is **no
+separate G0 row** and the graph ablation is **G1 vs P3**. Every rung and every classical baseline
+is scored on the **same 14,418 validation / 14,464 test observations**.
 
-**Headline (parsimony) finding:** the graph layer (G1 vs G0) adds **no statistically
-significant improvement** - the Diebold-Mariano test on QLIKE is not significant across the
-three seeds, and the held-out **test** QLIKE is actually slightly worse for G1. G0 and G1 are
-otherwise near-identical on validation. The honest takeaway is that the simpler model is
-preferred; G1 is reported as the proposed full model but does not beat its ablation.
+**Headline (parsimony) finding:** the cross-stock graph (G1 vs P3) adds **no statistically
+significant improvement** - the held-out **test** paired-t is not significant (p=0.7913) and the
+Diebold-Mariano test on QLIKE is not significant across the three seeds, at **all four horizons**
+(h1/h5/h10/h22, verdict B). The simplest news-augmented backbone (**P2**) attains the lowest test
+QLIKE in the study (0.559854). Classical **HAR/HARQ tie** the deep models on the level metrics
+(test QLIKE 0.579291 / 0.573674, R^2 ~0.767), while the **GARCH family is far worse** (test QLIKE
+1.76-1.87, R^2 ~0). G1 is reported as the proposed full model but does not beat its own ablation.
 
 ## Which command reproduces which paper number
 
@@ -70,14 +74,17 @@ computed chronologically per ticker and macro-averaged (never across ticker boun
 
 ## Notes / honesty
 
-- The P0-G1 table shows **validation** metrics (3-seed means). The **G0/G1 rows are the
-  definitive masked-manifest, screening-P3-backbone run** (k-NN-8 adjacency for G1) over the same
-  14,418 validation observations - these match the paper. The bundle also ships G1's held-out
-  **test** 3-seed mean (shown in `view`); a reviewer's own `train`/`infer` run prints its own
-  test metrics to the console.
-- `P0-P3` (pooled family) and `G0-G1` (graph family) are two **separate** studies scored on
-  different evaluation sets, so `P3 -> G1` is not a single controlled step.
-- The G0/G1 numbers come from `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.json`.
+- The P0-G1 table shows **validation** 3-seed means; `view` also prints the held-out **test**
+  3-seed means and the classical-baseline test table. All rows are on the **same** masked
+  consistent basis (14,418 validation / 14,464 test observations), so `P0 -> P1 -> P2 -> P3 -> G1`
+  is one controlled ladder and `G1 vs P3` is the exactly-nested graph ablation. A reviewer's own
+  `train`/`infer` run prints its own test metrics to the console.
+- The canonical numbers come from `docs/reports/ladder_consistent_h5_2026-08-09_154402.json`
+  (shipped as `results/ladder_consistent_h5.json`), `docs/reports/classical_baselines_h5_2026-08-09_182129.json`
+  (`results/classical_baselines_h5.json`), and the per-horizon files `results/ladder_consistent_h{1,10,22}.json`.
+- **Model Confidence Set:** not computed (per-observation prediction series were not retained in the
+  result artifacts; GARCH covers a 32-ticker subset). The Diebold-Mariano tests are the primary
+  graph-significance evidence.
 - The model code folder is named `trackb_code/` (not `code/`) to avoid shadowing Python's
   standard-library `code` module, which otherwise breaks `pytest`/`pdb`.
 

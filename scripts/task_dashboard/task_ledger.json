@@ -2311,5 +2311,41 @@
         "result": "PASS: 180 tests, diff-cover 90%, ruff pass, Pandera 34/34, Evidently ran; gate_results/2fdcd95.json overall pass. Pushed a5db0dc..2fdcd95 (ea0d359 code + 2fdcd95 reports)."
       }
     ]
+  },
+  {
+    "id": "trackb-final-submission-package-2026-08-10",
+    "task_type": "doc",
+    "phase": "Track-B / paper submission package",
+    "title": "Consolidate Track-B paper (.md) + LNCS .tex, re-sync reproducibility bundle, record MCS decision",
+    "status": "done",
+    "timestamp": "2026-08-10 01:30",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "submission_track_b/test/test_reproduce.py 11 passed (updated to P0-P1-P2-P3-G1 ladder, no G0; +no-G0, classical-baseline, full-precision G1-test-match tests)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff check submission_track_b/reproduce.py + test_reproduce.py clean; .tex structurally linted (balanced envs, all cite/ref/label/macro defined)"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "self-review: grep-verified G1/P3/P2/HAR/HARQ numbers consistent across .md/.tex-macros/PAPER_MAP/view (display-precision only), no stale Track-A numbers (0.4430/0.5493/0.4603) in any new file, Track A/A1/common-date fully removed, dashboard doc-type stays 0-red"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "diff-cover/pytest-cov not installed (standing repo tooling gap); reproduce.py view-logic change fully exercised by 11 passing bundle tests"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no change to data/features/manifest/train pipeline (docs + view-plumbing only)"
+      }
+    },
+    "result_summary": "Produced the final Track-B submission package. Consolidated docs/paper/track_b_paper_draft.md onto the canonical ladder-consistent h5 + multi-horizon (h1/10/22) + classical-baseline numbers: removed all Track A content and the A1 common-date ablation; collapsed G0 (ladder is now P0->P1->P2->P3->G1 with P3 = G1 graph-off, determinism 0.0); swapped stale §6.1 numbers; added classical-baseline and multi-horizon tables with per-horizon G1-vs-P3 Diebold-Mariano verdicts (verdict B / graph null at all four horizons); re-grounded §5 training (MSE-train/QLIKE-eval, RTX 4060/PyTorch 2.6/CUDA 12.4, single consistent basis); parsimony framing; added GNNHAR (Zhang et al. 2025) and Audrino-Chassot (2025) corroborators, fixed Sonani et al. to a generic LSTM+GNN price precedent. Created docs/paper/soict2026_trackb_v1.tex in Springer LNCS format (same packages + canonical-number-macro pattern + author block as v3); structurally linted (no LaTeX toolchain on host, compilation not run). Re-synced submission_track_b: reproduce.py view + PAPER_MAP.md + README.md now reflect the final ladder + classical + multi-horizon numbers (no G0); shipped ladder_consistent_h{1,5,10,22}.json + classical_baselines_h5.json; removed stale g0g1/pooled JSONs; 11 bundle tests pass; python reproduce.py view runs clean. Deleted stray 'track_b_paper_draft - Copy.md'. MCS: not computed (no per-observation prediction series retained; GARCH is a 32-ticker subset) -> DM used instead, recorded in paper/PAPER_MAP/README. Numbers grep-verified consistent across .md/.tex/PAPER_MAP/view."
   }
 ]
