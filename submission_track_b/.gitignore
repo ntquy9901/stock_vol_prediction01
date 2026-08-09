@@ -1,0 +1,8 @@
+# Regenerable / large - not committed (keeps the public repo lean)
+output/*
+!output/.gitkeep
+checkpoints/*
+!checkpoints/.gitkeep
+__pycache__/
+*.pyc
+.venv/

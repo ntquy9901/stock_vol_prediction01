@@ -1,0 +1,14 @@
+# Track-B reproducibility bundle - pinned dependencies.
+# Verified working with the exact versions in the trailing comments (CPU is fine;
+# no GPU required). The lower bounds are the minimums known to work; if you want a
+# byte-for-byte environment, replace ">=" with "==" and the commented version.
+#
+# `view` (option 1) only needs numpy + matplotlib.
+# `train` / `infer` (options 2-3) additionally need torch, pandas, scikit-learn, pyarrow.
+
+numpy>=1.26          # verified: 2.4.4
+matplotlib>=3.7      # verified: 3.11.0
+torch>=2.2           # verified: 2.12.1+cpu  (CPU build is sufficient)
+pandas>=2.1          # verified: 3.0.3
+scikit-learn>=1.3    # verified: 1.9.0
+pyarrow>=14          # verified: 25.0.0  (Parquet reader for the news panel)
