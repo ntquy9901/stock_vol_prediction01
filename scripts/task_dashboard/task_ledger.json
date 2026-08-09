@@ -2347,5 +2347,45 @@
       }
     },
     "result_summary": "Produced the final Track-B submission package. Consolidated docs/paper/track_b_paper_draft.md onto the canonical ladder-consistent h5 + multi-horizon (h1/10/22) + classical-baseline numbers: removed all Track A content and the A1 common-date ablation; collapsed G0 (ladder is now P0->P1->P2->P3->G1 with P3 = G1 graph-off, determinism 0.0); swapped stale §6.1 numbers; added classical-baseline and multi-horizon tables with per-horizon G1-vs-P3 Diebold-Mariano verdicts (verdict B / graph null at all four horizons); re-grounded §5 training (MSE-train/QLIKE-eval, RTX 4060/PyTorch 2.6/CUDA 12.4, single consistent basis); parsimony framing; added GNNHAR (Zhang et al. 2025) and Audrino-Chassot (2025) corroborators, fixed Sonani et al. to a generic LSTM+GNN price precedent. Created docs/paper/soict2026_trackb_v1.tex in Springer LNCS format (same packages + canonical-number-macro pattern + author block as v3); structurally linted (no LaTeX toolchain on host, compilation not run). Re-synced submission_track_b: reproduce.py view + PAPER_MAP.md + README.md now reflect the final ladder + classical + multi-horizon numbers (no G0); shipped ladder_consistent_h{1,5,10,22}.json + classical_baselines_h5.json; removed stale g0g1/pooled JSONs; 11 bundle tests pass; python reproduce.py view runs clean. Deleted stray 'track_b_paper_draft - Copy.md'. MCS: not computed (no per-observation prediction series retained; GARCH is a 32-ticker subset) -> DM used instead, recorded in paper/PAPER_MAP/README. Numbers grep-verified consistent across .md/.tex/PAPER_MAP/view."
+  },
+  {
+    "id": "gat-price-har-quick-2026-08-10",
+    "task_type": "code",
+    "phase": "Track-B / masked-GNN quick experiment",
+    "title": "GAT on price-only P1 backbone (news OFF, gate OFF) + knn-8 vs classical HAR (h5)",
+    "status": "done",
+    "timestamp": "2026-08-10 01:55",
+    "branch": "feature/gat-har-quick",
+    "commits": [
+      "3d574a2",
+      "a5a792d"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "test_price_graph_model.py 20/20 (RED->GREEN); test_models.py 39/39 (no regression); full baseline suite 200 passed (866s, standalone)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on models.py, gat_price_quick.py, test_price_graph_model.py"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "self-review: new PriceGraphAblationModel kept self-contained so it never perturbs the news+gate G1 path; frozen price encoder asserted (no gradients) by the graph runner; positivity floor + leakage-safe graph-bound train + shared per-ticker scalers preserved; recomputed P0 HAR matches ladder JSON exactly (identical basis)"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "models.py = 100% C0 on changed lines (diff-cover vs 2fdcd95, pytest-cov --cov-branch over test_models + test_price_graph_model); driver gat_price_quick.py is a run entry point (like ladder_consistent.py), exercised end-to-end by the real GPU run, outside coverage_gate.sh unit scope"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data change; reuses the ladder's manifest/features/per-ticker scalers"
+      }
+    },
+    "result_summary": "Trained a GAT on the price-only pooled LSTM backbone (P1 config: 3 HAR-scale node features, news OFF, gate OFF) + masked knn-8 message passing, 20 graph-head epochs on the frozen backbone, on the ladder's consistent h5 basis (6470 snapshots, leakage-safe graph-bound train, shared scalers, positivity floor, identical val/test obs). Compared all 6 metrics against classical HAR (P0) over identical observations, 3 seeds (42/123/2026). Validation: GAT-price beats HAR on all 6 metrics by small margins. Test (held-out): beats HAR on 1/6 (MAE, marginal); worse on MSE/RMSE/R2/QLIKE/DirAcc. Diebold-Mariano (squared-error, h=5) on test: GAT directionally worse than HAR but NOT significant at any seed (p=0.19-0.25). Conclusion: the leaner price-only GAT does not beat HAR out-of-sample; graph-null confirmed. Report: docs/reports/2026-08-10_0130_gat_price_har_quick.md; results JSON: docs/reports/gat_price_quick_2026-08-10_003120.json + _005412.json."
   }
 ]
