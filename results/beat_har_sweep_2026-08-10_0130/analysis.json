@@ -1,0 +1,336 @@
+{
+  "ts": "2026-08-10_0130",
+  "bar": {
+    "P0_qlike": 0.5676,
+    "HARQ_rmse": 0.0022891,
+    "HARQ_r2": 0.76682,
+    "classicalHAR_qlike": 0.5793
+  },
+  "configs": {
+    "C1": {
+      "per_seed": {
+        "42": {
+          "test_qlike_config": 0.5715209384752009,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.003896059678762054,
+          "dm_qlike_stat": 2.4218262866384097,
+          "dm_qlike_p": 0.015454944671259364,
+          "dm_rmse_stat": 0.02901647607524533,
+          "dm_rmse_p": 0.9768518504742038,
+          "test_rmse_config": 0.0022896903198483406,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "123": {
+          "test_qlike_config": 0.574598188571904,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.006973309775465175,
+          "dm_qlike_stat": 4.66579905793382,
+          "dm_qlike_p": 3.1017545508961623e-06,
+          "dm_rmse_stat": 0.23453354836364523,
+          "dm_rmse_p": 0.8145741114885282,
+          "test_rmse_config": 0.0022928514974116907,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "2026": {
+          "test_qlike_config": 0.5727620378730335,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.005137159076594622,
+          "dm_qlike_stat": 3.5083915475092446,
+          "dm_qlike_p": 0.000452194196513103,
+          "dm_rmse_stat": 0.33411707385210865,
+          "dm_rmse_p": 0.7382960610008541,
+          "test_rmse_config": 0.0022941025532489646,
+          "test_rmse_p0": 0.002289288920070898
+        }
+      },
+      "n_seeds": 3,
+      "paired_t_qlike": {
+        "mean_delta": 0.00533550951027395,
+        "t_stat": 5.969169406307012,
+        "p_value": 0.026936638366471123,
+        "all_negative": false,
+        "all_positive": true
+      },
+      "beats_P0_qlike_dm": false
+    },
+    "C2": {
+      "per_seed": {
+        "42": {
+          "test_qlike_config": 0.5668410135991686,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": -0.0007838651972702504,
+          "dm_qlike_stat": -0.5656032475327537,
+          "dm_qlike_p": 0.5716722938440193,
+          "dm_rmse_stat": -0.78136093602863,
+          "dm_rmse_p": 0.43460302952006,
+          "test_rmse_config": 0.002282527196283722,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "123": {
+          "test_qlike_config": 0.5693711284949394,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.0017462496985005682,
+          "dm_qlike_stat": 1.4877534067003348,
+          "dm_qlike_p": 0.13683773842430955,
+          "dm_rmse_stat": 1.2806017532209057,
+          "dm_rmse_p": 0.20035411977334688,
+          "test_rmse_config": 0.002308524980331483,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "2026": {
+          "test_qlike_config": 0.5625413524637707,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": -0.005083526332668176,
+          "dm_qlike_stat": -5.118912819175605,
+          "dm_qlike_p": 3.112438892641892e-07,
+          "dm_rmse_stat": -1.6807510179315917,
+          "dm_rmse_p": 0.09283287985848222,
+          "test_rmse_config": 0.0022778791409920145,
+          "test_rmse_p0": 0.002289288920070898
+        }
+      },
+      "n_seeds": 3,
+      "paired_t_qlike": {
+        "mean_delta": -0.0013737139438126194,
+        "t_stat": -0.6890886008303574,
+        "p_value": 0.5619726479104887,
+        "all_negative": false,
+        "all_positive": false
+      },
+      "beats_P0_qlike_dm": false
+    },
+    "C3": {
+      "per_seed": {
+        "42": {
+          "test_qlike_config": 0.5719762196185528,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.004351340822113969,
+          "dm_qlike_stat": 2.655670831809917,
+          "dm_qlike_p": 0.007923760537557408,
+          "dm_rmse_stat": 0.8024051409816944,
+          "dm_rmse_p": 0.4223318246459243,
+          "test_rmse_config": 0.002301992984712141,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "123": {
+          "test_qlike_config": 0.5913985176497217,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.023773638853282875,
+          "dm_qlike_stat": 9.309418717756634,
+          "dm_qlike_p": 1.467127143287619e-20,
+          "dm_rmse_stat": 1.259461247872441,
+          "dm_rmse_p": 0.20788410339347518,
+          "test_rmse_config": 0.002312938467664938,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "2026": {
+          "test_qlike_config": 0.6089142631165767,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.041289384320137845,
+          "dm_qlike_stat": 11.57537976753839,
+          "dm_qlike_p": 7.511604571977988e-31,
+          "dm_rmse_stat": 2.375532994580423,
+          "dm_rmse_p": 0.017536579966123806,
+          "test_rmse_config": 0.002370113718204968,
+          "test_rmse_p0": 0.002289288920070898
+        }
+      },
+      "n_seeds": 3,
+      "paired_t_qlike": {
+        "mean_delta": 0.023138121331844896,
+        "t_stat": 2.1689626860247455,
+        "p_value": 0.16233156628079817,
+        "all_negative": false,
+        "all_positive": true
+      },
+      "beats_P0_qlike_dm": false
+    },
+    "C5": {
+      "k_sweep": {
+        "k16": {
+          "per_seed": {
+            "42": {
+              "test_qlike_config": 0.5727708278110889,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.005145949014650042,
+              "dm_qlike_stat": 2.8210132152402094,
+              "dm_qlike_p": 0.004793743917493787,
+              "dm_rmse_stat": 0.9598364464873516,
+              "dm_rmse_p": 0.33715358136790896,
+              "test_rmse_config": 0.002305930647939209,
+              "test_rmse_p0": 0.002289288920070898
+            },
+            "123": {
+              "test_qlike_config": 0.5766898972708012,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.009065018474362363,
+              "dm_qlike_stat": 5.0012906397804215,
+              "dm_qlike_p": 5.761528414800609e-07,
+              "dm_rmse_stat": 0.8008414191299511,
+              "dm_rmse_p": 0.4232366123796228,
+              "test_rmse_config": 0.0023030698343219076,
+              "test_rmse_p0": 0.002289288920070898
+            },
+            "2026": {
+              "test_qlike_config": 0.5748108199399422,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.007185941143503349,
+              "dm_qlike_stat": 4.339930395399467,
+              "dm_qlike_p": 1.434953981202877e-05,
+              "dm_rmse_stat": 1.0408279632833612,
+              "dm_rmse_p": 0.2979727978770235,
+              "test_rmse_config": 0.002308167365020333,
+              "test_rmse_p0": 0.002289288920070898
+            }
+          },
+          "n_seeds": 3,
+          "paired_t_qlike": {
+            "mean_delta": 0.007132302877505252,
+            "t_stat": 6.302537611754093,
+            "p_value": 0.024262516410974534,
+            "all_negative": false,
+            "all_positive": true
+          },
+          "beats_P0_qlike_dm": false
+        },
+        "k8": {
+          "per_seed": {
+            "42": {
+              "test_qlike_config": 0.5720007474375776,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.004375868641138703,
+              "dm_qlike_stat": 2.27599695255032,
+              "dm_qlike_p": 0.022860745792651575,
+              "dm_rmse_stat": 1.0184185890339144,
+              "dm_rmse_p": 0.3084961070622008,
+              "test_rmse_config": 0.0023049102080737282,
+              "test_rmse_p0": 0.002289288920070898
+            },
+            "123": {
+              "test_qlike_config": 0.5812857161045785,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.013660837308139606,
+              "dm_qlike_stat": 6.282891278041493,
+              "dm_qlike_p": 3.4185055695194375e-10,
+              "dm_rmse_stat": 1.246986470637996,
+              "dm_rmse_p": 0.21242265153289294,
+              "test_rmse_config": 0.0023176703312732714,
+              "test_rmse_p0": 0.002289288920070898
+            },
+            "2026": {
+              "test_qlike_config": 0.5775865785005313,
+              "test_qlike_p0": 0.5676248787964389,
+              "qlike_delta": 0.009961699704092442,
+              "dm_qlike_stat": 5.752072968956683,
+              "dm_qlike_p": 8.993860526488253e-09,
+              "dm_rmse_stat": 1.1925737225613164,
+              "dm_rmse_p": 0.2330559272362235,
+              "test_rmse_config": 0.00231063888891559,
+              "test_rmse_p0": 0.002289288920070898
+            }
+          },
+          "n_seeds": 3,
+          "paired_t_qlike": {
+            "mean_delta": 0.009332801884456917,
+            "t_stat": 3.4582306738424498,
+            "p_value": 0.07440454315139197,
+            "all_negative": false,
+            "all_positive": true
+          },
+          "beats_P0_qlike_dm": false
+        }
+      },
+      "best_k": "k16",
+      "per_seed": {
+        "42": {
+          "test_qlike_config": 0.5727708278110889,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.005145949014650042,
+          "dm_qlike_stat": 2.8210132152402094,
+          "dm_qlike_p": 0.004793743917493787,
+          "dm_rmse_stat": 0.9598364464873516,
+          "dm_rmse_p": 0.33715358136790896,
+          "test_rmse_config": 0.002305930647939209,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "123": {
+          "test_qlike_config": 0.5766898972708012,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.009065018474362363,
+          "dm_qlike_stat": 5.0012906397804215,
+          "dm_qlike_p": 5.761528414800609e-07,
+          "dm_rmse_stat": 0.8008414191299511,
+          "dm_rmse_p": 0.4232366123796228,
+          "test_rmse_config": 0.0023030698343219076,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "2026": {
+          "test_qlike_config": 0.5748108199399422,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.007185941143503349,
+          "dm_qlike_stat": 4.339930395399467,
+          "dm_qlike_p": 1.434953981202877e-05,
+          "dm_rmse_stat": 1.0408279632833612,
+          "dm_rmse_p": 0.2979727978770235,
+          "test_rmse_config": 0.002308167365020333,
+          "test_rmse_p0": 0.002289288920070898
+        }
+      },
+      "n_seeds": 3,
+      "paired_t_qlike": {
+        "mean_delta": 0.007132302877505252,
+        "t_stat": 6.302537611754093,
+        "p_value": 0.024262516410974534,
+        "all_negative": false,
+        "all_positive": true
+      },
+      "beats_P0_qlike_dm": false
+    },
+    "C6": {
+      "per_seed": {
+        "42": {
+          "test_qlike_config": 0.5854553004753711,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.01783042167893223,
+          "dm_qlike_stat": 6.377501470498568,
+          "dm_qlike_p": 1.8546931110265464e-10,
+          "dm_rmse_stat": -0.6342853450369639,
+          "dm_rmse_p": 0.5259046507252284,
+          "test_rmse_config": 0.0022796277965547685,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "123": {
+          "test_qlike_config": 0.5942078999420934,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.026583021145654584,
+          "dm_qlike_stat": 9.588821929677817,
+          "dm_qlike_p": 1.033774757745809e-21,
+          "dm_rmse_stat": 3.551252370380745,
+          "dm_rmse_p": 0.00038462107739831516,
+          "test_rmse_config": 0.00237506360702446,
+          "test_rmse_p0": 0.002289288920070898
+        },
+        "2026": {
+          "test_qlike_config": 0.5912615457336939,
+          "test_qlike_p0": 0.5676248787964389,
+          "qlike_delta": 0.02363666693725508,
+          "dm_qlike_stat": 8.860955794584173,
+          "dm_qlike_p": 8.845577153526242e-19,
+          "dm_rmse_stat": 2.100998782084823,
+          "dm_rmse_p": 0.03565833445326157,
+          "test_rmse_config": 0.0023457637583162235,
+          "test_rmse_p0": 0.002289288920070898
+        }
+      },
+      "n_seeds": 3,
+      "paired_t_qlike": {
+        "mean_delta": 0.022683369920613965,
+        "t_stat": 8.822011879245306,
+        "p_value": 0.012606410394389412,
+        "all_negative": false,
+        "all_positive": true
+      },
+      "beats_P0_qlike_dm": false
+    }
+  }
+}
