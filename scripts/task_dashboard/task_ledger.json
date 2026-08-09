@@ -2217,5 +2217,99 @@
     },
     "result_summary": "Classical suite on identical ladder obs (14418/14464): HAR/HARQ tie the deep ladder on point accuracy (rmse~0.00229/r2~0.767), GARCH-family decisively worse (rmse~0.0048/r2~0), DirAcc ~48% for all. Reviewer defense: deep models clearly beat GARCH, honestly competitive-not-superior vs HAR.",
     "report_md": "docs/reports/2026-08-09_1927_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "masked-gnn-multihorizon-ladder-2026-08-10",
+    "task_type": "code",
+    "phase": "Track-B / masked-GNN consistent ladder",
+    "title": "Extend consistent ladder P0->P1->P2->P3->G1 to horizons 1/10/22 (h5 already done)",
+    "status": "done",
+    "timestamp": "2026-08-10 00:40",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "ea0d359",
+      "2fdcd95"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "180 baseline tests pass (pre-push hook, 783s); 2 new horizon tests RED->GREEN"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on ladder_consistent.py, dump.py, both test files (hook: ruff pass)"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial self-review: horizon global set/restore (finally + test asserts default restored), per-horizon obs-set invariant asserted at runtime, DM HAC lag=h-1 per horizon, concurrent-write race provenance resolved + clean re-dump as standing evidence"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "pre-push hook: 90% on changed lines (floor 80)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "no data change (horizon parametrization); pre-push Pandera 34/34 pass + Evidently drift ran"
+      }
+    },
+    "result_summary": "Extended the consistent-basis nested ladder P0->P1->P2->P3->G1 to forecast horizons 1, 10 and 22 (h5 previously done), replicating the exact h5 procedure (masked knn-8, leakage-safe graph-bound train, shared per-ticker scalers, positivity floor, identical val/test observations per horizon, seeds 42/123/2026, P3 = trained G1 read out with the GAT/message-passing residual disabled). Code: main() in ladder_consistent.py and main()/_collect() in ladder_consistent_dump.py take a horizon; run-config horizon set at entry (restored in finally), results route to results/.../h{horizon}, aggregator reads h{horizon} and runs Diebold-Mariano at horizon h (HAC lag h-1). Nesting determinism 0.0 for every seed at every horizon. Graph verdict B (null) at ALL horizons: h1 VAL 2/3 (QLIKE unstable, but DM-MSE sig-neg 3/3 test seeds), h10 VAL 3/3 p=0.0447 / TEST 3/3 p=0.0669, h22 VAL 3/3 p=0.0002 but TEST 0/3 (does not generalize). None clears the A bar. Canonical files: ladder_consistent_h{1,10,22}_2026-08-09_180326.{json,md} + combined ladder_consistent_multihorizon_2026-08-09_180326.md. Provenance: an h10 rc=1 was a redundant recovery orchestrator losing an atomic-write race to the original launcher (which completed rc=0); runs are seeded/deterministic and _write_json is atomic, verified by per-seed integrity checks + a single-process clean re-dump reproducing valid 3-seed reports.",
+    "report_md": "docs/reports/2026-08-10_0030_summaryOfUpdate_report.md",
+    "code_review": {
+      "type": "focused-adversarial-self",
+      "layers": 1,
+      "findings_fixed": 0,
+      "findings_deferred": 0,
+      "note": "horizon set/restore guarded by finally + smoke test; per-horizon obs-set invariant asserted at runtime (green all 3 real runs); concurrent-write race documented + clean re-dump standing evidence."
+    },
+    "dod": [
+      {
+        "item": "5-rung nested ladder at h1/h10/h22 (3 seeds, 6 metrics, val+test, same-obs-per-horizon)",
+        "ok": true
+      },
+      {
+        "item": "nesting exact (P3 = G1 graph-off), determinism 0.0 every seed/horizon; obs-set invariant asserted",
+        "ok": true
+      },
+      {
+        "item": "G1-vs-P3 Diebold-Mariano (QLIKE+MSE) per horizon",
+        "note": "verdict B (graph null) at all horizons",
+        "ok": true
+      },
+      {
+        "item": "canonical ladder_consistent_h{1,10,22}_<ts>.{json,md} + combined multi-horizon MD",
+        "ok": true
+      },
+      {
+        "item": "TDD RED->GREEN (2 new horizon tests) + ruff clean; committed + pushed feature/masked-gnn",
+        "ok": true
+      },
+      {
+        "item": "diff-cover",
+        "note": "pre-push quality gate PASSED (180 tests, diff-cover 90%, ruff, Pandera 34/34); push accepted a5db0dc..2fdcd95",
+        "ok": true
+      }
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest test/test_ladder_consistent.py test/test_ladder_dump.py",
+        "result": "7 pass; RED->GREEN for test_main_routes_horizon_to_subdir_and_stamp (writes h10, stamps horizon, restores default) + test_dump_reads_horizon_subdir_and_stamps_horizon (h22)."
+      },
+      {
+        "cmd": "python code/ladder_consistent.py 2026-08-09_180326 cuda {1,10,22} (.venv_gpu_encode, 3 seeds x 5 rungs)",
+        "result": "basis h1 val14550/test14596, h10 val14253/test14299, h22 val13857/test13903; nesting determinism 0.0 all seeds/horizons; obs-set invariant graph==pooled asserted."
+      },
+      {
+        "cmd": "python docs/reports/ladder_consistent_dump.py 2026-08-09_180326 {1,10,22} (clean re-dump)",
+        "result": "Verdict B all horizons. h1 VAL 2/3 (QLIKE unstable)/TEST 2/3; h10 VAL 3/3 p=0.0447/TEST 3/3 p=0.0669; h22 VAL 3/3 p=0.0002/TEST 0/3. seeds_completed [42,123,2026] each."
+      },
+      {
+        "cmd": "git push origin feature/masked-gnn (pre-push gate)",
+        "result": "PASS: 180 tests, diff-cover 90%, ruff pass, Pandera 34/34, Evidently ran; gate_results/2fdcd95.json overall pass. Pushed a5db0dc..2fdcd95 (ea0d359 code + 2fdcd95 reports)."
+      }
+    ]
   }
 ]
