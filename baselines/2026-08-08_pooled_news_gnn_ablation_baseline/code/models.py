@@ -367,3 +367,179 @@ class GraphAblationModel(nn.Module):
     ) -> torch.Tensor:
         base = self.encode_base(x_price, x_news, news_mask, ticker_ids, presence_mask)
         return self.apply_graph_head(base, adjacency, ticker_ids, presence_mask)
+
+
+class PriceGraphAblationModel(nn.Module):
+    """'GAT on the price-only P1 backbone' = P1 + graph (news OFF, gate OFF).
+
+    The node embedding is the frozen price LSTM hidden state alone -- no news encoder and no
+    per-ticker gate -- combined with the same :class:`_ResidualMessagePassing` k-NN message
+    passing and per-ticker positivity floor as :class:`GraphAblationModel`.  It exposes the same
+    ``encode_base`` / ``apply_graph_head`` / ``configure_positivity`` / provenance contract so the
+    pooled graph training + evaluation helpers drive it unchanged.  Kept self-contained (rather
+    than subclassing ``GraphAblationModel``) so the price-only variant never perturbs the
+    news+gate G1 path; the small positivity/head duplication is deliberate isolation.
+    """
+
+    def __init__(self, p1: PooledPriceLSTM, num_tickers: int, use_gnn: bool) -> None:
+        super().__init__()
+        if num_tickers < 1:
+            raise ValueError("num_tickers must be positive")
+        self.use_gnn = use_gnn
+        self.price_encoder = p1.price_lstm
+        self.head = p1.head
+        hidden_dim = p1.head[0].in_features
+        self.message_passing = _ResidualMessagePassing(hidden_dim) if use_gnn else None
+        self.price_encoder.eval()
+        for parameter in self.price_encoder.parameters():
+            parameter.requires_grad_(False)
+        self.register_buffer("target_mean", torch.zeros(num_tickers))
+        self.register_buffer("target_std", torch.ones(num_tickers))
+        self._positivity_configured = False
+        self._positivity_epsilon = POSITIVITY_EPSILON
+        self.graph_train_end_date: str | None = None
+        self.graph_manifest_hash: str | None = None
+
+    def configure_positivity(self, store: Any, epsilon: float = POSITIVITY_EPSILON) -> "PriceGraphAblationModel":
+        """Install the per-ticker train-fitted target mean/std used to floor predictions.
+
+        Identical contract to :meth:`GraphAblationModel.configure_positivity`: no new statistic is
+        derived (the values are each ticker's ``target_scaler`` mean/std), so the leakage/scaler
+        contract is unchanged.
+        """
+
+        if epsilon <= 0:
+            raise ValueError("positivity epsilon must be positive")
+        mean = self.target_mean.clone()
+        std = self.target_std.clone()
+        for ticker_id in range(mean.numel()):
+            preprocessor = store.preprocessors.get(ticker_id)
+            if preprocessor is None:
+                raise ValueError(f"positivity config missing preprocessor for ticker_id {ticker_id}")
+            scaler = preprocessor.target_scaler
+            mean[ticker_id] = float(scaler.mean[0])
+            std[ticker_id] = float(scaler.std[0])
+        self.target_mean.copy_(mean)
+        self.target_std.copy_(std)
+        self._positivity_epsilon = float(epsilon)
+        self._positivity_configured = True
+        return self
+
+    def _apply_positivity(self, output: torch.Tensor, ticker_ids: torch.Tensor) -> torch.Tensor:
+        mean = self.target_mean[ticker_ids].reshape(output.shape)
+        std = self.target_std[ticker_ids].reshape(output.shape)
+        raw = output * std + mean
+        epsilon = self._positivity_epsilon
+        raw_positive = epsilon * softplus(raw / epsilon) + epsilon
+        return (raw_positive - mean) / std
+
+    @classmethod
+    def from_p1_checkpoint(
+        cls, path: str, use_gnn: bool, num_tickers: int, graph_train_end_date: str | None = None,
+        graph_manifest_hash: str | None = None,
+    ) -> "PriceGraphAblationModel":
+        checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+        if not checkpoint.get("graph_safe") or not checkpoint.get("training_sample_hash"):
+            raise ValueError("P1 checkpoint is not graph-safe")
+        checkpoint_boundary = checkpoint.get("graph_train_end_date")
+        max_training_date = checkpoint.get("max_training_target_date")
+        if not checkpoint_boundary or not max_training_date or max_training_date > checkpoint_boundary:
+            raise ValueError("graph-safe P1 checkpoint has invalid training provenance")
+        if graph_train_end_date is not None and checkpoint_boundary != graph_train_end_date:
+            raise ValueError("graph-safe P1 checkpoint graph train boundary differs")
+        if graph_manifest_hash is not None and checkpoint.get("graph_manifest_hash") != graph_manifest_hash:
+            raise ValueError("graph-safe P1 checkpoint graph manifest hash differs")
+        state = checkpoint.get("model_state")
+        if not isinstance(state, dict):
+            raise ValueError("P1 checkpoint has no model_state")
+        try:
+            price_dim = int(state["price_lstm.weight_ih_l0"].shape[1])
+            hidden_dim = int(state["price_lstm.weight_hh_l0"].shape[1])
+        except (KeyError, IndexError, AttributeError) as error:
+            raise ValueError("P1 checkpoint does not contain a compatible price model") from error
+        p1 = PooledPriceLSTM(price_dim, hidden_dim=hidden_dim, dropout=0.0)
+        p1.load_state_dict(state, strict=True)
+        model = cls(p1, num_tickers, use_gnn)
+        model.graph_train_end_date = checkpoint_boundary
+        model.graph_manifest_hash = checkpoint.get("graph_manifest_hash")
+        return model
+
+    def train(self, mode: bool = True) -> "PriceGraphAblationModel":
+        super().train(mode)
+        self.price_encoder.eval()
+        return self
+
+    def encode_base(
+        self, x_price: torch.Tensor, x_news: torch.Tensor | None = None,
+        news_mask: torch.Tensor | None = None, ticker_ids: torch.Tensor | None = None,
+        presence_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Frozen price-LSTM node embeddings; ``x_news`` / ``news_mask`` / ``ticker_ids`` accepted
+        for a signature-compatible drop-in but ignored (price-only backbone).
+
+        Returns ``[batch, nodes, hidden]`` when ``x_price`` is 4-D, else ``[nodes, hidden]``.
+        """
+
+        batched = x_price.ndim == 4
+        if batched:
+            batch_size, node_count = x_price.shape[:2]
+            if presence_mask is not None and presence_mask.shape != (batch_size, node_count):
+                raise ValueError("batched presence_mask must be [batch, nodes]")
+            flat_price = x_price.reshape(batch_size * node_count, *x_price.shape[2:])
+            flat_presence = None if presence_mask is None else presence_mask.reshape(batch_size * node_count)
+        else:
+            if presence_mask is not None and (presence_mask.ndim != 1
+                                              or presence_mask.shape[0] != x_price.shape[0]):
+                raise ValueError("presence_mask must be a 1-D vector over nodes")
+            flat_price, flat_presence = x_price, presence_mask
+        with torch.no_grad():
+            base = self._encode_price_nodes(flat_price, flat_presence)
+        if batched:
+            base = base.reshape(batch_size, node_count, -1)
+        return base
+
+    def _encode_price_nodes(
+        self, price: torch.Tensor, presence: torch.Tensor | None,
+    ) -> torch.Tensor:
+        if presence is None:
+            _, (hidden, _) = self.price_encoder(price)
+            return hidden[-1]
+        present = presence.to(dtype=torch.bool)
+        base = price.new_zeros((price.shape[0], self.head[0].in_features))
+        index = present.nonzero(as_tuple=False).squeeze(-1)
+        if index.numel() == 0:
+            return base
+        _, (hidden, _) = self.price_encoder(price[index])
+        base[index] = hidden[-1]
+        return base
+
+    def apply_graph_head(
+        self, base: torch.Tensor, adjacency: torch.Tensor, ticker_ids: torch.Tensor,
+        presence_mask: torch.Tensor | None = None, apply_message_passing: bool = True,
+    ) -> torch.Tensor:
+        """Trainable message-passing (when ``use_gnn``) + head + positivity, given ``base``.
+
+        ``apply_message_passing=False`` reads out the pure backbone+head+positivity (price-only P1)
+        pathway; the message-passing residual is the only graph contribution.
+        """
+
+        batched = base.ndim == 3
+        if self.message_passing is not None and apply_message_passing:
+            if batched:
+                base = base + self.message_passing(base, adjacency, presence_mask)
+            else:
+                batch_presence = None if presence_mask is None else presence_mask.unsqueeze(0)
+                base = base + self.message_passing(base.unsqueeze(0), adjacency, batch_presence).squeeze(0)
+        output = self.head(base).squeeze(-1)
+        if self._positivity_configured:
+            flat_ticker = ticker_ids.reshape(-1).to(torch.long) if batched else ticker_ids.to(torch.long)
+            output = self._apply_positivity(output, flat_ticker)
+        return output
+
+    def forward(
+        self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
+        ticker_ids: torch.Tensor, adjacency: torch.Tensor,
+        presence_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        base = self.encode_base(x_price, x_news, news_mask, ticker_ids, presence_mask)
+        return self.apply_graph_head(base, adjacency, ticker_ids, presence_mask)
