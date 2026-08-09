@@ -338,3 +338,54 @@ def test_overlay_gate_ruff_na_does_not_override_handentry():
                       "timestamp": "2026-08-09T02:00"}}
     out = bd._overlay_gate(t, gr)
     assert bd._resolve_gate(out["quality_gate"]["lint"])[0] == "pass"
+
+
+# ---------------------------------------------------------------------------
+# Guard-branch coverage (empty/blank/non-dict inputs)
+# ---------------------------------------------------------------------------
+
+
+def test_load_ledger_blank_file_returns_empty(tmp_path: Path):
+    p = tmp_path / "blank.json"
+    p.write_text("   \n", encoding="utf-8")
+    assert bd.load_ledger(p) == []
+
+
+def test_load_ledger_non_array_raises(tmp_path: Path):
+    p = tmp_path / "obj.json"
+    p.write_text(json.dumps({"not": "a list"}), encoding="utf-8")
+    try:
+        bd.load_ledger(p)
+    except ValueError as exc:
+        assert "JSON array" in str(exc)
+    else:  # pragma: no cover - the raise above is the contract
+        raise AssertionError("expected ValueError for non-array ledger")
+
+
+def test_status_counts_unknown_status_falls_back_to_planned():
+    counts = bd.status_counts([{"status": "mystery"}])
+    assert counts["planned"] == 1
+
+
+def test_render_overview_zero_total_has_no_stackbar():
+    html = bd._render_overview({"done": 0, "running": 0, "blocked": 0, "planned": 0})
+    assert "stackbar" not in html
+
+
+def test_render_evidence_skips_non_dict_items():
+    # A non-dict evidence entry is skipped; an all-non-dict list yields "".
+    assert bd._render_evidence(["not-a-dict"]) == ""
+    html = bd._render_evidence([{"cmd": "x", "result": "y"}, 42])
+    assert "x" in html and "y" in html
+
+
+def test_render_dod_skips_non_dict_items():
+    assert bd._render_dod([123, "nope"]) == ""
+    html = bd._render_dod([{"item": "real", "ok": True}, 7])
+    assert "real" in html
+
+
+def test_render_task_card_non_dict_input():
+    # A non-dict task must not crash; it renders a fallback card.
+    html = bd._render_task_card("not-a-dict")
+    assert "task-card" in html

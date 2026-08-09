@@ -333,24 +333,32 @@
       {
         "cmd": "XSS inject <script> into title+evidence, regenerate",
         "result": "VERDICT: ESCAPED OK (no raw <script> in HTML)"
+      },
+      {
+        "cmd": "diff-cover td_cov.xml --compare-branch=e6c8d0d^ --fail-under=100 (2026-08-09, after +7 guard-branch tests, 34 tests)",
+        "result": "99% on changed lines (453 total, 2 missing = build_dashboard __main__ block 663-664, unreachable in-test)"
+      },
+      {
+        "cmd": "3-layer code review of current build_dashboard.py (Blind/EdgeCase/Acceptance)",
+        "result": "No new HIGH/MEDIUM. Builds on code-audit-2026-08-09 (found 2 MED here) + fix-audit fd420e4 (fixed: malformed diff_cover_pct crash-isolation, ruff fail->fail overlay). validate_task red-card logic re-verified vs ledger. XSS via _esc confirmed. LOW floor-80-displays-pass remains by design."
       }
     ],
     "quality_gate": {
       "tests": {
         "status": "pass",
-        "detail": "9 passed"
+        "detail": "34 passed"
       },
       "lint": {
         "status": "pass",
         "detail": "ruff clean"
       },
       "code_review": {
-        "status": "warn",
-        "detail": "focused (adversarial escaping) - 3-layer required"
+        "status": "pass",
+        "detail": "3-layer (audit code-audit-2026-08-09 + remediation fd420e4 + fresh re-review); no new HIGH/MEDIUM"
       },
       "diff_cover": {
-        "status": "miss",
-        "detail": "not run (tooling gap)"
+        "status": "pass",
+        "detail": "99% on changed lines (diff-cover vs e6c8d0d^; only __main__ 663-664 unreachable). Floor 80, C0 target 100."
       },
       "data_quality": {
         "status": "na",
@@ -359,7 +367,9 @@
     },
     "code_review": {
       "layers": [
-        "adversarial-escaping"
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
       ],
       "findings_fixed": 0,
       "findings_deferred": 0
