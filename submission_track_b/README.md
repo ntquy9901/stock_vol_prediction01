@@ -29,9 +29,15 @@ On macOS/Linux use the matching `.sh` scripts (`./view_results.sh`, etc.).
 | P2  | Price + News                            | ablation                |
 | P3  | Price + News + per-ticker gate          | ablation (graph backbone) |
 | G0  | Backbone, graph message-passing OFF     | ablation                |
-| **G1** | **Backbone + graph message-passing ON** | **FINAL / PROPOSED MODEL** |
+| **G1** | **Backbone + graph message-passing ON (k-NN-8 adjacency)** | **FINAL / PROPOSED MODEL** |
 
 `G1` is the proposed model. `P0-P3` and `G0` are the ablations that motivate it.
+
+**Headline (parsimony) finding:** the graph layer (G1 vs G0) adds **no statistically
+significant improvement** - the Diebold-Mariano test on QLIKE is not significant across the
+three seeds, and the held-out **test** QLIKE is actually slightly worse for G1. G0 and G1 are
+otherwise near-identical on validation. The honest takeaway is that the simpler model is
+preferred; G1 is reported as the proposed full model but does not beat its ablation.
 
 ## Which command reproduces which paper number
 
@@ -64,11 +70,14 @@ computed chronologically per ticker and macro-averaged (never across ticker boun
 
 ## Notes / honesty
 
-- The pilot that produced these numbers is a **validation-only screening** experiment, so the
-  P0-G1 table shows **validation** metrics. The held-out **test** metrics for the final model
-  (G1) are produced by running `train` (which also saves a G1 checkpoint) and/or `infer`.
-- `P0-P3` (pooled family) and `G0-G1` (graph common-date family) are two **separate** ablation
-  sets scored on different sample sets, so `P3 -> G1` is not a single controlled step.
+- The P0-G1 table shows **validation** metrics (3-seed means). The **G0/G1 rows are the
+  definitive masked-manifest, screening-P3-backbone run** (k-NN-8 adjacency for G1) over the same
+  14,418 validation observations - these match the paper. The bundle also ships G1's held-out
+  **test** 3-seed mean (shown in `view`); a reviewer's own `train`/`infer` run prints its own
+  test metrics to the console.
+- `P0-P3` (pooled family) and `G0-G1` (graph family) are two **separate** studies scored on
+  different evaluation sets, so `P3 -> G1` is not a single controlled step.
+- The G0/G1 numbers come from `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.json`.
 - The model code folder is named `trackb_code/` (not `code/`) to avoid shadowing Python's
   standard-library `code` module, which otherwise breaks `pytest`/`pdb`.
 

@@ -11,9 +11,10 @@ This table lets a reviewer verify each paper number against the code that regene
 
 | Paper claim | Command | Output file it regenerates |
 |-------------|---------|----------------------------|
-| Proposed model **G1** result (validation, all 6 metrics) | `view_results.bat` / `python reproduce.py view` | console table + `output/results_table.md` (G1 row) |
-| Proposed model **G1** on the held-out **test** split | `train_model.bat` then `run_inference.bat` (or `python reproduce.py train` / `... infer`) | `checkpoints/g1_final_metrics.json` (`test_metrics`), mirrored to `output/g1_final_metrics.json` |
-| Graph effect **G0 vs G1** (message passing on/off) | `python reproduce.py view` | `results/g0g1_graph_validation_comparison.json` (`results.G0` vs `results.G1`, `paired_delta`) |
+| Proposed model **G1** result - k-NN-8, 3-seed VAL mean (all 6 metrics: mse 2.11902e-06, rmse 0.00145569, mae 0.00046206, r2 0.745333, qlike 0.509197, DirAcc 48.6768) | `view_results.bat` / `python reproduce.py view` | console table + `output/results_table.md` (G1 row) |
+| **G0** ablation (graph OFF), 3-seed VAL mean (mse 2.13622e-06, rmse 0.00146158, mae 0.000463869, r2 0.743267, qlike 0.509512, DirAcc 48.577) | `python reproduce.py view` | `results/g0g1_graph_validation_comparison.json` -> `results.G0` |
+| Graph effect **G0 vs G1** and the **parsimony finding** (graph adds no significant gain: Diebold-Mariano on QLIKE n.s.; held-out test QLIKE slightly worse) | `python reproduce.py view` | `results/g0g1_graph_validation_comparison.json` -> `results.*`, `knn_verdict`, `significance_note`; canonical source `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.json` |
+| Proposed model **G1** on the held-out **test** split (paper 3-seed mean) | `python reproduce.py view` (shipped) or `train_model.bat` then `run_inference.bat` for your own run | `results/g0g1_graph_validation_comparison.json` -> `held_out_test_3seed_mean.G1`; a reviewer run prints to console + `checkpoints/g1_final_metrics.json` |
 
 ## Ablation ladder (motivating the proposed model)
 
@@ -36,14 +37,16 @@ ticker boundaries.
 
 ## Scope caveats (state these when citing)
 
-- The numbers in the shipped `results/*.json` are **validation** metrics: the pilot is a
-  validation-only screening/confirmation experiment. The final model's **test** numbers come from
-  the `train`/`infer` path (they require the dataset).
-- **P0-P3** are a pooled ablation family (pooled validation set); **G0-G1** are a graph
-  common-date family (common-date validation set). The two families use different sample sets, so
-  `P3 -> G1` is not one controlled increment - report them as two separate ablation studies.
-- The G0/G1 rows are single-seed (42). The G0/G1 graph variant may be refreshed by a separate
-  "latest-P3 backbone" run; the P0-P3 confirmation numbers (3-seed) are stable.
+- The shipped P0-G1 table rows are **validation** 3-seed means. The G0/G1 rows are the
+  **definitive** run (masked manifest, screening-P3 backbone, k-NN-8 adjacency for G1, same 14,418
+  validation observations across seeds 42/123/2026); G1's held-out **test** 3-seed mean is also
+  shipped. A reviewer's own `train`/`infer` run (requires the dataset) prints its own numbers.
+- **P0-P3** are a pooled ablation family (pooled validation set); **G0-G1** are the graph family
+  (masked validation set). The two families use different evaluation sets, so `P3 -> G1` is not
+  one controlled increment - report them as two separate studies.
+- **Parsimony finding (state this):** G1 does not significantly beat G0 - Diebold-Mariano on QLIKE
+  is not significant across seeds and G1's held-out test QLIKE is slightly worse. The graph layer
+  adds no measurable value; the simpler ablation is preferred.
 
 ## Exact reproduction command for the final model
 

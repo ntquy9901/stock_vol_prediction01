@@ -44,7 +44,7 @@ _LADDER = (
     ("P2", "Price + News", "ablation"),
     ("P3", "Price + News + gate", "ablation"),
     ("G0", "Backbone, graph OFF", "ablation"),
-    ("G1", "Backbone + graph ON", "FINAL / PROPOSED"),
+    ("G1", "Backbone+graph kNN-8", "FINAL / PROPOSED"),
 )
 
 
@@ -77,15 +77,27 @@ def _load_validation_metrics() -> dict[str, dict[str, float]]:
     return metrics
 
 
-def _load_g1_test_metrics() -> dict[str, float] | None:
-    """Return G1 test metrics if a prior train/infer produced them, else None."""
+def _graph_significance_note() -> str:
+    """One-line parsimony note from the canonical G0/G1 verdict JSON (empty if absent)."""
 
-    for candidate in (_OUTPUT / "g1_final_metrics.json", _CHECKPOINTS / "g1_final_metrics.json"):
-        if candidate.exists():
-            payload = json.loads(candidate.read_text(encoding="utf-8"))
-            test = payload.get("test_metrics")
-            if test:
-                return {name: float(test[name]) for name in _METRICS}
+    graph_path = _RESULTS / "g0g1_graph_validation_comparison.json"
+    payload = json.loads(graph_path.read_text(encoding="utf-8"))
+    return str(payload.get("significance_note", "")).strip()
+
+
+def _load_g1_test_metrics() -> dict[str, float] | None:
+    """Return the paper's G1 held-out TEST metrics (3-seed mean) from the canonical JSON.
+
+    This is shipped with the bundle, so the reviewer sees the paper's test numbers with no
+    data and no training. (A reviewer's own `train`/`infer` run prints its own test metrics
+    to the console; this row is the paper value.)
+    """
+
+    graph_path = _RESULTS / "g0g1_graph_validation_comparison.json"
+    payload = json.loads(graph_path.read_text(encoding="utf-8"))
+    test = payload.get("held_out_test_3seed_mean", {}).get("G1")
+    if test:
+        return {name: float(test[name]) for name in _METRICS}
     return None
 
 
@@ -98,20 +110,21 @@ def _table_lines(val: dict[str, dict[str, float]], g1_test: dict[str, float] | N
         row += "".join(f"{_fmt(name, val[config][name]):>12}" for name in _METRICS)
         lines.append(row)
     lines.append("")
-    lines.append("Scope: metrics above are VALIDATION (the pilot screening is validation-only).")
-    lines.append("  * P0-P3 = pooled ablation family (pooled validation set).")
-    lines.append("  * G0-G1 = graph ablation family (common-date validation set) - a separate set;")
-    lines.append("    do not read P3->G1 as a single controlled step (different sample sets).")
+    lines.append("Scope: metrics above are VALIDATION means.")
+    lines.append("  * P0-P3 = pooled ablation family (pooled validation set, 3-seed mean).")
+    lines.append("  * G0-G1 = graph ablation family (masked manifest, screening-P3 backbone,")
+    lines.append("    k-NN-8 adjacency for G1, 3-seed mean over the same 14,418 val obs).")
+    lines.append("    The P-family and G-family are two separate studies (different evaluation sets).")
     lines.append("  * G1 is the FINAL / PROPOSED model.")
+    note = _graph_significance_note()
+    if note:
+        lines.append(f"  * Parsimony finding: {note}")
     lines.append("")
     if g1_test is not None:
-        trow = f"{'G1':<6}{'TEST-SET (final)':<24}{'FINAL / PROPOSED':<18}"
+        trow = f"{'G1':<6}{'TEST (paper 3-seed)':<24}{'FINAL / PROPOSED':<18}"
         trow += "".join(f"{_fmt(name, g1_test[name]):>12}" for name in _METRICS)
-        lines.append("G1 held-out TEST metrics (from `reproduce.py train`/`infer`):")
+        lines.append("G1 held-out TEST metrics (paper, 3-seed mean; note QLIKE >= G0 - graph does not help):")
         lines.append(trow)
-    else:
-        lines.append("G1 held-out TEST metrics: not yet computed.")
-        lines.append("  Run `python reproduce.py train` (needs the dataset under data/) to generate them.")
     return lines
 
 

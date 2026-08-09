@@ -74,13 +74,16 @@ P0    HAR pooled linear       ablation             2.204e-06   1.485e-03   4.797
 P1    Price LSTM              ablation             2.245e-06   1.498e-03   4.887e-04      0.7301      0.5110       48.66
 P2    Price + News            ablation             2.208e-06   1.486e-03   4.801e-04      0.7346      0.5084       48.53
 P3    Price + News + gate     ablation             2.210e-06   1.487e-03   4.806e-04      0.7343      0.5084       48.53
-G0    Backbone, graph OFF     ablation             5.793e-06   2.407e-03   6.701e-04      0.7447      0.6876       48.61
-G1    Backbone + graph ON     FINAL / PROPOSED     5.809e-06   2.410e-03   6.602e-04      0.7440      0.6963       48.52
+G0    Backbone, graph OFF     ablation             2.136e-06   1.462e-03   4.639e-04      0.7433      0.5095       48.58
+G1    Backbone+graph kNN-8    FINAL / PROPOSED     2.119e-06   1.456e-03   4.621e-04      0.7453      0.5092       48.68
 ```
 
-Scope: metrics are VALIDATION (the pilot is validation-only screening). P0-P3 = pooled
-ablation family; G0-G1 = graph common-date family (separate sample sets). G1 held-out test
-metrics are produced by `train`/`infer`.
+Scope: metrics are VALIDATION 3-seed means. P0-P3 = pooled ablation family; G0-G1 = graph
+family from the definitive masked-manifest, screening-P3-backbone run (k-NN-8 adjacency for G1,
+same 14,418 val obs; source `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.json`).
+Parsimony finding: G1 does not significantly beat G0 (Diebold-Mariano on QLIKE n.s.; held-out
+test QLIKE slightly worse) - the graph layer adds no measurable value. G1's held-out test 3-seed
+mean is shipped and shown by `view`.
 
 ## Tests / quality gates
 

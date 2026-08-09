@@ -70,17 +70,20 @@ def test_cmd_view_writes_outputs(tmp_path, monkeypatch):
     assert "P0" in body and "G1" in body and "FINAL / PROPOSED" in body
 
 
-def test_g1_test_row_rendered_when_metrics_present(tmp_path, monkeypatch):
-    payload = {"test_metrics": {name: 1.0 for name in reproduce._METRICS}}
-    import json
-    out = tmp_path / "output"
-    out.mkdir()
-    (out / "g1_final_metrics.json").write_text(json.dumps(payload), encoding="utf-8")
-    monkeypatch.setattr(reproduce, "_OUTPUT", out)
+def test_g1_test_row_from_canonical_json():
+    # The bundle ships the paper's held-out test 3-seed mean; view shows it with no data.
     test_metrics = reproduce._load_g1_test_metrics()
     assert test_metrics is not None
+    assert set(test_metrics) == set(reproduce._METRICS)
     lines = reproduce._table_lines(reproduce._load_validation_metrics(), test_metrics)
-    assert any("TEST-SET (final)" in line for line in lines)
+    assert any("TEST (paper 3-seed)" in line for line in lines)
+
+
+def test_parsimony_note_present():
+    note = reproduce._graph_significance_note()
+    assert "parsimony" in note.lower() or "significant" in note.lower()
+    lines = reproduce._table_lines(reproduce._load_validation_metrics(), None)
+    assert any("Parsimony finding" in line for line in lines)
 
 
 def test_infer_missing_checkpoint_raises(tmp_path):
