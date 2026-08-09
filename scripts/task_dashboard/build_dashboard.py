@@ -230,14 +230,21 @@ def _overlay_gate(task: dict, gate_results: dict[str, dict]) -> dict:
         ok = bool(payload["tests_passed"])
         gate["tests"] = {"status": "pass" if ok else "fail", "detail": f"hook: {'passed' if ok else 'failed'}"}
     if payload.get("diff_cover_pct") is not None:
-        pct = float(payload["diff_cover_pct"])
-        # A real diff-cover run counts as gate-run; below the enforced floor (80)
-        # it is a genuine coverage failure. Target remains 100% per CLAUDE.md C0.
-        gate["diff_cover"] = {"status": "pass" if pct >= _COVER_FLOOR else "fail",
-                              "detail": f"hook: {pct:g}%"}
+        try:
+            pct = float(payload["diff_cover_pct"])
+        except (TypeError, ValueError):
+            pct = None  # malformed gate JSON: skip overlay, keep hand-entry, never crash
+        if pct is not None:
+            # A real diff-cover run counts as gate-run; below the enforced floor (80)
+            # it is a genuine coverage failure. Target remains 100% per CLAUDE.md C0.
+            gate["diff_cover"] = {"status": "pass" if pct >= _COVER_FLOOR else "fail",
+                                  "detail": f"hook: {pct:g}%"}
     if payload.get("ruff"):
-        gate["lint"] = {"status": "pass" if str(payload["ruff"]).lower() == "pass" else "warn",
-                        "detail": f"hook: ruff {payload['ruff']}"}
+        r = str(payload["ruff"]).lower()
+        # pass -> pass, fail -> fail (real lint errors must show red, not a soft
+        # warn); "na" (not measured on changed files) leaves hand-entry untouched.
+        if r in ("pass", "fail"):
+            gate["lint"] = {"status": r, "detail": f"hook: ruff {payload['ruff']}"}
     if payload.get("pandera"):
         p = str(payload["pandera"]).lower()
         gate["data_quality"] = {"status": "pass" if p == "pass" else ("fail" if p == "fail" else "na"),

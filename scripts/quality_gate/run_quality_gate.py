@@ -320,6 +320,16 @@ def write_gate_json(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{commit}.json"
+    # Do not clobber a richer coverage value already written for this commit
+    # (the pre-push hook measures diff-cover; this entry point cannot). If this
+    # run has no coverage number, keep the existing one.
+    if payload["diff_cover_pct"] is None and path.exists():
+        try:
+            prior = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prior = {}
+        if isinstance(prior, dict) and prior.get("diff_cover_pct") is not None:
+            payload["diff_cover_pct"] = prior["diff_cover_pct"]
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return path
 

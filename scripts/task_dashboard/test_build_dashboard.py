@@ -309,3 +309,32 @@ def test_overlay_gate_no_matching_commit_returns_unchanged():
     t = _code_task(id="nomatch", commits=["zzzzzzz"])
     out = bd._overlay_gate(t, {"other": {"diff_cover_pct": 50.0}})
     assert out is t  # untouched when no commit matches
+
+
+def test_overlay_gate_malformed_diff_cover_does_not_crash_build():
+    # A gate-result JSON whose diff_cover_pct is non-numeric must NOT crash the
+    # whole dashboard build; the bad value is skipped, the rest still renders.
+    t = _code_task(id="badpct", commits=["cafef00"])
+    gr = {"cafef00": {"commit": "cafef00", "diff_cover_pct": "N/A",
+                      "timestamp": "2026-08-09T02:00"}}
+    html = bd.build_html([t], gate_results=gr)  # must not raise
+    assert "badpct" in html
+
+
+def test_overlay_gate_ruff_fail_renders_fail_not_warn():
+    # A real ruff FAILURE from the hook must surface as fail (red), not a soft warn.
+    t = _code_task(id="rufffail", commits=["beadfab"])
+    gr = {"beadfab": {"commit": "beadfab", "ruff": "fail",
+                      "timestamp": "2026-08-09T02:00"}}
+    out = bd._overlay_gate(t, gr)
+    assert bd._resolve_gate(out["quality_gate"]["lint"])[0] == "fail"
+
+
+def test_overlay_gate_ruff_na_does_not_override_handentry():
+    # ruff "na" (not measured on the changed files) must NOT downgrade a
+    # hand-entered lint pass to warn.
+    t = _code_task(id="ruffna", commits=["beadfab"])
+    gr = {"beadfab": {"commit": "beadfab", "ruff": "na",
+                      "timestamp": "2026-08-09T02:00"}}
+    out = bd._overlay_gate(t, gr)
+    assert bd._resolve_gate(out["quality_gate"]["lint"])[0] == "pass"

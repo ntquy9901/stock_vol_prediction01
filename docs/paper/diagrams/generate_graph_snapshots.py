@@ -99,7 +99,7 @@ def _draw_graph(
             ha="center", va="center", zorder=3,
         )
 
-    avg_degree = 2.0 * len(edges) / len(present_ids)
+    avg_degree = 2.0 * len(edges) / len(present_ids) if present_ids else 0.0
     ax.set_title(
         f"{date}  |  {mode_label}\n{len(present_ids)} nodes, {len(edges)} edges, "
         f"avg deg {avg_degree:.1f}",
@@ -118,6 +118,10 @@ def _draw_heatmap(
     """Draw the present-node adjacency submatrix (signed correlation, diverging colormap)."""
 
     labels = [tickers_all[i] for i in present_ids]
+    if not present_ids:  # no present nodes: leave a blank panel (imshow on 0x0 warns)
+        ax.set_title(f"{mode_label} adjacency", fontsize=9)
+        ax.axis("off")
+        return
     sub = adjacency[np.ix_(present_ids, present_ids)]
     ax.imshow(sub, cmap="RdBu_r", vmin=-1.0, vmax=1.0, interpolation="nearest")
     ax.set_xticks(range(len(labels)))

@@ -265,6 +265,44 @@ def test_main_gate_json_failure_is_swallowed(
     assert rqg.main() == 0  # gate still passes despite JSON emission crashing
 
 
+def test_write_gate_json_preserves_existing_coverage_when_null(tmp_path: Path) -> None:
+    # The pre-push hook writes a real diff_cover_pct; a later run_quality_gate
+    # run (which cannot measure coverage) must NOT clobber it with null.
+    import json
+
+    out_dir = tmp_path / "gate_results"
+    results = [
+        rqg.CheckResult("TESTS", rqg.PASS, "ok"),
+        rqg.CheckResult("LINT", rqg.PASS, "ok"),
+        rqg.CheckResult("SCHEMA", rqg.PASS, "ok"),
+    ]
+    rqg.write_gate_json(results, out_dir, commit="abc1234",
+                        diff_cover_pct=87.0, timestamp="2020-01-01T00:00")
+    rqg.write_gate_json(results, out_dir, commit="abc1234",
+                        diff_cover_pct=None, timestamp="2020-01-02T00:00")
+    data = json.loads((out_dir / "abc1234.json").read_text(encoding="utf-8"))
+    assert data["diff_cover_pct"] == 87.0
+
+
+def test_write_gate_json_tolerates_malformed_existing_file(tmp_path: Path) -> None:
+    # A corrupt pre-existing gate file must not crash the null-coverage merge;
+    # there is simply nothing to preserve.
+    import json
+
+    out_dir = tmp_path / "gate_results"
+    out_dir.mkdir()
+    (out_dir / "abc1234.json").write_text("{not json", encoding="utf-8")
+    results = [
+        rqg.CheckResult("TESTS", rqg.PASS, "ok"),
+        rqg.CheckResult("LINT", rqg.PASS, "ok"),
+        rqg.CheckResult("SCHEMA", rqg.PASS, "ok"),
+    ]
+    path = rqg.write_gate_json(results, out_dir, commit="abc1234",
+                               diff_cover_pct=None, timestamp="2020-01-03T00:00")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data["diff_cover_pct"] is None
+
+
 # ---------------------------------------------------------------------------
 # Fixed-behaviour regression tests (review findings 2026-08-08)
 # ---------------------------------------------------------------------------

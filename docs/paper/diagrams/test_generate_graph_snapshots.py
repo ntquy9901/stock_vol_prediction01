@@ -56,3 +56,20 @@ def test_render_produces_svg_with_labels(tmp_path: Path) -> None:
 def test_render_rejects_empty_panels(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         render_graph_figure([], tmp_path / "empty.svg")
+
+
+@pytest.mark.smoke
+def test_render_empty_present_panel_does_not_crash(tmp_path: Path) -> None:
+    # A snapshot day with zero present nodes must not raise ZeroDivisionError
+    # (avg-degree divides by the present-node count).
+    panel = {
+        "date": "2020-01-03",
+        "split": "train",
+        "tickers_all": ["AAA", "BBB"],
+        "present_ids": [],
+        "adjacency_dense": np.zeros((2, 2), dtype=float),
+        "adjacency_knn": np.zeros((2, 2), dtype=float),
+    }
+    out = tmp_path / "empty_present.svg"
+    render_graph_figure([panel], out)  # must not raise
+    assert out.exists()
