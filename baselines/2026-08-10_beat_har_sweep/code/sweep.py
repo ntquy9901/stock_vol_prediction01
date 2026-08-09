@@ -58,7 +58,7 @@ CONFIGS: dict[str, dict[str, Any]] = {
     "C2": {"loss": "qlike", "adjacency": "knn", "head": "har_residual"},
     "C3": {"loss": "qlike", "adjacency": "spillover", "head": "monolithic", "omit_self": False},
     "C5": {"loss": "qlike", "adjacency": "spillover", "head": "monolithic", "omit_self": True,
-           "k_sweep": (4, 8, 12, 16)},
+           "k_sweep": (8, 16)},
     "C6": {"loss": "qlike", "adjacency": "learned", "head": "monolithic"},
 }
 _METRIC_KEYS = ("mse", "rmse", "mae", "r2", "qlike", "directional_accuracy")
@@ -346,7 +346,9 @@ def run_all(ts: str, device_name: str = "cuda", configs: list[str] | None = None
 
     from run_pilot import resolve_graph_device
     device = resolve_graph_device(device_name)
-    order = configs or ["C1", "C2", "C3", "C5", "C6"]
+    # C6 (5th distinct config) before C5's k-sweep so the expensive spillover ablation runs last
+    # and completion of >=5 configs is protected under GPU contention.
+    order = configs or ["C1", "C2", "C3", "C6", "C5"]
     stamp = Path(_ROOT) / "temp" / f"beat_har_all_{ts}"
     _log(stamp, f"device={device} building basis for configs={order} ...")
     pooled, graph, graph_store, _allowed = build_basis(device, stamp)
