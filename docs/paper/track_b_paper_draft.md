@@ -17,10 +17,10 @@ cross-stock graph LSTM for five-day-ahead VN30 volatility. Each ticker-day is on
 26% synchronized-date intersection a fixed-node graph would require. The proposed model (G1) has four
 components: a shared temporal LSTM over the three HAR volatility scales, a news LSTM branch over
 PhoBERT features, a per-ticker gate that admits a stock-specific amount of news, and a cross-stock
-message-passing layer over an availability-aware masked adjacency. We evaluate G1 with a six-step
-ablation ladder that builds it up one component at a time (P0 HAR, P1 price LSTM, P2 +news, P3 +gate,
-G0 graph-off, G1 graph-on) on the same 14,418 validation observations, so each step attributes one
-component's contribution. News content carries the forecast gain: adding the news branch lowers
+message-passing layer over an availability-aware masked adjacency. We evaluate G1 with a component
+ablation that starts from the full model and removes one component at a time down to the classical
+HAR baseline (G1 graph-on, G0 graph-off, P3 +gate, P2 +news, P1 price LSTM, P0 HAR), all on the same
+14,418 validation observations, so each step attributes one component's contribution. News content carries the forecast gain: adding the news branch lowers
 validation QLIKE from 0.51098 to 0.50843 and RMSE from 0.0014985 to 0.0014859, significant across
 three seeds on MSE, RMSE, MAE, and $R^2$ ($|t|>10$). The per-ticker gate is inert (all $|t|<0.6$).
 Enabling the cross-stock graph (G1 vs G0) changes the validation metrics within noise (three-seed
@@ -68,8 +68,9 @@ by running the graph on an availability-aware masked adjacency that builds edges
 the tickers present that day. On this foundation we propose a news-augmented cross-stock graph LSTM
 (G1) with four components: a shared temporal LSTM over the HAR price features, a news LSTM branch over
 PhoBERT features, a per-ticker news gate, and a residual cross-stock message-passing layer over the
-masked adjacency. We evaluate the model with a component ablation ladder that builds it up one step at
-a time, so the paper reports not only the full model but exactly what each component contributes. This
+masked adjacency. We evaluate the model with a component ablation that removes one part at
+a time, from the full model down to the classical HAR baseline, so the paper reports not only the
+full model but exactly what each component contributes. This
 paper makes four contributions.
 
 1. **A pooled news-augmented cross-stock graph LSTM for VN30 volatility (G1).** The architecture
@@ -78,10 +79,11 @@ paper makes four contributions.
    without imputing pre-listing history (Section 4). The masked cross-stock formulation is the
    paper's architectural novelty for a sparse emerging-market panel.
 
-2. **A six-step component ablation ladder that attributes each part's contribution.** P0 to G1 add
-   HAR, temporal learning, news, the gate, and cross-stock message-passing in turn, each measured on
-   the same 14,418 validation observations, so the paper isolates where the forecast quality comes
-   from (Section 6).
+2. **A component ablation from the full model down to the classical HAR baseline that attributes
+   each part's contribution.** Starting from G1, we remove cross-stock message-passing, the gate, the
+   news branch, and temporal learning in turn, down to the HAR baseline P0, each step measured on the
+   same 14,418 validation observations, so the paper isolates where the forecast quality comes from
+   (Section 6).
 
 3. **News content earns its place; the gate is inert; the cross-stock graph adds nothing
    statistically significant.** The news branch improves MSE, RMSE, MAE, and $R^2$ with paired
@@ -174,7 +176,7 @@ its own price window, news window, news mask, normalized target, and raw target,
 `(ticker_id, target_date)`. Pooling every ticker-day recovers the full timeline. The pooled training
 manifest holds 73,026 samples and the validation manifest holds 14,418 samples, against about 9,606
 training samples on the common-date panel that a fixed-node graph would require. We contrast the two
-regimes directly in the A1 data-design ablation (Section 6.4).
+regimes directly in the A1 data-design ablation (Section 6.5).
 
 **Temporal split and leakage control.** We split each ticker's series chronologically into 70% train,
 15% validation, and 15% test before generating HAR features, fitting scalers, or building windows, so
@@ -227,16 +229,21 @@ rate of 0.0 on the masked manifest.
 **The ablation ladder.** The ladder removes one component of G1 at a time, from the top down, so each
 rung isolates a contribution.
 
-- **P0 (HAR baseline):** a closed-form per-ticker linear regression on the three HAR moving averages,
-  no temporal learning, no news, no graph. It fixes the floor the deep components must beat.
-- **P1 (price LSTM):** G1 with the news branch, gate, and graph removed. It measures what temporal
-  learning adds over the linear HAR fit.
-- **P2 (+news):** P1 with the news branch restored, no gate, no graph. It measures the news
-  contribution.
-- **P3 (+gate):** P2 with the per-ticker gate restored, no graph. It measures the gate contribution.
-- **G0 (graph-off):** the full G1 pipeline with message-passing disabled, so node embeddings pass
-  straight to the head. G0 is the exact graph-off control for G1.
-- **G1 (full model):** G0 with cross-stock message-passing enabled.
+- **G1 (full model):** all four components together — the shared temporal LSTM, the news branch, the
+  per-ticker gate, and cross-stock message-passing over the masked adjacency.
+- **G0 (remove the cross-stock graph):** G1 with message-passing disabled, so node embeddings pass
+  straight to the head. G0 is the exact graph-off control for G1, and the G1-versus-G0 pair isolates
+  cross-stock propagation.
+- **P3 (backbone with gate, no graph):** the pooled news-augmented backbone with the per-ticker gate
+  and no message-passing. G0 and G1 wrap a frozen graph-safe copy of this backbone.
+- **P2 (remove the per-ticker gate):** P3 with the gate removed. The P3-versus-P2 contrast isolates
+  the gate's contribution.
+- **P1 (remove the news branch):** P2 with the news branch removed, a price-only LSTM. The
+  P2-versus-P1 contrast isolates the news contribution, and P1 measures what temporal learning adds
+  over the linear HAR fit.
+- **P0 (remove temporal learning; the HAR baseline):** a closed-form per-ticker linear regression on
+  the three HAR moving averages, with no temporal learning, no news, and no graph. It fixes the floor
+  every component must beat.
 
 G0 and G1 wrap a frozen screening-configuration P3 backbone, trained on a leakage-safe graph-bound set
 (5 epochs, dropout 0.2), and add only the message-passing projection as trainable parameters, so their
@@ -282,11 +289,56 @@ two-sided 5% threshold at two degrees of freedom is $|t|>4.30$. We complement th
 the validation loss with a Diebold-Mariano test on the QLIKE loss of the graph forecasts, which tests
 forecast-accuracy equality directly on the held-out observations rather than on the seed-level means.
 
+**Training objective.** All deep configurations are trained by minimizing the mean squared error
+between the model output and the per-ticker normalized five-day-ahead target. QLIKE and the other
+five metrics are computed only at evaluation, after inverting the normalization back to the raw
+volatility scale, so the proportional QLIKE loss never enters the gradient; this keeps the training
+loss convex and stable while the volatility-standard QLIKE is reserved for comparison. The graph
+layer minimizes the same mean squared error averaged over the present nodes of each date snapshot.
+
+**Optimization and hyperparameters.** Optimization uses the Adam optimizer with the default learning
+rate $10^{-3}$ and weight decay $10^{-5}$, dropout $0.2$ on the LSTM encoders, and gradient-norm
+clipping at $1.0$ on the backbone rungs. The backbone rungs P0-P3 train on the pooled manifest with
+batch size 256 (286 optimizer updates per epoch) for a 20-epoch budget with best-validation-loss
+checkpoint selection; P0 is a closed-form per-ticker linear least-squares fit with no iterative
+optimization. The graph layer (G0/G1) trains for 15 epochs over per-date snapshot batches of 32 on
+the frozen backbone. Every run seeds Python, NumPy, and Torch (including CUDA) from its run seed, and
+the three seeds 42/123/2026 are independent repetitions of the full pipeline.
+
+**Implementation and compute.** All models are implemented in PyTorch and select a CUDA GPU when one
+is available, falling back to CPU otherwise. The graph ablations were run on an NVIDIA GeForce RTX
+4060 Laptop GPU under PyTorch 2.6 with CUDA 12.4; a masked G0/G1 comparison at 15 epochs takes about
+15 minutes per seed, and the masked backbone's validation loss is flat after roughly epoch 5 [slow].
+
 ---
 
 ## 6. Results
 
-### 6.1 The component ladder: news helps, the gate does not
+We report the proposed model G1 first, against the classical HAR baseline, then present a component
+ablation that removes one part of the model at a time to attribute where the forecast quality comes
+from. Two studies underlie the ablation and use different evaluation sets, so we state which
+comparison each claim rests on: the cross-stock graph's contribution is isolated by the G1-versus-G0
+pair on the masked manifest (Section 6.3), while the gate, news, and temporal contributions are
+isolated by the pooled backbone ladder on the pooled manifest (Section 6.2). Both report validation
+on the same 14,418 present-node observations, so their levels are comparable, but the clean
+controlled increment for each component is the pairwise ablation named beside it, not the raw
+P0-to-G1 span.
+
+### 6.1 The proposed model versus the classical HAR baseline
+
+The proposed model G1 unifies temporal, textual, gating, and cross-stock structure. On the held-out
+test split its five-day-ahead forecast reaches QLIKE 0.575919, RMSE 0.00230503, and $R^2$ 0.763569
+(Table 3); on the validation split it reaches QLIKE 0.509197 and RMSE 0.00145569. The classical HAR
+baseline (P0), an ordinary per-ticker linear regression of the target on its three volatility scales,
+reaches validation QLIKE 0.51671 and RMSE 0.0014845 (Table 1). On the matched validation set G1
+improves QLIKE over the classical baseline (0.50920 versus 0.51671) while matching it on raw RMSE, so
+the deep news-augmented system is competitive with the field-standard econometric model on the loss
+the volatility literature weights most. The rest of this section decomposes G1 to show which
+component earns that difference: the backbone ablations remove the gate, the news branch, and
+temporal learning (Section 6.2), and the graph ablation removes cross-stock message-passing
+(Section 6.3).
+
+### 6.2 Backbone ablation: the news branch is decisive, the gate is inert
 
 Table 1 reports the five-day-ahead validation metrics for the backbone ladder P0 to P3, three-seed
 mean±std, on the pooled 14,418-observation validation set. Reading the ladder up, the price-only LSTM
@@ -331,7 +383,7 @@ metric, with all $|t|<0.6$ and $p>0.6$. The gate buys no measurable accuracy at 
 effect: it recovers the RMSE the price-only LSTM loses against HAR and improves QLIKE and $R^2$. The
 per-ticker gate is inert. The strong news-augmented backbone (P3) is what the graph layer builds on.
 
-### 6.2 The proposed model: the cross-stock graph adds no significant improvement
+### 6.3 Graph ablation: removing cross-stock message-passing changes nothing significant
 
 Table 3 completes the ladder with the graph on/off comparison that yields the proposed model G1. G0
 and G1 wrap the same frozen graph-safe P3 backbone and evaluate on the same 14,418 present-node
@@ -367,7 +419,7 @@ smaller common-date population and lacked the positivity floor, so its gap is an
 evaluation basis, not a graph effect [lineage]. We report only the fair masked comparison as evidence
 on message-passing.
 
-### 6.3 The null holds across adjacencies
+### 6.4 The null holds across adjacencies
 
 We repeated the comparison with a dense adjacency (average 18.6 off-diagonal edges) to check whether
 the null depends on the k-NN-8 choice. It does not. The dense adjacency lowers validation loss on only
@@ -387,7 +439,7 @@ Verdict B denotes no significant graph improvement. Source:
 | k-NN-8 (headline) | 3/3 | 0.019 | 0.74 / 0.60 / 0.43 | +0.0028 (worse) | B (null) |
 | dense | 2/3 | 0.282 | 0.60 / 0.998 / 0.74 | +0.0031 (worse) | B (null) |
 
-### 6.4 A1 data-design ablation: pooling recovers the timeline without changing the metrics
+### 6.5 A1 data-design ablation: pooling recovers the timeline without changing the metrics
 
 Table 5 contrasts the pooled asynchronous manifest against the common-date panel at a matched 5-epoch
 screening budget. The two regimes differ by less than one standard deviation on every configuration:
@@ -408,7 +460,7 @@ fixed-node graph would see.
 | P2 + news | 0.0014867 | 0.0015035 | 0.50839 | 0.51777 |
 | P3 + gate | 0.0014887 | 0.0015071 | 0.50856 | 0.51628 |
 
-### 6.5 Direction is near-random for every model
+### 6.6 Direction is near-random for every model
 
 Directional accuracy sits at 48.5% to 48.7% across the backbone ladder and near 48.6% to 48.9% across
 the graph configurations, at or below the 50% no-skill line. No paired test separates any
@@ -562,6 +614,7 @@ In *ACM ICAIF* (2022). arXiv:2112.09015.
 *Internal provenance references (not for the reference list): graph verdict
 `docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{md,json}`; [rc]
 `docs/reports/2026-08-09_pooled_convergence_rootcause.md`; [lineage]
-`docs/reports/2026-08-09_1003_g0g1_vs_p2p3_lineage.md`; sparse-graph method survey
+`docs/reports/2026-08-09_1003_g0g1_vs_p2p3_lineage.md`; [slow]
+`docs/reports/2026-08-09_g0g1_training_slowness.md`; sparse-graph method survey
 `docs/reports/2026-08-08_gnn_sparse_data_research.md`; consolidated metrics
 `docs/reports/2026-08-09_0747_all_metrics_consolidated.md`.*
