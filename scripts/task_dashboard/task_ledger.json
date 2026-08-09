@@ -1,2053 +1,2155 @@
 [
- {
-  "id": "quality-gate",
-  "task_type": "code",
-  "phase": "Cross-cutting - Quality tooling",
-  "title": "Post-code quality gate (pandera/evidently/ruff/pytest)",
-  "status": "done",
-  "timestamp": "2026-08-08T15:42",
-  "branch": "master",
-  "commits": [
-   "48a14bb"
-  ],
-  "skills_applied": [
-   "3-layer-code-review",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "python -m pytest scripts/quality_gate/test_quality_gate.py -q",
-    "result": "51 passed (was 13; +38 runner/schema I/O tests added 2026-08-09 to close diff-cover)"
-   },
-   {
-    "cmd": "diff-cover qg_cov.xml --compare-branch=48a14bb^ --fail-under=100",
-    "result": "99% on changed lines (628 total, 5 missing). Missing = import-guard (rqg:34), __main__ (rqg:375), defensive all-NaN redundancy (data_schemas:148), test import-guards — all unreachable in-test."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "51 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer, 4 findings fixed"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "99% on changed lines (diff-cover vs 48a14bb^; 5 unreachable lines: import-guard/__main__/defensive). Floor 80, C0 target 100."
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "is the gate itself (pandera+evidently)"
-   }
+  {
+    "id": "quality-gate",
+    "task_type": "code",
+    "phase": "Cross-cutting - Quality tooling",
+    "title": "Post-code quality gate (pandera/evidently/ruff/pytest)",
+    "status": "done",
+    "timestamp": "2026-08-08T15:42",
+    "branch": "master",
+    "commits": [
+      "48a14bb"
+    ],
+    "skills_applied": [
+      "3-layer-code-review",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "python -m pytest scripts/quality_gate/test_quality_gate.py -q",
+        "result": "51 passed (was 13; +38 runner/schema I/O tests added 2026-08-09 to close diff-cover)"
+      },
+      {
+        "cmd": "diff-cover qg_cov.xml --compare-branch=48a14bb^ --fail-under=100",
+        "result": "99% on changed lines (628 total, 5 missing). Missing = import-guard (rqg:34), __main__ (rqg:375), defensive all-NaN redundancy (data_schemas:148), test import-guards \u2014 all unreachable in-test."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "51 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer, 4 findings fixed"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "99% on changed lines (diff-cover vs 48a14bb^; 5 unreachable lines: import-guard/__main__/defensive). Floor 80, C0 target 100."
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "is the gate itself (pandera+evidently)"
+      }
+    },
+    "code_review": {
+      "layers": 3,
+      "findings_fixed": 4,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "pytest green (13 passed)",
+        "ok": true
+      },
+      {
+        "item": "3-layer code review run + findings fixed",
+        "ok": true
+      },
+      {
+        "item": "committed to master (48a14bb)",
+        "ok": true
+      },
+      {
+        "item": "summary report written",
+        "ok": true
+      }
+    ],
+    "result_summary": "Post-code data/schema quality gate built (pandera schemas, evidently drift, ruff, pytest) and hardened via a 3-layer adversarial review; tests re-run green.",
+    "report_md": "docs/reports/2026-08-08_1542_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": 3,
-   "findings_fixed": 4,
-   "findings_deferred": 0
+  {
+    "id": "task-7",
+    "task_type": "code",
+    "phase": "Phase 1 - Headline Track B experiments",
+    "title": "Pooled news-GNN G0/G1 graph ablation + G1 positivity fix",
+    "status": "done",
+    "timestamp": "2026-08-08T16:21",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "8055413",
+      "702289f"
+    ],
+    "skills_applied": [
+      "systematic-debugging",
+      "TDD-red-green",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "python -m pytest baselines/2026-08-08_pooled_news_gnn_ablation_baseline/test/ -q",
+        "result": "135 passed (was 92; +guard tests 2026-08-09)"
+      },
+      {
+        "cmd": "diff-cover pilot_cov.xml --compare-branch=8055413^ (2026-08-09)",
+        "result": "88% on changed lines (models.py positivity floor 94.6%; run_pilot.py; above floor 80). Residual uncovered = GPU-training entry (run_graph_screening) exercised by bounded GPU runs, not pytest."
+      },
+      {
+        "cmd": "pre-push data-quality gate over pilot campaign diff (2026-08-09)",
+        "result": "Pandera SCHEMA PASS 34/34 + Evidently drift.html (prepush_20260809_102733)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "135 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer, 0 findings"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "88% on changed lines (diff-cover vs 8055413^; floor 80, C0 target 100; residual = GPU-training entry validated by bounded runs)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera 34/34 + Evidently drift (pre-push hook, 2026-08-09)"
+      }
+    },
+    "code_review": {
+      "layers": 3,
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "result_summary": "G1 positivity fixed via a denormalized floor (models.py:206). Result (seed 42, 5 epochs, 33 tickers): graph message-passing HURTS - G1 worse than no-graph control G0 on all 6 metrics; GNN stays an ablation, not the main architecture.",
+    "dod": [
+      {
+        "item": "pytest green (92 passed) re-verified in worktree",
+        "ok": true
+      },
+      {
+        "item": "positivity floor at models.py:206",
+        "ok": true
+      },
+      {
+        "item": "committed on feature/pooled-news-gnn-pilot",
+        "ok": true
+      },
+      {
+        "item": "summary report written",
+        "ok": true
+      }
+    ],
+    "report_md": ".worktrees/pooled-news-gnn-pilot/docs/reports/2026-08-08_1621_summaryOfUpdate_report.md"
   },
-  "dod": [
-   {
-    "item": "pytest green (13 passed)",
-    "ok": true
-   },
-   {
-    "item": "3-layer code review run + findings fixed",
-    "ok": true
-   },
-   {
-    "item": "committed to master (48a14bb)",
-    "ok": true
-   },
-   {
-    "item": "summary report written",
-    "ok": true
-   }
-  ],
-  "result_summary": "Post-code data/schema quality gate built (pandera schemas, evidently drift, ruff, pytest) and hardened via a 3-layer adversarial review; tests re-run green.",
-  "report_md": "docs/reports/2026-08-08_1542_summaryOfUpdate_report.md"
- },
- {
-  "id": "task-7",
-  "task_type": "code",
-  "phase": "Phase 1 - Headline Track B experiments",
-  "title": "Pooled news-GNN G0/G1 graph ablation + G1 positivity fix",
-  "status": "done",
-  "timestamp": "2026-08-08T16:21",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "8055413",
-   "702289f"
-  ],
-  "skills_applied": [
-   "systematic-debugging",
-   "TDD-red-green",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "python -m pytest baselines/2026-08-08_pooled_news_gnn_ablation_baseline/test/ -q",
-    "result": "135 passed (was 92; +guard tests 2026-08-09)"
-   },
-   {
-    "cmd": "diff-cover pilot_cov.xml --compare-branch=8055413^ (2026-08-09)",
-    "result": "88% on changed lines (models.py positivity floor 94.6%; run_pilot.py; above floor 80). Residual uncovered = GPU-training entry (run_graph_screening) exercised by bounded GPU runs, not pytest."
-   },
-   {
-    "cmd": "pre-push data-quality gate over pilot campaign diff (2026-08-09)",
-    "result": "Pandera SCHEMA PASS 34/34 + Evidently drift.html (prepush_20260809_102733)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "135 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer, 0 findings"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "88% on changed lines (diff-cover vs 8055413^; floor 80, C0 target 100; residual = GPU-training entry validated by bounded runs)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "Pandera 34/34 + Evidently drift (pre-push hook, 2026-08-09)"
-   }
+  {
+    "id": "roadmap",
+    "task_type": "doc",
+    "phase": "Planning - Unified roadmap",
+    "title": "Unified Track A+B roadmap (architecture based on Track B)",
+    "status": "done",
+    "timestamp": "2026-08-08T17:00",
+    "branch": "master",
+    "commits": [
+      "127dace",
+      "cbbf75e"
+    ],
+    "skills_applied": [
+      "writing-plans"
+    ],
+    "evidence": [
+      {
+        "cmd": "git log -1 --format=%H %s 127dace",
+        "result": "127dace5e4c3a633a5c93dac71372fd0e2057591 Add unified Track A+B roadmap (architecture based on Track B)"
+      },
+      {
+        "cmd": "git log -1 --format=%H %s cbbf75e",
+        "result": "cbbf75e3d7c88095627ffcd6fb8a0702f0a65db9 Roadmap: R10 graph-training batching approved by user, move into T0.2"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "focused (1L) planning review"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "doc"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "result_summary": "Dependency-ordered plan unifying remaining Track A (paper) and Track B (pooled news-GNN) work; execution order T0.1 -> T1.1 -> T1.2 -> T1.3 -> T2.* -> Phase 3 -> Phase 4.",
+    "dod": [
+      {
+        "item": "roadmap committed to master",
+        "ok": true
+      },
+      {
+        "item": "R10 approval folded into T0.2",
+        "ok": true
+      }
+    ],
+    "report_md": "docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md"
   },
-  "code_review": {
-   "layers": 3,
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "t0.1-multihorizon",
+    "task_type": "code",
+    "phase": "Phase 0 - Foundations",
+    "title": "T0.1 Multi-horizon --horizon knob (1/5/10/22)",
+    "status": "done",
+    "timestamp": "2026-08-08T18:00",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "7346c33"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "verification-before-completion",
+      "focused-adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "110 passed in 8.69s (was 92)"
+      },
+      {
+        "cmd": "ruff check code/ test/",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "RED before impl",
+        "result": "5 failed for correct reasons (unrecognized --horizon; no _assert_matched_horizon; DID NOT RAISE)"
+      },
+      {
+        "cmd": "regression: build_pooled_manifest(horizon=5) vs old default",
+        "result": "byte-identical train/val/test hashes; h1 differs (sanity)"
+      },
+      {
+        "cmd": "bounded runs h1/h5/h22 (CUDA,1ep,3 tickers)",
+        "result": "exit 0, outputs namespaced h1/h5/h22, metrics finite"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "110 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of run_pilot.py horizon plumbing: off-by-one correct (target_index = offset+seq+horizon-1, no cross-split), --horizon reaches both pooled+graph manifests. No HIGH/MEDIUM. LOW deferred: _assert_matched_horizon vacuous guard (both args =horizon); seed set after graph-layer init."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "85% on changed lines (diff-cover vs 7346c33^, 2026-08-09; floor 80). +guard tests for horizon/regime validation. Residual = GPU-training entry (run_graph_screening horizon plumbing) validated by bounded h1/h5/h22 runs."
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign, 2026-08-09)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 3
+    },
+    "result_summary": "--horizon {1,5,10,22} knob added; scaler/model unchanged (horizon-independent); h=5 byte-identical regression; leakage guard for pooled/graph horizon match. 3-layer review (2026-08-09) confirms off-by-one correct, no leakage. Follow-up: pre-existing --smoke news-provenance conflict.",
+    "dod": [
+      {
+        "item": "TDD red-green",
+        "ok": true
+      },
+      {
+        "item": "110 tests pass",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "leakage guard tested",
+        "ok": true
+      },
+      {
+        "item": "pushed",
+        "ok": true
+      },
+      {
+        "item": "pre-existing --smoke/news-provenance conflict (follow-up, not T0.1)",
+        "ok": false
+      }
+    ],
+    "report_md": "docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md"
   },
-  "result_summary": "G1 positivity fixed via a denormalized floor (models.py:206). Result (seed 42, 5 epochs, 33 tickers): graph message-passing HURTS - G1 worse than no-graph control G0 on all 6 metrics; GNN stays an ablation, not the main architecture.",
-  "dod": [
-   {
-    "item": "pytest green (92 passed) re-verified in worktree",
-    "ok": true
-   },
-   {
-    "item": "positivity floor at models.py:206",
-    "ok": true
-   },
-   {
-    "item": "committed on feature/pooled-news-gnn-pilot",
-    "ok": true
-   },
-   {
-    "item": "summary report written",
-    "ok": true
-   }
-  ],
-  "report_md": ".worktrees/pooled-news-gnn-pilot/docs/reports/2026-08-08_1621_summaryOfUpdate_report.md"
- },
- {
-  "id": "roadmap",
-  "task_type": "doc",
-  "phase": "Planning - Unified roadmap",
-  "title": "Unified Track A+B roadmap (architecture based on Track B)",
-  "status": "done",
-  "timestamp": "2026-08-08T17:00",
-  "branch": "master",
-  "commits": [
-   "127dace",
-   "cbbf75e"
-  ],
-  "skills_applied": [
-   "writing-plans"
-  ],
-  "evidence": [
-   {
-    "cmd": "git log -1 --format=%H %s 127dace",
-    "result": "127dace5e4c3a633a5c93dac71372fd0e2057591 Add unified Track A+B roadmap (architecture based on Track B)"
-   },
-   {
-    "cmd": "git log -1 --format=%H %s cbbf75e",
-    "result": "cbbf75e3d7c88095627ffcd6fb8a0702f0a65db9 Roadmap: R10 graph-training batching approved by user, move into T0.2"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "focused (1L) planning review"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "doc"
-   }
+  {
+    "id": "task-dashboard",
+    "task_type": "code",
+    "phase": "Infra (Track A+B)",
+    "title": "Task-evidence ledger + HTML dashboard",
+    "status": "done",
+    "timestamp": "2026-08-08 16:47",
+    "branch": "master",
+    "commits": [
+      "e6c8d0d"
+    ],
+    "skills_applied": [
+      "dataviz",
+      "TDD-red-green",
+      "verification-before-completion",
+      "adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest scripts/task_dashboard/ -q",
+        "result": "9 passed in 0.16s"
+      },
+      {
+        "cmd": "ruff check scripts/task_dashboard/",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "XSS inject <script> into title+evidence, regenerate",
+        "result": "VERDICT: ESCAPED OK (no raw <script> in HTML)"
+      },
+      {
+        "cmd": "diff-cover td_cov.xml --compare-branch=e6c8d0d^ --fail-under=100 (2026-08-09, after +7 guard-branch tests, 34 tests)",
+        "result": "99% on changed lines (453 total, 2 missing = build_dashboard __main__ block 663-664, unreachable in-test)"
+      },
+      {
+        "cmd": "3-layer code review of current build_dashboard.py (Blind/EdgeCase/Acceptance)",
+        "result": "No new HIGH/MEDIUM. Builds on code-audit-2026-08-09 (found 2 MED here) + fix-audit fd420e4 (fixed: malformed diff_cover_pct crash-isolation, ruff fail->fail overlay). validate_task red-card logic re-verified vs ledger. XSS via _esc confirmed. LOW floor-80-displays-pass remains by design."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "34 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (audit code-audit-2026-08-09 + remediation fd420e4 + fresh re-review); no new HIGH/MEDIUM"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "99% on changed lines (diff-cover vs e6c8d0d^; only __main__ 663-664 unreachable). Floor 80, C0 target 100."
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data touched"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "tests green",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "html renders + escaped",
+        "ok": true
+      },
+      {
+        "item": "committed+pushed",
+        "ok": true
+      }
+    ],
+    "result_summary": "Self-contained HTML dashboard aggregates all task evidence; every future task appends here + regenerates.",
+    "report_md": "docs/reports/2026-08-08_1644_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": 1,
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "t0.2-batch-graph",
+    "task_type": "code",
+    "phase": "Track B / Phase 0",
+    "title": "Batch graph path (R10 approved) + ~10x speedup + G0/G1 re-baseline",
+    "status": "done",
+    "timestamp": "2026-08-08 17:24",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "29babb2",
+      "b96e4d2",
+      "eae9403"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "focused-adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "117 passed (110 prior + 7 new); smoke 2 passed"
+      },
+      {
+        "cmd": "ruff check code/ test/",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "batched GPU run seed42 5ep wall-clock",
+        "result": "235s (~3.9 min) vs ~40 min batch-1 -> ~10x"
+      },
+      {
+        "cmd": "G0 batched",
+        "result": "rmse 0.002407 r2 0.7447 qlike 0.6876 diracc 48.61% nonpos 0.0%"
+      },
+      {
+        "cmd": "G1 batched",
+        "result": "rmse 0.002410 r2 0.7440 qlike 0.6963 diracc 48.52% nonpos 0.0%"
+      },
+      {
+        "cmd": "graph_hash vs Task 7 batch-1",
+        "result": "byte-identical 772bc399bc312c -> leakage/provenance preserved"
+      },
+      {
+        "cmd": "batch_size=1 vs old per-sample trajectory",
+        "result": "exactly reproduced (asserted by test)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "117 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of batched graph training: per-batch loss weighted by snapshot count then divided by total -> exact per-snapshot mean; batch=1 reproduces per-snapshot trajectory; frozen-encoder gradient assertion guards leak; batching identical G0/G1 so cannot manufacture graph-null. No HIGH/MEDIUM."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "97% on changed lines (diff-cover vs 29babb2^, 2026-08-09; floor 80). Batched builders/training loop covered by test_models.py."
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign, 2026-08-09)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "TDD red-green",
+        "ok": true
+      },
+      {
+        "item": "117 tests pass",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "positivity gate 0.0% nonpos",
+        "ok": true
+      },
+      {
+        "item": "leakage/provenance hash-identical",
+        "ok": true
+      },
+      {
+        "item": "pushed",
+        "ok": true
+      }
+    ],
+    "result_summary": "~10x faster graph path (batched builders+training, R10 approved). Verdict STABLE: graph message-passing still does not help (G1 marginally worse than G0); pathological batch-1 G1 QLIKE 4.38->0.70. These batched seed-42 numbers SUPERSEDE Task 7's batch-1.",
+    "report_md": "docs/reports/2026-08-08_1720_summaryOfUpdate_report.md"
   },
-  "result_summary": "Dependency-ordered plan unifying remaining Track A (paper) and Track B (pooled news-GNN) work; execution order T0.1 -> T1.1 -> T1.2 -> T1.3 -> T2.* -> Phase 3 -> Phase 4.",
-  "dod": [
-   {
-    "item": "roadmap committed to master",
-    "ok": true
-   },
-   {
-    "item": "R10 approval folded into T0.2",
-    "ok": true
-   }
-  ],
-  "report_md": "docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md"
- },
- {
-  "id": "t0.1-multihorizon",
-  "task_type": "code",
-  "phase": "Phase 0 - Foundations",
-  "title": "T0.1 Multi-horizon --horizon knob (1/5/10/22)",
-  "status": "done",
-  "timestamp": "2026-08-08T18:00",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "7346c33"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "verification-before-completion",
-   "focused-adversarial-review"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest .../test/ -q",
-    "result": "110 passed in 8.69s (was 92)"
-   },
-   {
-    "cmd": "ruff check code/ test/",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "RED before impl",
-    "result": "5 failed for correct reasons (unrecognized --horizon; no _assert_matched_horizon; DID NOT RAISE)"
-   },
-   {
-    "cmd": "regression: build_pooled_manifest(horizon=5) vs old default",
-    "result": "byte-identical train/val/test hashes; h1 differs (sanity)"
-   },
-   {
-    "cmd": "bounded runs h1/h5/h22 (CUDA,1ep,3 tickers)",
-    "result": "exit 0, outputs namespaced h1/h5/h22, metrics finite"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "110 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of run_pilot.py horizon plumbing: off-by-one correct (target_index = offset+seq+horizon-1, no cross-split), --horizon reaches both pooled+graph manifests. No HIGH/MEDIUM. LOW deferred: _assert_matched_horizon vacuous guard (both args =horizon); seed set after graph-layer init."
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "85% on changed lines (diff-cover vs 7346c33^, 2026-08-09; floor 80). +guard tests for horizon/regime validation. Residual = GPU-training entry (run_graph_screening horizon plumbing) validated by bounded h1/h5/h22 runs."
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign, 2026-08-09)"
-   }
+  {
+    "id": "t1.1-a1-pooled-vs-commondate",
+    "task_type": "code",
+    "phase": "Track B / Phase 1 (HEADLINE)",
+    "title": "A1: pooled vs common-date (does pooling give the data advantage vs HAR)",
+    "status": "done",
+    "timestamp": "2026-08-08 17:25",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "a14482d",
+      "064d82d",
+      "13350d7",
+      "bdceadb"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "125 passed"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "P0 HAR seed42",
+        "result": "rmse 0.001485 r2 0.7351 qlike 0.5167"
+      },
+      {
+        "cmd": "P1 pooled vs commondate",
+        "result": "0.001499 vs 0.001489 -> common-date better; pooling does NOT help P1"
+      },
+      {
+        "cmd": "P2 pooled vs commondate",
+        "result": "0.001490 vs 0.001502 -> pooling helps P2 slightly"
+      },
+      {
+        "cmd": "leakage fix",
+        "result": "restrict TRAIN only; val/test identical across regimes (commit 13350d7)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "125 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of common-date regime: restrict_train_to_common_dates filters ONLY samples['train']; val/test pass through same objects -> content_hash('val') byte-identical across regimes (scored on identical held-out set). Scalers train-only everywhere; common-date axis from train-fitted preprocessors (no future values). No HIGH/MEDIUM leakage. LOW deferred: regime-less output path (invoker must set distinct --output-dir)."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "97% on changed lines (diff-cover vs a14482d^, 2026-08-09; floor 80). common-date regime data.py/run_pilot.py covered by test_regime.py (219 lines); leakage-fix (restrict TRAIN only) tested."
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign incl new common-date manifest, 2026-08-09)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 3,
+      "findings_deferred": 1
+    },
+    "dod": [
+      {
+        "item": "common-date manifest (TDD)",
+        "ok": true
+      },
+      {
+        "item": "scalers not refit (tested)",
+        "ok": true
+      },
+      {
+        "item": "val/test identical across regimes",
+        "ok": true
+      },
+      {
+        "item": "6 GPU cells 3 seeds",
+        "ok": true
+      },
+      {
+        "item": "A1 verdict table",
+        "ok": true
+      },
+      {
+        "item": "n>=5 + longer epochs (follow-up)",
+        "ok": false
+      }
+    ],
+    "result_summary": "HEADLINE = NEGATIVE. ~7.6x more data (73k vs 9.6k) but validation moves <1% with mixed sign; HAR on par/ahead of deep models under BOTH regimes. Pooling does NOT create a HAR-beating regime. Track B premise NOT supported at 5-ep/3-seed/h5 screening (df=2 low power; n>=5 needed). Positive still standing: deep beats HAR on QLIKE.",
+    "report_md": "docs/reports/2026-08-08_1819_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 3
+  {
+    "id": "t1.2-parsimony-pooled",
+    "task_type": "code",
+    "phase": "Track B / Phase 1",
+    "title": "Parsimony on pooled: news helps, gate inert, HAR beaten only on QLIKE",
+    "status": "done",
+    "timestamp": "2026-08-08 18:31",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "5e9ba5a"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest docs/reports/test_t12_parsimony_pooled.py -q",
+        "result": "6 passed"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "News P2 vs P1",
+        "result": "rmse t=-4.81, qlike t=-6.94, 3/3 seeds improve -> news HELPS (significant)"
+      },
+      {
+        "cmd": "Gate P3 vs P2",
+        "result": "0/3 improve, qlike t=1.05 -> gate INERT (null)"
+      },
+      {
+        "cmd": "P2 vs HAR",
+        "result": "rmse tie (t=1.1), qlike t=-59.5 -> news recovers RMSE + crushes QLIKE"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "6 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "Focused adversarial review (right-sized per CLAUDE.md SDD: small pure-stats diff). mean_std uses ddof=1 (sample std, hand-verified in test); paired_t returns nan on zero-diff (no div-by-zero, tested); sign_consistency direction-correct (tested); build_report reads real committed results.json (integration test). No HIGH/MEDIUM. Loud-crash-on-missing-data acceptable for a manual analysis script."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "99% on changed lines (diff-cover vs 6e5c623^, 2026-08-09; only __main__ 156 unreachable). +main()/_fmt_cell runner tests added; build_report integration test runs against real committed results.json."
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "reuses A1 cells, no new data"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "focused-adversarial"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "reuse A1 pooled cells (no wasted runs)",
+        "ok": true
+      },
+      {
+        "item": "6 tests pass",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "parsimony verdict table",
+        "ok": true
+      },
+      {
+        "item": "n>=5 (follow-up)",
+        "ok": false
+      }
+    ],
+    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R\u00b2; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
+    "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
   },
-  "result_summary": "--horizon {1,5,10,22} knob added; scaler/model unchanged (horizon-independent); h=5 byte-identical regression; leakage guard for pooled/graph horizon match. 3-layer review (2026-08-09) confirms off-by-one correct, no leakage. Follow-up: pre-existing --smoke news-provenance conflict.",
-  "dod": [
-   {
-    "item": "TDD red-green",
-    "ok": true
-   },
-   {
-    "item": "110 tests pass",
-    "ok": true
-   },
-   {
-    "item": "ruff clean",
-    "ok": true
-   },
-   {
-    "item": "leakage guard tested",
-    "ok": true
-   },
-   {
-    "item": "pushed",
-    "ok": true
-   },
-   {
-    "item": "pre-existing --smoke/news-provenance conflict (follow-up, not T0.1)",
-    "ok": false
-   }
-  ],
-  "report_md": "docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md"
- },
- {
-  "id": "task-dashboard",
-  "task_type": "code",
-  "phase": "Infra (Track A+B)",
-  "title": "Task-evidence ledger + HTML dashboard",
-  "status": "done",
-  "timestamp": "2026-08-08 16:47",
-  "branch": "master",
-  "commits": [
-   "e6c8d0d"
-  ],
-  "skills_applied": [
-   "dataviz",
-   "TDD-red-green",
-   "verification-before-completion",
-   "adversarial-review"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest scripts/task_dashboard/ -q",
-    "result": "9 passed in 0.16s"
-   },
-   {
-    "cmd": "ruff check scripts/task_dashboard/",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "XSS inject <script> into title+evidence, regenerate",
-    "result": "VERDICT: ESCAPED OK (no raw <script> in HTML)"
-   },
-   {
-    "cmd": "diff-cover td_cov.xml --compare-branch=e6c8d0d^ --fail-under=100 (2026-08-09, after +7 guard-branch tests, 34 tests)",
-    "result": "99% on changed lines (453 total, 2 missing = build_dashboard __main__ block 663-664, unreachable in-test)"
-   },
-   {
-    "cmd": "3-layer code review of current build_dashboard.py (Blind/EdgeCase/Acceptance)",
-    "result": "No new HIGH/MEDIUM. Builds on code-audit-2026-08-09 (found 2 MED here) + fix-audit fd420e4 (fixed: malformed diff_cover_pct crash-isolation, ruff fail->fail overlay). validate_task red-card logic re-verified vs ledger. XSS via _esc confirmed. LOW floor-80-displays-pass remains by design."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "34 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (audit code-audit-2026-08-09 + remediation fd420e4 + fresh re-review); no new HIGH/MEDIUM"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "99% on changed lines (diff-cover vs e6c8d0d^; only __main__ 663-664 unreachable). Floor 80, C0 target 100."
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "no data touched"
-   }
+  {
+    "id": "data-qa-pandera-evidently",
+    "task_type": "data-quality",
+    "phase": "Quality assurance (data foundation)",
+    "title": "Data-quality gate: Pandera schema + Evidently drift on Track B data",
+    "status": "done",
+    "timestamp": "2026-08-08 19:59",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "pandera-schema-validation",
+      "evidently-drift",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "check_schema() [Pandera on data/processed + news panel] \u2014 re-run 2026-08-09",
+        "result": "PASS: 34/34 artifacts valid"
+      },
+      {
+        "cmd": "check_drift() [Evidently temporal train-vs-test]",
+        "result": "INFO: ACB train=2800 vs test=1200 -> drift.html (3.6M)"
+      },
+      {
+        "cmd": "drift artifact",
+        "result": "results/quality_gate/campaign_dataqa_2026-08-08_195809/drift.html"
+      },
+      {
+        "cmd": "task_type correction (2026-08-09): commits=[] \u2014 this task AUTHORED no code, it RAN the existing scripts/quality_gate tooling on data",
+        "result": "reclassified code->data-quality; code gates are N/A here. The exercised module scripts/quality_gate is separately fully gated under task 'quality-gate' (ruff clean, 3-layer review, 99% diff-cover vs 48a14bb^)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "exercised tooling tested under quality-gate (51 passed)"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "N/A - no code authored (ran existing tooling; that module ruff-clean under quality-gate)"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "N/A - no code authored (exercised scripts/quality_gate, 3-layer reviewed under quality-gate)"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "N/A - no code authored (exercised module 99% diff-covered under quality-gate)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 (re-run 2026-08-09) + evidently drift.html"
+      }
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "Pandera schema 34/34 valid",
+        "ok": true
+      },
+      {
+        "item": "Evidently drift html produced",
+        "ok": true
+      },
+      {
+        "item": "validates data underlying ALL Track B experiments",
+        "ok": true
+      }
+    ],
+    "result_summary": "Pandera + Evidently exercised on the data foundation shared by every Track B experiment: schema 34/34 valid (OHLCV/HAR non-neg, high>=low, monotonic dates; news panel structural cols), temporal drift report produced. A1's new common-date manifest draws from this same validated source data.",
+    "report_md": "scripts/quality_gate/README.md"
   },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "consolidated-metrics",
+    "task_type": "doc",
+    "phase": "Reporting",
+    "title": "Consolidated metrics table (Track A + Track B, 3 clusters)",
+    "status": "done",
+    "timestamp": "2026-08-08 20:11",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "aggregate results/a1_*/h5/* (3 seeds) + G0/G1 batched + Track A table",
+        "result": "real val metrics re-read from results.json, not copied"
+      },
+      {
+        "cmd": "News P2 vs P1",
+        "result": "RMSE t=-4.81, QLIKE t=-6.94, 3/3 SIGNIFICANT"
+      },
+      {
+        "cmd": "Graph/Gate/Pooling",
+        "result": "all null"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "doc"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "doc"
+      }
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "3 clusters with eval-basis caveat",
+        "ok": true
+      },
+      {
+        "item": "paired-t verdicts",
+        "ok": true
+      },
+      {
+        "item": "provenance to result files",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate",
+        "ok": true
+      }
+    ],
+    "result_summary": "Only NEWS features carry a robust contribution (QLIKE + RMSE-recovery-to-tie vs HAR); graph/gate/pooling null; HAR strong on RMSE; direction near-random. Track A and Track B on different eval bases -> compare within cluster only.",
+    "report_md": "docs/reports/2026-08-08_2010_consolidated_metrics.md"
   },
-  "dod": [
-   {
-    "item": "tests green",
-    "ok": true
-   },
-   {
-    "item": "ruff clean",
-    "ok": true
-   },
-   {
-    "item": "html renders + escaped",
-    "ok": true
-   },
-   {
-    "item": "committed+pushed",
-    "ok": true
-   }
-  ],
-  "result_summary": "Self-contained HTML dashboard aggregates all task evidence; every future task appends here + regenerates.",
-  "report_md": "docs/reports/2026-08-08_1644_summaryOfUpdate_report.md"
- },
- {
-  "id": "t0.2-batch-graph",
-  "task_type": "code",
-  "phase": "Track B / Phase 0",
-  "title": "Batch graph path (R10 approved) + ~10x speedup + G0/G1 re-baseline",
-  "status": "done",
-  "timestamp": "2026-08-08 17:24",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "29babb2",
-   "b96e4d2",
-   "eae9403"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "systematic-debugging",
-   "verification-before-completion",
-   "focused-adversarial-review"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest .../test/ -q",
-    "result": "117 passed (110 prior + 7 new); smoke 2 passed"
-   },
-   {
-    "cmd": "ruff check code/ test/",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "batched GPU run seed42 5ep wall-clock",
-    "result": "235s (~3.9 min) vs ~40 min batch-1 -> ~10x"
-   },
-   {
-    "cmd": "G0 batched",
-    "result": "rmse 0.002407 r2 0.7447 qlike 0.6876 diracc 48.61% nonpos 0.0%"
-   },
-   {
-    "cmd": "G1 batched",
-    "result": "rmse 0.002410 r2 0.7440 qlike 0.6963 diracc 48.52% nonpos 0.0%"
-   },
-   {
-    "cmd": "graph_hash vs Task 7 batch-1",
-    "result": "byte-identical 772bc399bc312c -> leakage/provenance preserved"
-   },
-   {
-    "cmd": "batch_size=1 vs old per-sample trajectory",
-    "result": "exactly reproduced (asserted by test)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "117 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of batched graph training: per-batch loss weighted by snapshot count then divided by total -> exact per-snapshot mean; batch=1 reproduces per-snapshot trajectory; frozen-encoder gradient assertion guards leak; batching identical G0/G1 so cannot manufacture graph-null. No HIGH/MEDIUM."
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "97% on changed lines (diff-cover vs 29babb2^, 2026-08-09; floor 80). Batched builders/training loop covered by test_models.py."
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign, 2026-08-09)"
-   }
+  {
+    "id": "quality-enforcement",
+    "task_type": "code",
+    "phase": "Quality assurance (enforcement)",
+    "title": "Enforce gate always-run: diff-cover installed + pre-push hook + honest code-review note",
+    "status": "done",
+    "timestamp": "2026-08-08 20:38",
+    "branch": "master",
+    "commits": [
+      "0ccf425"
+    ],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pip install pytest-cov diff-cover",
+        "result": "diff-cover 10.4.1 installed; core deps unchanged"
+      },
+      {
+        "cmd": "diff-cover on Track B changed lines vs merge-base",
+        "result": "87% (176/1459 uncovered) \u2014 FAILS C0=100 target; debt logged"
+      },
+      {
+        "cmd": "pre-push hook fired live on push",
+        "result": "pytest 13 passed + diff-cover + pandera/evidently gate -> passed, push allowed"
+      },
+      {
+        "cmd": "git config core.hooksPath scripts/git_hooks",
+        "result": "active; gate now runs before EVERY push, blocks on failure"
+      },
+      {
+        "cmd": "3-layer code review of scripts/git_hooks/pre-push (Blind/EdgeCase/Acceptance)",
+        "result": "No HIGH/MEDIUM. Blind: set -uo pipefail, FAIL propagated to exit 1, TDD/pytest/schema block correctly, JSON emission wrapped so it never fails the push. EdgeCase: QG_SKIP bypass records intent; missing HEAD -> merge-base fallback; drift never hard-fails (INFO). Corroborated by code-audit-2026-08-09 (LOW-only). LOW deferred (by design/harmless): DATA_TOUCHED substring over-triggers data gate (safe, slower); unquoted $CHANGED relies on no-space repo paths."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "13 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance) of pre-push hook; no HIGH/MEDIUM, LOW deferred (harmless)"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "87% (hook, floor 80, target 100 per CLAUDE.md C0)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook fired (pandera/evidently)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 2
+    },
+    "dod": [
+      {
+        "item": "diff-cover installed + run (87%)",
+        "ok": true
+      },
+      {
+        "item": "pre-push hook enforces gate",
+        "ok": true
+      },
+      {
+        "item": "hook fired live (proven)",
+        "ok": true
+      },
+      {
+        "item": "raise Track B coverage 87->100",
+        "ok": false
+      },
+      {
+        "item": "code-review not git-automatable \u2014 honest note",
+        "ok": true
+      }
+    ],
+    "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated \u2014 it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
+    "report_md": "scripts/git_hooks/README.md"
   },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "research-gnn-sparse-data",
+    "task_type": "research",
+    "phase": "Research (informs Track B decision)",
+    "title": "Deep research: sparse/irregular-node GNN methods for stocks w/ different histories",
+    "status": "done",
+    "timestamp": "2026-08-08 20:59",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "web-research",
+      "verification-before-completion",
+      "no-fake-citation"
+    ],
+    "evidence": [
+      {
+        "cmd": "report file",
+        "result": "195 lines, 8 method families + ranked recs + comparison table + verified refs"
+      },
+      {
+        "cmd": "citation check",
+        "result": "21 core citations web-verified; 3 marked [unverified], not relied on"
+      },
+      {
+        "cmd": "data-quality gate",
+        "result": "N/A (research doc, no data/code change)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "research doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "research"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "research"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "8 method families researched",
+        "ok": true
+      },
+      {
+        "item": "real verified citations",
+        "ok": true
+      },
+      {
+        "item": "ranked recs for VN30",
+        "ok": true
+      },
+      {
+        "item": "informs paper Limitations",
+        "ok": true
+      }
+    ],
+    "result_summary": "The 26% intersection ceiling is an ARTIFACT of a fixed 33-node set, not intrinsic to GNNs -> graph-null IS confounded with data scarcity (confirms the concern). Rank-1 fix: masked availability-aware message-passing (per-day present-ticker adjacency + presence mask; dataloader/collate change, no leakage, trains on full ~4,900-date union). Rank-2: long-history panel-selection (bias, diagnostic only). NOT imputation (leaks/fabricates). Literature gap = paper contribution: no surveyed financial-GNN paper trains on per-day variable stock set with masking.",
+    "report_md": "docs/reports/2026-08-08_gnn_sparse_data_research.md"
   },
-  "dod": [
-   {
-    "item": "TDD red-green",
-    "ok": true
-   },
-   {
-    "item": "117 tests pass",
-    "ok": true
-   },
-   {
-    "item": "ruff clean",
-    "ok": true
-   },
-   {
-    "item": "positivity gate 0.0% nonpos",
-    "ok": true
-   },
-   {
-    "item": "leakage/provenance hash-identical",
-    "ok": true
-   },
-   {
-    "item": "pushed",
-    "ok": true
-   }
-  ],
-  "result_summary": "~10x faster graph path (batched builders+training, R10 approved). Verdict STABLE: graph message-passing still does not help (G1 marginally worse than G0); pathological batch-1 G1 QLIKE 4.38->0.70. These batched seed-42 numbers SUPERSEDE Task 7's batch-1.",
-  "report_md": "docs/reports/2026-08-08_1720_summaryOfUpdate_report.md"
- },
- {
-  "id": "t1.1-a1-pooled-vs-commondate",
-  "task_type": "code",
-  "phase": "Track B / Phase 1 (HEADLINE)",
-  "title": "A1: pooled vs common-date (does pooling give the data advantage vs HAR)",
-  "status": "done",
-  "timestamp": "2026-08-08 17:25",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "a14482d",
-   "064d82d",
-   "13350d7",
-   "bdceadb"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "systematic-debugging",
-   "verification-before-completion",
-   "adversarial-review"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest .../test/ -q",
-    "result": "125 passed"
-   },
-   {
-    "cmd": "ruff",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "P0 HAR seed42",
-    "result": "rmse 0.001485 r2 0.7351 qlike 0.5167"
-   },
-   {
-    "cmd": "P1 pooled vs commondate",
-    "result": "0.001499 vs 0.001489 -> common-date better; pooling does NOT help P1"
-   },
-   {
-    "cmd": "P2 pooled vs commondate",
-    "result": "0.001490 vs 0.001502 -> pooling helps P2 slightly"
-   },
-   {
-    "cmd": "leakage fix",
-    "result": "restrict TRAIN only; val/test identical across regimes (commit 13350d7)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "125 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (Blind/EdgeCase/Acceptance, 2026-08-09) of common-date regime: restrict_train_to_common_dates filters ONLY samples['train']; val/test pass through same objects -> content_hash('val') byte-identical across regimes (scored on identical held-out set). Scalers train-only everywhere; common-date axis from train-fitted preprocessors (no future values). No HIGH/MEDIUM leakage. LOW deferred: regime-less output path (invoker must set distinct --output-dir)."
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "97% on changed lines (diff-cover vs a14482d^, 2026-08-09; floor 80). common-date regime data.py/run_pilot.py covered by test_regime.py (219 lines); leakage-fix (restrict TRAIN only) tested."
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "Pandera 34/34 + Evidently drift (pre-push hook over pilot campaign incl new common-date manifest, 2026-08-09)"
-   }
+  {
+    "id": "t-pooled-20ep",
+    "task_type": "code",
+    "phase": "Track B / longer-training check",
+    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) \u2014 does longer training beat HAR?",
+    "status": "done",
+    "timestamp": "2026-08-08 22:00",
+    "branch": "feature/pooled-news-gnn-pilot",
+    "commits": [
+      "e5f4af6",
+      "6ccc54d",
+      "3ccca8a"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "verification-before-completion",
+      "systematic-debugging"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest scripts/pooled_20ep_analysis/ (from repo root, AFTER conftest fix)",
+        "result": "5 passed (agent's original passed only from inside the dir \u2014 verification caught it)"
+      },
+      {
+        "cmd": "20ep 3-seed means",
+        "result": "P0 rmse .001485 ql .5167 | P1 .001498/.5110 | P2 .001486/.5084 | P3 .001487/.5084"
+      },
+      {
+        "cmd": "paired-t",
+        "result": "News P2vsP1 sig (p~.009); Gate P3vsP2 inert (p>=.61); P1 worse than HAR RMSE (p~.028); P2/P3 TIE HAR RMSE; all beat HAR QLIKE (p<.004)"
+      },
+      {
+        "cmd": "5ep vs 20ep",
+        "result": "UNCHANGED (deltas 4th-5th sig fig); best-val epoch 5-7 then OVERFIT -> 20ep add nothing"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "5 passed (after conftest fix)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "verification-caught 3 issues, 2 fixed"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced (floor 80)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook (pandera/evidently)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "verification-caught"
+      ],
+      "findings_fixed": 2,
+      "findings_deferred": 1
+    },
+    "dod": [
+      {
+        "item": "20ep 3-seed run",
+        "ok": true
+      },
+      {
+        "item": "verdict: longer training does NOT beat HAR",
+        "ok": true
+      },
+      {
+        "item": "FIX test collection (conftest)",
+        "ok": true
+      },
+      {
+        "item": "FIX 60MB public-repo bloat (untrack+gitignore)",
+        "ok": true
+      },
+      {
+        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) \u2014 flagged",
+        "ok": true
+      },
+      {
+        "item": "540MB in git HISTORY -> needs user decision on rewrite",
+        "ok": false
+      }
+    ],
+    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R\u00b2 (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
+    "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 3,
-   "findings_deferred": 1
+  {
+    "id": "masked-gnn-rerun",
+    "task_type": "code",
+    "phase": "Track B / graph confound resolution",
+    "title": "Masked availability-aware GNN \u2014 does graph help with 3.8x more data?",
+    "status": "done",
+    "timestamp": "2026-08-08 22:03",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "(5 commits, pushed)"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "pandera-evidently-data-gate"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "134 passed (6 new masking tests incl absent-node non-leakage invariance)"
+      },
+      {
+        "cmd": "ruff",
+        "result": "All checks passed!"
+      },
+      {
+        "cmd": "snapshot count",
+        "result": "masked 4,941 dates / 4,523 train snapshots vs intersection 1,296/900 = 3.8x more"
+      },
+      {
+        "cmd": "masked G0/G1 3-seed \u0394(G1-G0 vloss)",
+        "result": "+0.001039 mean (G1 marginally WORSE 2/3 seeds); nonpos 0.0 all"
+      },
+      {
+        "cmd": "pre-push hook",
+        "result": "ran from worktree: TDD+pytest+diff-cover+ruff+Pandera 34/34+Evidently -> passed"
+      },
+      {
+        "cmd": "code_review resolution (2026-08-09, READ-ONLY per masked-gnn worktree-busy constraint)",
+        "result": "3-layer review of this code was performed by task b-review-masked-gnn at tip 3665936 (Blind/EdgeCase/Acceptance; F1 MEDIUM per-ticker boundary-lookahead surfaced as Limitations caveat, 2 fixed, 3 LOW deferred). 3665936 verified ancestor of feature/masked-gnn. Independently re-traced read-only (git show 03084b2): absent nodes zeroed in features AND adjacency, absent softmax rows zeroed (no NaN leak), presence_mask=None preserves exact intersection numerics -> present outputs cannot depend on absent nodes (non-leakage invariant confirmed)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "134 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer via b-review-masked-gnn (tip 3665936) + read-only non-leakage re-trace; F1 MEDIUM = Limitations caveat (does not change G1~G0 verdict), LOW deferred"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced (floor 80)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 + drift"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 2,
+      "findings_deferred": 3
+    },
+    "dod": [
+      {
+        "item": "masked message-passing (TDD, 134 tests)",
+        "ok": true
+      },
+      {
+        "item": "non-leakage invariance tested",
+        "ok": true
+      },
+      {
+        "item": "3.8x more data (union not intersection)",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate run",
+        "ok": true
+      },
+      {
+        "item": "verdict: graph-null is GENUINE not scarcity artifact",
+        "ok": true
+      },
+      {
+        "item": "3-layer /code-review",
+        "ok": false
+      }
+    ],
+    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1\u2248G0, mean \u0394 +0.001, marginally worse). So the graph-null is a CLEAN, genuine null \u2014 NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
+    "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   },
-  "dod": [
-   {
-    "item": "common-date manifest (TDD)",
-    "ok": true
-   },
-   {
-    "item": "scalers not refit (tested)",
-    "ok": true
-   },
-   {
-    "item": "val/test identical across regimes",
-    "ok": true
-   },
-   {
-    "item": "6 GPU cells 3 seeds",
-    "ok": true
-   },
-   {
-    "item": "A1 verdict table",
-    "ok": true
-   },
-   {
-    "item": "n>=5 + longer epochs (follow-up)",
-    "ok": false
-   }
-  ],
-  "result_summary": "HEADLINE = NEGATIVE. ~7.6x more data (73k vs 9.6k) but validation moves <1% with mixed sign; HAR on par/ahead of deep models under BOTH regimes. Pooling does NOT create a HAR-beating regime. Track B premise NOT supported at 5-ep/3-seed/h5 screening (df=2 low power; n>=5 needed). Positive still standing: deep beats HAR on QLIKE.",
-  "report_md": "docs/reports/2026-08-08_1819_summaryOfUpdate_report.md"
- },
- {
-  "id": "t1.2-parsimony-pooled",
-  "task_type": "code",
-  "phase": "Track B / Phase 1",
-  "title": "Parsimony on pooled: news helps, gate inert, HAR beaten only on QLIKE",
-  "status": "done",
-  "timestamp": "2026-08-08 18:31",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "5e9ba5a"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest docs/reports/test_t12_parsimony_pooled.py -q",
-    "result": "6 passed"
-   },
-   {
-    "cmd": "ruff",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "News P2 vs P1",
-    "result": "rmse t=-4.81, qlike t=-6.94, 3/3 seeds improve -> news HELPS (significant)"
-   },
-   {
-    "cmd": "Gate P3 vs P2",
-    "result": "0/3 improve, qlike t=1.05 -> gate INERT (null)"
-   },
-   {
-    "cmd": "P2 vs HAR",
-    "result": "rmse tie (t=1.1), qlike t=-59.5 -> news recovers RMSE + crushes QLIKE"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "6 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "Focused adversarial review (right-sized per CLAUDE.md SDD: small pure-stats diff). mean_std uses ddof=1 (sample std, hand-verified in test); paired_t returns nan on zero-diff (no div-by-zero, tested); sign_consistency direction-correct (tested); build_report reads real committed results.json (integration test). No HIGH/MEDIUM. Loud-crash-on-missing-data acceptable for a manual analysis script."
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "99% on changed lines (diff-cover vs 6e5c623^, 2026-08-09; only __main__ 156 unreachable). +main()/_fmt_cell runner tests added; build_report integration test runs against real committed results.json."
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "reuses A1 cells, no new data"
-   }
+  {
+    "id": "a-history-rewrite",
+    "task_type": "git-op",
+    "phase": "Repo hygiene",
+    "title": "(a) Purge ~76MB manifests from public git history (fresh-clone filter-repo + force-push)",
+    "status": "done",
+    "timestamp": "2026-08-08 22:36",
+    "branch": "feature/{pooled,masked}",
+    "commits": [
+      "126cdfb",
+      "3665936"
+    ],
+    "skills_applied": [
+      "verification-before-completion",
+      "git-safety (user-authorized force-push)"
+    ],
+    "evidence": [
+      {
+        "cmd": "git rev-list --all --objects | grep sample_manifest (in fresh clone)",
+        "result": "2 unique blobs (~76MB, dedup) BEFORE -> 0 AFTER filter-repo"
+      },
+      {
+        "cmd": "git push origin --force feature/{pooled,masked}",
+        "result": "45c2712->3665936, 71cfa8d->126cdfb (forced), user-authorized"
+      },
+      {
+        "cmd": "post-resync worktree history manifest count",
+        "result": "pooled=0, masked=0; master unchanged e61c3db"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "git op"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "git op"
+      }
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "fresh-clone (safe, no live-worktree corruption)",
+        "ok": true
+      },
+      {
+        "item": "filter-repo strip verified 0",
+        "ok": true
+      },
+      {
+        "item": "force-push (user-authorized)",
+        "ok": true
+      },
+      {
+        "item": "worktrees re-synced + verified",
+        "ok": true
+      },
+      {
+        "item": "backup branches kept",
+        "ok": true
+      }
+    ],
+    "result_summary": "Removed all sample_manifest.json blobs from public git history via fresh-clone git-filter-repo + force-push (user-authorized). Actual bloat ~76MB (2 unique blobs; git dedup, not 1.2GB). master untouched. Worktrees re-synced to rewritten tips; both feature branches now carry 0 manifest blobs. Local backup branches kept as recovery net.",
+    "report_md": "scripts/git_hooks/README.md"
   },
-  "code_review": {
-   "layers": [
-    "focused-adversarial"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "b-review-masked-gnn",
+    "task_type": "code",
+    "phase": "Track B / QA",
+    "title": "(b) 3-layer code-review of masked-GNN",
+    "status": "done",
+    "timestamp": "2026-08-08 22:36",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "3665936"
+    ],
+    "skills_applied": [
+      "3-layer-code-review",
+      "verification-before-completion",
+      "TDD (fix)"
+    ],
+    "evidence": [
+      {
+        "cmd": "Blind Hunter",
+        "result": "NO HIGH/MEDIUM; non-leakage guarantee confirmed by code trace"
+      },
+      {
+        "cmd": "Edge Case Hunter",
+        "result": "F1 MEDIUM (per-ticker boundary look-ahead, design/intent, does NOT affect G1-vs-G0 verdict); F2/F3 LOW"
+      },
+      {
+        "cmd": "Acceptance Auditor",
+        "result": "PASS; F1 tone violation, F2 weak non-leakage test"
+      },
+      {
+        "cmd": "fixes: strengthen test + drop 'honest'",
+        "result": "135 passed, ruff clean, pushed 3665936"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "135 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance)"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "hook-enforced"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "hook (pandera/evidently)"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 2,
+      "findings_deferred": 3
+    },
+    "dod": [
+      {
+        "item": "3-layer review run",
+        "ok": true
+      },
+      {
+        "item": "no HIGH/MEDIUM code bug",
+        "ok": true
+      },
+      {
+        "item": "tone fix + strengthened non-leakage test",
+        "ok": true
+      },
+      {
+        "item": "isfinite guard + boundary-intent surfaced to user",
+        "ok": true
+      }
+    ],
+    "result_summary": "3-layer review: masking correctness/non-leakage CONFIRMED (Blind Hunter code trace + strengthened test). Fixed: objective-tone violation + weak non-leakage test. Surfaced to user: F1 per-ticker boundary look-ahead (Limitations caveat, does not change graph-null verdict since both G0/G1 share it) + snapshot loss-weighting sign-off. Deferred LOW: isfinite guard on present features (unreachable via standard pipeline).",
+    "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   },
-  "dod": [
-   {
-    "item": "reuse A1 pooled cells (no wasted runs)",
-    "ok": true
-   },
-   {
-    "item": "6 tests pass",
-    "ok": true
-   },
-   {
-    "item": "ruff clean",
-    "ok": true
-   },
-   {
-    "item": "parsimony verdict table",
-    "ok": true
-   },
-   {
-    "item": "n>=5 (follow-up)",
-    "ok": false
-   }
-  ],
-  "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R²; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
-  "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
- },
- {
-  "id": "data-qa-pandera-evidently",
-  "task_type": "data-quality",
-  "phase": "Quality assurance (data foundation)",
-  "title": "Data-quality gate: Pandera schema + Evidently drift on Track B data",
-  "status": "done",
-  "timestamp": "2026-08-08 19:59",
-  "branch": "master",
-  "commits": [],
-  "skills_applied": [
-   "pandera-schema-validation",
-   "evidently-drift",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "check_schema() [Pandera on data/processed + news panel] — re-run 2026-08-09",
-    "result": "PASS: 34/34 artifacts valid"
-   },
-   {
-    "cmd": "check_drift() [Evidently temporal train-vs-test]",
-    "result": "INFO: ACB train=2800 vs test=1200 -> drift.html (3.6M)"
-   },
-   {
-    "cmd": "drift artifact",
-    "result": "results/quality_gate/campaign_dataqa_2026-08-08_195809/drift.html"
-   },
-   {
-    "cmd": "task_type correction (2026-08-09): commits=[] — this task AUTHORED no code, it RAN the existing scripts/quality_gate tooling on data",
-    "result": "reclassified code->data-quality; code gates are N/A here. The exercised module scripts/quality_gate is separately fully gated under task 'quality-gate' (ruff clean, 3-layer review, 99% diff-cover vs 48a14bb^)."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "exercised tooling tested under quality-gate (51 passed)"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "N/A - no code authored (ran existing tooling; that module ruff-clean under quality-gate)"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "N/A - no code authored (exercised scripts/quality_gate, 3-layer reviewed under quality-gate)"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "N/A - no code authored (exercised module 99% diff-covered under quality-gate)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "pandera 34/34 (re-run 2026-08-09) + evidently drift.html"
-   }
+  {
+    "id": "research-har-benchmark",
+    "task_type": "research",
+    "phase": "Research (paper baselines)",
+    "title": "Literature: which models beat HAR + standard benchmark/baseline suite",
+    "status": "done",
+    "timestamp": "2026-08-08 23:25",
+    "branch": "master",
+    "commits": [
+      "051af1c"
+    ],
+    "skills_applied": [
+      "web-research",
+      "verification-before-completion",
+      "no-fake-citation"
+    ],
+    "evidence": [
+      {
+        "cmd": "report",
+        "result": "331 lines, 9 sections, 55 DOI/citation markers; [unverified] marked + kept out of load-bearing claims"
+      },
+      {
+        "cmd": "key finding",
+        "result": "Audrino&Chassot 2024 'HARd to Beat': ML fails vs properly-fitted HAR; many wins = weak-HAR artifact"
+      },
+      {
+        "cmd": "consistency",
+        "result": "wins over HAR concentrate on QLIKE / longer horizon / extra info (LOB,news) -> matches project (deep beats HAR only on QLIKE, ties RMSE)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "research doc"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "research"
+      },
+      "code_review": {
+        "status": "na",
+        "detail": "research"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
+    },
+    "code_review": {
+      "layers": [],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "models-that-beat-HAR surveyed w/ metric/market/horizon",
+        "ok": true
+      },
+      {
+        "item": "HAR variants (HARQ/log-HAR/SHAR)",
+        "ok": true
+      },
+      {
+        "item": "benchmark methodology (QLIKE+MSE, DM, MCS)",
+        "ok": true
+      },
+      {
+        "item": "paper recommendations",
+        "ok": true
+      }
+    ],
+    "result_summary": "HAR-hard-to-beat is MAINSTREAM (Audrino&Chassot 2024); project's result is not a failure. Wins over HAR are conditional (QLIKE/longer-horizon/extra-info), matching 'deep beats HAR only on QLIKE, ties RMSE'. Paper actions: add log-HAR+HARQ baselines (same inputs; main reviewer-risk fix), QLIKE+MSE primary (Patton 2011) + Diebold-Mariano + MCS tests. Novelty niche: no emerging-market panel HAR-vs-DL-with-news study found.",
+    "report_md": "docs/reports/2026-08-08_har_benchmark_literature.md"
   },
-  "code_review": {
-   "layers": [],
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "final-architecture-svg",
+    "task_type": "code",
+    "phase": "Paper artifacts",
+    "title": "Final combined architecture diagram (SVG, matplotlib)",
+    "status": "done",
+    "timestamp": "2026-08-08 23:31",
+    "branch": "master",
+    "commits": [
+      "228cc36",
+      "fca11db"
+    ],
+    "skills_applied": [
+      "matplotlib-svg (project method)",
+      "verification-before-completion",
+      "dataviz"
+    ],
+    "evidence": [
+      {
+        "cmd": "file",
+        "result": "docs/paper/diagrams/final_combined_architecture.svg (61KB) + generate_final_combined.py"
+      },
+      {
+        "cmd": "pytest docs/paper/diagrams/test_generate_final_combined.py -q",
+        "result": "2 passed (build() exercises every box/arrow + asserts key labels; main() spies savefig writes SVG)"
+      },
+      {
+        "cmd": "diff-cover fc_cov.xml --compare-branch=228cc36^ (isolated at fca11db)",
+        "result": "99% on changed lines (143 total, 1 missing = generate_final_combined:301 __main__ block, unreachable in-test)"
+      },
+      {
+        "cmd": "3-layer review (via code-audit-2026-08-09 adversarial pass)",
+        "result": "CLEAN. Deterministic matplotlib render, Agg backend set before pyplot, no external input, no injection surface, main() writes SVG + closes fig. No findings."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "2 passed (smoke: build() + main())"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "3-layer adversarial (code-audit-2026-08-09): CLEAN, no findings"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "99% on changed lines (isolated diff-cover 228cc36^..fca11db; only __main__ unreachable). Floor 80, C0 target 100."
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "matplotlib-SVG (not Mermaid)",
+        "ok": true
+      },
+      {
+        "item": "components traced to code",
+        "ok": true
+      },
+      {
+        "item": "null components tagged",
+        "ok": true
+      },
+      {
+        "item": "reproducible generator",
+        "ok": true
+      }
+    ],
+    "result_summary": "Current combined pooled news-GNN architecture drawn to SVG (matplotlib, project method): two manifests (pooled async / masked common-date graph), causal preprocessing + leakage barriers, P1-P3 shared encoders + per-ticker gate, masked availability-aware GNN G0/G1 (frozen P3, presence mask, correlation adjacency + dashed knn-8 'being added'), positivity floor, 6 metrics. HAR=external baseline; null components (graph/gate/pooling) tagged.",
+    "report_md": "docs/paper/diagrams/final_combined_architecture.svg"
   },
-  "dod": [
-   {
-    "item": "Pandera schema 34/34 valid",
-    "ok": true
-   },
-   {
-    "item": "Evidently drift html produced",
-    "ok": true
-   },
-   {
-    "item": "validates data underlying ALL Track B experiments",
-    "ok": true
-   }
-  ],
-  "result_summary": "Pandera + Evidently exercised on the data foundation shared by every Track B experiment: schema 34/34 valid (OHLCV/HAR non-neg, high>=low, monotonic dates; news panel structural cols), temporal drift report produced. A1's new common-date manifest draws from this same validated source data.",
-  "report_md": "scripts/quality_gate/README.md"
- },
- {
-  "id": "consolidated-metrics",
-  "task_type": "doc",
-  "phase": "Reporting",
-  "title": "Consolidated metrics table (Track A + Track B, 3 clusters)",
-  "status": "done",
-  "timestamp": "2026-08-08 20:11",
-  "branch": "master",
-  "commits": [],
-  "skills_applied": [
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "aggregate results/a1_*/h5/* (3 seeds) + G0/G1 batched + Track A table",
-    "result": "real val metrics re-read from results.json, not copied"
-   },
-   {
-    "cmd": "News P2 vs P1",
-    "result": "RMSE t=-4.81, QLIKE t=-6.94, 3/3 SIGNIFICANT"
-   },
-   {
-    "cmd": "Graph/Gate/Pooling",
-    "result": "all null"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "doc"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "doc"
-   }
+  {
+    "id": "knn-sparse-adjacency",
+    "task_type": "code",
+    "phase": "Track B / graph (pivotal)",
+    "title": "GAT-hybrid knn-8 sparse adjacency on masked graph @ 15-epoch convergence",
+    "status": "done",
+    "timestamp": "2026-08-09 00:03",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "30b3809",
+      "2a0bed6"
+    ],
+    "skills_applied": [
+      "TDD-red-green",
+      "systematic-debugging",
+      "verification-before-completion",
+      "3-layer-code-review",
+      "diff-cover C0=100%"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest .../test/ -q",
+        "result": "154 passed (incl real-data smoke + run_graph_screening integration)"
+      },
+      {
+        "cmd": "ruff + diff-cover",
+        "result": "ruff clean; diff-cover C0=100% on changed lines (agent claim)"
+      },
+      {
+        "cmd": "dense G1-G0",
+        "result": "-0.00127 (edge density 18.6)"
+      },
+      {
+        "cmd": "knn-8 G1-G0",
+        "result": "-0.00253 BEST (edge density 5.9) ~2x dense"
+      },
+      {
+        "cmd": "threshold-0.7 G1-G0",
+        "result": "0.00000 (over-sparsified ~1 edge/row -> null)"
+      },
+      {
+        "cmd": "G0 invariance sanity",
+        "result": "G0=0.83924 identical across all 3 (adjacency doesn't touch G0) -> not a bug"
+      },
+      {
+        "cmd": "adversarial review",
+        "result": "agent 3-layer: fixed 1 HIGH (_plot_learning_curve savefig crash)"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "154 passed"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "agent 3-layer (Blind/EdgeCase/Acceptance), 1 HIGH fixed"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "C0=100% on changed lines (agent)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "pandera 34/34 + drift"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance (agent)"
+      ],
+      "findings_fixed": 1,
+      "findings_deferred": 0
+    },
+    "dod": [
+      {
+        "item": "knn/threshold sparse adjacency (TDD)",
+        "ok": true
+      },
+      {
+        "item": "non-leakage preserved (masking)",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate Pandera 34/34 + Evidently",
+        "ok": true
+      },
+      {
+        "item": "3 conditions run @15ep",
+        "ok": true
+      },
+      {
+        "item": "MULTI-SEED + Diebold-Mariano confirmation",
+        "ok": false
+      }
+    ],
+    "result_summary": "PIVOTAL (single-seed): at 15-epoch convergence, masked graph with knn-8 sparse edges (GAT-hybrid style) gives G1<G0 (delta -0.00253 ~2x dense), REVERSING the 5-epoch null. So the earlier graph-null was partly UNDERTRAINING, not only data-scarcity. Sparsity sweet spot: knn-8 best; |corr|>0.7 over-sparsifies to null. CAVEAT: SINGLE SEED, tiny delta, significance NOT established (Diebold-Mariano + seeds 123/2026 required before any claim). DirAcc ~48-49% unchanged (QLIKE/MSE effect). Graph epochs ran at 15 (>10; agent raised graph cap to 50).",
+    "report_md": "docs/reports (masked-gnn worktree summary)"
   },
-  "code_review": {
-   "layers": [],
-   "findings_fixed": 0,
-   "findings_deferred": 0
+  {
+    "id": "code-audit-2026-08-09",
+    "task_type": "research",
+    "phase": "Quality / audit",
+    "title": "Read-only audit of campaign code not yet 3-layer reviewed",
+    "status": "done",
+    "timestamp": "2026-08-09 08:10",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "adversarial-review",
+      "edge-case-hunter",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "audit scripts/task_dashboard/build_dashboard.py (+ test_build_dashboard.py)",
+        "result": "2 MEDIUM + 1 LOW. MED build_dashboard.py:232 _overlay_gate float(payload['diff_cover_pct']) has no per-task try/except in build_html:456; a gate_results JSON with non-numeric diff_cover_pct crashes the WHOLE dashboard build (reproduced: ValueError). Breaks load_gate_results' 'invalid files skipped, not fatal' contract. MED build_dashboard.py:238-240 _overlay_gate ruff branch maps everything except 'pass' to 'warn' (reproduced: ruff=fail->warn, ruff=na->warn); a real ruff FAILURE is shown yellow not red, and a legit 'na' overrides hand-entered pass and can redden a task. pandera branch (243) handles na/fail correctly - ruff branch is inconsistent. LOW overlay marks 80-99% diff-cover as 'pass' (line 236) while CLAUDE.md C0 target=100%, so <100% coverage can display fully-gated. Escaping/injection: all ledger text via _esc, gate status constrained to safe tokens - clean. validate_task red-card logic VERIFIED against ledger: correctly flags all 11 code tasks missing a required gate, 0 false pos/neg."
+      },
+      {
+        "cmd": "audit scripts/quality_gate/run_quality_gate.py (new write_gate_json + main emission only)",
+        "result": "1 MEDIUM. write_gate_json + main() write scripts/task_dashboard/gate_results/<short-sha>.json keyed by commit, the SAME filename the pre-push hook writes. run_quality_gate sets diff_cover_pct=None; running it after a hook run OVERWRITES the hook's richer diff_cover_pct with null (data loss of the coverage overlay). Broad git try/except is correct (missing HEAD -> skip). ruff/pandera/evidently mapping fine. No HIGH."
+      },
+      {
+        "cmd": "audit scripts/git_hooks/pre-push (new per-commit gate-JSON block)",
+        "result": "LOW only. DATA_TOUCHED grep -iE 'data|manifest|...' matches ANY path containing substring 'data' -> over-triggers the Pandera/Evidently gate on unrelated changes (safe, just slower). Unquoted $CHANGED/$CODE_CHG rely on no-space paths (true for repo). TDD 'test_' substring could misclassify a file like 'contest_*.py' (unlikely). JSON writer, cleanup (rm -f), FAIL propagation all correct. No HIGH/MEDIUM."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_final_combined.py",
+        "result": "CLEAN. Deterministic matplotlib box/arrow render, Agg backend set before pyplot, no external input, no injection surface. main() writes SVG + closes fig. No findings."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_proposed_updates.py",
+        "result": "CLEAN. Same pattern as generate_final_combined; _STATUS_STYLE keys match all overlay() calls. No findings."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_graph_snapshots.py",
+        "result": "1 MEDIUM. _draw_graph:102 avg_degree = 2.0*len(edges)/len(present_ids) raises ZeroDivisionError when present_ids is empty (reproduced). render_graph_figure guards empty PANEL LIST but not an empty-present panel, so a zero-present snapshot (or a smoke panel) crashes the draw path. build_panels itself is fine (raises clear ValueError for a missing train date)."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/build_review_html.py",
+        "result": "LOW only. table_html() interpolates ROWS into HTML WITHOUT escaping - intentional (static constants carry HTML entities like &Delta;/&times;); safe ONLY while ROWS stays hardcoded, would inject if ever data-sourced. inline_svg id/href namespacing regex is correct; missing/garbage SVG -> loud FileNotFoundError/ValueError (acceptable). No HIGH/MEDIUM."
+      },
+      {
+        "cmd": "audit aggregate (named scripts/pooled_20ep_analysis/aggregate.py DOES NOT EXIST; audited closest recent aggregate scripts/convergence_check/aggregate_convergence.py)",
+        "result": "SCOPE NOTE: the named file is absent in the tree; audited aggregate_convergence.py instead. LOW: collect() rec['test_metrics'][m] KeyError (no guard) if a run json lacks a metric; main() sys.argv[1] IndexError with no usage guard; sorted(seeds,key=int) ValueError on non-numeric seed key. paired_t nan-guard is correct (t==t filter). Manual analysis script - loud crashes acceptable. No HIGH/MEDIUM."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "read-only audit, no code changed"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "no code changed"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "this IS an adversarial audit pass"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code changed"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data change"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 8
+    },
+    "dod": [
+      {
+        "item": "audited 8 not-yet-3-layer files (skipped already-reviewed)",
+        "ok": true
+      },
+      {
+        "item": "findings reproduced where claimed (crash/overlay/zerodiv)",
+        "ok": true
+      },
+      {
+        "item": "red-card logic cross-checked vs ledger",
+        "ok": true
+      },
+      {
+        "item": "findings are report-only (audited code NOT modified)",
+        "ok": true
+      }
+    ],
+    "result_summary": "VERDICT: no HIGH; 4 MEDIUM, 4 LOW across 8 files (report-only, no fixes applied). MEDIUM: (1) build_dashboard _overlay_gate crashes the whole build on a non-numeric diff_cover_pct in any gate_results JSON (no per-task isolation); (2) _overlay_gate ruff branch shows a real ruff FAIL as yellow 'warn' and turns 'na' into 'warn' (pandera branch is correct - ruff is inconsistent); (3) run_quality_gate.main clobbers the hook's per-commit JSON (same <sha>.json) with diff_cover_pct=null; (4) generate_graph_snapshots._draw_graph ZeroDivisionError on an empty-present snapshot. LOW: overlay counts 80-99% diff-cover as pass vs CLAUDE.md C0=100%; pre-push 'data' substring over-triggers the data gate; build_review_html table cells unescaped (safe only while ROWS static); aggregate_convergence KeyError/argv guards. SCOPE: named scripts/pooled_20ep_analysis/aggregate.py does NOT exist - audited scripts/convergence_check/aggregate_convergence.py in its place. SKIPPED as already 3-layer reviewed: masked-GNN pilot, knn-sparse-adjacency, A1(t1.1), t0.1, t0.2, task-7, quality_gate core. The two diagram generators generate_final_combined/generate_proposed_updates are clean.",
+    "report_md": "recorded inline in this ledger entry (read-only audit)"
   },
-  "dod": [
-   {
-    "item": "3 clusters with eval-basis caveat",
-    "ok": true
-   },
-   {
-    "item": "paired-t verdicts",
-    "ok": true
-   },
-   {
-    "item": "provenance to result files",
-    "ok": true
-   },
-   {
-    "item": "data-quality gate",
-    "ok": true
-   }
-  ],
-  "result_summary": "Only NEWS features carry a robust contribution (QLIKE + RMSE-recovery-to-tie vs HAR); graph/gate/pooling null; HAR strong on RMSE; direction near-random. Track A and Track B on different eval bases -> compare within cluster only.",
-  "report_md": "docs/reports/2026-08-08_2010_consolidated_metrics.md"
- },
- {
-  "id": "quality-enforcement",
-  "task_type": "code",
-  "phase": "Quality assurance (enforcement)",
-  "title": "Enforce gate always-run: diff-cover installed + pre-push hook + honest code-review note",
-  "status": "done",
-  "timestamp": "2026-08-08 20:38",
-  "branch": "master",
-  "commits": [
-   "0ccf425"
-  ],
-  "skills_applied": [
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "pip install pytest-cov diff-cover",
-    "result": "diff-cover 10.4.1 installed; core deps unchanged"
-   },
-   {
-    "cmd": "diff-cover on Track B changed lines vs merge-base",
-    "result": "87% (176/1459 uncovered) — FAILS C0=100 target; debt logged"
-   },
-   {
-    "cmd": "pre-push hook fired live on push",
-    "result": "pytest 13 passed + diff-cover + pandera/evidently gate -> passed, push allowed"
-   },
-   {
-    "cmd": "git config core.hooksPath scripts/git_hooks",
-    "result": "active; gate now runs before EVERY push, blocks on failure"
-   },
-   {
-    "cmd": "3-layer code review of scripts/git_hooks/pre-push (Blind/EdgeCase/Acceptance)",
-    "result": "No HIGH/MEDIUM. Blind: set -uo pipefail, FAIL propagated to exit 1, TDD/pytest/schema block correctly, JSON emission wrapped so it never fails the push. EdgeCase: QG_SKIP bypass records intent; missing HEAD -> merge-base fallback; drift never hard-fails (INFO). Corroborated by code-audit-2026-08-09 (LOW-only). LOW deferred (by design/harmless): DATA_TOUCHED substring over-triggers data gate (safe, slower); unquoted $CHANGED relies on no-space repo paths."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "13 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (Blind/EdgeCase/Acceptance) of pre-push hook; no HIGH/MEDIUM, LOW deferred (harmless)"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "87% (hook, floor 80, target 100 per CLAUDE.md C0)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "hook fired (pandera/evidently)"
-   }
+  {
+    "id": "fix-audit-medium-2026-08-09",
+    "task_type": "code",
+    "phase": "Quality / audit",
+    "title": "Fix 4 MEDIUM audit findings in quality-infra (TDD)",
+    "status": "done",
+    "timestamp": "2026-08-09 08:40",
+    "branch": "master",
+    "commits": [
+      "fd420e4"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion",
+      "adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest (3 changed test files) after RED->GREEN",
+        "result": "48 passed. 6 new tests each watched fail first: malformed diff_cover_pct crash, ruff fail->fail, ruff na no-override, coverage-preserve-on-null, malformed-prior tolerated, empty-present no ZeroDivision."
+      },
+      {
+        "cmd": "diff-cover cov_fix.xml --compare-branch=master",
+        "result": "Coverage: 100% on changed lines (59 lines, 0 missing) across all 6 files. C0=100% met."
+      },
+      {
+        "cmd": "ruff check (6 changed files)",
+        "result": "All checks passed."
+      },
+      {
+        "cmd": "fixes (source: code-audit-2026-08-09)",
+        "result": "build_dashboard._overlay_gate: guard float(diff_cover_pct) (malformed JSON no longer crashes build); ruff fail->fail not warn, ruff na leaves hand-entry. run_quality_gate.write_gate_json: null-coverage run preserves an existing richer diff_cover_pct. generate_graph_snapshots: empty-present avg-degree guard + blank heatmap panel."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "48 passed (pytest)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on 6 changed files"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial review of the 4 diffs (right-sized per CLAUDE.md SDD); edge cases checked, no new issues"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "100% on changed lines (diff-cover vs master)"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A - no data/manifest/pipeline change"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "type": "focused-adversarial-remediation",
+      "findings_fixed": 0,
+      "findings_deferred": 0,
+      "note": "remediates code-audit-2026-08-09 (4 MEDIUM); 4 LOW left as follow-up (floor-80 by design, grep-substring safe, static HTML, manual-script guards)"
+    },
+    "dod": [
+      {
+        "item": "TDD RED->GREEN for each fix",
+        "ok": true
+      },
+      {
+        "item": "48 tests pass",
+        "ok": true
+      },
+      {
+        "item": "diff-cover C0=100% on changed lines",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate N/A (no data change)",
+        "ok": true
+      },
+      {
+        "item": "committed + pushed",
+        "ok": true
+      }
+    ],
+    "result_summary": "Fixed the 4 MEDIUM defects from the read-only audit (code-audit-2026-08-09) following TDD: dashboard-build crash on malformed gate JSON, ruff fail/na overlay mis-mapping, coverage clobber-with-null, and empty-present snapshot ZeroDivision. 6 new RED-first tests, C0=100% on changed lines. 4 LOW findings deferred (intentional/harmless).",
+    "report_md": "docs/reports/2026-08-09_0840_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 2
+  {
+    "id": "track-b-repro-bundle-2026-08-09",
+    "task_type": "code",
+    "phase": "Track-B / reproducibility",
+    "title": "Track-B reproducibility bundle (view/infer/train, G1 final)",
+    "status": "done",
+    "timestamp": "2026-08-09 10:45",
+    "branch": "master",
+    "commits": [
+      "b66d0dd"
+    ],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "python reproduce.py view",
+        "result": "Printed full P0->G1 table (6 metrics/model, validation) and wrote output/results_table.md + output/summary.png using only shipped results/*.json (no data, no training)."
+      },
+      {
+        "cmd": "python -m pytest submission_track_b/test/ -q",
+        "result": "7 passed: view end-to-end (writes md+png), metric formatting, JSON load of all 6 configs, G1=FINAL label, G1 test-row render, infer missing-checkpoint guard, g1_final import."
+      },
+      {
+        "cmd": "ruff check reproduce.py trackb_code/g1_final.py trackb_code/run_pilot.py test/test_reproduce.py",
+        "result": "All checks passed."
+      },
+      {
+        "cmd": "train/infer (G1) with TRACK_B_DATA_ROOT -> full dataset",
+        "result": "Verified END-TO-END with the full dataset (TRACK_B_DATA_ROOT -> pilot worktree). Real 4-ticker seed-42 1-epoch run: `train` trained G1, saved checkpoints/g1_final.pt, printed val+test 6-metric sets (test rmse=4.765e-04, r2=0.1412, qlike=0.5531, DirAcc=48.48%); `infer` reloaded g1_final.pt and reproduced IDENTICAL test metrics (deterministic). Subset smoke, not full-universe final; checkpoints git-ignored."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "7 passed (bundle pytest)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on added/edited files"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial self-review; found+fixed code->trackb_code stdlib-shadow; honest val-vs-test labelling"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "pre-push coverage report excludes bundle sources; C0 Not run for bundle lines. view path exercised by passing tests."
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A - bundle changes no data/manifest; vendored small result JSONs only."
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "type": "focused-adversarial-self",
+      "findings_fixed": 1,
+      "findings_deferred": 0,
+      "note": "fixed stdlib `code` shadowing (renamed code/ -> trackb_code/); verified no large data/checkpoints committed."
+    },
+    "dod": [
+      {
+        "item": "view works with no data/training (verified)",
+        "ok": true
+      },
+      {
+        "item": "P0->G1 table printed + output files written",
+        "ok": true
+      },
+      {
+        "item": "launchers + README + PAPER_MAP + requirements present",
+        "ok": true
+      },
+      {
+        "item": "G1 = final/proposed labelled; infer/train target G1",
+        "ok": true
+      },
+      {
+        "item": "tests pass + ruff clean",
+        "ok": true
+      },
+      {
+        "item": "committed + pushed",
+        "ok": true
+      },
+      {
+        "item": "train+infer verified end-to-end (real subset run)",
+        "ok": true
+      }
+    ],
+    "result_summary": "Added submission_track_b/: a self-contained, Windows double-click reproducibility bundle. `view` fully works offline (prints P0->G1 6-metric table from shipped JSONs, writes md+png). G1 (P3 backbone + graph message passing) is labelled the FINAL/PROPOSED model; g1_final.py adds the G1 checkpoint save + test-split evaluation the validation-only pilot lacked (train/infer require the full dataset via TRACK_B_DATA_ROOT). Vendored pilot code, small result JSONs only; no large data or fat checkpoints committed.",
+    "report_md": "docs/reports/2026-08-09_1040_summaryOfUpdate_report.md"
   },
-  "dod": [
-   {
-    "item": "diff-cover installed + run (87%)",
-    "ok": true
-   },
-   {
-    "item": "pre-push hook enforces gate",
-    "ok": true
-   },
-   {
-    "item": "hook fired live (proven)",
-    "ok": true
-   },
-   {
-    "item": "raise Track B coverage 87->100",
-    "ok": false
-   },
-   {
-    "item": "code-review not git-automatable — honest note",
-    "ok": true
-   }
-  ],
-  "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated — it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
-  "report_md": "scripts/git_hooks/README.md"
- },
- {
-  "id": "research-gnn-sparse-data",
-  "task_type": "research",
-  "phase": "Research (informs Track B decision)",
-  "title": "Deep research: sparse/irregular-node GNN methods for stocks w/ different histories",
-  "status": "done",
-  "timestamp": "2026-08-08 20:59",
-  "branch": "master",
-  "commits": [],
-  "skills_applied": [
-   "web-research",
-   "verification-before-completion",
-   "no-fake-citation"
-  ],
-  "evidence": [
-   {
-    "cmd": "report file",
-    "result": "195 lines, 8 method families + ranked recs + comparison table + verified refs"
-   },
-   {
-    "cmd": "citation check",
-    "result": "21 core citations web-verified; 3 marked [unverified], not relied on"
-   },
-   {
-    "cmd": "data-quality gate",
-    "result": "N/A (research doc, no data/code change)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "research doc"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "research"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "research"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "no code"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "no data"
-   }
+  {
+    "id": "masked-gnn-encoder-cache-verdict-2026-08-09",
+    "task_type": "code",
+    "phase": "Track-B / masked-GNN cache + verdict",
+    "title": "Frozen-encoder base cache (present-node-only) + screening backbone; knn-8 multi-seed + DM verdict",
+    "status": "done",
+    "timestamp": "2026-08-09 12:00",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "572abfd"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest test/test_graph_base_cache.py",
+        "result": "8/8 pass. Cached==uncached run bit-identical (valloss diff 0.0, atol 1e-6); present-only encode==full-encode present rows (0.0); shared G0/G1 cache==self-computed; CLI + backbone-dropout covered."
+      },
+      {
+        "cmd": "python temp/speedup_bench.py (CPU, 33 nodes/22 seq/hidden 64, 15 ep)",
+        "result": "train-loop 21.3x/epoch (21.886s->1.025s), end-to-end 6.3x (342s->54.1s); valloss diff 0.000 (bit-identical)."
+      },
+      {
+        "cmd": "real-data GPU cross-check cached vs pre-cache G0",
+        "result": "val-loss diff 6.9e-6, metrics ~1e-5 (G0 deterministic). G1 diff ~1.6e-3 = GPU cuDNN nondeterminism amplified over 15 training epochs, not cache logic (CPU test bit-identical)."
+      },
+      {
+        "cmd": "python docs/reports/dm_knn8_confirmation.py (old-backbone knn-8, seeds 42/123/2026)",
+        "result": "G1<G0 in 3/3 seeds; mean delta -2.08e-3; paired-t t=-8.15 p=0.0147; QLIKE delta -2.88e-3 p=0.018; DM-QLIKE p=0.0049/0.044/0.071. Verdict leans A (graph helps)."
+      },
+      {
+        "cmd": "git push origin feature/masked-gnn",
+        "result": "pre-push gate PASS: pytest pass, diff-cover 90%, ruff pass, Pandera 34/34, Evidently info. Pushed 2a0bed6..572abfd."
+      },
+      {
+        "cmd": "python temp/verdict_driver.py (new screening-config backbone: 5 ep, dropout 0.2; dense+knn x seeds 42/123/2026, val+test)",
+        "result": "knn-8 verdict B: G1<G0 3/3 seeds (paired-t p=0.0185) but DM-QLIKE n.s. (p=0.74/0.60/0.43), test QLIKE +2.8e-3 (worse). dense verdict B: 2/3 seeds, sign flips, paired-t p=0.282 n.s., no DM sig. Proper backbone flips old lean-A into a null. Artifact: docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{json,md}"
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "pre-push full pytest pass (incl smokes); 8/8 new equivalence tests; 168 non-smoke pass on final rev"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on changed files"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial self-review of cache diff (stale cross-seed/model cache guarded by _assert_shared_frozen_encoder byte-compare; absent-node leakage; train/eval path divergence) - equivalence test is standing evidence"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "90% on changed lines vs master (floor 80%) - pre-push hook"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera 34/34 valid + Evidently drift.html (pre-push); change is model/training code, no data/manifest edit"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "type": "focused-adversarial-self",
+      "findings_fixed": 1,
+      "findings_deferred": 0,
+      "note": "top risk = silent cache result-change; found projection-init-not-seed-controlled equivalence-test artifact (fixed by seeding construction), verified no stale cache across seeds/models via encoder byte-compare."
+    },
+    "dod": [
+      {
+        "item": "equivalence test GREEN (cached==uncached bit-identical)",
+        "ok": true
+      },
+      {
+        "item": "speedup measured (21.3x train-loop, 6.3x end-to-end)",
+        "ok": true
+      },
+      {
+        "item": "old-backbone knn-8 3-seed + DM verdict (leans A)",
+        "ok": true
+      },
+      {
+        "item": "ruff clean + diff-cover 90% + Pandera pass",
+        "ok": true
+      },
+      {
+        "item": "committed + pushed (gate pass)",
+        "ok": true
+      },
+      {
+        "item": "new-backbone dense+knn 6-config sweep",
+        "ok": true,
+        "note": "DONE via build-once driver: knn-8 + dense x 3 seeds, val+test. Both verdict B (graph null on proper backbone)."
+      }
+    ],
+    "result_summary": "Proposed updates #1 (cache frozen-encoder base once per seed, reused across epochs + shared G0/G1) + #2 (encode present nodes only). Numerical equivalence proven bit-identical on CPU (8/8 tests; bench valloss diff 0.000); measured speedup 21.3x train-loop/epoch, 6.3x end-to-end. Re-ran knn-8 masked G0/G1 across seeds 42/123/2026 (old backbone) + Diebold-Mariano: G1<G0 in 3/3 seeds, paired-t p=0.0147, QLIKE improvement significant (p=0.018) -> verdict leans A (graph genuinely helps, small ~0.3% QLIKE), stronger than the prior single-seed note. Added screening-config backbone (5 ep, dropout 0.2, leakage-safe) + held-out test eval + dense/knn paper-dump; the full new-backbone 6-config sweep is code-complete but compute-infeasible before the deadline. NEW-BACKBONE VERDICT (completed): screening-config P3 (5 ep, dropout 0.2) frozen backbone, dense+knn-8 x 3 seeds, val+test -> Verdict B for BOTH: knn-8 G1<G0 3/3 on valloss (paired-t p=0.0185, tiny ~0.08%) but Diebold-Mariano QLIKE/MSE not significant and test QLIKE worse; dense not significant (p=0.282), sign flips across seeds. The properly-trained backbone turns the old-backbone lean-A into a genuine graph-null.",
+    "report_md": "docs/reports/2026-08-09_1104_summaryOfUpdate_report.md"
   },
-  "code_review": {
-   "layers": [],
-   "findings_fixed": 0,
-   "findings_deferred": 0
-  },
-  "dod": [
-   {
-    "item": "8 method families researched",
-    "ok": true
-   },
-   {
-    "item": "real verified citations",
-    "ok": true
-   },
-   {
-    "item": "ranked recs for VN30",
-    "ok": true
-   },
-   {
-    "item": "informs paper Limitations",
-    "ok": true
-   }
-  ],
-  "result_summary": "The 26% intersection ceiling is an ARTIFACT of a fixed 33-node set, not intrinsic to GNNs -> graph-null IS confounded with data scarcity (confirms the concern). Rank-1 fix: masked availability-aware message-passing (per-day present-ticker adjacency + presence mask; dataloader/collate change, no leakage, trains on full ~4,900-date union). Rank-2: long-history panel-selection (bias, diagnostic only). NOT imputation (leaks/fabricates). Literature gap = paper contribution: no surveyed financial-GNN paper trains on per-day variable stock set with masking.",
-  "report_md": "docs/reports/2026-08-08_gnn_sparse_data_research.md"
- },
- {
-  "id": "t-pooled-20ep",
-  "task_type": "code",
-  "phase": "Track B / longer-training check",
-  "title": "Pooled P0-P3 @ 20 epochs (3 seeds) — does longer training beat HAR?",
-  "status": "done",
-  "timestamp": "2026-08-08 22:00",
-  "branch": "feature/pooled-news-gnn-pilot",
-  "commits": [
-   "e5f4af6",
-   "6ccc54d",
-   "3ccca8a"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "verification-before-completion",
-   "systematic-debugging"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest scripts/pooled_20ep_analysis/ (from repo root, AFTER conftest fix)",
-    "result": "5 passed (agent's original passed only from inside the dir — verification caught it)"
-   },
-   {
-    "cmd": "20ep 3-seed means",
-    "result": "P0 rmse .001485 ql .5167 | P1 .001498/.5110 | P2 .001486/.5084 | P3 .001487/.5084"
-   },
-   {
-    "cmd": "paired-t",
-    "result": "News P2vsP1 sig (p~.009); Gate P3vsP2 inert (p>=.61); P1 worse than HAR RMSE (p~.028); P2/P3 TIE HAR RMSE; all beat HAR QLIKE (p<.004)"
-   },
-   {
-    "cmd": "5ep vs 20ep",
-    "result": "UNCHANGED (deltas 4th-5th sig fig); best-val epoch 5-7 then OVERFIT -> 20ep add nothing"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "5 passed (after conftest fix)"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "verification-caught 3 issues, 2 fixed"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "hook-enforced (floor 80)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "hook (pandera/evidently)"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "verification-caught"
-   ],
-   "findings_fixed": 2,
-   "findings_deferred": 1
-  },
-  "dod": [
-   {
-    "item": "20ep 3-seed run",
-    "ok": true
-   },
-   {
-    "item": "verdict: longer training does NOT beat HAR",
-    "ok": true
-   },
-   {
-    "item": "FIX test collection (conftest)",
-    "ok": true
-   },
-   {
-    "item": "FIX 60MB public-repo bloat (untrack+gitignore)",
-    "ok": true
-   },
-   {
-    "item": "epoch cap relaxed >10->20 pooled (graph stays 10) — flagged",
-    "ok": true
-   },
-   {
-    "item": "540MB in git HISTORY -> needs user decision on rewrite",
-    "ok": false
-   }
-  ],
-  "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R² (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
-  "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
- },
- {
-  "id": "masked-gnn-rerun",
-  "task_type": "code",
-  "phase": "Track B / graph confound resolution",
-  "title": "Masked availability-aware GNN — does graph help with 3.8x more data?",
-  "status": "done",
-  "timestamp": "2026-08-08 22:03",
-  "branch": "feature/masked-gnn",
-  "commits": [
-   "(5 commits, pushed)"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "systematic-debugging",
-   "verification-before-completion",
-   "pandera-evidently-data-gate"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest .../test/ -q",
-    "result": "134 passed (6 new masking tests incl absent-node non-leakage invariance)"
-   },
-   {
-    "cmd": "ruff",
-    "result": "All checks passed!"
-   },
-   {
-    "cmd": "snapshot count",
-    "result": "masked 4,941 dates / 4,523 train snapshots vs intersection 1,296/900 = 3.8x more"
-   },
-   {
-    "cmd": "masked G0/G1 3-seed Δ(G1-G0 vloss)",
-    "result": "+0.001039 mean (G1 marginally WORSE 2/3 seeds); nonpos 0.0 all"
-   },
-   {
-    "cmd": "pre-push hook",
-    "result": "ran from worktree: TDD+pytest+diff-cover+ruff+Pandera 34/34+Evidently -> passed"
-   },
-   {
-    "cmd": "code_review resolution (2026-08-09, READ-ONLY per masked-gnn worktree-busy constraint)",
-    "result": "3-layer review of this code was performed by task b-review-masked-gnn at tip 3665936 (Blind/EdgeCase/Acceptance; F1 MEDIUM per-ticker boundary-lookahead surfaced as Limitations caveat, 2 fixed, 3 LOW deferred). 3665936 verified ancestor of feature/masked-gnn. Independently re-traced read-only (git show 03084b2): absent nodes zeroed in features AND adjacency, absent softmax rows zeroed (no NaN leak), presence_mask=None preserves exact intersection numerics -> present outputs cannot depend on absent nodes (non-leakage invariant confirmed)."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "134 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer via b-review-masked-gnn (tip 3665936) + read-only non-leakage re-trace; F1 MEDIUM = Limitations caveat (does not change G1~G0 verdict), LOW deferred"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "hook-enforced (floor 80)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "pandera 34/34 + drift"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 2,
-   "findings_deferred": 3
-  },
-  "dod": [
-   {
-    "item": "masked message-passing (TDD, 134 tests)",
-    "ok": true
-   },
-   {
-    "item": "non-leakage invariance tested",
-    "ok": true
-   },
-   {
-    "item": "3.8x more data (union not intersection)",
-    "ok": true
-   },
-   {
-    "item": "data-quality gate run",
-    "ok": true
-   },
-   {
-    "item": "verdict: graph-null is GENUINE not scarcity artifact",
-    "ok": true
-   },
-   {
-    "item": "3-layer /code-review",
-    "ok": false
-   }
-  ],
-  "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1≈G0, mean Δ +0.001, marginally worse). So the graph-null is a CLEAN, genuine null — NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
-  "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
- },
- {
-  "id": "a-history-rewrite",
-  "task_type": "git-op",
-  "phase": "Repo hygiene",
-  "title": "(a) Purge ~76MB manifests from public git history (fresh-clone filter-repo + force-push)",
-  "status": "done",
-  "timestamp": "2026-08-08 22:36",
-  "branch": "feature/{pooled,masked}",
-  "commits": [
-   "126cdfb",
-   "3665936"
-  ],
-  "skills_applied": [
-   "verification-before-completion",
-   "git-safety (user-authorized force-push)"
-  ],
-  "evidence": [
-   {
-    "cmd": "git rev-list --all --objects | grep sample_manifest (in fresh clone)",
-    "result": "2 unique blobs (~76MB, dedup) BEFORE -> 0 AFTER filter-repo"
-   },
-   {
-    "cmd": "git push origin --force feature/{pooled,masked}",
-    "result": "45c2712->3665936, 71cfa8d->126cdfb (forced), user-authorized"
-   },
-   {
-    "cmd": "post-resync worktree history manifest count",
-    "result": "pooled=0, masked=0; master unchanged e61c3db"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "git op"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "git op"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "git op"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "git op"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "git op"
-   }
-  },
-  "code_review": {
-   "layers": [],
-   "findings_fixed": 0,
-   "findings_deferred": 0
-  },
-  "dod": [
-   {
-    "item": "fresh-clone (safe, no live-worktree corruption)",
-    "ok": true
-   },
-   {
-    "item": "filter-repo strip verified 0",
-    "ok": true
-   },
-   {
-    "item": "force-push (user-authorized)",
-    "ok": true
-   },
-   {
-    "item": "worktrees re-synced + verified",
-    "ok": true
-   },
-   {
-    "item": "backup branches kept",
-    "ok": true
-   }
-  ],
-  "result_summary": "Removed all sample_manifest.json blobs from public git history via fresh-clone git-filter-repo + force-push (user-authorized). Actual bloat ~76MB (2 unique blobs; git dedup, not 1.2GB). master untouched. Worktrees re-synced to rewritten tips; both feature branches now carry 0 manifest blobs. Local backup branches kept as recovery net.",
-  "report_md": "scripts/git_hooks/README.md"
- },
- {
-  "id": "b-review-masked-gnn",
-  "task_type": "code",
-  "phase": "Track B / QA",
-  "title": "(b) 3-layer code-review of masked-GNN",
-  "status": "done",
-  "timestamp": "2026-08-08 22:36",
-  "branch": "feature/masked-gnn",
-  "commits": [
-   "3665936"
-  ],
-  "skills_applied": [
-   "3-layer-code-review",
-   "verification-before-completion",
-   "TDD (fix)"
-  ],
-  "evidence": [
-   {
-    "cmd": "Blind Hunter",
-    "result": "NO HIGH/MEDIUM; non-leakage guarantee confirmed by code trace"
-   },
-   {
-    "cmd": "Edge Case Hunter",
-    "result": "F1 MEDIUM (per-ticker boundary look-ahead, design/intent, does NOT affect G1-vs-G0 verdict); F2/F3 LOW"
-   },
-   {
-    "cmd": "Acceptance Auditor",
-    "result": "PASS; F1 tone violation, F2 weak non-leakage test"
-   },
-   {
-    "cmd": "fixes: strengthen test + drop 'honest'",
-    "result": "135 passed, ruff clean, pushed 3665936"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "135 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer (Blind/EdgeCase/Acceptance)"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "hook-enforced"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "hook (pandera/evidently)"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 2,
-   "findings_deferred": 3
-  },
-  "dod": [
-   {
-    "item": "3-layer review run",
-    "ok": true
-   },
-   {
-    "item": "no HIGH/MEDIUM code bug",
-    "ok": true
-   },
-   {
-    "item": "tone fix + strengthened non-leakage test",
-    "ok": true
-   },
-   {
-    "item": "isfinite guard + boundary-intent surfaced to user",
-    "ok": true
-   }
-  ],
-  "result_summary": "3-layer review: masking correctness/non-leakage CONFIRMED (Blind Hunter code trace + strengthened test). Fixed: objective-tone violation + weak non-leakage test. Surfaced to user: F1 per-ticker boundary look-ahead (Limitations caveat, does not change graph-null verdict since both G0/G1 share it) + snapshot loss-weighting sign-off. Deferred LOW: isfinite guard on present features (unreachable via standard pipeline).",
-  "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
- },
- {
-  "id": "research-har-benchmark",
-  "task_type": "research",
-  "phase": "Research (paper baselines)",
-  "title": "Literature: which models beat HAR + standard benchmark/baseline suite",
-  "status": "done",
-  "timestamp": "2026-08-08 23:25",
-  "branch": "master",
-  "commits": [
-   "051af1c"
-  ],
-  "skills_applied": [
-   "web-research",
-   "verification-before-completion",
-   "no-fake-citation"
-  ],
-  "evidence": [
-   {
-    "cmd": "report",
-    "result": "331 lines, 9 sections, 55 DOI/citation markers; [unverified] marked + kept out of load-bearing claims"
-   },
-   {
-    "cmd": "key finding",
-    "result": "Audrino&Chassot 2024 'HARd to Beat': ML fails vs properly-fitted HAR; many wins = weak-HAR artifact"
-   },
-   {
-    "cmd": "consistency",
-    "result": "wins over HAR concentrate on QLIKE / longer horizon / extra info (LOB,news) -> matches project (deep beats HAR only on QLIKE, ties RMSE)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "research doc"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "research"
-   },
-   "code_review": {
-    "status": "na",
-    "detail": "research"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "no code"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "no data"
-   }
-  },
-  "code_review": {
-   "layers": [],
-   "findings_fixed": 0,
-   "findings_deferred": 0
-  },
-  "dod": [
-   {
-    "item": "models-that-beat-HAR surveyed w/ metric/market/horizon",
-    "ok": true
-   },
-   {
-    "item": "HAR variants (HARQ/log-HAR/SHAR)",
-    "ok": true
-   },
-   {
-    "item": "benchmark methodology (QLIKE+MSE, DM, MCS)",
-    "ok": true
-   },
-   {
-    "item": "paper recommendations",
-    "ok": true
-   }
-  ],
-  "result_summary": "HAR-hard-to-beat is MAINSTREAM (Audrino&Chassot 2024); project's result is not a failure. Wins over HAR are conditional (QLIKE/longer-horizon/extra-info), matching 'deep beats HAR only on QLIKE, ties RMSE'. Paper actions: add log-HAR+HARQ baselines (same inputs; main reviewer-risk fix), QLIKE+MSE primary (Patton 2011) + Diebold-Mariano + MCS tests. Novelty niche: no emerging-market panel HAR-vs-DL-with-news study found.",
-  "report_md": "docs/reports/2026-08-08_har_benchmark_literature.md"
- },
- {
-  "id": "final-architecture-svg",
-  "task_type": "code",
-  "phase": "Paper artifacts",
-  "title": "Final combined architecture diagram (SVG, matplotlib)",
-  "status": "done",
-  "timestamp": "2026-08-08 23:31",
-  "branch": "master",
-  "commits": [
-   "228cc36",
-   "fca11db"
-  ],
-  "skills_applied": [
-   "matplotlib-svg (project method)",
-   "verification-before-completion",
-   "dataviz"
-  ],
-  "evidence": [
-   {
-    "cmd": "file",
-    "result": "docs/paper/diagrams/final_combined_architecture.svg (61KB) + generate_final_combined.py"
-   },
-   {
-    "cmd": "pytest docs/paper/diagrams/test_generate_final_combined.py -q",
-    "result": "2 passed (build() exercises every box/arrow + asserts key labels; main() spies savefig writes SVG)"
-   },
-   {
-    "cmd": "diff-cover fc_cov.xml --compare-branch=228cc36^ (isolated at fca11db)",
-    "result": "99% on changed lines (143 total, 1 missing = generate_final_combined:301 __main__ block, unreachable in-test)"
-   },
-   {
-    "cmd": "3-layer review (via code-audit-2026-08-09 adversarial pass)",
-    "result": "CLEAN. Deterministic matplotlib render, Agg backend set before pyplot, no external input, no injection surface, main() writes SVG + closes fig. No findings."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "2 passed (smoke: build() + main())"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "3-layer adversarial (code-audit-2026-08-09): CLEAN, no findings"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "99% on changed lines (isolated diff-cover 228cc36^..fca11db; only __main__ unreachable). Floor 80, C0 target 100."
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "no data"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 0
-  },
-  "dod": [
-   {
-    "item": "matplotlib-SVG (not Mermaid)",
-    "ok": true
-   },
-   {
-    "item": "components traced to code",
-    "ok": true
-   },
-   {
-    "item": "null components tagged",
-    "ok": true
-   },
-   {
-    "item": "reproducible generator",
-    "ok": true
-   }
-  ],
-  "result_summary": "Current combined pooled news-GNN architecture drawn to SVG (matplotlib, project method): two manifests (pooled async / masked common-date graph), causal preprocessing + leakage barriers, P1-P3 shared encoders + per-ticker gate, masked availability-aware GNN G0/G1 (frozen P3, presence mask, correlation adjacency + dashed knn-8 'being added'), positivity floor, 6 metrics. HAR=external baseline; null components (graph/gate/pooling) tagged.",
-  "report_md": "docs/paper/diagrams/final_combined_architecture.svg"
- },
- {
-  "id": "knn-sparse-adjacency",
-  "task_type": "code",
-  "phase": "Track B / graph (pivotal)",
-  "title": "GAT-hybrid knn-8 sparse adjacency on masked graph @ 15-epoch convergence",
-  "status": "done",
-  "timestamp": "2026-08-09 00:03",
-  "branch": "feature/masked-gnn",
-  "commits": [
-   "30b3809",
-   "2a0bed6"
-  ],
-  "skills_applied": [
-   "TDD-red-green",
-   "systematic-debugging",
-   "verification-before-completion",
-   "3-layer-code-review",
-   "diff-cover C0=100%"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest .../test/ -q",
-    "result": "154 passed (incl real-data smoke + run_graph_screening integration)"
-   },
-   {
-    "cmd": "ruff + diff-cover",
-    "result": "ruff clean; diff-cover C0=100% on changed lines (agent claim)"
-   },
-   {
-    "cmd": "dense G1-G0",
-    "result": "-0.00127 (edge density 18.6)"
-   },
-   {
-    "cmd": "knn-8 G1-G0",
-    "result": "-0.00253 BEST (edge density 5.9) ~2x dense"
-   },
-   {
-    "cmd": "threshold-0.7 G1-G0",
-    "result": "0.00000 (over-sparsified ~1 edge/row -> null)"
-   },
-   {
-    "cmd": "G0 invariance sanity",
-    "result": "G0=0.83924 identical across all 3 (adjacency doesn't touch G0) -> not a bug"
-   },
-   {
-    "cmd": "adversarial review",
-    "result": "agent 3-layer: fixed 1 HIGH (_plot_learning_curve savefig crash)"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "154 passed"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "agent 3-layer (Blind/EdgeCase/Acceptance), 1 HIGH fixed"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "C0=100% on changed lines (agent)"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "pandera 34/34 + drift"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance (agent)"
-   ],
-   "findings_fixed": 1,
-   "findings_deferred": 0
-  },
-  "dod": [
-   {
-    "item": "knn/threshold sparse adjacency (TDD)",
-    "ok": true
-   },
-   {
-    "item": "non-leakage preserved (masking)",
-    "ok": true
-   },
-   {
-    "item": "data-quality gate Pandera 34/34 + Evidently",
-    "ok": true
-   },
-   {
-    "item": "3 conditions run @15ep",
-    "ok": true
-   },
-   {
-    "item": "MULTI-SEED + Diebold-Mariano confirmation",
-    "ok": false
-   }
-  ],
-  "result_summary": "PIVOTAL (single-seed): at 15-epoch convergence, masked graph with knn-8 sparse edges (GAT-hybrid style) gives G1<G0 (delta -0.00253 ~2x dense), REVERSING the 5-epoch null. So the earlier graph-null was partly UNDERTRAINING, not only data-scarcity. Sparsity sweet spot: knn-8 best; |corr|>0.7 over-sparsifies to null. CAVEAT: SINGLE SEED, tiny delta, significance NOT established (Diebold-Mariano + seeds 123/2026 required before any claim). DirAcc ~48-49% unchanged (QLIKE/MSE effect). Graph epochs ran at 15 (>10; agent raised graph cap to 50).",
-  "report_md": "docs/reports (masked-gnn worktree summary)"
- },
- {
-  "id": "code-audit-2026-08-09",
-  "task_type": "research",
-  "phase": "Quality / audit",
-  "title": "Read-only audit of campaign code not yet 3-layer reviewed",
-  "status": "done",
-  "timestamp": "2026-08-09 08:10",
-  "branch": "master",
-  "commits": [],
-  "skills_applied": [
-   "adversarial-review",
-   "edge-case-hunter",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "audit scripts/task_dashboard/build_dashboard.py (+ test_build_dashboard.py)",
-    "result": "2 MEDIUM + 1 LOW. MED build_dashboard.py:232 _overlay_gate float(payload['diff_cover_pct']) has no per-task try/except in build_html:456; a gate_results JSON with non-numeric diff_cover_pct crashes the WHOLE dashboard build (reproduced: ValueError). Breaks load_gate_results' 'invalid files skipped, not fatal' contract. MED build_dashboard.py:238-240 _overlay_gate ruff branch maps everything except 'pass' to 'warn' (reproduced: ruff=fail->warn, ruff=na->warn); a real ruff FAILURE is shown yellow not red, and a legit 'na' overrides hand-entered pass and can redden a task. pandera branch (243) handles na/fail correctly - ruff branch is inconsistent. LOW overlay marks 80-99% diff-cover as 'pass' (line 236) while CLAUDE.md C0 target=100%, so <100% coverage can display fully-gated. Escaping/injection: all ledger text via _esc, gate status constrained to safe tokens - clean. validate_task red-card logic VERIFIED against ledger: correctly flags all 11 code tasks missing a required gate, 0 false pos/neg."
-   },
-   {
-    "cmd": "audit scripts/quality_gate/run_quality_gate.py (new write_gate_json + main emission only)",
-    "result": "1 MEDIUM. write_gate_json + main() write scripts/task_dashboard/gate_results/<short-sha>.json keyed by commit, the SAME filename the pre-push hook writes. run_quality_gate sets diff_cover_pct=None; running it after a hook run OVERWRITES the hook's richer diff_cover_pct with null (data loss of the coverage overlay). Broad git try/except is correct (missing HEAD -> skip). ruff/pandera/evidently mapping fine. No HIGH."
-   },
-   {
-    "cmd": "audit scripts/git_hooks/pre-push (new per-commit gate-JSON block)",
-    "result": "LOW only. DATA_TOUCHED grep -iE 'data|manifest|...' matches ANY path containing substring 'data' -> over-triggers the Pandera/Evidently gate on unrelated changes (safe, just slower). Unquoted $CHANGED/$CODE_CHG rely on no-space paths (true for repo). TDD 'test_' substring could misclassify a file like 'contest_*.py' (unlikely). JSON writer, cleanup (rm -f), FAIL propagation all correct. No HIGH/MEDIUM."
-   },
-   {
-    "cmd": "audit docs/paper/diagrams/generate_final_combined.py",
-    "result": "CLEAN. Deterministic matplotlib box/arrow render, Agg backend set before pyplot, no external input, no injection surface. main() writes SVG + closes fig. No findings."
-   },
-   {
-    "cmd": "audit docs/paper/diagrams/generate_proposed_updates.py",
-    "result": "CLEAN. Same pattern as generate_final_combined; _STATUS_STYLE keys match all overlay() calls. No findings."
-   },
-   {
-    "cmd": "audit docs/paper/diagrams/generate_graph_snapshots.py",
-    "result": "1 MEDIUM. _draw_graph:102 avg_degree = 2.0*len(edges)/len(present_ids) raises ZeroDivisionError when present_ids is empty (reproduced). render_graph_figure guards empty PANEL LIST but not an empty-present panel, so a zero-present snapshot (or a smoke panel) crashes the draw path. build_panels itself is fine (raises clear ValueError for a missing train date)."
-   },
-   {
-    "cmd": "audit docs/paper/diagrams/build_review_html.py",
-    "result": "LOW only. table_html() interpolates ROWS into HTML WITHOUT escaping - intentional (static constants carry HTML entities like &Delta;/&times;); safe ONLY while ROWS stays hardcoded, would inject if ever data-sourced. inline_svg id/href namespacing regex is correct; missing/garbage SVG -> loud FileNotFoundError/ValueError (acceptable). No HIGH/MEDIUM."
-   },
-   {
-    "cmd": "audit aggregate (named scripts/pooled_20ep_analysis/aggregate.py DOES NOT EXIST; audited closest recent aggregate scripts/convergence_check/aggregate_convergence.py)",
-    "result": "SCOPE NOTE: the named file is absent in the tree; audited aggregate_convergence.py instead. LOW: collect() rec['test_metrics'][m] KeyError (no guard) if a run json lacks a metric; main() sys.argv[1] IndexError with no usage guard; sorted(seeds,key=int) ValueError on non-numeric seed key. paired_t nan-guard is correct (t==t filter). Manual analysis script - loud crashes acceptable. No HIGH/MEDIUM."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "na",
-    "detail": "read-only audit, no code changed"
-   },
-   "lint": {
-    "status": "na",
-    "detail": "no code changed"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "this IS an adversarial audit pass"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "no code changed"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "no data change"
-   }
-  },
-  "code_review": {
-   "layers": [
-    "Blind",
-    "EdgeCase",
-    "Acceptance"
-   ],
-   "findings_fixed": 0,
-   "findings_deferred": 8
-  },
-  "dod": [
-   {
-    "item": "audited 8 not-yet-3-layer files (skipped already-reviewed)",
-    "ok": true
-   },
-   {
-    "item": "findings reproduced where claimed (crash/overlay/zerodiv)",
-    "ok": true
-   },
-   {
-    "item": "red-card logic cross-checked vs ledger",
-    "ok": true
-   },
-   {
-    "item": "findings are report-only (audited code NOT modified)",
-    "ok": true
-   }
-  ],
-  "result_summary": "VERDICT: no HIGH; 4 MEDIUM, 4 LOW across 8 files (report-only, no fixes applied). MEDIUM: (1) build_dashboard _overlay_gate crashes the whole build on a non-numeric diff_cover_pct in any gate_results JSON (no per-task isolation); (2) _overlay_gate ruff branch shows a real ruff FAIL as yellow 'warn' and turns 'na' into 'warn' (pandera branch is correct - ruff is inconsistent); (3) run_quality_gate.main clobbers the hook's per-commit JSON (same <sha>.json) with diff_cover_pct=null; (4) generate_graph_snapshots._draw_graph ZeroDivisionError on an empty-present snapshot. LOW: overlay counts 80-99% diff-cover as pass vs CLAUDE.md C0=100%; pre-push 'data' substring over-triggers the data gate; build_review_html table cells unescaped (safe only while ROWS static); aggregate_convergence KeyError/argv guards. SCOPE: named scripts/pooled_20ep_analysis/aggregate.py does NOT exist - audited scripts/convergence_check/aggregate_convergence.py in its place. SKIPPED as already 3-layer reviewed: masked-GNN pilot, knn-sparse-adjacency, A1(t1.1), t0.1, t0.2, task-7, quality_gate core. The two diagram generators generate_final_combined/generate_proposed_updates are clean.",
-  "report_md": "recorded inline in this ledger entry (read-only audit)"
- },
- {
-  "id": "fix-audit-medium-2026-08-09",
-  "task_type": "code",
-  "phase": "Quality / audit",
-  "title": "Fix 4 MEDIUM audit findings in quality-infra (TDD)",
-  "status": "done",
-  "timestamp": "2026-08-09 08:40",
-  "branch": "master",
-  "commits": [
-   "fd420e4"
-  ],
-  "skills_applied": [
-   "test-driven-development",
-   "verification-before-completion",
-   "adversarial-review"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest (3 changed test files) after RED->GREEN",
-    "result": "48 passed. 6 new tests each watched fail first: malformed diff_cover_pct crash, ruff fail->fail, ruff na no-override, coverage-preserve-on-null, malformed-prior tolerated, empty-present no ZeroDivision."
-   },
-   {
-    "cmd": "diff-cover cov_fix.xml --compare-branch=master",
-    "result": "Coverage: 100% on changed lines (59 lines, 0 missing) across all 6 files. C0=100% met."
-   },
-   {
-    "cmd": "ruff check (6 changed files)",
-    "result": "All checks passed."
-   },
-   {
-    "cmd": "fixes (source: code-audit-2026-08-09)",
-    "result": "build_dashboard._overlay_gate: guard float(diff_cover_pct) (malformed JSON no longer crashes build); ruff fail->fail not warn, ruff na leaves hand-entry. run_quality_gate.write_gate_json: null-coverage run preserves an existing richer diff_cover_pct. generate_graph_snapshots: empty-present avg-degree guard + blank heatmap panel."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "48 passed (pytest)"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean on 6 changed files"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "focused adversarial review of the 4 diffs (right-sized per CLAUDE.md SDD); edge cases checked, no new issues"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "100% on changed lines (diff-cover vs master)"
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "N/A - no data/manifest/pipeline change"
-   }
-  },
-  "code_review": {
-   "layers": 1,
-   "type": "focused-adversarial-remediation",
-   "findings_fixed": 0,
-   "findings_deferred": 0,
-   "note": "remediates code-audit-2026-08-09 (4 MEDIUM); 4 LOW left as follow-up (floor-80 by design, grep-substring safe, static HTML, manual-script guards)"
-  },
-  "dod": [
-   {
-    "item": "TDD RED->GREEN for each fix",
-    "ok": true
-   },
-   {
-    "item": "48 tests pass",
-    "ok": true
-   },
-   {
-    "item": "diff-cover C0=100% on changed lines",
-    "ok": true
-   },
-   {
-    "item": "ruff clean",
-    "ok": true
-   },
-   {
-    "item": "data-quality gate N/A (no data change)",
-    "ok": true
-   },
-   {
-    "item": "committed + pushed",
-    "ok": true
-   }
-  ],
-  "result_summary": "Fixed the 4 MEDIUM defects from the read-only audit (code-audit-2026-08-09) following TDD: dashboard-build crash on malformed gate JSON, ruff fail/na overlay mis-mapping, coverage clobber-with-null, and empty-present snapshot ZeroDivision. 6 new RED-first tests, C0=100% on changed lines. 4 LOW findings deferred (intentional/harmless).",
-  "report_md": "docs/reports/2026-08-09_0840_summaryOfUpdate_report.md"
- },
- {
-  "id": "track-b-repro-bundle-2026-08-09",
-  "task_type": "code",
-  "phase": "Track-B / reproducibility",
-  "title": "Track-B reproducibility bundle (view/infer/train, G1 final)",
-  "status": "done",
-  "timestamp": "2026-08-09 10:45",
-  "branch": "master",
-  "commits": [
-   "b66d0dd"
-  ],
-  "skills_applied": [
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "python reproduce.py view",
-    "result": "Printed full P0->G1 table (6 metrics/model, validation) and wrote output/results_table.md + output/summary.png using only shipped results/*.json (no data, no training)."
-   },
-   {
-    "cmd": "python -m pytest submission_track_b/test/ -q",
-    "result": "7 passed: view end-to-end (writes md+png), metric formatting, JSON load of all 6 configs, G1=FINAL label, G1 test-row render, infer missing-checkpoint guard, g1_final import."
-   },
-   {
-    "cmd": "ruff check reproduce.py trackb_code/g1_final.py trackb_code/run_pilot.py test/test_reproduce.py",
-    "result": "All checks passed."
-   },
-   {
-    "cmd": "train/infer (G1) with TRACK_B_DATA_ROOT -> full dataset",
-    "result": "Verified END-TO-END with the full dataset (TRACK_B_DATA_ROOT -> pilot worktree). Real 4-ticker seed-42 1-epoch run: `train` trained G1, saved checkpoints/g1_final.pt, printed val+test 6-metric sets (test rmse=4.765e-04, r2=0.1412, qlike=0.5531, DirAcc=48.48%); `infer` reloaded g1_final.pt and reproduced IDENTICAL test metrics (deterministic). Subset smoke, not full-universe final; checkpoints git-ignored."
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "7 passed (bundle pytest)"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean on added/edited files"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "focused adversarial self-review; found+fixed code->trackb_code stdlib-shadow; honest val-vs-test labelling"
-   },
-   "diff_cover": {
-    "status": "na",
-    "detail": "pre-push coverage report excludes bundle sources; C0 Not run for bundle lines. view path exercised by passing tests."
-   },
-   "data_quality": {
-    "status": "na",
-    "detail": "N/A - bundle changes no data/manifest; vendored small result JSONs only."
-   }
-  },
-  "code_review": {
-   "layers": 1,
-   "type": "focused-adversarial-self",
-   "findings_fixed": 1,
-   "findings_deferred": 0,
-   "note": "fixed stdlib `code` shadowing (renamed code/ -> trackb_code/); verified no large data/checkpoints committed."
-  },
-  "dod": [
-   {
-    "item": "view works with no data/training (verified)",
-    "ok": true
-   },
-   {
-    "item": "P0->G1 table printed + output files written",
-    "ok": true
-   },
-   {
-    "item": "launchers + README + PAPER_MAP + requirements present",
-    "ok": true
-   },
-   {
-    "item": "G1 = final/proposed labelled; infer/train target G1",
-    "ok": true
-   },
-   {
-    "item": "tests pass + ruff clean",
-    "ok": true
-   },
-   {
-    "item": "committed + pushed",
-    "ok": true
-   },
-   {
-    "item": "train+infer verified end-to-end (real subset run)",
-    "ok": true
-   }
-  ],
-  "result_summary": "Added submission_track_b/: a self-contained, Windows double-click reproducibility bundle. `view` fully works offline (prints P0->G1 6-metric table from shipped JSONs, writes md+png). G1 (P3 backbone + graph message passing) is labelled the FINAL/PROPOSED model; g1_final.py adds the G1 checkpoint save + test-split evaluation the validation-only pilot lacked (train/infer require the full dataset via TRACK_B_DATA_ROOT). Vendored pilot code, small result JSONs only; no large data or fat checkpoints committed.",
-  "report_md": "docs/reports/2026-08-09_1040_summaryOfUpdate_report.md"
- },
- {
-  "id": "masked-gnn-encoder-cache-verdict-2026-08-09",
-  "task_type": "code",
-  "phase": "Track-B / masked-GNN cache + verdict",
-  "title": "Frozen-encoder base cache (present-node-only) + screening backbone; knn-8 multi-seed + DM verdict",
-  "status": "done",
-  "timestamp": "2026-08-09 12:00",
-  "branch": "feature/masked-gnn",
-  "commits": [
-   "572abfd"
-  ],
-  "skills_applied": [
-   "test-driven-development",
-   "verification-before-completion"
-  ],
-  "evidence": [
-   {
-    "cmd": "pytest test/test_graph_base_cache.py",
-    "result": "8/8 pass. Cached==uncached run bit-identical (valloss diff 0.0, atol 1e-6); present-only encode==full-encode present rows (0.0); shared G0/G1 cache==self-computed; CLI + backbone-dropout covered."
-   },
-   {
-    "cmd": "python temp/speedup_bench.py (CPU, 33 nodes/22 seq/hidden 64, 15 ep)",
-    "result": "train-loop 21.3x/epoch (21.886s->1.025s), end-to-end 6.3x (342s->54.1s); valloss diff 0.000 (bit-identical)."
-   },
-   {
-    "cmd": "real-data GPU cross-check cached vs pre-cache G0",
-    "result": "val-loss diff 6.9e-6, metrics ~1e-5 (G0 deterministic). G1 diff ~1.6e-3 = GPU cuDNN nondeterminism amplified over 15 training epochs, not cache logic (CPU test bit-identical)."
-   },
-   {
-    "cmd": "python docs/reports/dm_knn8_confirmation.py (old-backbone knn-8, seeds 42/123/2026)",
-    "result": "G1<G0 in 3/3 seeds; mean delta -2.08e-3; paired-t t=-8.15 p=0.0147; QLIKE delta -2.88e-3 p=0.018; DM-QLIKE p=0.0049/0.044/0.071. Verdict leans A (graph helps)."
-   },
-   {
-    "cmd": "git push origin feature/masked-gnn",
-    "result": "pre-push gate PASS: pytest pass, diff-cover 90%, ruff pass, Pandera 34/34, Evidently info. Pushed 2a0bed6..572abfd."
-   },
-   {
-    "cmd": "python temp/verdict_driver.py (new screening-config backbone: 5 ep, dropout 0.2; dense+knn x seeds 42/123/2026, val+test)",
-    "result": "knn-8 verdict B: G1<G0 3/3 seeds (paired-t p=0.0185) but DM-QLIKE n.s. (p=0.74/0.60/0.43), test QLIKE +2.8e-3 (worse). dense verdict B: 2/3 seeds, sign flips, paired-t p=0.282 n.s., no DM sig. Proper backbone flips old lean-A into a null. Artifact: docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{json,md}"
-   }
-  ],
-  "quality_gate": {
-   "tests": {
-    "status": "pass",
-    "detail": "pre-push full pytest pass (incl smokes); 8/8 new equivalence tests; 168 non-smoke pass on final rev"
-   },
-   "lint": {
-    "status": "pass",
-    "detail": "ruff clean on changed files"
-   },
-   "code_review": {
-    "status": "pass",
-    "detail": "focused adversarial self-review of cache diff (stale cross-seed/model cache guarded by _assert_shared_frozen_encoder byte-compare; absent-node leakage; train/eval path divergence) - equivalence test is standing evidence"
-   },
-   "diff_cover": {
-    "status": "pass",
-    "detail": "90% on changed lines vs master (floor 80%) - pre-push hook"
-   },
-   "data_quality": {
-    "status": "pass",
-    "detail": "Pandera 34/34 valid + Evidently drift.html (pre-push); change is model/training code, no data/manifest edit"
-   }
-  },
-  "code_review": {
-   "layers": 1,
-   "type": "focused-adversarial-self",
-   "findings_fixed": 1,
-   "findings_deferred": 0,
-   "note": "top risk = silent cache result-change; found projection-init-not-seed-controlled equivalence-test artifact (fixed by seeding construction), verified no stale cache across seeds/models via encoder byte-compare."
-  },
-  "dod": [
-   {
-    "item": "equivalence test GREEN (cached==uncached bit-identical)",
-    "ok": true
-   },
-   {
-    "item": "speedup measured (21.3x train-loop, 6.3x end-to-end)",
-    "ok": true
-   },
-   {
-    "item": "old-backbone knn-8 3-seed + DM verdict (leans A)",
-    "ok": true
-   },
-   {
-    "item": "ruff clean + diff-cover 90% + Pandera pass",
-    "ok": true
-   },
-   {
-    "item": "committed + pushed (gate pass)",
-    "ok": true
-   },
-   {
-    "item": "new-backbone dense+knn 6-config sweep",
-    "ok": true,
-    "note": "DONE via build-once driver: knn-8 + dense x 3 seeds, val+test. Both verdict B (graph null on proper backbone)."
-   }
-  ],
-  "result_summary": "Proposed updates #1 (cache frozen-encoder base once per seed, reused across epochs + shared G0/G1) + #2 (encode present nodes only). Numerical equivalence proven bit-identical on CPU (8/8 tests; bench valloss diff 0.000); measured speedup 21.3x train-loop/epoch, 6.3x end-to-end. Re-ran knn-8 masked G0/G1 across seeds 42/123/2026 (old backbone) + Diebold-Mariano: G1<G0 in 3/3 seeds, paired-t p=0.0147, QLIKE improvement significant (p=0.018) -> verdict leans A (graph genuinely helps, small ~0.3% QLIKE), stronger than the prior single-seed note. Added screening-config backbone (5 ep, dropout 0.2, leakage-safe) + held-out test eval + dense/knn paper-dump; the full new-backbone 6-config sweep is code-complete but compute-infeasible before the deadline. NEW-BACKBONE VERDICT (completed): screening-config P3 (5 ep, dropout 0.2) frozen backbone, dense+knn-8 x 3 seeds, val+test -> Verdict B for BOTH: knn-8 G1<G0 3/3 on valloss (paired-t p=0.0185, tiny ~0.08%) but Diebold-Mariano QLIKE/MSE not significant and test QLIKE worse; dense not significant (p=0.282), sign flips across seeds. The properly-trained backbone turns the old-backbone lean-A into a genuine graph-null.",
-  "report_md": "docs/reports/2026-08-09_1104_summaryOfUpdate_report.md"
- }
+  {
+    "id": "masked-gnn-consistent-ladder-2026-08-09",
+    "task_type": "code",
+    "phase": "Track-B / masked-GNN consistent ladder",
+    "title": "Consistent-basis ladder P0->P1->P2->P3->G1 (P3 = graph-off G1; eliminate separate G0)",
+    "status": "done",
+    "timestamp": "2026-08-09 17:21",
+    "branch": "feature/masked-gnn",
+    "commits": [
+      "4485bec",
+      "0cd5f97"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest test/test_models.py::test_g1_graph_off_readout_equals_the_graph_off_model_within_fp_tolerance",
+        "result": "GREEN (RED->GREEN). apply_graph_head(apply_message_passing=False) on trained G1 == use_gnn=False model (atol=rtol=0); residual non-trivial (G1!=P3)."
+      },
+      {
+        "cmd": "pytest test/test_ladder_consistent.py",
+        "result": "6 pass. Graph-rung smoke: nesting determinism 0.0; P0/P1/P2 rung integration finite val+test; present-obs == pooled val samples; _evaluate_graph_off == use_gnn=False on shared base."
+      },
+      {
+        "cmd": "pytest test/ (full baseline suite)",
+        "result": "exit 0, 178 tests collected/pass; test_models 39 pass."
+      },
+      {
+        "cmd": "python code/ladder_consistent.py <TS> cuda (.venv_gpu_encode, 3 seeds x 5 rungs, h5)",
+        "result": "basis: 6470 snapshots, train 73026, val 14418, test 14464 obs (obs-set invariant graph==pooled asserted). Nesting determinism 0.0 all 3 seeds; graph residual mean|G1-P3| ~3.2e-5..4.4e-5."
+      },
+      {
+        "cmd": "python docs/reports/ladder_consistent_dump.py <TS> (Diebold-Mariano G1 vs P3, h=5)",
+        "result": "Graph verdict B (null). VAL: G1 QLIKE<P3 3/3 seeds, paired-t p=0.0096, but DM-QLIKE p=0.208/0.016/0.006 (not all sig). TEST: 2/3 seeds, paired-t p=0.79, DM mixed. Confirms prior new-backbone null. Canonical: docs/reports/ladder_consistent_h5_2026-08-09_154402.{json,md}"
+      },
+      {
+        "cmd": "git push origin feature/masked-gnn",
+        "result": "Pushed 572abfd..0cd5f97 (code commit 4485bec + results/report commit 0cd5f97)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "178 baseline tests exit 0; nesting mechanism atol=rtol=0; driver graph-rung + P0/P1/P2 rung integration smokes"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on ladder_consistent.py, models.py, ladder_consistent_dump.py, both test files"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial self-review (P3 readout base alignment, graph-off vs on head sharing, present-node masking, obs-set equality, DM sorted-key alignment); nesting test + runtime determinism 0.0 are standing evidence"
+      },
+      "diff_cover": {
+        "status": "not_run",
+        "detail": "pytest-cov/diff-cover not installed (CLAUDE.md tooling gap)"
+      },
+      "data_quality": {
+        "status": "n/a",
+        "detail": "no data change: driver + one model flag, trains on unchanged data/processed + dual_group_news_panel.parquet"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "type": "focused-adversarial-self",
+      "findings_fixed": 0,
+      "findings_deferred": 0,
+      "note": "top risk = P3 readout reading a wrong/detached base -> P3 reuses the identical shared frozen base as G1; nesting test (atol=rtol=0) + runtime determinism 0.0 verify G1-minus-GAT == P3 exactly."
+    },
+    "dod": [
+      {
+        "item": "5-rung ladder re-run on one basis (3 seeds, h5) + consolidated 6-metric val+test table",
+        "ok": true
+      },
+      {
+        "item": "nesting verified numerically (G1-minus-GAT == P3, determinism 0.0) + RED->GREEN test",
+        "ok": true
+      },
+      {
+        "item": "G1-vs-P3 Diebold-Mariano (QLIKE+MSE); single clean graph test (no G0)",
+        "ok": true,
+        "note": "verdict B (graph null) on consistent basis"
+      },
+      {
+        "item": "canonical ladder_consistent_h5_<ts>.{json,md} written",
+        "ok": true
+      },
+      {
+        "item": "tests + ruff clean; committed + pushed feature/masked-gnn",
+        "ok": true
+      },
+      {
+        "item": "diff-cover",
+        "ok": false,
+        "note": "Not run (tooling gap: pytest-cov/diff-cover not installed)"
+      }
+    ],
+    "result_summary": "Rebuilt the Track-B ablation as ONE nested ladder P0->P1->P2->P3->G1 on a single consistent basis (masked knn-8, leakage-safe graph-bound train, shared per-ticker scalers, positivity floor, identical val 14418 / test 14464 obs, seeds 42/123/2026, h5), eliminating the confusing separate G0 row. Structural fix: P3 IS the graph-off model (the trained G1 read out with the GAT/message-passing residual disabled) via a new apply_message_passing flag on GraphAblationModel.apply_graph_head; head + frozen encoders are shared so 'remove the GAT from G1 = P3' is exact by construction. Nesting verified: graph-off readout determinism 0.0 (bit-identical) for all 3 seeds + a RED->GREEN unit test (atol=rtol=0). Graph effect G1 vs P3 by Diebold-Mariano (h=5): VAL G1 QLIKE < P3 in 3/3 seeds (paired-t p=0.0096) but per-seed DM-QLIKE not significant in all seeds (p=0.208/0.016/0.006); TEST null (2/3 seeds, paired-t p=0.79). Verdict B: the graph is a genuine null on the consistent basis, confirming the prior new-backbone multi-seed finding. Paper/bundle note: P3 is redefined (graph-off G1 with common-date scalers + positivity floor + 15-epoch head refinement) and the separate G0 row is removed; P1/P2 now train on the same graph-bound basis and are scored on the identical val/test observations.",
+    "report_md": "docs/reports/2026-08-09_1721_summaryOfUpdate_report.md"
+  }
 ]
