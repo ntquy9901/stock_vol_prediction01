@@ -1,0 +1,27 @@
+{
+  "id": "beat-har-solution-sweep-2026-08-10",
+  "task_type": "code",
+  "phase": "Track-B / beat-HAR solution sweep (C1-C6)",
+  "title": "Beat-HAR sweep: QLIKE loss + spillover/learned adjacency + HAR-residual, 5 configs x 3 seeds x 20 epochs vs HAR",
+  "status": "done",
+  "timestamp": "2026-08-10 04:12",
+  "branch": "feature/beat-har-sweep",
+  "commits": ["82fbd86", "82bb2b9", "4e9c3e2", "6a416c6", "94c20b1", "52438f9", "c2b2c41"],
+  "skills_applied": ["test-driven-development", "verification-before-completion"],
+  "quality_gate": {
+    "tests": {"status": "pass", "detail": "33 unit + 6 smoke tests green (baselines/2026-08-10_beat_har_sweep/test); TDD RED->GREEN on QLIKE loss floor bug, spillover, adjacency invariants, analyze P0 key-parse fix"},
+    "lint": {"status": "pass", "detail": "ruff clean on baselines/2026-08-10_beat_har_sweep/"},
+    "smoke": {"status": "pass", "detail": "6 @smoke cases boot the graph-head training/eval for C1/C2/C3/C5/C6 through the real message passing; full 5-config sweep ran end-to-end on GPU"},
+    "code_review": {"status": "pass", "detail": "adversarial self-review code_review/code_review_2026-08-10.md; QLIKE-floor HIGH fixed, leakage invariants verified (train-only VAR/embeddings), self-loop invariant guarded; no open HIGH/MEDIUM"},
+    "data_quality": {"status": "n/a", "detail": "no data/manifest change; reuses frozen fair basis. Pre-push gate runs Pandera 34/34 + Evidently drift."}
+  },
+  "result_summary": "Documented NULL: no config DM-significantly beats P0 pooled-HAR anchor (test QLIKE 0.5676). C2 (HAR+additive graph residual) statistically ties P0 on QLIKE (paired-t p=0.562) and RMSE; C1 (QLIKE-loss GAT+news) ties P0 on RMSE, worse on QLIKE; C3 (spillover), C5 (spillover+omit-self k-sweep), C6 (learned adjacency) worse on QLIKE. C4 (HAR-RV-X) deferred (needs 6-feature backbone via pilot preprocessor change), C7 (news-as-edge) infeasible (per-ticker panel, no multi-ticker structure). 5 configs x 3 seeds x 20 epochs on the consistent fair basis; leakage-safe.",
+  "report_md": "docs/reports/2026-08-10_0412_beat_har_sweep_results.md",
+  "code_review": "baselines/2026-08-10_beat_har_sweep/code_review/code_review_2026-08-10.md",
+  "dod": {"tests": true, "lint": true, "smoke": true, "code_review": true, "report": true, "pushed": "pending (branch feature/beat-har-sweep)"},
+  "evidence": [
+    "results/beat_har_{C1,C2,C3,C5,C6}_2026-08-10_0130/seed*/results.json",
+    "results/beat_har_sweep_2026-08-10_0130/analysis.json",
+    "results/beat_har_sweep_2026-08-10_0130/report_summary.json"
+  ]
+}
