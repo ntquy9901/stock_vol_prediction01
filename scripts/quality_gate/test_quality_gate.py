@@ -140,6 +140,115 @@ def test_validate_data_flags_bad_news_norm(tmp_path: Path) -> None:
     assert news[1] == ds.INVALID
 
 
+def test_processed_read_failure_is_invalid(tmp_path: Path) -> None:
+    # A path that pandas cannot read as CSV -> INVALID (not a crash).
+    missing = tmp_path / "nope.csv"
+    _, status, detail = ds._check_processed_file(missing)
+    assert status == ds.INVALID
+    assert "read failed" in detail
+
+
+def test_processed_schema_fails_unparseable_dates(tmp_path: Path) -> None:
+    df = pd.DataFrame(
+        {"date": ["not-a-date", "also-bad"], "parkinson_volatility": [0.01, 0.02]}
+    )
+    csv = tmp_path / "BADDATE_processed.csv"
+    _write_processed(csv, df)
+    _, status, detail = ds._check_processed_file(csv)
+    assert status == ds.INVALID
+    assert "unparseable" in detail
+
+
+def test_processed_schema_fails_duplicate_dates(tmp_path: Path) -> None:
+    df = pd.DataFrame(
+        {"date": ["2020-01-01", "2020-01-01"], "parkinson_volatility": [0.01, 0.02]}
+    )
+    csv = tmp_path / "DUP_processed.csv"
+    _write_processed(csv, df)
+    _, status, detail = ds._check_processed_file(csv)
+    assert status == ds.INVALID
+    assert "duplicate" in detail
+
+
+def test_processed_schema_fails_all_nan_column(tmp_path: Path) -> None:
+    df = pd.DataFrame(
+        {
+            "date": ["2020-01-01", "2020-01-02"],
+            "parkinson_volatility": [0.01, 0.02],
+            "extra": [float("nan"), float("nan")],  # all-NaN column
+        }
+    )
+    csv = tmp_path / "ALLNAN_processed.csv"
+    _write_processed(csv, df)
+    _, status, detail = ds._check_processed_file(csv)
+    assert status == ds.INVALID
+    assert "all-NaN" in detail
+
+
+def test_news_panel_read_failure_is_invalid(tmp_path: Path) -> None:
+    bad = tmp_path / "panel.parquet"
+    bad.write_bytes(b"not a parquet file")
+    _, status, detail = ds._check_news_panel(bad)
+    assert status == ds.INVALID
+    assert "read failed" in detail
+
+
+def test_news_panel_schema_violation_missing_ticker(tmp_path: Path) -> None:
+    panel = tmp_path / "panel.parquet"
+    pd.DataFrame(
+        {"date": pd.to_datetime(["2020-01-01"]), "kq_emb_0": [0.1]}
+    ).to_parquet(panel)
+    _, status, detail = ds._check_news_panel(panel)
+    assert status == ds.INVALID
+    assert "schema violations" in detail
+
+
+def test_news_panel_date_dtype_not_datetime(tmp_path: Path) -> None:
+    panel = tmp_path / "panel.parquet"
+    pd.DataFrame({"ticker": ["AAA"], "date": ["2020-01-01"]}).to_parquet(panel)
+    _, status, detail = ds._check_news_panel(panel)
+    assert status == ds.INVALID
+    assert "date dtype" in detail
+
+
+def test_news_panel_all_nan_ticker_is_invalid(tmp_path: Path) -> None:
+    # An all-NaN required column is rejected. The schema's nullable=False catches
+    # it first (line 128), so line 148's later all-NaN guard is defensive
+    # redundancy; either way the panel is INVALID, which is the contract.
+    panel = tmp_path / "panel.parquet"
+    pd.DataFrame(
+        {
+            "ticker": pd.Series([None, None], dtype="string"),
+            "date": pd.to_datetime(["2020-01-01", "2020-01-02"]),
+        }
+    ).to_parquet(panel)
+    _, status, _ = ds._check_news_panel(panel)
+    assert status == ds.INVALID
+
+
+def test_news_panel_nonmonotonic_dates_per_ticker(tmp_path: Path) -> None:
+    panel = tmp_path / "panel.parquet"
+    pd.DataFrame(
+        {
+            "ticker": ["AAA", "AAA"],
+            "date": pd.to_datetime(["2020-01-03", "2020-01-01"]),
+        }
+    ).to_parquet(panel)
+    _, status, detail = ds._check_news_panel(panel)
+    assert status == ds.INVALID
+    assert "monotonic" in detail
+
+
+def test_validate_data_empty_dir_is_missing(tmp_path: Path) -> None:
+    empty = tmp_path / "processed"
+    empty.mkdir()
+    missing_panel = tmp_path / "nope.parquet"
+    results = ds.validate_data(processed_dir=empty, news_panel=missing_panel)
+    proc = [r for r in results if r[0] == "processed_dir"][0]
+    assert proc[1] == ds.MISSING
+    assert "no per-ticker" in proc[2]
+
+
 # ---------------------------------------------------------------------------
 # Orchestrator tests
 # ---------------------------------------------------------------------------
@@ -370,3 +479,292 @@ def test_check_lint_crash_is_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     result = rqg.check_lint()
     # A crashing/timing-out ruff is a HARD FAIL, not a silent SKIP.
     assert result.status == rqg.FAIL
+
+
+# ---------------------------------------------------------------------------
+# Runner-function coverage (I/O-runner tests per CLAUDE.md testing rules)
+# ---------------------------------------------------------------------------
+
+
+import types  # noqa: E402
+
+
+def _proc(returncode: int = 0, stdout: str = "", stderr: str = ""):
+    return types.SimpleNamespace(returncode=returncode, stdout=stdout, stderr=stderr)
+
+
+def test_run_invokes_subprocess() -> None:
+    # Exercise the real _run wrapper on a harmless, fast command.
+    proc = rqg._run([sys.executable, "-c", "print('ok')"])
+    assert proc.returncode == 0
+    assert "ok" in proc.stdout
+
+
+def test_check_lint_skips_when_ruff_missing(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg.shutil, "which", lambda _: None)
+    result = rqg.check_lint()
+    assert result.status == rqg.SKIPPED
+
+
+def test_check_lint_passes_clean(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg.shutil, "which", lambda _: "ruff")
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: _proc(0))
+    assert rqg.check_lint().status == rqg.PASS
+
+
+def test_check_lint_reports_found_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg.shutil, "which", lambda _: "ruff")
+    out = "foo.py:1:1 E501 line too long\nFound 3 errors."
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: _proc(1, stdout=out))
+    result = rqg.check_lint()
+    assert result.status == rqg.FAIL
+    assert "Found 3 errors" in result.detail
+
+
+def test_check_lint_fail_without_found_line(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg.shutil, "which", lambda _: "ruff")
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: _proc(2, stderr="boom"))
+    result = rqg.check_lint()
+    assert result.status == rqg.FAIL
+    assert "boom" in result.detail
+
+
+def test_check_tests_invocation_exception(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _boom(cmd, timeout: int = 900):  # noqa: ANN001, ARG001
+        raise OSError("cannot spawn")
+
+    monkeypatch.setattr(rqg, "_run", _boom)
+    assert rqg.check_tests().status == rqg.FAIL
+
+
+def test_check_tests_no_tests_collected(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: _proc(5, stdout=""))
+    assert rqg.check_tests().status == rqg.SKIPPED
+
+
+def test_check_tests_pass_includes_smoke_note(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        rqg, "_run", lambda cmd, timeout=900: _proc(0, stdout="10 passed in 1s")
+    )
+    monkeypatch.setattr(rqg, "_smoke_note", lambda: " | smoke: ok")
+    result = rqg.check_tests()
+    assert result.status == rqg.PASS
+    assert "smoke" in result.detail
+
+
+def test_check_tests_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        rqg, "_run", lambda cmd, timeout=900: _proc(1, stdout="1 failed in 1s")
+    )
+    result = rqg.check_tests()
+    assert result.status == rqg.FAIL
+    assert "failed" in result.detail
+
+
+def test_smoke_note_variants(monkeypatch: pytest.MonkeyPatch) -> None:
+    # invocation failure
+    def _boom(cmd, timeout: int = 900):  # noqa: ANN001, ARG001
+        raise RuntimeError("x")
+
+    monkeypatch.setattr(rqg, "_run", _boom)
+    assert "invocation failed" in rqg._smoke_note()
+
+    # no smoke tests (exit 5)
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: _proc(5))
+    assert "no smoke tests" in rqg._smoke_note()
+
+    # unregistered marker
+    unreg = _proc(1, stdout="ERROR: 'smoke' not found in `markers`", stderr="")
+    monkeypatch.setattr(rqg, "_run", lambda cmd, timeout=900: unreg)
+    assert "unregistered" in rqg._smoke_note()
+
+    # passing smoke
+    monkeypatch.setattr(
+        rqg, "_run", lambda cmd, timeout=900: _proc(0, stdout="2 passed in 1s")
+    )
+    assert "passed" in rqg._smoke_note()
+
+    # failing smoke (non-zero, still summarised)
+    monkeypatch.setattr(
+        rqg, "_run", lambda cmd, timeout=900: _proc(1, stdout="1 failed in 1s")
+    )
+    assert "failed" in rqg._smoke_note()
+
+
+def test_pytest_summary_empty() -> None:
+    assert rqg._pytest_summary("") == ""
+    assert "passed" in rqg._pytest_summary("blah\n5 passed in 2s\n")
+
+
+def test_check_schema_import_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _fake_import(name, *a, **k):
+        if name.endswith("data_schemas") or "data_schemas" in name:
+            raise ImportError("no pandera")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", _fake_import)
+    assert rqg.check_schema().status == rqg.SKIPPED
+
+
+def test_check_schema_validate_crash(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.quality_gate.data_schemas as ds_mod
+
+    def _boom():
+        raise ValueError("bad data")
+
+    monkeypatch.setattr(ds_mod, "validate_data", _boom)
+    assert rqg.check_schema().status == rqg.FAIL
+
+
+def test_check_schema_reports_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.quality_gate.data_schemas as ds_mod
+
+    fake = [
+        ("AAA", ds_mod.INVALID, "neg vol"),
+        ("BBB", ds_mod.INVALID, "high<low"),
+        ("CCC", ds_mod.INVALID, "dates"),
+        ("DDD", ds_mod.INVALID, "more"),
+        ("EEE", ds_mod.VALID, "ok"),
+    ]
+    monkeypatch.setattr(ds_mod, "validate_data", lambda: fake)
+    result = rqg.check_schema()
+    assert result.status == rqg.FAIL
+    assert "more" in result.detail  # "+N more" branch exercised
+
+
+def test_check_schema_passes(monkeypatch: pytest.MonkeyPatch) -> None:
+    import scripts.quality_gate.data_schemas as ds_mod
+
+    monkeypatch.setattr(
+        ds_mod, "validate_data", lambda: [("AAA", ds_mod.VALID, "ok")]
+    )
+    assert rqg.check_schema().status == rqg.PASS
+
+
+def test_check_drift_skips_when_no_csv(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(rqg, "PROCESSED_DIR", tmp_path / "empty")
+    (tmp_path / "empty").mkdir()
+    assert rqg.check_drift(tmp_path / "out").status == rqg.SKIPPED
+
+
+def test_check_drift_skips_when_too_few_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    proc = tmp_path / "processed"
+    proc.mkdir()
+    pd.DataFrame({"parkinson_volatility": [0.01, 0.02, 0.03]}).to_csv(
+        proc / "AAA.csv", index=False
+    )
+    monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
+    assert rqg.check_drift(tmp_path / "out").status == rqg.SKIPPED
+
+
+def test_check_drift_real_run_writes_html(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("evidently")
+    proc = tmp_path / "processed"
+    proc.mkdir()
+    import numpy as np
+
+    n = 200
+    rng = np.random.default_rng(0)
+    pd.DataFrame(
+        {
+            "parkinson_volatility": rng.uniform(0.01, 0.05, n),
+            "close": rng.uniform(10, 20, n),
+        }
+    ).to_csv(proc / "AAA.csv", index=False)
+    monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
+    out = tmp_path / "out"
+    result = rqg.check_drift(out)
+    assert result.status == rqg.INFO
+    assert (out / "drift.html").exists()
+
+
+def test_check_drift_report_failure_is_skipped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    proc = tmp_path / "processed"
+    proc.mkdir()
+    pd.DataFrame(
+        {"parkinson_volatility": [0.01] * 60, "close": [10.0] * 60}
+    ).to_csv(proc / "AAA.csv", index=False)
+    monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
+
+    import pandas as _pd
+
+    def _boom(_path):
+        raise RuntimeError("read exploded")
+
+    monkeypatch.setattr(_pd, "read_csv", _boom)
+    assert rqg.check_drift(tmp_path / "out").status == rqg.SKIPPED
+
+
+def test_check_drift_skips_when_evidently_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import builtins
+
+    real_import = builtins.__import__
+
+    def _fake_import(name, *a, **k):
+        if name == "evidently" or name.startswith("evidently."):
+            raise ImportError("no evidently")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", _fake_import)
+    assert rqg.check_drift(tmp_path / "out").status == rqg.SKIPPED
+
+
+def test_check_drift_truncates_to_max_rows(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pytest.importorskip("evidently")
+    import numpy as np
+
+    proc = tmp_path / "processed"
+    proc.mkdir()
+    n = 300
+    rng = np.random.default_rng(1)
+    pd.DataFrame(
+        {
+            "parkinson_volatility": rng.uniform(0.01, 0.05, n),
+            "close": rng.uniform(10, 20, n),
+        }
+    ).to_csv(proc / "AAA.csv", index=False)
+    monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
+    # max_rows below the row count exercises the truncation branch.
+    result = rqg.check_drift(tmp_path / "out", max_rows=100)
+    assert result.status == rqg.INFO
+    assert "cur=" in result.detail
+
+
+def test_run_gate_non_fast_calls_drift(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(rqg, "check_lint", lambda: rqg.CheckResult("LINT", rqg.PASS, ""))
+    monkeypatch.setattr(rqg, "check_tests", lambda: rqg.CheckResult("TESTS", rqg.PASS, ""))
+    monkeypatch.setattr(rqg, "check_schema", lambda: rqg.CheckResult("SCHEMA", rqg.PASS, ""))
+    monkeypatch.setattr(
+        rqg, "check_drift", lambda out: rqg.CheckResult("DRIFT", rqg.INFO, str(out))
+    )
+    results = rqg.run_gate(fast=False, timestamp="2020-01-01_000000")
+    drift = [r for r in results if r.name == "DRIFT"][0]
+    assert drift.status == rqg.INFO
+    assert "2020-01-01_000000" in drift.detail
+
+
+def test_print_summary_runs(capsys: pytest.CaptureFixture) -> None:
+    results = [
+        rqg.CheckResult("LINT", rqg.PASS, "ok"),
+        rqg.CheckResult("TESTS", rqg.FAIL, "1 failed"),
+    ]
+    rqg.print_summary(results)
+    out = capsys.readouterr().out
+    assert "QUALITY GATE SUMMARY" in out
+    assert "OVERALL: FAIL" in out

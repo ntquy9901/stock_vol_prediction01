@@ -17,13 +17,17 @@
     "evidence": [
       {
         "cmd": "python -m pytest scripts/quality_gate/test_quality_gate.py -q",
-        "result": "13 passed in 1.28s"
+        "result": "51 passed (was 13; +38 runner/schema I/O tests added 2026-08-09 to close diff-cover)"
+      },
+      {
+        "cmd": "diff-cover qg_cov.xml --compare-branch=48a14bb^ --fail-under=100",
+        "result": "99% on changed lines (628 total, 5 missing). Missing = import-guard (rqg:34), __main__ (rqg:375), defensive all-NaN redundancy (data_schemas:148), test import-guards — all unreachable in-test."
       }
     ],
     "quality_gate": {
       "tests": {
         "status": "pass",
-        "detail": "13 passed"
+        "detail": "51 passed"
       },
       "lint": {
         "status": "pass",
@@ -34,8 +38,8 @@
         "detail": "3-layer, 4 findings fixed"
       },
       "diff_cover": {
-        "status": "miss",
-        "detail": "skip (pre-tooling; diff-cover not yet installed)"
+        "status": "pass",
+        "detail": "99% on changed lines (diff-cover vs 48a14bb^; 5 unreachable lines: import-guard/__main__/defensive). Floor 80, C0 target 100."
       },
       "data_quality": {
         "status": "pass",
