@@ -1985,6 +1985,10 @@
    {
     "cmd": "git push origin feature/masked-gnn",
     "result": "pre-push gate PASS: pytest pass, diff-cover 90%, ruff pass, Pandera 34/34, Evidently info. Pushed 2a0bed6..572abfd."
+   },
+   {
+    "cmd": "python temp/verdict_driver.py (new screening-config backbone: 5 ep, dropout 0.2; dense+knn x seeds 42/123/2026, val+test)",
+    "result": "knn-8 verdict B: G1<G0 3/3 seeds (paired-t p=0.0185) but DM-QLIKE n.s. (p=0.74/0.60/0.43), test QLIKE +2.8e-3 (worse). dense verdict B: 2/3 seeds, sign flips, paired-t p=0.282 n.s., no DM sig. Proper backbone flips old lean-A into a null. Artifact: docs/reports/verdict_masked_g0g1_newbackbone_2026-08-09_120512.{json,md}"
    }
   ],
   "quality_gate": {
@@ -2039,11 +2043,11 @@
    },
    {
     "item": "new-backbone dense+knn 6-config sweep",
-    "ok": false,
-    "note": "code+driver ready; compute-infeasible before deadline (~30-50 min/config backbone), not run to completion"
+    "ok": true,
+    "note": "DONE via build-once driver: knn-8 + dense x 3 seeds, val+test. Both verdict B (graph null on proper backbone)."
    }
   ],
-  "result_summary": "Proposed updates #1 (cache frozen-encoder base once per seed, reused across epochs + shared G0/G1) + #2 (encode present nodes only). Numerical equivalence proven bit-identical on CPU (8/8 tests; bench valloss diff 0.000); measured speedup 21.3x train-loop/epoch, 6.3x end-to-end. Re-ran knn-8 masked G0/G1 across seeds 42/123/2026 (old backbone) + Diebold-Mariano: G1<G0 in 3/3 seeds, paired-t p=0.0147, QLIKE improvement significant (p=0.018) -> verdict leans A (graph genuinely helps, small ~0.3% QLIKE), stronger than the prior single-seed note. Added screening-config backbone (5 ep, dropout 0.2, leakage-safe) + held-out test eval + dense/knn paper-dump; the full new-backbone 6-config sweep is code-complete but compute-infeasible before the deadline.",
+  "result_summary": "Proposed updates #1 (cache frozen-encoder base once per seed, reused across epochs + shared G0/G1) + #2 (encode present nodes only). Numerical equivalence proven bit-identical on CPU (8/8 tests; bench valloss diff 0.000); measured speedup 21.3x train-loop/epoch, 6.3x end-to-end. Re-ran knn-8 masked G0/G1 across seeds 42/123/2026 (old backbone) + Diebold-Mariano: G1<G0 in 3/3 seeds, paired-t p=0.0147, QLIKE improvement significant (p=0.018) -> verdict leans A (graph genuinely helps, small ~0.3% QLIKE), stronger than the prior single-seed note. Added screening-config backbone (5 ep, dropout 0.2, leakage-safe) + held-out test eval + dense/knn paper-dump; the full new-backbone 6-config sweep is code-complete but compute-infeasible before the deadline. NEW-BACKBONE VERDICT (completed): screening-config P3 (5 ep, dropout 0.2) frozen backbone, dense+knn-8 x 3 seeds, val+test -> Verdict B for BOTH: knn-8 G1<G0 3/3 on valloss (paired-t p=0.0185, tiny ~0.08%) but Diebold-Mariano QLIKE/MSE not significant and test QLIKE worse; dense not significant (p=0.282), sign flips across seeds. The properly-trained backbone turns the old-backbone lean-A into a genuine graph-null.",
   "report_md": "docs/reports/2026-08-09_1104_summaryOfUpdate_report.md"
  }
 ]
