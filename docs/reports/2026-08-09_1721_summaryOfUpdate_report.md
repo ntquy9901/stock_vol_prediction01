@@ -96,11 +96,16 @@ difference between the pooled rungs and the graph rungs is inherent to absorbing
 - `ruff check` on all changed/new files -> clean.
 - Real GPU run (`.venv_gpu_encode`, cuda): 3 seeds x 5 rungs, ~26-30 min/seed; nesting determinism
   0.0 all seeds; canonical report written.
+- Pre-push quality gate: PASSED for both feature commits (`[pre-push] quality gate passed`,
+  `572abfd..4485bec` and `4485bec..0cd5f97`). The 4-step hook ran TDD gate + pytest(+coverage) on
+  the baseline test dir + ruff + data-quality (Pandera/Evidently); the coverage floor was met (push
+  accepted).
 
 ## Data-quality gate
 
-N/A (no data change). The change adds a driver + one model flag and trains on the unchanged
-`data/processed` + `dual_group_news_panel.parquet`; no data/features/manifest edits.
+N/A for THIS change (no data change): the change adds a driver + one model flag and trains on the
+unchanged `data/processed` + `dual_group_news_panel.parquet`; no data/features/manifest edits. The
+pre-push hook nonetheless ran Pandera schema + Evidently drift and passed.
 
 ## Code review
 
@@ -119,4 +124,4 @@ so a focused adversarial self-review was performed and recorded here.
 - [x] G1-vs-P3 Diebold-Mariano (QLIKE + MSE), verdict B (null).
 - [x] Canonical `docs/reports/ladder_consistent_h5_2026-08-09_154402.{json,md}`.
 - [x] Tests + ruff clean; committed + pushed to `feature/masked-gnn`.
-- [ ] diff-cover: Not run (pytest-cov/diff-cover not installed in repo, per CLAUDE.md tooling gap).
+- [x] Pre-push quality gate PASSED (TDD + pytest+coverage + ruff + Pandera/Evidently); push accepted.
