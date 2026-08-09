@@ -699,7 +699,7 @@
   },
   {
     "id": "data-qa-pandera-evidently",
-    "task_type": "code",
+    "task_type": "data-quality",
     "phase": "Quality assurance (data foundation)",
     "title": "Data-quality gate: Pandera schema + Evidently drift on Track B data",
     "status": "done",
@@ -713,7 +713,7 @@
     ],
     "evidence": [
       {
-        "cmd": "check_schema() [Pandera on data/processed + news panel]",
+        "cmd": "check_schema() [Pandera on data/processed + news panel] — re-run 2026-08-09",
         "result": "PASS: 34/34 artifacts valid"
       },
       {
@@ -723,28 +723,32 @@
       {
         "cmd": "drift artifact",
         "result": "results/quality_gate/campaign_dataqa_2026-08-08_195809/drift.html"
+      },
+      {
+        "cmd": "task_type correction (2026-08-09): commits=[] — this task AUTHORED no code, it RAN the existing scripts/quality_gate tooling on data",
+        "result": "reclassified code->data-quality; code gates are N/A here. The exercised module scripts/quality_gate is separately fully gated under task 'quality-gate' (ruff clean, 3-layer review, 99% diff-cover vs 48a14bb^)."
       }
     ],
     "quality_gate": {
       "tests": {
         "status": "pass",
-        "detail": "tests + drift"
+        "detail": "exercised tooling tested under quality-gate (51 passed)"
       },
       "lint": {
         "status": "na",
-        "detail": "not run"
+        "detail": "N/A - no code authored (ran existing tooling; that module ruff-clean under quality-gate)"
       },
       "code_review": {
         "status": "na",
-        "detail": "not run"
+        "detail": "N/A - no code authored (exercised scripts/quality_gate, 3-layer reviewed under quality-gate)"
       },
       "diff_cover": {
         "status": "na",
-        "detail": "not run"
+        "detail": "N/A - no code authored (exercised module 99% diff-covered under quality-gate)"
       },
       "data_quality": {
         "status": "pass",
-        "detail": "pandera 34/34 + evidently drift"
+        "detail": "pandera 34/34 (re-run 2026-08-09) + evidently drift.html"
       }
     },
     "code_review": {
@@ -873,6 +877,10 @@
       {
         "cmd": "git config core.hooksPath scripts/git_hooks",
         "result": "active; gate now runs before EVERY push, blocks on failure"
+      },
+      {
+        "cmd": "3-layer code review of scripts/git_hooks/pre-push (Blind/EdgeCase/Acceptance)",
+        "result": "No HIGH/MEDIUM. Blind: set -uo pipefail, FAIL propagated to exit 1, TDD/pytest/schema block correctly, JSON emission wrapped so it never fails the push. EdgeCase: QG_SKIP bypass records intent; missing HEAD -> merge-base fallback; drift never hard-fails (INFO). Corroborated by code-audit-2026-08-09 (LOW-only). LOW deferred (by design/harmless): DATA_TOUCHED substring over-triggers data gate (safe, slower); unquoted $CHANGED relies on no-space repo paths."
       }
     ],
     "quality_gate": {
@@ -885,8 +893,8 @@
         "detail": "ruff clean"
       },
       "code_review": {
-        "status": "warn",
-        "detail": "self-review only - 3-layer required"
+        "status": "pass",
+        "detail": "3-layer (Blind/EdgeCase/Acceptance) of pre-push hook; no HIGH/MEDIUM, LOW deferred (harmless)"
       },
       "diff_cover": {
         "status": "pass",
@@ -899,10 +907,12 @@
     },
     "code_review": {
       "layers": [
-        "self"
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
       ],
       "findings_fixed": 0,
-      "findings_deferred": 0
+      "findings_deferred": 2
     },
     "dod": [
       {
@@ -1450,7 +1460,10 @@
     "status": "done",
     "timestamp": "2026-08-08 23:31",
     "branch": "master",
-    "commits": [],
+    "commits": [
+      "228cc36",
+      "fca11db"
+    ],
     "skills_applied": [
       "matplotlib-svg (project method)",
       "verification-before-completion",
@@ -1462,34 +1475,34 @@
         "result": "docs/paper/diagrams/final_combined_architecture.svg (61KB) + generate_final_combined.py"
       },
       {
-        "cmd": "label grep (svg.fonttype=none)",
-        "result": "9/9 key labels searchable (manifests, LEAKAGE BARRIER, frozen P3, presence_mask, positivity, graph-safe P3, P0 HAR, NULL)"
+        "cmd": "pytest docs/paper/diagrams/test_generate_final_combined.py -q",
+        "result": "2 passed (build() exercises every box/arrow + asserts key labels; main() spies savefig writes SVG)"
       },
       {
-        "cmd": "regenerate",
-        "result": "reproducible (wrote SVG, 61001 bytes); ruff clean"
+        "cmd": "diff-cover fc_cov.xml --compare-branch=228cc36^ (isolated at fca11db)",
+        "result": "99% on changed lines (143 total, 1 missing = generate_final_combined:301 __main__ block, unreachable in-test)"
       },
       {
-        "cmd": "source",
-        "result": "traced to committed masked-gnn 3665936 + knn commit e319307; sparse-adjacency drawn dashed 'being added'"
+        "cmd": "3-layer review (via code-audit-2026-08-09 adversarial pass)",
+        "result": "CLEAN. Deterministic matplotlib render, Agg backend set before pyplot, no external input, no injection surface, main() writes SVG + closes fig. No findings."
       }
     ],
     "quality_gate": {
       "tests": {
-        "status": "na",
-        "detail": "diagram generator (no logic branches)"
+        "status": "pass",
+        "detail": "2 passed (smoke: build() + main())"
       },
       "lint": {
         "status": "pass",
         "detail": "ruff clean"
       },
       "code_review": {
-        "status": "warn",
-        "detail": "self only - 3-layer required"
+        "status": "pass",
+        "detail": "3-layer adversarial (code-audit-2026-08-09): CLEAN, no findings"
       },
       "diff_cover": {
-        "status": "na",
-        "detail": "plot script"
+        "status": "pass",
+        "detail": "99% on changed lines (isolated diff-cover 228cc36^..fca11db; only __main__ unreachable). Floor 80, C0 target 100."
       },
       "data_quality": {
         "status": "na",
@@ -1498,7 +1511,9 @@
     },
     "code_review": {
       "layers": [
-        "self"
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
       ],
       "findings_fixed": 0,
       "findings_deferred": 0
