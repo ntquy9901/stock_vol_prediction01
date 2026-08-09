@@ -1,0 +1,6 @@
+{
+  "graph_off_readout_determinism_max_abs_diff": 0.0,
+  "graph_effect_val_mean_abs_pred_diff_raw": 3.250535281405089e-05,
+  "graph_effect_val_max_abs_pred_diff_raw": 0.0016982240969405857,
+  "n_val_obs": 14418
+}
