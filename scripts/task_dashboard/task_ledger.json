@@ -1885,7 +1885,7 @@
       },
       {
         "cmd": "train/infer (G1) with TRACK_B_DATA_ROOT -> full dataset",
-        "result": "Implemented in g1_final.py (adds G1 checkpoint + test-split eval the validation-only pilot lacked). Import-verified and past data-load; full CPU end-to-end is slow (graph build). Documented as reviewer-runs-with-data; infer needs train once."
+        "result": "Verified END-TO-END with the full dataset (TRACK_B_DATA_ROOT -> pilot worktree). Real 4-ticker seed-42 1-epoch run: `train` trained G1, saved checkpoints/g1_final.pt, printed val+test 6-metric sets (test rmse=4.765e-04, r2=0.1412, qlike=0.5531, DirAcc=48.48%); `infer` reloaded g1_final.pt and reproduced IDENTICAL test metrics (deterministic). Subset smoke, not full-universe final; checkpoints git-ignored."
       }
     ],
     "quality_gate": {
@@ -1940,6 +1940,10 @@
       },
       {
         "item": "committed + pushed",
+        "ok": true
+      },
+      {
+        "item": "train+infer verified end-to-end (real subset run)",
         "ok": true
       }
     ],

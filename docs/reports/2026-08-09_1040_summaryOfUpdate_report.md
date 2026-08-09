@@ -42,13 +42,28 @@ graph message passing), not P3. `infer`/`train` target G1; `view` labels G1 as t
 - **`view` - fully working, no data, no training.** Verified end to end: it prints the full
   P0->G1 table (all 6 metrics) from the shipped JSONs and writes `output/results_table.md` +
   `output/summary.png`. Printed table below.
-- **`train` / `infer` (final G1) - implemented; require the project dataset** (`data/processed/*.csv`
-  + `data/features/dual_group_news_panel.parquet` and its `.provenance.json` sidecar). The
-  master tree lacks the `.provenance.json` sidecar, so these paths need `TRACK_B_DATA_ROOT`
-  pointed at a repo that has the full data (e.g. the pilot worktree). They are import-verified
-  and pass data-loading; a full CPU end-to-end run is slow (graph manifest build dominates) and
-  is documented as reviewer-runs-with-data. `infer` requires `train` to have produced
-  `checkpoints/g1_final.pt` once.
+- **`train` / `infer` (final G1) - verified end to end with the dataset.** Both require the
+  project dataset (`data/processed/*.csv` + `data/features/dual_group_news_panel.parquet` and its
+  `.provenance.json` sidecar). The master tree lacks the `.provenance.json` sidecar, so these
+  paths need `TRACK_B_DATA_ROOT` pointed at a repo that has the full data (the pilot worktree was
+  used here). A real 4-ticker, seed-42, 1-epoch run was executed on CPU:
+  - `train` trained G1, saved `checkpoints/g1_final.pt`, and printed val + test metrics (below).
+  - `infer` re-loaded `checkpoints/g1_final.pt` and reproduced the **identical** test metrics,
+    confirming deterministic load-and-score.
+  A full CPU run is slow (graph manifest build dominates, several minutes); the numbers below are
+  a small-subset smoke, not the paper's final full-universe figures (which a reviewer regenerates
+  with the full dataset via the launchers). `infer` requires `train` to have produced
+  `checkpoints/g1_final.pt` once. These checkpoints/metrics are git-ignored (kept out of the repo).
+
+  G1 subset run (4 tickers, seed 42, 1 epoch) - proof the path runs:
+  ```
+  metric                 validation       test
+  rmse                    3.093e-04    4.765e-04
+  mae                     1.866e-04    3.018e-04
+  r2                        0.05143      0.14116
+  qlike                     0.53411      0.55305
+  directional_accuracy      48.56%       48.48%
+  ```
 
 ## Printed P0->G1 table (real `python reproduce.py view` run)
 
