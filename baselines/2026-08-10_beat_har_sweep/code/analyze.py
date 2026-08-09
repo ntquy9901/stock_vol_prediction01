@@ -89,8 +89,56 @@ def _aligned_losses(p0: dict, cfg: dict, loss_fn) -> tuple[np.ndarray, np.ndarra
     return cfg_loss, p0_loss
 
 
+def _analyze_variant(pred_paths: dict[int, Path], p0: dict) -> dict[str, Any]:
+    """DM + paired-t for one variant given {seed: predictions_test.json path}."""
+
+    per_seed: dict[int, Any] = {}
+    qlike_deltas: list[float] = []
+    for seed, pred_path in sorted(pred_paths.items()):
+        if not pred_path.exists():
+            continue
+        cfg = _load_config_predictions(pred_path)
+        cfg_q, p0_q = _aligned_losses(p0["test"], cfg, _qlike_vec)
+        cfg_se, p0_se = _aligned_losses(p0["test"], cfg, _se_vec)
+        dm_q = diebold_mariano(cfg_q, p0_q, h=HORIZON)
+        dm_se = diebold_mariano(cfg_se, p0_se, h=HORIZON)
+        per_seed[seed] = {
+            "test_qlike_config": float(cfg_q.mean()), "test_qlike_p0": float(p0_q.mean()),
+            "qlike_delta": float(cfg_q.mean() - p0_q.mean()),
+            "dm_qlike_stat": dm_q.dm_hln, "dm_qlike_p": dm_q.p_value,
+            "dm_rmse_stat": dm_se.dm_hln, "dm_rmse_p": dm_se.p_value,
+            "test_rmse_config": float(np.sqrt(cfg_se.mean())), "test_rmse_p0": float(np.sqrt(p0_se.mean())),
+        }
+        qlike_deltas.append(float(cfg_q.mean() - p0_q.mean()))
+    summary: dict[str, Any] = {"per_seed": per_seed, "n_seeds": len(qlike_deltas)}
+    if len(qlike_deltas) >= 2:
+        deltas = np.array(qlike_deltas)
+        t_stat, p_val = stats.ttest_1samp(deltas, 0.0)
+        summary["paired_t_qlike"] = {
+            "mean_delta": float(deltas.mean()), "t_stat": float(t_stat), "p_value": float(p_val),
+            "all_negative": bool((deltas < 0).all()), "all_positive": bool((deltas > 0).all()),
+        }
+        dm_ps = [per_seed[s]["dm_qlike_p"] for s in per_seed]
+        summary["beats_P0_qlike_dm"] = bool(
+            (deltas < 0).all() and all(p < 0.05 for p in dm_ps) and p_val < 0.05)
+    return summary
+
+
 def analyze_config(config_dir: Path, p0: dict, seeds=SEEDS) -> dict[str, Any]:
-    """Per-seed DM (config vs P0) on QLIKE and SE + across-seed paired-t on seed-mean QLIKE deltas."""
+    """Structure-aware: flat seed dirs, or C5's per-k sub-dirs (reports per-k + best-k)."""
+
+    k_dirs = sorted({p.parent.name for p in config_dir.glob("seed*/k*/predictions_test.json")})
+    if k_dirs:
+        variants: dict[str, Any] = {}
+        for k_name in k_dirs:
+            pred_paths = {s: config_dir / f"seed{s}" / k_name / "predictions_test.json" for s in seeds}
+            variants[k_name] = _analyze_variant(pred_paths, p0)
+        # best-k by mean test QLIKE across seeds
+        def _mean_q(v):
+            ps = v["per_seed"].values()
+            return np.mean([x["test_qlike_config"] for x in ps]) if ps else float("inf")
+        best = min(variants, key=lambda k: _mean_q(variants[k]))
+        return {"k_sweep": variants, "best_k": best, **variants[best]}
 
     per_seed: dict[int, Any] = {}
     qlike_deltas: list[float] = []
