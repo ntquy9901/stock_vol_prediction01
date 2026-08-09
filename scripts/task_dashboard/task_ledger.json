@@ -21,7 +21,7 @@
       },
       {
         "cmd": "diff-cover qg_cov.xml --compare-branch=48a14bb^ --fail-under=100",
-        "result": "99% on changed lines (628 total, 5 missing). Missing = import-guard (rqg:34), __main__ (rqg:375), defensive all-NaN redundancy (data_schemas:148), test import-guards \u2014 all unreachable in-test."
+        "result": "99% on changed lines (628 total, 5 missing). Missing = import-guard (rqg:34), __main__ (rqg:375), defensive all-NaN redundancy (data_schemas:148), test import-guards — all unreachable in-test."
       }
     ],
     "quality_gate": {
@@ -708,7 +708,7 @@
         "ok": false
       }
     ],
-    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R\u00b2; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
+    "result_summary": "Parsimony CONFIRMED on pooled: news helps error metrics (3/3, significant), gate inert, graph null (T0.2). HAR strong on RMSE/R²; news ties HAR on RMSE + wins QLIKE decisively. Robust across BOTH architectures.",
     "report_md": "docs/reports/2026-08-08_1829_summaryOfUpdate_report.md"
   },
   {
@@ -727,7 +727,7 @@
     ],
     "evidence": [
       {
-        "cmd": "check_schema() [Pandera on data/processed + news panel] \u2014 re-run 2026-08-09",
+        "cmd": "check_schema() [Pandera on data/processed + news panel] — re-run 2026-08-09",
         "result": "PASS: 34/34 artifacts valid"
       },
       {
@@ -739,7 +739,7 @@
         "result": "results/quality_gate/campaign_dataqa_2026-08-08_195809/drift.html"
       },
       {
-        "cmd": "task_type correction (2026-08-09): commits=[] \u2014 this task AUTHORED no code, it RAN the existing scripts/quality_gate tooling on data",
+        "cmd": "task_type correction (2026-08-09): commits=[] — this task AUTHORED no code, it RAN the existing scripts/quality_gate tooling on data",
         "result": "reclassified code->data-quality; code gates are N/A here. The exercised module scripts/quality_gate is separately fully gated under task 'quality-gate' (ruff clean, 3-layer review, 99% diff-cover vs 48a14bb^)."
       }
     ],
@@ -882,7 +882,7 @@
       },
       {
         "cmd": "diff-cover on Track B changed lines vs merge-base",
-        "result": "87% (176/1459 uncovered) \u2014 FAILS C0=100 target; debt logged"
+        "result": "87% (176/1459 uncovered) — FAILS C0=100 target; debt logged"
       },
       {
         "cmd": "pre-push hook fired live on push",
@@ -946,11 +946,11 @@
         "ok": false
       },
       {
-        "item": "code-review not git-automatable \u2014 honest note",
+        "item": "code-review not git-automatable — honest note",
         "ok": true
       }
     ],
-    "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated \u2014 it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
+    "result_summary": "Root fix for 'gate might be skipped': a pre-push git hook now runs pytest+diff-cover+ruff+Pandera+Evidently before EVERY push and blocks on failure (proven live). diff-cover finally run = 87% on Track B code (target 100, debt logged). Honest limit: code-review (3-layer) cannot be git-automated — it remains a CLAUDE.md process rule; some earlier tasks got focused-adversarial review, not full 3-layer.",
     "report_md": "scripts/git_hooks/README.md"
   },
   {
@@ -1033,7 +1033,7 @@
     "id": "t-pooled-20ep",
     "task_type": "code",
     "phase": "Track B / longer-training check",
-    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) \u2014 does longer training beat HAR?",
+    "title": "Pooled P0-P3 @ 20 epochs (3 seeds) — does longer training beat HAR?",
     "status": "done",
     "timestamp": "2026-08-08 22:00",
     "branch": "feature/pooled-news-gnn-pilot",
@@ -1050,7 +1050,7 @@
     "evidence": [
       {
         "cmd": "pytest scripts/pooled_20ep_analysis/ (from repo root, AFTER conftest fix)",
-        "result": "5 passed (agent's original passed only from inside the dir \u2014 verification caught it)"
+        "result": "5 passed (agent's original passed only from inside the dir — verification caught it)"
       },
       {
         "cmd": "20ep 3-seed means",
@@ -1112,7 +1112,7 @@
         "ok": true
       },
       {
-        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) \u2014 flagged",
+        "item": "epoch cap relaxed >10->20 pooled (graph stays 10) — flagged",
         "ok": true
       },
       {
@@ -1120,14 +1120,14 @@
         "ok": false
       }
     ],
-    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R\u00b2 (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
+    "result_summary": "20 epochs do NOT change the story: deep models still do not beat HAR on RMSE/R² (P1 worse, P2/P3 tie); news helps, gate inert; HAR beaten only on QLIKE. Pooled architecture OVERFITS after epoch 5-7 so extra epochs add nothing (confirms 5ep T1.2). Verification-before-completion caught 3 real defects the agent's claims masked: (1) tests only collected from inside their dir -> added conftest; (2) 9x60MB sample_manifest.json pushed to PUBLIC repo -> untracked+gitignored (history bloat needs user rewrite call); (3) pre-push hook silently disabled on feature-branch worktrees -> fixed to absolute hooksPath + main-root quality_gate resolution.",
     "report_md": "docs/reports/2026-08-08_2146_summaryOfUpdate_report.md"
   },
   {
     "id": "masked-gnn-rerun",
     "task_type": "code",
     "phase": "Track B / graph confound resolution",
-    "title": "Masked availability-aware GNN \u2014 does graph help with 3.8x more data?",
+    "title": "Masked availability-aware GNN — does graph help with 3.8x more data?",
     "status": "done",
     "timestamp": "2026-08-08 22:03",
     "branch": "feature/masked-gnn",
@@ -1154,7 +1154,7 @@
         "result": "masked 4,941 dates / 4,523 train snapshots vs intersection 1,296/900 = 3.8x more"
       },
       {
-        "cmd": "masked G0/G1 3-seed \u0394(G1-G0 vloss)",
+        "cmd": "masked G0/G1 3-seed Δ(G1-G0 vloss)",
         "result": "+0.001039 mean (G1 marginally WORSE 2/3 seeds); nonpos 0.0 all"
       },
       {
@@ -1223,7 +1223,7 @@
         "ok": false
       }
     ],
-    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1\u2248G0, mean \u0394 +0.001, marginally worse). So the graph-null is a CLEAN, genuine null \u2014 NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
+    "result_summary": "CONFOUND RESOLVED. With ~3.8x more graph data (4,941 vs 1,296 dates via per-day variable node set + masking, no imputation/leakage), the cross-stock graph STILL does not help (G1≈G0, mean Δ +0.001, marginally worse). So the graph-null is a CLEAN, genuine null — NOT a data-scarcity artifact (your hypothesis tested and answered). This STRENGTHENS the paper: removes the obvious reviewer objection + the masked-panel method itself is a contribution (no surveyed financial-GNN paper trains on a per-day variable stock set).",
     "report_md": "docs/reports/2026-08-08_2158_summaryOfUpdate_report.md"
   },
   {
@@ -2151,5 +2151,71 @@
     ],
     "result_summary": "Rebuilt the Track-B ablation as ONE nested ladder P0->P1->P2->P3->G1 on a single consistent basis (masked knn-8, leakage-safe graph-bound train, shared per-ticker scalers, positivity floor, identical val 14418 / test 14464 obs, seeds 42/123/2026, h5), eliminating the confusing separate G0 row. Structural fix: P3 IS the graph-off model (the trained G1 read out with the GAT/message-passing residual disabled) via a new apply_message_passing flag on GraphAblationModel.apply_graph_head; head + frozen encoders are shared so 'remove the GAT from G1 = P3' is exact by construction. Nesting verified: graph-off readout determinism 0.0 (bit-identical) for all 3 seeds + a RED->GREEN unit test (atol=rtol=0). Graph effect G1 vs P3 by Diebold-Mariano (h=5): VAL G1 QLIKE < P3 in 3/3 seeds (paired-t p=0.0096) but per-seed DM-QLIKE not significant in all seeds (p=0.208/0.016/0.006); TEST null (2/3 seeds, paired-t p=0.79). Verdict B: the graph is a genuine null on the consistent basis, confirming the prior new-backbone multi-seed finding. Paper/bundle note: P3 is redefined (graph-off G1 with common-date scalers + positivity floor + 15-epoch head refinement) and the separate G0 row is removed; P1/P2 now train on the same graph-bound basis and are scored on the identical val/test observations.",
     "report_md": "docs/reports/2026-08-09_1721_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "classical-econometric-baselines-2026-08-09",
+    "task_type": "code",
+    "phase": "Track-B / classical baselines",
+    "title": "Classical econometric baselines (Persistence/EWMA/HAR/HARQ/logHAR/GARCH-GJR-EGARCH) on the consistent ladder basis (h5)",
+    "status": "done",
+    "timestamp": "2026-08-09 19:27",
+    "branch": "master",
+    "commits": [
+      "4dbc884"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest baselines/classical_baselines/test",
+        "result": "18 pass (17 unit + 1 smoke). metric-correctness vs evaluate_records abs<=1e-12; obs-alignment smoke val=14418/test=14464; per-ticker GARCH real-data smoke (garch/gjr/egarch); tz-aware date-normalization regression (VPB/VRE); run_all+CLI integration."
+      },
+      {
+        "cmd": "ruff check baselines/classical_baselines",
+        "result": "All checks passed."
+      },
+      {
+        "cmd": "diff-cover coverage.xml --compare-branch=origin/master",
+        "result": "C0=98% on 259 changed lines (3 missing = sys.path guards + __main__, idiomatic). pytest-cov+diff-cover installed for this task."
+      },
+      {
+        "cmd": "python baselines/classical_baselines/code/run_classical_baselines.py <TS> 5",
+        "result": "wrote canonical docs/reports/classical_baselines_h5_2026-08-09_182129.{json,md}. HAR test rmse 0.002290/r2 0.7667/qlike 0.579 == P0; GARCH-family rmse ~0.0048/r2 ~0/qlike ~1.8 (decisively worse); GARCH 32/33 tickers (LPB no OHLCV)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "18 pytest pass incl obs-alignment smoke and per-ticker GARCH real-data smoke"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on baselines/classical_baselines"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "C0=98% on changed lines (3 idiomatic bootstrap lines uncovered); real diff-cover run (tools installed)"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A (no data change): reads data/processed + data/raw/prices read-only, derives no new data artifact/manifest -> Pandera/Evidently not applicable"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "adversarial 3-layer self-review (code_review_2026-08-09.md); 3 real bugs found+fixed (GARCH variance-vs-vol units, VPB/VRE tz-aware date mismatch, log(0) in log-HAR); no open HIGH/MEDIUM"
+      }
+    },
+    "code_review": {
+      "status": "pass",
+      "detail": "Blind Hunter/Edge Case Hunter/Acceptance Auditor; findings B1-B3,E1-E4,A1-A4 resolved with tests"
+    },
+    "dod": {
+      "status": "met",
+      "detail": "baseline folder (req/design/code/test/code_review); canonical JSON+MD in ladder schema; same obs/target/split/scorer as ladder (verified); TDD green; comparison note vs P3/G1; summary report; pushed"
+    },
+    "result_summary": "Classical suite on identical ladder obs (14418/14464): HAR/HARQ tie the deep ladder on point accuracy (rmse~0.00229/r2~0.767), GARCH-family decisively worse (rmse~0.0048/r2~0), DirAcc ~48% for all. Reviewer defense: deep models clearly beat GARCH, honestly competitive-not-superior vs HAR.",
+    "report_md": "docs/reports/2026-08-09_1927_summaryOfUpdate_report.md"
   }
 ]
