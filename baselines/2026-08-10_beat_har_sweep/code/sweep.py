@@ -12,7 +12,6 @@ where CONFIG in {C1,C2,C3,C5,C6}. Writes results/beat_har_<CONFIG>_<TS>/seed{see
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -67,19 +66,23 @@ _METRIC_KEYS = ("mse", "rmse", "mae", "r2", "qlike", "directional_accuracy")
 
 # ---------------------------------------------------------------------------- backbone + base cache
 
-def build_backbone(pooled, graph, graph_store, out: Path, seed: int, device) -> GraphAblationModel:
-    """The SAME graph-safe MSE P3 backbone the consistent ladder wraps (warm-start + 1 safe epoch)."""
+def build_backbone_path(pooled, graph, graph_store, out: Path, seed: int, device) -> Path:
+    """Train the SAME graph-safe MSE P3 backbone the consistent ladder wraps; return checkpoint path."""
 
-    graph_hash = graph.content_hash("train")
     warm = build_graph_bound_p3_warm_start(pooled, graph, out, seed, graph_store,
                                             epochs=BACKBONE_WARM_EPOCHS, device=device,
                                             train_batch_size=BACKBONE_BATCH, dropout=BACKBONE_DROPOUT)
-    safe = build_graph_safe_p3_checkpoint(pooled, graph, out, seed, warm, graph_store,
+    return build_graph_safe_p3_checkpoint(pooled, graph, out, seed, warm, graph_store,
                                           epochs=BACKBONE_SAFE_EPOCHS, device=device,
                                           train_batch_size=BACKBONE_BATCH, dropout=BACKBONE_DROPOUT)
-    model = GraphAblationModel.from_p3_checkpoint(str(safe), use_gnn=True,
+
+
+def load_backbone(safe_path: Path, graph, device) -> GraphAblationModel:
+    """A FRESH GraphAblationModel (head/mp reset to the P3 init) from a graph-safe checkpoint."""
+
+    model = GraphAblationModel.from_p3_checkpoint(str(safe_path), use_gnn=True,
                                                   graph_train_end_date=graph.train_end_date,
-                                                  graph_manifest_hash=graph_hash)
+                                                  graph_manifest_hash=graph.content_hash("train"))
     model.to(device)
     return model
 
@@ -308,40 +311,80 @@ def _log(stamp: Path, msg: str) -> None:
         handle.write(line + "\n")
 
 
-def main(config_name: str, ts: str, device_name: str = "cuda") -> None:
-    if config_name not in CONFIGS:
-        raise ValueError(f"config must be one of {sorted(CONFIGS)}")
+def _run_config_for_seed(config_name, cfg, pooled, graph, graph_store, safe_path, base_cache,
+                         out_root: Path, seed, device, stamp: Path) -> None:
+    k_sweep = cfg.get("k_sweep")
+    if k_sweep:
+        for top_k in k_sweep:
+            out = out_root / f"seed{seed}" / f"k{top_k}"
+            if (out / "results.json").exists():
+                continue
+            out.mkdir(parents=True, exist_ok=True)
+            model = load_backbone(safe_path, graph, device)
+            res = train_and_eval(config_name, cfg, pooled, graph, graph_store, model, base_cache,
+                                 out, seed, device, top_k=top_k)
+            _log(stamp, f"{config_name} seed={seed} k={top_k} test_qlike={res['test_metrics']['qlike']:.4f}")
+    else:
+        out = out_root / f"seed{seed}"
+        if (out / "results.json").exists():
+            return
+        out.mkdir(parents=True, exist_ok=True)
+        model = load_backbone(safe_path, graph, device)
+        res = train_and_eval(config_name, cfg, pooled, graph, graph_store, model, base_cache,
+                             out, seed, device)
+        _log(stamp, f"{config_name} seed={seed} test_qlike={res['test_metrics']['qlike']:.4f} "
+                    f"test_rmse={res['test_metrics']['rmse']:.7f}")
+
+
+def run_all(ts: str, device_name: str = "cuda", configs: list[str] | None = None) -> None:
+    """Build the fair basis + per-seed MSE backbones + base caches ONCE; run every config on them.
+
+    The frozen-encoder base cache is adjacency- and head-independent, so it is shared across all
+    configs; each (config, seed) reloads a fresh head/mp from the seed's graph-safe P3 checkpoint.
+    Resumable: a (config, seed) with an existing results.json is skipped.
+    """
+
     from run_pilot import resolve_graph_device
     device = resolve_graph_device(device_name)
-    cfg = CONFIGS[config_name]
-    stamp = Path(_ROOT) / "temp" / f"beat_har_{config_name}_{ts}"
-    _log(stamp, f"device={device} config={config_name} building basis ...")
+    order = configs or ["C1", "C2", "C3", "C5", "C6"]
+    stamp = Path(_ROOT) / "temp" / f"beat_har_all_{ts}"
+    _log(stamp, f"device={device} building basis for configs={order} ...")
     pooled, graph, graph_store, _allowed = build_basis(device, stamp)
     _log(stamp, f"basis ready snapshots={len(graph.snapshots)}")
 
+    safe_paths: dict[int, Path] = {}
+    base_caches: dict[int, Any] = {}
     for seed in SEEDS:
-        base_out = Path(_ROOT) / "results" / f"beat_har_{config_name}_{ts}" / f"seed{seed}"
-        base_out.mkdir(parents=True, exist_ok=True)
+        backbone_dir = Path(_ROOT) / "results" / f"beat_har_sweep_{ts}" / "backbones" / f"seed{seed}"
+        backbone_dir.mkdir(parents=True, exist_ok=True)
         _log(stamp, f"seed={seed} building backbone + base cache ...")
-        model = build_backbone(pooled, graph, graph_store, base_out / "backbone", seed, device)
-        base_cache = _build_shared_graph_base(model, graph, device, GRAPH_TRAIN_BATCH, GRAPH_VAL_BATCH)
-        k_sweep = cfg.get("k_sweep")
-        if k_sweep:
-            for top_k in k_sweep:
-                out = base_out / f"k{top_k}"
-                out.mkdir(parents=True, exist_ok=True)
-                # reload a fresh backbone head/mp for each k so runs are independent
-                fresh = build_backbone(pooled, graph, graph_store, base_out / "backbone", seed, device)
-                res = train_and_eval(config_name, cfg, pooled, graph, graph_store, fresh, base_cache,
-                                     out, seed, device, top_k=top_k)
-                _log(stamp, f"seed={seed} k={top_k} test_qlike={res['test_metrics']['qlike']:.4f}")
-        else:
-            res = train_and_eval(config_name, cfg, pooled, graph, graph_store, model, base_cache,
-                                 base_out, seed, device)
-            _log(stamp, f"seed={seed} test_qlike={res['test_metrics']['qlike']:.4f} "
-                        f"test_rmse={res['test_metrics']['rmse']:.7f}")
-    stamp.with_suffix(".DONE").write_text("done", encoding="utf-8")
-    _log(stamp, f"{config_name} ALL_DONE")
+        safe_paths[seed] = build_backbone_path(pooled, graph, graph_store, backbone_dir, seed, device)
+        model0 = load_backbone(safe_paths[seed], graph, device)
+        model0.configure_positivity(graph_store)
+        base_caches[seed] = _build_shared_graph_base(model0, graph, device, GRAPH_TRAIN_BATCH,
+                                                     GRAPH_VAL_BATCH)
+        del model0
+    _log(stamp, "backbones + base caches ready")
+
+    for config_name in order:
+        cfg = CONFIGS[config_name]
+        out_root = Path(_ROOT) / "results" / f"beat_har_{config_name}_{ts}"
+        _log(stamp, f"=== running {config_name} ===")
+        for seed in SEEDS:
+            _run_config_for_seed(config_name, cfg, pooled, graph, graph_store, safe_paths[seed],
+                                 base_caches[seed], out_root, seed, device, stamp)
+        (Path(_ROOT) / "temp" / f"beat_har_{config_name}_{ts}").with_suffix(".DONE").write_text(
+            "done", encoding="utf-8")
+        _log(stamp, f"{config_name} ALL_DONE")
+    stamp.with_suffix(".ALL_DONE").write_text("done", encoding="utf-8")
+    _log(stamp, "SWEEP ALL_DONE")
+
+
+def main(config_name: str, ts: str, device_name: str = "cuda") -> None:
+    if config_name == "ALL":
+        run_all(ts, device_name)
+        return
+    run_all(ts, device_name, configs=[config_name])
 
 
 if __name__ == "__main__":
