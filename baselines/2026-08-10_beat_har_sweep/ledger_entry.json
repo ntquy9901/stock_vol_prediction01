@@ -9,10 +9,11 @@
   "commits": ["82fbd86", "82bb2b9", "4e9c3e2", "6a416c6", "94c20b1", "52438f9", "c2b2c41"],
   "skills_applied": ["test-driven-development", "verification-before-completion"],
   "quality_gate": {
-    "tests": {"status": "pass", "detail": "33 unit + 6 smoke tests green (baselines/2026-08-10_beat_har_sweep/test); TDD RED->GREEN on QLIKE loss floor bug, spillover, adjacency invariants, analyze P0 key-parse fix"},
+    "tests": {"status": "pass", "detail": "43 tests green (37 unit + 6 smoke, baselines/2026-08-10_beat_har_sweep/test); TDD RED->GREEN on QLIKE loss floor bug, spillover, adjacency invariants, analyze P0 key-parse fix"},
     "lint": {"status": "pass", "detail": "ruff clean on baselines/2026-08-10_beat_har_sweep/"},
     "smoke": {"status": "pass", "detail": "6 @smoke cases boot the graph-head training/eval for C1/C2/C3/C5/C6 through the real message passing; full 5-config sweep ran end-to-end on GPU"},
     "code_review": {"status": "pass", "detail": "adversarial self-review code_review/code_review_2026-08-10.md; QLIKE-floor HIGH fixed, leakage invariants verified (train-only VAR/embeddings), self-loop invariant guarded; no open HIGH/MEDIUM"},
+    "diff_cover": {"status": "pass", "detail": "diff-cover 84% on changed lines vs feature/masked-gnn (pytest-cov --cov-branch, 43 tests). Computational core 95-100% (qlike_torch/rvx_features 100%, spillover 96%, adjacency_ops 98%, build_report 94%, analyze 83%); shortfall is sweep.py GPU orchestration (run_all/main/build_backbone_path/load_backbone/_spillover_static/_run_config_for_seed) — run entry points exercised end-to-end by the real 5-config x 3-seed GPU sweep (evidence: results/beat_har_*_2026-08-10_0130/), outside unit scope per repo convention"},
     "data_quality": {"status": "n/a", "detail": "no data/manifest change; reuses frozen fair basis. Pre-push gate runs Pandera 34/34 + Evidently drift."}
   },
   "result_summary": "Documented NULL: no config DM-significantly beats P0 pooled-HAR anchor (test QLIKE 0.5676). C2 (HAR+additive graph residual) statistically ties P0 on QLIKE (paired-t p=0.562) and RMSE; C1 (QLIKE-loss GAT+news) ties P0 on RMSE, worse on QLIKE; C3 (spillover), C5 (spillover+omit-self k-sweep), C6 (learned adjacency) worse on QLIKE. C4 (HAR-RV-X) deferred (needs 6-feature backbone via pilot preprocessor change), C7 (news-as-edge) infeasible (per-ticker panel, no multi-ticker structure). 5 configs x 3 seeds x 20 epochs on the consistent fair basis; leakage-safe.",
