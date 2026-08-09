@@ -1614,5 +1614,197 @@
     ],
     "result_summary": "PIVOTAL (single-seed): at 15-epoch convergence, masked graph with knn-8 sparse edges (GAT-hybrid style) gives G1<G0 (delta -0.00253 ~2x dense), REVERSING the 5-epoch null. So the earlier graph-null was partly UNDERTRAINING, not only data-scarcity. Sparsity sweet spot: knn-8 best; |corr|>0.7 over-sparsifies to null. CAVEAT: SINGLE SEED, tiny delta, significance NOT established (Diebold-Mariano + seeds 123/2026 required before any claim). DirAcc ~48-49% unchanged (QLIKE/MSE effect). Graph epochs ran at 15 (>10; agent raised graph cap to 50).",
     "report_md": "docs/reports (masked-gnn worktree summary)"
+  },
+  {
+    "id": "code-audit-2026-08-09",
+    "task_type": "research",
+    "phase": "Quality / audit",
+    "title": "Read-only audit of campaign code not yet 3-layer reviewed",
+    "status": "done",
+    "timestamp": "2026-08-09 08:10",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "adversarial-review",
+      "edge-case-hunter",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "audit scripts/task_dashboard/build_dashboard.py (+ test_build_dashboard.py)",
+        "result": "2 MEDIUM + 1 LOW. MED build_dashboard.py:232 _overlay_gate float(payload['diff_cover_pct']) has no per-task try/except in build_html:456; a gate_results JSON with non-numeric diff_cover_pct crashes the WHOLE dashboard build (reproduced: ValueError). Breaks load_gate_results' 'invalid files skipped, not fatal' contract. MED build_dashboard.py:238-240 _overlay_gate ruff branch maps everything except 'pass' to 'warn' (reproduced: ruff=fail->warn, ruff=na->warn); a real ruff FAILURE is shown yellow not red, and a legit 'na' overrides hand-entered pass and can redden a task. pandera branch (243) handles na/fail correctly - ruff branch is inconsistent. LOW overlay marks 80-99% diff-cover as 'pass' (line 236) while CLAUDE.md C0 target=100%, so <100% coverage can display fully-gated. Escaping/injection: all ledger text via _esc, gate status constrained to safe tokens - clean. validate_task red-card logic VERIFIED against ledger: correctly flags all 11 code tasks missing a required gate, 0 false pos/neg."
+      },
+      {
+        "cmd": "audit scripts/quality_gate/run_quality_gate.py (new write_gate_json + main emission only)",
+        "result": "1 MEDIUM. write_gate_json + main() write scripts/task_dashboard/gate_results/<short-sha>.json keyed by commit, the SAME filename the pre-push hook writes. run_quality_gate sets diff_cover_pct=None; running it after a hook run OVERWRITES the hook's richer diff_cover_pct with null (data loss of the coverage overlay). Broad git try/except is correct (missing HEAD -> skip). ruff/pandera/evidently mapping fine. No HIGH."
+      },
+      {
+        "cmd": "audit scripts/git_hooks/pre-push (new per-commit gate-JSON block)",
+        "result": "LOW only. DATA_TOUCHED grep -iE 'data|manifest|...' matches ANY path containing substring 'data' -> over-triggers the Pandera/Evidently gate on unrelated changes (safe, just slower). Unquoted $CHANGED/$CODE_CHG rely on no-space paths (true for repo). TDD 'test_' substring could misclassify a file like 'contest_*.py' (unlikely). JSON writer, cleanup (rm -f), FAIL propagation all correct. No HIGH/MEDIUM."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_final_combined.py",
+        "result": "CLEAN. Deterministic matplotlib box/arrow render, Agg backend set before pyplot, no external input, no injection surface. main() writes SVG + closes fig. No findings."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_proposed_updates.py",
+        "result": "CLEAN. Same pattern as generate_final_combined; _STATUS_STYLE keys match all overlay() calls. No findings."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/generate_graph_snapshots.py",
+        "result": "1 MEDIUM. _draw_graph:102 avg_degree = 2.0*len(edges)/len(present_ids) raises ZeroDivisionError when present_ids is empty (reproduced). render_graph_figure guards empty PANEL LIST but not an empty-present panel, so a zero-present snapshot (or a smoke panel) crashes the draw path. build_panels itself is fine (raises clear ValueError for a missing train date)."
+      },
+      {
+        "cmd": "audit docs/paper/diagrams/build_review_html.py",
+        "result": "LOW only. table_html() interpolates ROWS into HTML WITHOUT escaping - intentional (static constants carry HTML entities like &Delta;/&times;); safe ONLY while ROWS stays hardcoded, would inject if ever data-sourced. inline_svg id/href namespacing regex is correct; missing/garbage SVG -> loud FileNotFoundError/ValueError (acceptable). No HIGH/MEDIUM."
+      },
+      {
+        "cmd": "audit aggregate (named scripts/pooled_20ep_analysis/aggregate.py DOES NOT EXIST; audited closest recent aggregate scripts/convergence_check/aggregate_convergence.py)",
+        "result": "SCOPE NOTE: the named file is absent in the tree; audited aggregate_convergence.py instead. LOW: collect() rec['test_metrics'][m] KeyError (no guard) if a run json lacks a metric; main() sys.argv[1] IndexError with no usage guard; sorted(seeds,key=int) ValueError on non-numeric seed key. paired_t nan-guard is correct (t==t filter). Manual analysis script - loud crashes acceptable. No HIGH/MEDIUM."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "read-only audit, no code changed"
+      },
+      "lint": {
+        "status": "na",
+        "detail": "no code changed"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "this IS an adversarial audit pass"
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code changed"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no data change"
+      }
+    },
+    "code_review": {
+      "layers": [
+        "Blind",
+        "EdgeCase",
+        "Acceptance"
+      ],
+      "findings_fixed": 0,
+      "findings_deferred": 8
+    },
+    "dod": [
+      {
+        "item": "audited 8 not-yet-3-layer files (skipped already-reviewed)",
+        "ok": true
+      },
+      {
+        "item": "findings reproduced where claimed (crash/overlay/zerodiv)",
+        "ok": true
+      },
+      {
+        "item": "red-card logic cross-checked vs ledger",
+        "ok": true
+      },
+      {
+        "item": "findings are report-only (audited code NOT modified)",
+        "ok": true
+      }
+    ],
+    "result_summary": "VERDICT: no HIGH; 4 MEDIUM, 4 LOW across 8 files (report-only, no fixes applied). MEDIUM: (1) build_dashboard _overlay_gate crashes the whole build on a non-numeric diff_cover_pct in any gate_results JSON (no per-task isolation); (2) _overlay_gate ruff branch shows a real ruff FAIL as yellow 'warn' and turns 'na' into 'warn' (pandera branch is correct - ruff is inconsistent); (3) run_quality_gate.main clobbers the hook's per-commit JSON (same <sha>.json) with diff_cover_pct=null; (4) generate_graph_snapshots._draw_graph ZeroDivisionError on an empty-present snapshot. LOW: overlay counts 80-99% diff-cover as pass vs CLAUDE.md C0=100%; pre-push 'data' substring over-triggers the data gate; build_review_html table cells unescaped (safe only while ROWS static); aggregate_convergence KeyError/argv guards. SCOPE: named scripts/pooled_20ep_analysis/aggregate.py does NOT exist - audited scripts/convergence_check/aggregate_convergence.py in its place. SKIPPED as already 3-layer reviewed: masked-GNN pilot, knn-sparse-adjacency, A1(t1.1), t0.1, t0.2, task-7, quality_gate core. The two diagram generators generate_final_combined/generate_proposed_updates are clean.",
+    "report_md": "recorded inline in this ledger entry (read-only audit)"
+  },
+  {
+    "id": "fix-audit-medium-2026-08-09",
+    "task_type": "code",
+    "phase": "Quality / audit",
+    "title": "Fix 4 MEDIUM audit findings in quality-infra (TDD)",
+    "status": "done",
+    "timestamp": "2026-08-09 08:40",
+    "branch": "master",
+    "commits": [
+      "fd420e4"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion",
+      "adversarial-review"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest (3 changed test files) after RED->GREEN",
+        "result": "48 passed. 6 new tests each watched fail first: malformed diff_cover_pct crash, ruff fail->fail, ruff na no-override, coverage-preserve-on-null, malformed-prior tolerated, empty-present no ZeroDivision."
+      },
+      {
+        "cmd": "diff-cover cov_fix.xml --compare-branch=master",
+        "result": "Coverage: 100% on changed lines (59 lines, 0 missing) across all 6 files. C0=100% met."
+      },
+      {
+        "cmd": "ruff check (6 changed files)",
+        "result": "All checks passed."
+      },
+      {
+        "cmd": "fixes (source: code-audit-2026-08-09)",
+        "result": "build_dashboard._overlay_gate: guard float(diff_cover_pct) (malformed JSON no longer crashes build); ruff fail->fail not warn, ruff na leaves hand-entry. run_quality_gate.write_gate_json: null-coverage run preserves an existing richer diff_cover_pct. generate_graph_snapshots: empty-present avg-degree guard + blank heatmap panel."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "48 passed (pytest)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on 6 changed files"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "focused adversarial review of the 4 diffs (right-sized per CLAUDE.md SDD); edge cases checked, no new issues"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "100% on changed lines (diff-cover vs master)"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A - no data/manifest/pipeline change"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "type": "focused-adversarial-remediation",
+      "findings_fixed": 0,
+      "findings_deferred": 0,
+      "note": "remediates code-audit-2026-08-09 (4 MEDIUM); 4 LOW left as follow-up (floor-80 by design, grep-substring safe, static HTML, manual-script guards)"
+    },
+    "dod": [
+      {
+        "item": "TDD RED->GREEN for each fix",
+        "ok": true
+      },
+      {
+        "item": "48 tests pass",
+        "ok": true
+      },
+      {
+        "item": "diff-cover C0=100% on changed lines",
+        "ok": true
+      },
+      {
+        "item": "ruff clean",
+        "ok": true
+      },
+      {
+        "item": "data-quality gate N/A (no data change)",
+        "ok": true
+      },
+      {
+        "item": "committed + pushed",
+        "ok": true
+      }
+    ],
+    "result_summary": "Fixed the 4 MEDIUM defects from the read-only audit (code-audit-2026-08-09) following TDD: dashboard-build crash on malformed gate JSON, ruff fail/na overlay mis-mapping, coverage clobber-with-null, and empty-present snapshot ZeroDivision. 6 new RED-first tests, C0=100% on changed lines. 4 LOW findings deferred (intentional/harmless).",
+    "report_md": "docs/reports/2026-08-09_0840_summaryOfUpdate_report.md"
   }
 ]
