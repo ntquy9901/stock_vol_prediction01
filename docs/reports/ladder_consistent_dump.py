@@ -38,10 +38,10 @@ def _sorted_rows(rows: list[dict]) -> list[dict]:
     return sorted(rows, key=lambda r: (r["ticker_id"], r["target_date"]))
 
 
-def _collect(ts: str) -> dict:
+def _collect(ts: str, horizon: int) -> dict:
     seeds: dict[int, dict] = {}
     for seed in _SEEDS:
-        base = _ROOT / "results" / f"ladder_consistent_seed{seed}_{ts}" / "h5"
+        base = _ROOT / "results" / f"ladder_consistent_seed{seed}_{ts}" / f"h{horizon}"
         ladder_path = base / "ladder_metrics.json"
         if not ladder_path.exists():
             continue
@@ -53,8 +53,8 @@ def _collect(ts: str) -> dict:
             p3 = _sorted_rows(load_predictions(base / "P3" / val_file))
             g1 = _sorted_rows(load_predictions(base / "G1" / val_file))
             losses = paired_losses(p3, g1)  # a=P3, b=G1
-            dm_q = diebold_mariano(losses["qlike_g1"], losses["qlike_g0"], h=_HORIZON)
-            dm_s = diebold_mariano(losses["se_g1"], losses["se_g0"], h=_HORIZON)
+            dm_q = diebold_mariano(losses["qlike_g1"], losses["qlike_g0"], h=horizon)
+            dm_s = diebold_mariano(losses["se_g1"], losses["se_g0"], h=horizon)
             block["dm"][split] = {"dm_qlike": {"stat": dm_q.dm_hln, "p": dm_q.p_value},
                                   "dm_mse": {"stat": dm_s.dm_hln, "p": dm_s.p_value}, "n_obs": losses["n"]}
         seeds[seed] = block
@@ -103,8 +103,8 @@ def _fmt(value: float, metric: str) -> str:
     return f"{value:.2f}" if metric == "directional_accuracy" else f"{value:.6g}"
 
 
-def main(ts: str, out_prefix: str) -> None:
-    seeds = _collect(ts)
+def main(ts: str, out_prefix: str, horizon: int = _HORIZON) -> None:
+    seeds = _collect(ts, horizon)
     if not seeds:
         raise SystemExit(f"no completed ladder seeds for timestamp {ts}")
     val_table = _rung_table(seeds, "val")
@@ -112,7 +112,7 @@ def main(ts: str, out_prefix: str) -> None:
     verdict = {"val": _graph_verdict(seeds, "val"), "test": _graph_verdict(seeds, "test")}
     nesting = {str(seed): s["nesting_check"] for seed, s in seeds.items()}
     any_seed = next(iter(seeds.values()))
-    summary = {"timestamp": ts, "horizon": _HORIZON, "seeds_completed": sorted(seeds),
+    summary = {"timestamp": ts, "horizon": horizon, "seeds_completed": sorted(seeds),
                "adjacency": any_seed.get("adjacency"), "edge_density": any_seed.get("edge_density"),
                "snapshot_count": any_seed.get("snapshot_count"),
                "basis": "masked manifest, leakage-safe graph-bound train, shared per-ticker scalers, "
@@ -124,9 +124,9 @@ def main(ts: str, out_prefix: str) -> None:
                "graph_effect_verdict": verdict, "nesting_check": nesting}
 
     lines: list[str] = [
-        "# Consistent-basis Track-B ladder P0 -> P1 -> P2 -> P3 -> G1 (h5)", "",
+        f"# Consistent-basis Track-B ladder P0 -> P1 -> P2 -> P3 -> G1 (h{horizon})", "",
         f"One basis for every rung: {summary['basis']}. Masked k-NN-8 adjacency, "
-        f"seeds {list(_SEEDS)}, horizon {_HORIZON}. "
+        f"seeds {list(_SEEDS)}, horizon {horizon}. "
         f"P3 = {summary['p3_definition']}.", "",
         "## Nesting verification (G1 minus the GAT = P3)", "",
         "The P3 row is the identical trained G1 model with the message-passing residual removed, so "
@@ -178,5 +178,7 @@ def main(ts: str, out_prefix: str) -> None:
 
 if __name__ == "__main__":
     ts_arg = sys.argv[1]
-    prefix = sys.argv[2] if len(sys.argv) > 2 else str(_ROOT / "docs" / "reports" / f"ladder_consistent_h5_{ts_arg}")
-    main(ts_arg, prefix)
+    horizon_arg = int(sys.argv[2]) if len(sys.argv) > 2 else _HORIZON
+    prefix = (sys.argv[3] if len(sys.argv) > 3
+              else str(_ROOT / "docs" / "reports" / f"ladder_consistent_h{horizon_arg}_{ts_arg}"))
+    main(ts_arg, prefix, horizon_arg)

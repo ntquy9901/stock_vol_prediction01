@@ -267,19 +267,26 @@ def build_basis(device: torch.device, stamp: Path):
     return pooled, graph, graph_store, allowed
 
 
-def main(ts: str, device_name: str) -> None:
-    stamp = Path(R) / "temp" / f"ladder_{ts}"
-    device = resolve_graph_device(device_name)
-    _log(stamp, f"device={device} building seed-independent basis ...")
-    pooled, graph, graph_store, allowed = build_basis(device, stamp)
-    for seed in SEEDS:
-        out = Path(R) / "results" / f"ladder_consistent_seed{seed}_{ts}" / "h5"
-        t0 = time.perf_counter()
-        run_seed(pooled, graph, graph_store, allowed, out, seed, device, stamp)
-        _log(stamp, f"seed={seed} elapsed {time.perf_counter() - t0:.1f}s")
-    stamp.with_suffix(".ALL_DONE").write_text("done", encoding="utf-8")
-    _log(stamp, "ALL_DONE")
+def main(ts: str, device_name: str, horizon: int = HORIZON) -> None:
+    global HORIZON
+    previous_horizon = HORIZON
+    HORIZON = horizon  # run-config constant read by build_basis/run_seed; restored in finally
+    try:
+        stamp = Path(R) / "temp" / f"ladder_{ts}_h{horizon}"
+        device = resolve_graph_device(device_name)
+        _log(stamp, f"device={device} horizon={horizon} building seed-independent basis ...")
+        pooled, graph, graph_store, allowed = build_basis(device, stamp)
+        for seed in SEEDS:
+            out = Path(R) / "results" / f"ladder_consistent_seed{seed}_{ts}" / f"h{horizon}"
+            t0 = time.perf_counter()
+            run_seed(pooled, graph, graph_store, allowed, out, seed, device, stamp)
+            _log(stamp, f"seed={seed} elapsed {time.perf_counter() - t0:.1f}s")
+        stamp.with_suffix(".ALL_DONE").write_text("done", encoding="utf-8")
+        _log(stamp, "ALL_DONE")
+    finally:
+        HORIZON = previous_horizon
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "cuda")
+    main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "cuda",
+         int(sys.argv[3]) if len(sys.argv) > 3 else HORIZON)

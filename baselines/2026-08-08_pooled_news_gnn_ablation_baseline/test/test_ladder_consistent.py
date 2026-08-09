@@ -146,3 +146,27 @@ def test_run_graph_rungs_produces_nested_p3_and_g1(tmp_path: Path, monkeypatch: 
     assert (out / "G1" / "predictions.json").exists()
     nesting = json.loads((out / "nesting_check.json").read_text(encoding="utf-8"))
     assert nesting["n_val_obs"] == len(pooled.samples["val"])
+
+
+@pytest.mark.smoke
+def test_main_routes_horizon_to_subdir_and_stamp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """main(horizon=h) sets the run horizon, writes results under h{h}, and stamps ladder horizon."""
+
+    pooled, graph, store = _tiny_basis()
+    allowed = tuple(s for s in pooled.samples["train"] if s.key.target_date <= graph.train_end_date)
+    (tmp_path / "temp").mkdir()  # mirrors the repo-root temp/ the progress logger appends to
+    monkeypatch.setattr(ladder, "R", str(tmp_path))
+    monkeypatch.setattr(ladder, "SEEDS", (42,))
+    monkeypatch.setattr(ladder, "GRAPH_EPOCHS", 2)
+    monkeypatch.setattr(ladder, "BACKBONE_EPOCHS", 2)
+    monkeypatch.setattr(ladder, "POOLED_EPOCHS", 1)
+    monkeypatch.setattr(ladder, "build_basis", lambda device, stamp: (pooled, graph, store, allowed))
+
+    ladder.main("testts", "cpu", horizon=10)
+
+    out = tmp_path / "results" / "ladder_consistent_seed42_testts" / "h10"
+    metrics = json.loads((out / "ladder_metrics.json").read_text(encoding="utf-8"))
+    assert metrics["horizon"] == 10
+    assert (out / "G1" / "predictions.json").exists()
+    # main restores the module default so later runs are not contaminated.
+    assert ladder.HORIZON == 5
