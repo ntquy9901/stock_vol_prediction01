@@ -42,7 +42,8 @@ class _FakeModel(nn.Module):
         for p in self.price_encoder.parameters():
             p.requires_grad_(False)
         self.head = nn.Sequential(nn.Linear(HIDDEN, HIDDEN), nn.ReLU(), nn.Linear(HIDDEN, 1))
-        self.message_passing = None
+        from models import _ResidualMessagePassing
+        self.message_passing = _ResidualMessagePassing(HIDDEN)  # exercise real MP + adjacency invariant
         self._positivity_configured = True
         self._positivity_epsilon = 1e-6
         self.register_buffer("target_mean", torch.full((N,), 1.3e-4))
@@ -58,6 +59,8 @@ class _FakeModel(nn.Module):
 
     def apply_graph_head(self, base, adjacency, ticker_ids, presence_mask=None,
                          apply_message_passing=True):
+        if apply_message_passing:
+            base = base + self.message_passing(base, adjacency, presence_mask)
         out = self.head(base).squeeze(-1)
         return self._apply_positivity(out, ticker_ids.reshape(-1).long())
 
@@ -116,6 +119,36 @@ def test_train_and_eval_runs_and_produces_metrics(tmp_path, monkeypatch, cfg_nam
         assert np.isfinite(list(metrics.values())).all()
     assert (tmp_path / "predictions_test.json").exists()
     assert len(result["train_losses"]) == 2
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize("cfg_name", ["C3", "C5", "C6"])
+def test_adjacency_variant_configs_run(tmp_path, monkeypatch, cfg_name):
+    """C3 (spillover), C5 (spillover+omit-self), C6 (learned) run through the real message passing."""
+
+    monkeypatch.setattr(sweep, "GRAPH_EPOCHS", 2)
+    # fabricate a directed spillover matrix so the smoke does not read data/processed
+    static = np.array([[1.0, 0.4, 0.2], [0.3, 1.0, 0.5], [0.1, 0.6, 1.0]], dtype=np.float32)
+    monkeypatch.setattr(sweep, "_spillover_static", lambda graph, store: static)
+    cfg = sweep.CONFIGS[cfg_name]
+    train = [_snapshot("train", f"2020-01-0{d}", 1.0) for d in range(1, 6)]
+    val = [_snapshot("val", f"2021-01-0{d}", 1.1) for d in range(1, 4)]
+    test = [_snapshot("test", f"2022-01-0{d}", 1.2) for d in range(1, 4)]
+
+    class _Graph:
+        ticker_to_id = {f"T{i}": i for i in range(N)}
+        train_end_date = "2020-01-05"
+    graph = _Graph()
+    graph.snapshots = tuple(train + val + test)
+    base_cache = {"train": _base_cache(train), "val": _base_cache(val), "test": _base_cache(test)}
+    model = _FakeModel()
+    monkeypatch.setattr(model, "configure_positivity", lambda store: model, raising=False)
+
+    top_k = 2 if cfg.get("k_sweep") else None
+    result = sweep.train_and_eval(cfg_name, cfg, None, graph, _store(), model, base_cache,
+                                  tmp_path, seed=42, device=torch.device("cpu"), top_k=top_k)
+    assert set(sweep._METRIC_KEYS).issubset(result["test_metrics"])
+    assert np.isfinite(list(result["test_metrics"].values())).all()
 
 
 @pytest.mark.smoke
