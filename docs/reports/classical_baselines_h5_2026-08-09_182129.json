@@ -1,0 +1,459 @@
+{
+  "timestamp": "2026-08-09_182129",
+  "horizon": 5,
+  "basis": "classical econometric baselines on the consistent Track-B ladder observation set (identical val/test keys + targets + evaluate_records scorer as P0-G1)",
+  "n_val_obs": 14418,
+  "n_test_obs": 14464,
+  "n_tickers": 33,
+  "garch_excluded_tickers": [
+    "LPB"
+  ],
+  "garch_n_val_obs": 14247,
+  "garch_n_test_obs": 14292,
+  "notes": {
+    "basis_note": "One basis for every baseline: leakage-safe chronological 70/15/15 split, Parkinson-volatility target shift(-h), and the EXACT pooled val/test observations (same keys + raw targets) scored by the same `train.evaluate_records` as the deep-model ladder P0-G1.",
+    "HARQ": "HARQ uses a DAILY range-based realized-quarticity proxy RQ_d = sigma_d^2 because the dataset is daily OHLCV (no intraday returns); the canonical BPQ-2016 5-min RQ is not identified. This is an approximation, not the canonical HARQ.",
+    "target_units": "The processed `parkinson_volatility` column is numerically the Parkinson VARIANCE estimator sigma^2 = (ln(H/L))^2 / (4 ln 2) (verified corr=1.0 vs raw OHLCV, median ~1.3e-4). Every baseline forecasts this daily realized-variance quantity; EWMA smooths it directly and GARCH forecasts the conditional return variance (same units).",
+    "GARCH_family": "GARCH(1,1)/GJR/EGARCH fit per ticker on 100x close-to-close log returns; params estimated on the train sample only (frozen). The h-step marginal conditional variance (percent^2) is divided by 1e4 to recover the raw-return variance, directly comparable to the Parkinson variance target.",
+    "P0_anchor": "P0 (pooled HAR on standardized features, from the ladder) is the deep-pipeline HAR anchor; the HAR row here is a per-ticker OLS on raw volatility.",
+    "GARCH_coverage": "GARCH/GJR/EGARCH are scored on 14247 val / 14292 test observations (32 of 33 tickers); tickers ['LPB'] lack raw OHLCV so returns cannot be formed. Persistence/EWMA/HAR/HARQ/logHAR cover the full 14418/14464 observation set (exact ladder alignment)."
+  },
+  "rung_metrics": {
+    "val": {
+      "Persistence": {
+        "mse": {
+          "mean": 3.3603582898322864e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0018331280069412191,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.000578995163692352,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.5961485133961238,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 2050.8319802973165,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.20442536568119,
+          "std": 0.0
+        },
+        "n_obs": 14418
+      },
+      "EWMA": {
+        "mse": {
+          "mean": 2.1808568199141602e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0014767724333539546,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.00047505768776104666,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7379022732613156,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.5262279654233143,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.61142668062657,
+          "std": 0.0
+        },
+        "n_obs": 14418
+      },
+      "HAR": {
+        "mse": {
+          "mean": 2.3992238454057002e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0015489428154085289,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0005154995241702179,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7116586884219066,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.5285771711897073,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.67103516763963,
+          "std": 0.0
+        },
+        "n_obs": 14418
+      },
+      "HARQ": {
+        "mse": {
+          "mean": 2.3989783184019753e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.001548863557064332,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0005139637272265413,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7116881961222479,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.5232249122024234,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.929839900992704,
+          "std": 0.0
+        },
+        "n_obs": 14418
+      },
+      "logHAR": {
+        "mse": {
+          "mean": 2.2151360624620822e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0014883333169898746,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0004502509325555548,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7337825568892485,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.6934168441728803,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.045806949628734,
+          "std": 0.0
+        },
+        "n_obs": 14418
+      },
+      "GARCH": {
+        "mse": {
+          "mean": 8.677897871246431e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0029458271964333603,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0008580642854473194,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": -0.031513296979442496,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.9480991457974772,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 49.684343883637496,
+          "std": 0.0
+        },
+        "n_obs": 14247
+      },
+      "GJR-GARCH": {
+        "mse": {
+          "mean": 8.67505235859133e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.002945344183383553,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0008592381907229318,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": -0.031175060210122174,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.8827863917354049,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 49.72302530766521,
+          "std": 0.0
+        },
+        "n_obs": 14247
+      },
+      "EGARCH": {
+        "mse": {
+          "mean": 8.638803605588263e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0029391841734719964,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0008596216956169589,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": -0.02686628966726068,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.8767740821012842,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 49.35598008477898,
+          "std": 0.0
+        },
+        "n_obs": 14247
+      }
+    },
+    "test": {
+      "Persistence": {
+        "mse": {
+          "mean": 7.685592170810934e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0027722900589243786,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0007227423087585447,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.6579998263711028,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 4151.223942036549,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.008927738371305,
+          "std": 0.0
+        },
+        "n_obs": 14464
+      },
+      "EWMA": {
+        "mse": {
+          "mean": 5.339292263685158e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.002310690862855773,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0006106147896391744,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.762407522979055,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.6006245497191144,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.03132474779471,
+          "std": 0.0
+        },
+        "n_obs": 14464
+      },
+      "HAR": {
+        "mse": {
+          "mean": 5.242771315539139e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.002289709875844348,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0006311696376812291,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7667025961876144,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.5792911127117053,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.401470526164154,
+          "std": 0.0
+        },
+        "n_obs": 14464
+      },
+      "HARQ": {
+        "mse": {
+          "mean": 5.240199094843906e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0022891481155320435,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0006289246747199311,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.766817057104201,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.5736740678284201,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.37933971955306,
+          "std": 0.0
+        },
+        "n_obs": 14464
+      },
+      "logHAR": {
+        "mse": {
+          "mean": 5.6275888018004636e-06,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.0023722539496859236,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0005932003480236494,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.7495786525549246,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 0.7794215327312903,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.830111317197705,
+          "std": 0.0
+        },
+        "n_obs": 14464
+      },
+      "GARCH": {
+        "mse": {
+          "mean": 2.2664198568468795e-05,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.004760693076482541,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0011687801631105929,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.0030747525177595714,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.7610030341293732,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.67324391605078,
+          "std": 0.0
+        },
+        "n_obs": 14292
+      },
+      "GJR-GARCH": {
+        "mse": {
+          "mean": 2.271714303849939e-05,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.004766250417099315,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0011722865750558153,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": 0.0007458954558781095,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.82431983981112,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.652681013585266,
+          "std": 0.0
+        },
+        "n_obs": 14292
+      },
+      "EGARCH": {
+        "mse": {
+          "mean": 2.2805266010698372e-05,
+          "std": 0.0
+        },
+        "rmse": {
+          "mean": 0.00477548594497967,
+          "std": 0.0
+        },
+        "mae": {
+          "mean": 0.0011763976351445132,
+          "std": 0.0
+        },
+        "r2": {
+          "mean": -0.003130350845218288,
+          "std": 0.0
+        },
+        "qlike": {
+          "mean": 1.8737919388498105,
+          "std": 0.0
+        },
+        "directional_accuracy": {
+          "mean": 48.827089196776775,
+          "std": 0.0
+        },
+        "n_obs": 14292
+      }
+    }
+  }
+}
