@@ -64,3 +64,20 @@ def test_build_report_integration_real_json():
     # gate effect (P3 vs P2) is negligible: |mean qlike diff| tiny
     gate_qlike = report["contrasts"]["gate_P3_vs_P2"]["qlike"]
     assert abs(gate_qlike["mean_diff"]) < 1e-3
+
+
+def test_main_prints_full_report(capsys):
+    # Exercises the print/report runner (_fmt_cell, _print_contrast, main) against
+    # the real committed pooled results.json, so the I/O runner is covered too.
+    mod.main()
+    out = capsys.readouterr().out
+    assert "POOLED regime parsimony" in out
+    assert "NEWS EFFECT" in out
+    assert "GATE EFFECT" in out
+    # every config column header appears in the metric table
+    for cfg in ("P0", "P1", "P2", "P3"):
+        assert cfg in out
+
+
+def test_fmt_cell_formats_mean_std():
+    assert mod._fmt_cell([1.0, 2.0, 3.0]) == "2.000000+/-1.000000"
