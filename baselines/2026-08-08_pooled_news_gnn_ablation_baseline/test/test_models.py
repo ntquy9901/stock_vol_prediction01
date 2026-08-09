@@ -559,6 +559,48 @@ def test_positivity_buffers_do_not_break_p3_checkpoint_loading(tmp_path: Path) -
     )
 
 
+def test_g1_graph_off_readout_equals_the_graph_off_model_within_fp_tolerance() -> None:
+    """Nesting evidence: G1 with the message-passing residual disabled reproduces the pure
+    backbone+head+positivity path (the P3 rung) bit-identically, while the residual actually
+    changes the prediction.  This makes 'remove the GAT from G1 = P3' literally true in the
+    numbers rather than an asserted claim.
+    """
+
+    torch.manual_seed(3)
+    p3 = PooledPriceNewsLSTM(3, 2, 2, use_gate=True, hidden_dim=4, news_hidden_dim=4, dropout=0.0)
+    with torch.no_grad():
+        for parameter in p3.parameters():
+            parameter.uniform_(-0.5, 0.5)
+    g1 = GraphAblationModel(p3, use_gnn=True).eval()
+    with torch.no_grad():
+        # A non-zero message-passing projection: the residual must be able to move predictions.
+        for parameter in g1.message_passing.parameters():
+            parameter.uniform_(-0.5, 0.5)
+    store = PreprocessorStore({0: _target_preprocessor(0.02, 0.01), 1: _target_preprocessor(0.03, 0.01)})
+    g1.configure_positivity(store)
+
+    price = torch.randn(2, 22, 3)
+    news = torch.randn(2, 22, 2)
+    mask = torch.ones(2, 22, dtype=torch.bool)
+    ticker_ids = torch.tensor([0, 1])
+    presence = torch.ones(2, dtype=torch.bool)
+    adjacency = torch.ones(2, 2)
+    base = g1.encode_base(price, news, mask, ticker_ids, presence)
+
+    graph_off = g1.apply_graph_head(base, adjacency, ticker_ids, presence, apply_message_passing=False)
+    graph_on = g1.apply_graph_head(base, adjacency, ticker_ids, presence, apply_message_passing=True)
+
+    # The graph-off readout must NOT depend on the trained message-passing residual: it is the
+    # pure P3 pathway.  A graph-off model (use_gnn=False) sharing the identical frozen encoder,
+    # gate and head must produce exactly the same prediction.
+    g0 = GraphAblationModel(p3, use_gnn=False).eval()
+    g0.configure_positivity(store)
+    g0_out = g0.apply_graph_head(base, adjacency, ticker_ids, presence)
+    torch.testing.assert_close(graph_off, g0_out, rtol=0.0, atol=0.0)
+    # The residual is real: with it enabled the prediction changes.
+    assert not torch.allclose(graph_on, graph_off)
+
+
 def test_run_one_graph_model_positivity_gate_passes_for_negative_prone_head(tmp_path: Path) -> None:
     from data import GraphManifest, GraphNode, GraphSnapshot
     from run_pilot import _run_one_graph_model

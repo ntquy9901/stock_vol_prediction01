@@ -333,17 +333,22 @@ class GraphAblationModel(nn.Module):
 
     def apply_graph_head(
         self, base: torch.Tensor, adjacency: torch.Tensor, ticker_ids: torch.Tensor,
-        presence_mask: torch.Tensor | None = None,
+        presence_mask: torch.Tensor | None = None, apply_message_passing: bool = True,
     ) -> torch.Tensor:
         """Trainable message-passing (G1 only) + head + positivity, given a precomputed ``base``.
 
         ``base`` is ``[batch, nodes, hidden]`` (batched) or ``[nodes, hidden]`` (single) as
         returned by :meth:`encode_base`.  This is the only part that carries gradients and reads
         the trainable message-passing / head parameters.
+
+        ``apply_message_passing=False`` reads out the same trained model with the graph residual
+        removed -- the pure backbone+head+positivity (P3) pathway.  Because ``head`` and the frozen
+        encoders are shared, this is bit-identical to a ``use_gnn=False`` model built from the same
+        weights, so 'G1 minus the GAT = P3' holds exactly (see the nesting test).
         """
 
         batched = base.ndim == 3
-        if self.message_passing is not None:
+        if self.message_passing is not None and apply_message_passing:
             if batched:
                 base = base + self.message_passing(base, adjacency, presence_mask)
             else:
