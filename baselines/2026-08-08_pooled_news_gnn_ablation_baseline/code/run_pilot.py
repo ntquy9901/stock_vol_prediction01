@@ -6,6 +6,7 @@ import argparse
 import csv
 import json
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -122,9 +123,16 @@ def _pooled_training_batches(
 def build_graph_bound_p3_warm_start(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str,
     seed: int, store: PreprocessorStore, epochs: int = 1, device: torch.device | None = None,
-    train_batch_size: int = 256,
+    train_batch_size: int = 256, dropout: float = 0.0,
 ) -> Path:
-    """Train a fresh P3 only on graph-bound samples and attest its exact provenance."""
+    """Train a fresh P3 only on graph-bound samples and attest its exact provenance.
+
+    ``dropout`` selects the regularization used for the frozen graph backbone.  The screening
+    P0-P3 comparison uses ``dropout=0.2``; the graph runner passes that so G0/G1 wrap a
+    screening-configuration P3 rather than a bespoke dropout-free backbone.  The training set stays
+    the leakage-safe graph-bound subset (``target_date <= graph.train_end_date``) so the frozen
+    backbone never sees data from the graph val/test period.
+    """
 
     allowed = tuple(sample for sample in pooled_manifest.samples["train"]
                     if sample.key.target_date <= graph_manifest.train_end_date)
@@ -141,7 +149,8 @@ def build_graph_bound_p3_warm_start(
     _validate_graph_manifest(graph_manifest)
     _seed_graph_device(seed, selected_device)
     model = PooledPriceNewsLSTM(price_dim, news_dim, max(pooled_manifest.ticker_to_id.values()) + 1,
-                                 use_gate=True, dropout=0.0).to(selected_device)
+                                 use_gate=True, dropout=dropout).to(selected_device)
+    model.train()
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
     for _ in range(epochs):
         for x_price, x_news, news_mask, ticker_ids, targets in _pooled_training_batches(
@@ -166,7 +175,7 @@ def build_graph_bound_p3_warm_start(
 def build_graph_safe_p3_checkpoint(
     pooled_manifest: PooledManifest, graph_manifest: GraphManifest, output_dir: Path | str, seed: int,
     warm_start_checkpoint: Path | str, store: PreprocessorStore, epochs: int = 1,
-    device: torch.device | None = None, train_batch_size: int = 256,
+    device: torch.device | None = None, train_batch_size: int = 256, dropout: float = 0.0,
 ) -> Path:
     """Create the only P3 initialization permitted for the matched graph pair.
 
@@ -209,7 +218,7 @@ def build_graph_safe_p3_checkpoint(
     selected_device = device or torch.device("cpu")
     _validate_graph_manifest(graph_manifest)
     _seed_graph_device(seed, selected_device)
-    model = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True, dropout=0.0)
+    model = PooledPriceNewsLSTM(price_dim, news_dim, num_tickers, use_gate=True, dropout=dropout)
     model.load_state_dict(warm["model_state"], strict=True)
     model.to(selected_device)
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=1e-5)
@@ -405,21 +414,41 @@ def run_graph_screening(args: argparse.Namespace) -> Path:
     _validate_graph_manifest(graph)
     out = Path(args.output_dir) / f"h{horizon}"
     out.mkdir(parents=True, exist_ok=True)
+    # Screening-configuration backbone: G0/G1 wrap a P3 trained with the standard screening depth
+    # + dropout (``--backbone-epochs`` / ``--backbone-dropout``, defaults 5 / 0.2), not a bespoke
+    # 1+1-epoch dropout-0 backbone.  Training stays on the leakage-safe graph-bound subset.
+    warm_epochs = max(1, args.backbone_epochs - 1)
     warm_start = args.p3_checkpoint or build_graph_bound_p3_warm_start(
-        graph_pooled, graph, out, args.seed, graph_store, epochs=1, device=device,
-        train_batch_size=args.batch_size,
+        graph_pooled, graph, out, args.seed, graph_store, epochs=warm_epochs, device=device,
+        train_batch_size=args.batch_size, dropout=args.backbone_dropout,
     )
     graph_safe = build_graph_safe_p3_checkpoint(graph_pooled, graph, out, args.seed, warm_start,
                                                  graph_store, epochs=1, device=device,
-                                                 train_batch_size=args.batch_size)
+                                                 train_batch_size=args.batch_size,
+                                                 dropout=args.backbone_dropout)
     graph_hash = graph.content_hash("train")
+    models = {
+        name: GraphAblationModel.from_p3_checkpoint(
+            str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
+            graph_manifest_hash=graph_hash,
+        )
+        for name in ("G0", "G1")
+    }
+    # G0 and G1 load the identical graph-safe P3 weights, so their FROZEN encoder + gate produce
+    # bit-identical node embeddings.  Compute that ``base`` cache ONCE and reuse it for both
+    # models and all epochs (proven equivalent to per-epoch recompute by the equivalence test).
+    use_cache = not args.no_base_cache
+    shared_base = None
+    if use_cache:
+        _assert_shared_frozen_encoder(models["G0"], models["G1"])
+        models["G0"].to(device)
+        shared_base = _build_shared_graph_base(models["G0"], graph, device,
+                                               args.graph_train_batch_size, args.graph_batch_size)
     results = {
         name: _run_one_graph_model(
-            GraphAblationModel.from_p3_checkpoint(
-                str(graph_safe), use_gnn=name == "G1", graph_train_end_date=graph.train_end_date,
-                graph_manifest_hash=graph_hash,
-            ), graph, graph_store, name, args.epochs, args.seed, out / name, device,
+            models[name], graph, graph_store, name, args.epochs, args.seed, out / name, device,
             validation_batch_size=args.graph_batch_size, train_batch_size=args.graph_train_batch_size,
+            base_cache=shared_base, use_base_cache=use_cache,
         )
         for name in ("G0", "G1")
     }
@@ -466,6 +495,7 @@ def _edge_density_stats(graph: GraphManifest) -> dict[str, float | int]:
 
 def _graph_validation_loss(
     model: GraphAblationModel, validation: list[Any], device: torch.device, validation_batch_size: int,
+    base: list[torch.Tensor] | None = None,
 ) -> float:
     """Present-node-weighted validation MSE for one epoch's learning-curve point."""
 
@@ -475,7 +505,10 @@ def _graph_validation_loss(
     with torch.no_grad():
         for start in range(0, len(validation), validation_batch_size):
             snapshots = validation[start:start + validation_batch_size]
-            predictions, targets, presence = _graph_prediction_batch(model, snapshots, device)
+            predictions, targets, presence = _graph_predict(
+                model, snapshots, device,
+                None if base is None else base[start:start + validation_batch_size],
+            )
             loss_sum = loss_sum + _mean_snapshot_mse(predictions, targets, presence) * len(snapshots)
             snapshot_count += len(snapshots)
     return (loss_sum / snapshot_count).item()
@@ -538,6 +571,7 @@ def _run_one_graph_model(
     model: GraphAblationModel, graph: GraphManifest, store: PreprocessorStore, name: str,
     epochs: int, seed: int, output: Path, device: str | torch.device = "cpu",
     validation_batch_size: int = 32, train_batch_size: int = 32,
+    base_cache: Mapping[str, list[torch.Tensor]] | None = None, use_base_cache: bool = True,
 ) -> dict[str, Any]:
     selected_device = resolve_graph_device(device) if isinstance(device, str) else device
     _validate_graph_run_provenance(model, graph)
@@ -555,10 +589,25 @@ def _run_one_graph_model(
         raise ValueError("validation_batch_size must be positive")
     if train_batch_size < 1:
         raise ValueError("train_batch_size must be positive")
+    # Frozen-encoder ``base`` cache (proposed updates #1 + #2): computed once per seed over PRESENT
+    # nodes and reused across every epoch (and, when supplied via ``base_cache``, across G0/G1).
+    # ``use_base_cache=False`` recomputes the encoder each batch (the pre-cache path) and is used
+    # by the equivalence + speedup measurements only.
+    encode_seconds = 0.0
+    if base_cache is not None:
+        train_base, val_base = base_cache["train"], base_cache["val"]
+    elif use_base_cache:
+        encode_start = time.perf_counter()
+        train_base = _precompute_graph_base(model, train, selected_device, train_batch_size)
+        val_base = _precompute_graph_base(model, validation, selected_device, validation_batch_size)
+        encode_seconds = time.perf_counter() - encode_start
+    else:
+        train_base = val_base = None
     trainable = [parameter for parameter in model.parameters() if parameter.requires_grad]
     optimizer = torch.optim.Adam(trainable, weight_decay=1e-5)
     losses: list[float] = []
     validation_losses: list[float] = []
+    train_start = time.perf_counter()
     for _ in range(epochs):
         model.train()
         # Training keeps its deterministic chronological (unshuffled) snapshot order; snapshots
@@ -570,7 +619,10 @@ def _run_one_graph_model(
         for start in range(0, len(train), train_batch_size):
             snapshots = train[start:start + train_batch_size]
             optimizer.zero_grad()
-            predictions, targets, presence = _graph_prediction_batch(model, snapshots, selected_device)
+            predictions, targets, presence = _graph_predict(
+                model, snapshots, selected_device,
+                None if train_base is None else train_base[start:start + train_batch_size],
+            )
             loss = _mean_snapshot_mse(predictions, targets, presence)
             loss.backward()
             if any(parameter.grad is not None for parameter in model.price_encoder.parameters()):
@@ -582,25 +634,74 @@ def _run_one_graph_model(
         # Per-epoch validation loss lets the learning curve expose convergence and any
         # train-vs-validation divergence (overfitting) rather than a single end-of-run point.
         validation_losses.append(
-            _graph_validation_loss(model, validation, selected_device, validation_batch_size)
+            _graph_validation_loss(model, validation, selected_device, validation_batch_size, val_base)
         )
+    train_seconds = time.perf_counter() - train_start
     _plot_learning_curve(losses, validation_losses, output / "learning_curve.png")
     model.eval()
-    records = []
+    validation_loss, val_records, val_eval = _evaluate_graph_split(
+        model, validation, val_base, store, selected_device, validation_batch_size)
+    _write_graph_predictions(val_records, val_eval, output / "predictions.json")
+    result_payload: dict[str, Any] = {
+        "config_name": name, "graph_hash": graph.content_hash("val"),
+        "train_losses": losses, "validation_losses": validation_losses,
+        "validation_loss": validation_loss,
+        "runtime": _graph_runtime_metadata(str(device), selected_device),
+        "timing": {"base_cache": base_cache is not None or use_base_cache,
+                   "encode_seconds": encode_seconds, "train_seconds": train_seconds,
+                   "seconds_per_epoch": train_seconds / epochs},
+        "train_snapshot_count": len(train), "validation_snapshot_count": len(validation),
+        "present_validation_node_count": len(val_records),
+        "validation_metrics": val_eval["metrics"],
+        "nonpositive_prediction_rate": val_eval["nonpositive_prediction_rate"],
+    }
+    # Held-out TEST evaluation (for the paper's val+test table).  Backbone is graph-bound (train),
+    # message-passing head is train-only, so test is a clean out-of-sample forecast.
+    test = [snapshot for snapshot in graph.snapshots if snapshot.split == "test"]
+    outcome = {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
+               "validation_metrics": val_eval["metrics"]}
+    if test:
+        test_base = None
+        if base_cache is not None and "test" in base_cache:
+            test_base = base_cache["test"]
+        elif use_base_cache:
+            test_base = _precompute_graph_base(model, test, selected_device, validation_batch_size)
+        test_loss, test_records, test_eval = _evaluate_graph_split(
+            model, test, test_base, store, selected_device, validation_batch_size)
+        _write_graph_predictions(test_records, test_eval, output / "predictions_test.json")
+        result_payload.update({
+            "test_loss": test_loss, "test_snapshot_count": len(test),
+            "present_test_node_count": len(test_records),
+            "test_metrics": test_eval["metrics"],
+            "test_nonpositive_prediction_rate": test_eval["nonpositive_prediction_rate"],
+        })
+        outcome.update({"test_loss": test_loss, "test_metrics": test_eval["metrics"]})
+    _write_json(output / "results.json", result_payload)
+    return outcome
+
+
+def _evaluate_graph_split(
+    model: GraphAblationModel, snapshots: list[Any], base: list[torch.Tensor] | None,
+    store: PreprocessorStore, device: torch.device, batch_size: int,
+) -> tuple[float, list[dict[str, Any]], dict[str, Any]]:
+    """Present-node-weighted loss + raw-scale ``evaluate_records`` metrics for one split."""
+
+    model.eval()
+    records: list[dict[str, Any]] = []
     with torch.no_grad():
-        validation_loss_sum = torch.zeros((), device=selected_device)
-        validation_snapshot_count = 0
-        for start in range(0, len(validation), validation_batch_size):
-            snapshots = validation[start:start + validation_batch_size]
-            predictions, targets, presence = _graph_prediction_batch(model, snapshots, selected_device)
+        loss_sum = torch.zeros((), device=device)
+        snapshot_count = 0
+        for start in range(0, len(snapshots), batch_size):
+            batch = snapshots[start:start + batch_size]
+            predictions, targets, presence = _graph_predict(
+                model, batch, device, None if base is None else base[start:start + batch_size])
             # Keep the original per-snapshot weighting exactly, even if a future
             # manifest contains snapshots with different node counts.
-            batch_loss = _mean_snapshot_mse(predictions, targets, presence)
-            validation_loss_sum = validation_loss_sum + batch_loss * len(snapshots)
-            validation_snapshot_count += len(snapshots)
+            loss_sum = loss_sum + _mean_snapshot_mse(predictions, targets, presence) * len(batch)
+            snapshot_count += len(batch)
             presence_cpu = presence.cpu()
             for snapshot, snapshot_predictions, snapshot_presence in zip(
-                snapshots, predictions.cpu(), presence_cpu, strict=True
+                batch, predictions.cpu(), presence_cpu, strict=True
             ):
                 for index, (node, prediction) in enumerate(
                     zip(snapshot.nodes, snapshot_predictions, strict=True)
@@ -610,21 +711,8 @@ def _run_one_graph_model(
                         continue
                     records.append({"ticker_id": node.ticker_id, "target_date": snapshot.target_date,
                                     "prediction_norm": float(prediction), "target_raw": node.y_raw})
-        validation_loss = (validation_loss_sum / validation_snapshot_count).item()
-    evaluation = evaluate_records(records, store)
-    _write_graph_predictions(records, evaluation, output / "predictions.json")
-    _write_json(output / "results.json", {"config_name": name, "graph_hash": graph.content_hash("val"),
-                                            "train_losses": losses,
-                                            "validation_losses": validation_losses,
-                                            "validation_loss": validation_loss,
-                                            "runtime": _graph_runtime_metadata(str(device), selected_device),
-                                            "train_snapshot_count": len(train),
-                                            "validation_snapshot_count": len(validation),
-                                            "present_validation_node_count": len(records),
-                                            "validation_metrics": evaluation["metrics"],
-                                            "nonpositive_prediction_rate": evaluation["nonpositive_prediction_rate"]})
-    return {"graph_hash": graph.content_hash("val"), "validation_loss": validation_loss,
-            "validation_metrics": evaluation["metrics"]}
+        split_loss = (loss_sum / snapshot_count).item()
+    return split_loss, records, evaluate_records(records, store)
 
 
 def _snapshot_presence(snapshot: Any, device: torch.device) -> torch.Tensor | None:
@@ -694,6 +782,120 @@ def _graph_prediction_batch(
                            dtype=torch.float32, device=device)
     resolved = presence_mask if presence_mask is not None else torch.ones_like(targets, dtype=torch.bool)
     return predictions, targets, resolved
+
+
+def _stacked_snapshot_inputs(
+    snapshots: list[Any], device: torch.device,
+) -> tuple[torch.Tensor, torch.Tensor | None, torch.Tensor, torch.Tensor]:
+    """Batch adjacency / presence / ticker_ids / normalized targets without the raw price+news.
+
+    Used by the cached path: the frozen ``base`` is already computed, so only the trainable
+    head's inputs (adjacency, presence, ticker IDs for positivity, targets) are stacked here.
+    """
+
+    non_blocking = device.type == "cuda"
+    presence_mask = None
+    if any(snapshot.presence_mask is not None for snapshot in snapshots):
+        presence_mask = torch.from_numpy(
+            np.stack([snapshot.presence_mask for snapshot in snapshots])).to(
+            device, non_blocking=non_blocking).to(dtype=torch.bool)
+    ticker_ids = torch.tensor([[node.ticker_id for node in snapshot.nodes] for snapshot in snapshots],
+                              dtype=torch.long, device=device)
+    adjacency = torch.from_numpy(np.stack([snapshot.adjacency for snapshot in snapshots])).to(
+        device, non_blocking=non_blocking)
+    targets = torch.tensor([[node.y_norm for node in snapshot.nodes] for snapshot in snapshots],
+                           dtype=torch.float32, device=device)
+    return adjacency, presence_mask, ticker_ids, targets
+
+
+def _precompute_graph_base(
+    model: GraphAblationModel, snapshots: list[Any], device: torch.device, batch_size: int,
+) -> list[torch.Tensor]:
+    """Frozen-encoder ``base`` per snapshot, computed once (present-only) and reused across epochs.
+
+    Returns one ``[nodes, hidden]`` tensor per snapshot in ``snapshots`` order, resident on
+    ``device``.  The encoders are frozen + dropout-free, so these embeddings are bit-identical to
+    the per-epoch recompute (asserted by the equivalence test) while removing the redundant work.
+    """
+
+    model.eval()
+    non_blocking = device.type == "cuda"
+    bases: list[torch.Tensor] = []
+    with torch.no_grad():
+        for start in range(0, len(snapshots), batch_size):
+            chunk = snapshots[start:start + batch_size]
+            presence = None
+            if any(snapshot.presence_mask is not None for snapshot in chunk):
+                presence = torch.from_numpy(
+                    np.stack([snapshot.presence_mask for snapshot in chunk])).to(
+                    device, non_blocking=non_blocking).to(dtype=torch.bool)
+            base = model.encode_base(
+                torch.from_numpy(np.stack([snapshot.x_price for snapshot in chunk])).to(
+                    device, non_blocking=non_blocking),
+                torch.from_numpy(np.stack([snapshot.x_news for snapshot in chunk])).to(
+                    device, non_blocking=non_blocking),
+                torch.from_numpy(np.stack([snapshot.news_mask for snapshot in chunk])).to(
+                    device, non_blocking=non_blocking),
+                torch.tensor([[node.ticker_id for node in snapshot.nodes] for snapshot in chunk],
+                             dtype=torch.long, device=device),
+                presence,
+            )
+            bases.extend(base[index] for index in range(base.shape[0]))
+    return bases
+
+
+def _graph_predict(
+    model: GraphAblationModel, snapshots: list[Any], device: torch.device,
+    base: list[torch.Tensor] | None = None,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Predict one snapshot batch, using cached ``base`` when supplied (else encode on the fly)."""
+
+    if base is None:
+        return _graph_prediction_batch(model, snapshots, device)
+    if len(base) != len(snapshots):
+        raise ValueError("cached base must align one-to-one with the snapshot batch")
+    adjacency, presence_mask, ticker_ids, targets = _stacked_snapshot_inputs(snapshots, device)
+    predictions = model.apply_graph_head(torch.stack(base), adjacency, ticker_ids, presence_mask)
+    resolved = presence_mask if presence_mask is not None else torch.ones_like(targets, dtype=torch.bool)
+    return predictions, targets, resolved
+
+
+def _build_shared_graph_base(
+    model: GraphAblationModel, graph: GraphManifest, device: torch.device,
+    train_batch_size: int, validation_batch_size: int,
+) -> dict[str, list[torch.Tensor]]:
+    """Precompute the train/val frozen ``base`` cache once, shared by G0 and G1."""
+
+    train = [snapshot for snapshot in graph.snapshots if snapshot.split == "train"]
+    validation = [snapshot for snapshot in graph.snapshots if snapshot.split == "val"]
+    test = [snapshot for snapshot in graph.snapshots if snapshot.split == "test"]
+    cache = {
+        "train": _precompute_graph_base(model, train, device, train_batch_size),
+        "val": _precompute_graph_base(model, validation, device, validation_batch_size),
+    }
+    if test:
+        cache["test"] = _precompute_graph_base(model, test, device, validation_batch_size)
+    return cache
+
+
+def _assert_shared_frozen_encoder(first: GraphAblationModel, second: GraphAblationModel) -> None:
+    """Reject sharing a base cache between two models whose frozen encoder/gate differ.
+
+    The cache is only valid across G0/G1 because both load identical graph-safe P3 weights.  This
+    guards against a future path where they diverge (which would silently poison the shared cache).
+    """
+
+    for name, left, right in (
+        ("price_encoder", first.price_encoder, second.price_encoder),
+        ("news_encoder", first.news_encoder, second.news_encoder),
+    ):
+        left_state, right_state = left.state_dict(), right.state_dict()
+        if left_state.keys() != right_state.keys() or any(
+            not torch.equal(left_state[key], right_state[key]) for key in left_state
+        ):
+            raise ValueError(f"shared base cache requires identical frozen {name} for G0 and G1")
+    if not torch.equal(first.gate_logits, second.gate_logits):
+        raise ValueError("shared base cache requires identical frozen gate for G0 and G1")
 
 
 def _mean_snapshot_mse(
@@ -921,6 +1123,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--smoke", action="store_true")
     parser.add_argument("--max-tickers", type=int)
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--backbone-epochs", type=int, default=5,
+                        help="graph backbone (frozen P3) total training epochs (screening default 5)")
+    parser.add_argument("--backbone-dropout", type=float, default=0.2,
+                        help="graph backbone (frozen P3) training dropout (screening default 0.2)")
+    parser.add_argument("--no-base-cache", action="store_true",
+                        help="disable the frozen-encoder base cache (recompute per epoch); for "
+                             "the cache speedup/equivalence measurement only")
     args = parser.parse_args(argv)
     if args.phase == "graph" and args.regime != "pooled":
         # The graph manifest is common-date by construction; a non-default regime here would

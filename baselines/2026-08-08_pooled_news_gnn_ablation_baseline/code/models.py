@@ -266,45 +266,99 @@ class GraphAblationModel(nn.Module):
         self.news_encoder.eval()
         return self
 
-    def forward(
+    def encode_base(
         self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
-        ticker_ids: torch.Tensor, adjacency: torch.Tensor,
-        presence_mask: torch.Tensor | None = None,
+        ticker_ids: torch.Tensor, presence_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
+        """Frozen-encoder node embeddings ``cat(price_hidden, gated_news)`` — the cacheable
+        part of ``forward``.
+
+        The encoders are frozen (``requires_grad_(False)``) and dropout-free, so this output is a
+        deterministic function of the inputs alone: identical every epoch and identical between
+        G0 and G1.  It can therefore be computed once per seed and reused, instead of recomputed
+        on every forward pass.  With ``presence_mask`` only PRESENT nodes are run through the
+        LSTMs (each node's sequence is encoded independently, so present rows are bit-identical to
+        the full-batch encode); absent nodes get a zero embedding and never influence present
+        outputs (message passing zeroes their features and incoming edges).
+
+        Returns ``[batch, nodes, hidden]`` when ``x_price`` is 4-D, else ``[nodes, hidden]``.
+        """
+
         batched = x_price.ndim == 4
         if batched:
             if x_news.ndim != 4 or news_mask.ndim != 3 or ticker_ids.ndim != 2:
                 raise ValueError("batched graph inputs must be [batch, nodes, time, features]")
             batch_size, node_count = x_price.shape[:2]
-            x_price = x_price.reshape(batch_size * node_count, *x_price.shape[2:])
-            x_news = x_news.reshape(batch_size * node_count, *x_news.shape[2:])
-            news_mask = news_mask.reshape(batch_size * node_count, news_mask.shape[-1])
-            ticker_ids = ticker_ids.reshape(batch_size * node_count)
-            if adjacency.ndim == 2:
-                adjacency = adjacency.unsqueeze(0).expand(batch_size, -1, -1)
-            if adjacency.ndim != 3 or adjacency.shape != (batch_size, node_count, node_count):
-                raise ValueError("batched adjacency must be [batch, nodes, nodes]")
             if presence_mask is not None and presence_mask.shape != (batch_size, node_count):
                 raise ValueError("batched presence_mask must be [batch, nodes]")
-        elif presence_mask is not None and (presence_mask.ndim != 1
-                                            or presence_mask.shape[0] != x_price.shape[0]):
-            raise ValueError("presence_mask must be a 1-D vector over nodes")
+            flat_price = x_price.reshape(batch_size * node_count, *x_price.shape[2:])
+            flat_news = x_news.reshape(batch_size * node_count, *x_news.shape[2:])
+            flat_mask = news_mask.reshape(batch_size * node_count, news_mask.shape[-1])
+            flat_ticker = ticker_ids.reshape(batch_size * node_count)
+            flat_presence = None if presence_mask is None else presence_mask.reshape(batch_size * node_count)
+        else:
+            if presence_mask is not None and (presence_mask.ndim != 1
+                                              or presence_mask.shape[0] != x_price.shape[0]):
+                raise ValueError("presence_mask must be a 1-D vector over nodes")
+            flat_price, flat_news, flat_mask = x_price, x_news, news_mask
+            flat_ticker, flat_presence = ticker_ids, presence_mask
+        flat_ticker = self._news_encoder._validated_ticker_ids(flat_ticker, flat_price.shape[0])
         with torch.no_grad():
-            _, (price_hidden, _) = self.price_encoder(x_price)
-            news_hidden = self._news_encoder._encode_news(x_news, news_mask)
-            ticker_ids = self._news_encoder._validated_ticker_ids(ticker_ids, x_price.shape[0])
-            gated_news = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
-            base = torch.cat((price_hidden[-1], gated_news), dim=1)
+            base = self._encode_nodes(flat_price, flat_news, flat_mask, flat_ticker, flat_presence)
+        if batched:
+            base = base.reshape(batch_size, node_count, -1)
+        return base
+
+    def _encode_nodes(
+        self, price: torch.Tensor, news: torch.Tensor, mask: torch.Tensor,
+        ticker_ids: torch.Tensor, presence: torch.Tensor | None,
+    ) -> torch.Tensor:
+        if presence is None:
+            return self._encode_present_rows(price, news, mask, ticker_ids)
+        present = presence.to(dtype=torch.bool)
+        base = price.new_zeros((price.shape[0], self.head[0].in_features))
+        index = present.nonzero(as_tuple=False).squeeze(-1)
+        if index.numel() == 0:
+            return base
+        base[index] = self._encode_present_rows(price[index], news[index], mask[index], ticker_ids[index])
+        return base
+
+    def _encode_present_rows(
+        self, price: torch.Tensor, news: torch.Tensor, mask: torch.Tensor, ticker_ids: torch.Tensor,
+    ) -> torch.Tensor:
+        _, (price_hidden, _) = self.price_encoder(price)
+        news_hidden = self._news_encoder._encode_news(news, mask)
+        gated_news = torch.sigmoid(self.gate_logits[ticker_ids])[:, None] * news_hidden
+        return torch.cat((price_hidden[-1], gated_news), dim=1)
+
+    def apply_graph_head(
+        self, base: torch.Tensor, adjacency: torch.Tensor, ticker_ids: torch.Tensor,
+        presence_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        """Trainable message-passing (G1 only) + head + positivity, given a precomputed ``base``.
+
+        ``base`` is ``[batch, nodes, hidden]`` (batched) or ``[nodes, hidden]`` (single) as
+        returned by :meth:`encode_base`.  This is the only part that carries gradients and reads
+        the trainable message-passing / head parameters.
+        """
+
+        batched = base.ndim == 3
         if self.message_passing is not None:
             if batched:
-                base = base.reshape(batch_size, node_count, -1)
                 base = base + self.message_passing(base, adjacency, presence_mask)
             else:
                 batch_presence = None if presence_mask is None else presence_mask.unsqueeze(0)
                 base = base + self.message_passing(base.unsqueeze(0), adjacency, batch_presence).squeeze(0)
         output = self.head(base).squeeze(-1)
-        if batched:
-            output = output.reshape(batch_size, node_count)
         if self._positivity_configured:
-            output = self._apply_positivity(output, ticker_ids)
+            flat_ticker = ticker_ids.reshape(-1).to(torch.long) if batched else ticker_ids.to(torch.long)
+            output = self._apply_positivity(output, flat_ticker)
         return output
+
+    def forward(
+        self, x_price: torch.Tensor, x_news: torch.Tensor, news_mask: torch.Tensor,
+        ticker_ids: torch.Tensor, adjacency: torch.Tensor,
+        presence_mask: torch.Tensor | None = None,
+    ) -> torch.Tensor:
+        base = self.encode_base(x_price, x_news, news_mask, ticker_ids, presence_mask)
+        return self.apply_graph_head(base, adjacency, ticker_ids, presence_mask)
