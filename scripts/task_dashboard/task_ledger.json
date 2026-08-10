@@ -2403,7 +2403,8 @@
       "6a416c6",
       "94c20b1",
       "52438f9",
-      "c2b2c41"
+      "c2b2c41",
+      "52b9e75"
     ],
     "skills_applied": [
       "test-driven-development",
@@ -2451,7 +2452,7 @@
       "results/beat_har_sweep_2026-08-10_0130/analysis.json",
       "results/beat_har_sweep_2026-08-10_0130/report_summary.json"
     ],
-    "provenance_note": "This card renders red only because the entry's commits list predates the branch's final two commits; the sweep's real verified-green gate result is 52b9e75.json (tests_passed:true, diff-cover 90%, overall:pass). Completing the commits list with 52b9e75 is an accurate provenance fix awaiting the user's explicit authorization. Gate status and commits are left unchanged (no tampering)."
+    "provenance_note": "commits completed with 52b9e75 (verified-green HEAD, gate 52b9e75.json tests_passed/diff-cover 90/overall pass) per explicit user authorization 2026-08-10"
   },
   {
     "id": "track-b-final-assembly-2026-08-10",
