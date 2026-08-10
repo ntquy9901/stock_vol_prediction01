@@ -4,7 +4,7 @@
 Canonical sources: five-day ladder `docs/reports/ladder_consistent_h5_2026-08-09_154402.json`;
 multi-horizon `docs/reports/ladder_consistent_h{1,10,22}_2026-08-09_180326.json` and
 `..._multihorizon_2026-08-09_180326.md`; classical baselines
-`docs/reports/classical_baselines_h5_2026-08-09_182129.json`. Paired-$t$ statistics on the ladder
+`docs/reports/classical_baselines_h5_2026-08-10_221043.json`. Paired-$t$ statistics on the ladder
 are derived from the per-seed entries in those JSONs. Per-table source lines appear below each
 table.*
 
@@ -35,7 +35,7 @@ enhancements (QLIKE-loss training, HAR + graph-residual, directed spillover edge
 omit-self-loop) beats a well-specified HAR at a Diebold-Mariano-significant level. Classical econometric
 baselines confirm the picture: HAR and HARQ tie the deep models on the
 level metrics (test QLIKE 0.5793 / 0.5737, $R^2$ 0.767), while GARCH-family models are far worse
-(test QLIKE 1.76-1.87, $R^2 \approx 0$). We present G1 as the proposed architecture and report a
+(test QLIKE 1.75-1.86, $R^2 \approx 0$). We present G1 as the proposed architecture and report a
 rigorous parsimony finding: on sparse daily VN30 data, news content improves the forecast but
 cross-stock graph propagation does not, and the strongest configuration is the parsimonious
 news-augmented backbone. Directional accuracy stays near 48% for every model because the day-to-day
@@ -319,7 +319,7 @@ a Diebold-Mariano (DM) test on the per-observation QLIKE and MSE loss series of 
 directly on the held-out observations rather than on the seed-level means. We attempted a Model
 Confidence Set (Hansen-Lunde-Nabney) over the ladder and classical baselines; the aggregate result
 artifacts store per-configuration metrics but not the per-observation prediction series, and clean
-re-scoring onto a single common observation set (GARCH covers a 32-ticker subset) was not feasible
+re-scoring onto a single common observation set was not feasible
 within the submission window, so we report the DM tests as the primary significance evidence for the
 graph.
 
@@ -328,8 +328,11 @@ routine as the deep ladder, we fit seven classical econometric baselines: a pers
 forecast, an EWMA, the classical HAR, a HARQ variant with a daily range-based realized-quarticity proxy
 (the canonical 5-minute quarticity is not identified on daily OHLCV, so this is an approximation), a
 log-HAR, and GARCH(1,1), GJR-GARCH, and EGARCH fit per ticker on close-to-close log returns. The GARCH
-family is scored on 32 of 33 tickers (14,247 val / 14,292 test observations) because one ticker (LPB)
-lacks the raw OHLCV needed to form returns; all other baselines cover the full 14,418 / 14,464 set.
+family covers all 33 tickers on the full 14,418 / 14,464 observation set: LPB's raw OHLCV was recovered
+from the SSI iBoard API (SSI applies a different price-adjustment convention than the other tickers,
+immaterial for return-based GARCH since log-returns are scale-invariant except on a few ex-dividend
+days; 18 LPB holiday dates absent from the SSI trading calendar use the carried-forward forecast from
+the last trading origin, 0.12% of test observations).
 
 **Implementation and compute.** All models are implemented in PyTorch and select a CUDA GPU when one is
 available, falling back to CPU otherwise. The runs used an NVIDIA GeForce RTX 4060 Laptop GPU under
@@ -351,20 +354,20 @@ Table 1 places the proposed model G1 against the classical baselines on the held
 reaches test QLIKE 0.575926, RMSE 0.00230527, and $R^2$ 0.763520. The classical HAR reaches QLIKE
 0.579291 and HARQ 0.573674 at $R^2 \approx 0.767$; EWMA reaches QLIKE 0.600625. On the level metrics
 the HAR family and the deep models tie: HARQ's test QLIKE (0.573674) is marginally below G1's, and G1's
-$R^2$ is within 0.004 of HAR's. The GARCH family is far worse on every level metric (test QLIKE 1.76 to
-1.87, $R^2$ from $+0.003$ to $-0.003$, RMSE roughly double the HAR family's), because a conditional
+$R^2$ is within 0.004 of HAR's. The GARCH family is far worse on every level metric (test QLIKE 1.75 to
+1.86, $R^2$ from $+0.003$ to $-0.003$, RMSE roughly double the HAR family's), because a conditional
 return-variance model tracks the daily range-variance target poorly. The persistence forecast collapses
 on QLIKE (4151), confirming that a naive last-value forecast is inadmissible under the proportional
 loss. The headline reading is a tie between the deep news-augmented system and the field-standard
 HAR/HARQ on the level the volatility literature weights most, and a decisive win of both over GARCH.
 
 **Table 1. Five-day-ahead held-out test metrics: proposed model G1 and classical econometric
-baselines.** Same 14,464 test observations for all rows except the GARCH family (14,292 test
-observations, 32/33 tickers). Deep-model rows are three-seed means (42/123/2026); classical rows are
+baselines.** Same 14,464 test observations for all rows including the GARCH family (33/33 tickers).
+Deep-model rows are three-seed means (42/123/2026); classical rows are
 single deterministic fits. Lower is better for MSE, RMSE, MAE, QLIKE; higher for $R^2$ and DirAcc.
 Bold marks the best value per column among all rows. Source:
 `docs/reports/ladder_consistent_h5_2026-08-09_154402.json` (G1) and
-`docs/reports/classical_baselines_h5_2026-08-09_182129.json` (classical).
+`docs/reports/classical_baselines_h5_2026-08-10_221043.json` (classical).
 
 | Model | MSE ↓ | RMSE ↓ | MAE ↓ | $R^2$ ↑ | QLIKE ↓ | DirAcc % ↑ |
 |---|---|---|---|---|---|---|
@@ -374,9 +377,9 @@ Bold marks the best value per column among all rows. Source:
 | log-HAR | 5.62759e-06 | 0.00237225 | **0.000593200** | 0.749579 | 0.779422 | **48.830** |
 | EWMA | 5.33929e-06 | 0.00231069 | 0.000610615 | 0.762408 | 0.600625 | 48.031 |
 | Persistence | 7.68559e-06 | 0.00277229 | 0.000722742 | 0.658000 | 4151.22 | 48.009 |
-| GARCH(1,1) | 2.26642e-05 | 0.00476069 | 0.001168780 | 0.003075 | 1.76100 | 48.673 |
-| GJR-GARCH | 2.27171e-05 | 0.00476625 | 0.001172287 | 0.000746 | 1.82432 | 48.653 |
-| EGARCH | 2.28053e-05 | 0.00477549 | 0.001176398 | -0.003130 | 1.87379 | 48.827 |
+| GARCH(1,1) | 2.23971e-05 | 0.00473256 | 0.001159200 | 0.003355 | 1.75138 | 48.492 |
+| GJR-GARCH | 2.24496e-05 | 0.00473811 | 0.001162910 | 0.001016 | 1.81412 | 48.401 |
+| EGARCH | 2.25369e-05 | 0.00474731 | 0.001167340 | -0.002868 | 1.86327 | 48.641 |
 
 The rest of this section decomposes G1 to show which component earns its place: the ladder isolates
 the news branch, the gate, and temporal learning (Section 6.2), and the graph ablation isolates
@@ -533,7 +536,7 @@ is the appropriate architecture.
 
 **Classical baselines confirm the ceiling.** HAR and HARQ tie the deep models on the level metrics
 (test QLIKE 0.5793 / 0.5737, $R^2 \approx 0.767$), and HARQ's QLIKE is marginally below G1's, while the
-GARCH family is far worse (test QLIKE 1.76 to 1.87, $R^2 \approx 0$). A well-specified HAR-family model
+GARCH family is far worse (test QLIKE 1.75 to 1.86, $R^2 \approx 0$). A well-specified HAR-family model
 sits near a structural ceiling for daily range-based variance on a small universe, so the deep model's
 value is that it matches HAR while adding a news channel, not that it dominates HAR on the level.
 
@@ -606,8 +609,8 @@ minimum for a paired $t$-test; the graph null is strengthened by a Diebold-Maria
 QLIKE across four horizons, but a larger seed set and a Model Confidence Set would tighten it, and the
 MCS was not computed here because per-observation prediction series were not retained in the result
 artifacts. Fourth, the HARQ baseline uses a daily range-based realized-quarticity proxy rather than the
-canonical 5-minute quarticity, and the GARCH family covers 32 of 33 tickers, so those rows are read as
-approximations on a near-identical basis. Fifth, low directional accuracy is a structural property of
+canonical 5-minute quarticity, so that row is read as an approximation on an otherwise identical basis
+(the GARCH family now covers all 33 tickers after LPB's OHLCV was recovered from SSI). Fifth, low directional accuracy is a structural property of
 the anti-persistent daily target, not a tunable model deficiency, so a direction-focused deployment
 would need a different target construction.
 
@@ -706,7 +709,7 @@ In *ACM ICAIF* (2022). arXiv:2112.09015.
 `docs/reports/ladder_consistent_h5_2026-08-09_154402.json`; multi-horizon
 `docs/reports/ladder_consistent_h{1,10,22}_2026-08-09_180326.json` and
 `..._multihorizon_2026-08-09_180326.md`; classical baselines
-`docs/reports/classical_baselines_h5_2026-08-09_182129.json`; diagnosis
+`docs/reports/classical_baselines_h5_2026-08-10_221043.json`; diagnosis
 `docs/reports/2026-08-09_2148_old_gat_vs_new_g1_diagnosis.md`; beat-HAR conditions research
 `docs/reports/2026-08-09_2209_gnn_volatility_beat_har_research.md`; hybrid combinations research
 `docs/reports/2026-08-09_2214_gnn_hybrid_combinations_research.md`; beat-HAR sweep (C1-C6)

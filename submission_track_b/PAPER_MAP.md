@@ -32,8 +32,8 @@ This table lets a reviewer verify each paper number against the code/data that r
 
 | Paper claim | Command | Output file it regenerates |
 |-------------|---------|----------------------------|
-| HAR / HARQ **tie** the deep models on level metrics (test QLIKE 0.579291 / 0.573674, r2 ~0.767); GARCH family far worse (test QLIKE 1.76-1.87, r2 ~0) | `python reproduce.py view` | `results/classical_baselines_h5.json` -> `rung_metrics.test.*` |
-| GARCH family covers 32/33 tickers (LPB lacks raw OHLCV); all other baselines cover the full 14,464 test obs | (inspect JSON) | `results/classical_baselines_h5.json` -> `notes`, `garch_excluded_tickers` |
+| HAR / HARQ **tie** the deep models on level metrics (test QLIKE 0.579291 / 0.573674, r2 ~0.767); GARCH family far worse (test QLIKE 1.75-1.86, r2 ~0) | `python reproduce.py view` | `results/classical_baselines_h5.json` -> `rung_metrics.test.*` |
+| GARCH family covers all 33/33 tickers on the full 14,464 test obs (LPB OHLCV recovered from SSI iBoard; `garch_excluded_tickers` now empty), same as every other baseline | (inspect JSON) | `results/classical_baselines_h5.json` -> `notes`, `garch_excluded_tickers` |
 
 ## Multi-horizon graph verdict (h1 / h5 / h10 / h22)
 
@@ -53,7 +53,8 @@ ticker boundaries.
 ## Scope caveats (state these when citing)
 
 - The shipped ladder rows are **3-seed means** (seeds 42/123/2026) on the masked consistent basis:
-  same 14,418 validation / 14,464 test observations across every rung and every classical baseline.
+  same 14,418 validation / 14,464 test observations across every rung and every classical baseline
+  (including the GARCH family, now 33/33 tickers after LPB's OHLCV was recovered from SSI).
   A reviewer's own `train`/`infer` run (requires the dataset) prints its own numbers.
 - **Parsimony finding (state this):** G1 does not significantly beat P3 - the held-out test paired-t
   is not significant (p=0.7913) and the Diebold-Mariano test on QLIKE is not significant across
@@ -61,7 +62,7 @@ ticker boundaries.
   simpler news-augmented backbone (P2) attains the lowest test QLIKE in the study.
 - **Model Confidence Set:** not computed. The result artifacts store per-configuration metrics but
   not per-observation prediction series, and clean alignment onto one common observation set (GARCH
-  covers a 32-ticker subset) was not feasible in the submission window; the Diebold-Mariano tests are
+  was not feasible in the submission window; the Diebold-Mariano tests are
   the primary graph-significance evidence.
 
 ## Exact reproduction command for the final model

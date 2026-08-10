@@ -20,7 +20,7 @@
 % unless noted. Source files:
 %   ladder h5      : docs/reports/ladder_consistent_h5_2026-08-09_154402.json
 %   multi-horizon  : docs/reports/ladder_consistent_h{1,10,22}_2026-08-09_180326.json (+ _multihorizon .md)
-%   classical      : docs/reports/classical_baselines_h5_2026-08-09_182129.json
+%   classical      : docs/reports/classical_baselines_h5_2026-08-10_221043.json
 % ----------------------------------------------------------------------
 % Proposed model G1 --- held-out TEST (h5).
 \newcommand{\GtestQ}{0.5759}     % QLIKE (raw 0.575926)
@@ -45,7 +45,7 @@
 \newcommand{\HARQtestQ}{0.5737}  % HARQ  QLIKE (raw 0.573674)  <-- best classical test QLIKE
 \newcommand{\HARQtestRsq}{0.7668}% HARQ  R^2   (raw 0.766817)
 \newcommand{\EWMAtestQ}{0.6006}  % EWMA  QLIKE (raw 0.600625)
-\newcommand{\GARCHtestQ}{1.7610} % GARCH QLIKE (raw 1.76100)
+\newcommand{\GARCHtestQ}{1.7514} % GARCH QLIKE (raw 1.75138)
 \newcommand{\GARCHtestRsq}{0.0031}% GARCH R^2  (raw 0.003075)
 % Graph ablation G1 vs P3 (exactly nested; graph-off determinism 0.0).
 \newcommand{\graphTestP}{0.79}   % TEST paired-t p over seeds (raw 0.7913)
@@ -98,7 +98,7 @@ targeted sweep confirms this: neither the base graph nor five research-backed en
 training, HAR $+$ graph-residual, directed spillover edges, learned adjacency, omit-self-loop) beats a
 well-specified HAR at a Diebold--Mariano-significant level. HAR and
 HARQ tie the deep models on the level metrics (test QLIKE \HARtestQ{} and \HARQtestQ, $R^2\approx0.767$),
-while GARCH-family models are far worse (test QLIKE $1.76$--$1.87$, $R^2\approx0$). We present G1 as the
+while GARCH-family models are far worse (test QLIKE $1.75$--$1.86$, $R^2\approx0$). We present G1 as the
 proposed architecture and report a rigorous parsimony finding: news content improves the forecast but
 cross-stock graph propagation does not. Directional accuracy stays near $48\%$ for every forecaster
 because the daily Parkinson target's day-to-day change is anti-persistent (sign lag-1 autocorrelation
@@ -312,15 +312,17 @@ complement the paired-$t$ with a Diebold--Mariano (DM) test on the per-observati
 series (HAC truncation lag $h-1$, Harvey--Leybourne--Newbold corrected). We attempted a Model Confidence
 Set over the ladder and classical baselines, but the result artifacts store per-configuration metrics
 rather than per-observation prediction series, and clean re-scoring onto a single common observation set
-(GARCH covers a 32-ticker subset) was not feasible within the submission window, so the DM tests are the
+was not feasible within the submission window, so the DM tests are the
 primary graph-significance evidence.
 
 \subsubsection{Classical baselines.}
 On the identical val/test keys and raw targets, scored by the same routine as the deep ladder, we fit a
 persistence forecast, an EWMA, the classical HAR, a HARQ variant with a daily range-based
 realized-quarticity proxy (the canonical 5-minute quarticity is not identified on daily OHLCV), a log-HAR,
-and GARCH(1,1), GJR-GARCH, and EGARCH per ticker on close-to-close log returns. The GARCH family covers 32
-of \ntick{} tickers (one ticker lacks raw OHLCV to form returns); all other baselines cover the full set.
+and GARCH(1,1), GJR-GARCH, and EGARCH per ticker on close-to-close log returns. The GARCH family covers all
+\ntick{} tickers on the full observation set: LPB's raw OHLCV was recovered from the SSI iBoard API (SSI's
+different price-adjustment convention is immaterial for return-based GARCH, and 18 LPB holiday dates absent
+from the SSI trading calendar use the carried-forward forecast from the last trading origin).
 All models were run in PyTorch on an NVIDIA GeForce RTX~4060 Laptop GPU under PyTorch~2.6 with CUDA~12.4.
 
 % ======================================================================
@@ -335,13 +337,13 @@ Table~\ref{tab:classical} places G1 against the classical baselines on the held-
 test QLIKE~\GtestQ{} and $R^2$~\GtestRsq. The classical HAR reaches QLIKE~\HARtestQ{} and HARQ~\HARQtestQ{}
 at $R^2\approx0.767$; EWMA reaches~\EWMAtestQ. On the level metrics the HAR family and the deep models tie:
 HARQ's test QLIKE is marginally below G1's, and G1's $R^2$ is within $0.004$ of HAR's. The GARCH family is
-far worse on every level metric (test QLIKE~\GARCHtestQ{}--$1.87$, $R^2$ from~\GARCHtestRsq{} to $-0.003$),
+far worse on every level metric (test QLIKE~\GARCHtestQ{}--$1.86$, $R^2$ from~\GARCHtestRsq{} to $-0.003$),
 and the persistence forecast collapses on QLIKE. The headline is a tie between the deep news-augmented
 system and the field-standard HAR/HARQ, and a decisive win of both over GARCH.
 
 \begin{table}[t]
 \caption{Five-day-ahead held-out test metrics: proposed model G1 and classical econometric baselines. Same
-\ntest{} observations except the GARCH family ($14{,}292$, 32/33 tickers). Deep rows are \nseed-seed means;
+\ntest{} observations for all rows including the GARCH family (33/33 tickers). Deep rows are \nseed-seed means;
 classical rows are single deterministic fits. Lower is better for QLIKE, RMSE, MAE; higher for $R^2$,
 DirAcc. Bold marks the best value per column. Source:
 \texttt{ladder\_consistent\_h5} and \texttt{classical\_baselines\_h5}.}
@@ -357,9 +359,9 @@ HARQ              & $\mathbf{0.5737}$ & $\mathbf{0.002289}$ & $\mathbf{0.7668}$ 
 log-HAR           & $0.7794$          & $0.002372$          & $0.7496$          & $\mathbf{48.83}$ \\
 EWMA              & $0.6006$          & $0.002311$          & $0.7624$          & $48.03$ \\
 Persistence       & $4151.2$          & $0.002772$          & $0.6580$          & $48.01$ \\
-GARCH(1,1)        & $1.7610$          & $0.004761$          & $0.0031$          & $48.67$ \\
-GJR-GARCH         & $1.8243$          & $0.004766$          & $0.0007$          & $48.65$ \\
-EGARCH            & $1.8738$          & $0.004775$          & $-0.0031$         & $48.83$ \\
+GARCH(1,1)        & $1.7514$          & $0.004733$          & $0.0034$          & $48.49$ \\
+GJR-GARCH         & $1.8141$          & $0.004738$          & $0.0010$          & $48.40$ \\
+EGARCH            & $1.8633$          & $0.004747$          & $-0.0029$         & $48.64$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -565,8 +567,9 @@ published GNN-beats-HAR result relies on intraday-derived realized variance this
 Third, three seeds is the minimum for a paired-$t$; the graph null is strengthened by a DM test across four
 horizons, but a larger seed set and a Model Confidence Set would tighten it, and the MCS was not computed
 here because per-observation prediction series were not retained. Fourth, the HARQ baseline uses a daily
-range-based quarticity proxy and the GARCH family covers 32 of \ntick{} tickers, so those rows are
-approximations on a near-identical basis. Fifth, low directional accuracy is a structural property of the
+range-based quarticity proxy, so that row is an approximation on an otherwise identical basis (the GARCH
+family now covers all \ntick{} tickers after LPB's OHLCV was recovered from SSI). Fifth, low directional
+accuracy is a structural property of the
 anti-persistent daily target, not a tunable deficiency.
 
 \subsubsection{Conclusion.}

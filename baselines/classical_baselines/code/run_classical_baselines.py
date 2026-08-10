@@ -103,14 +103,28 @@ def main(ts: str, horizon: int = 5) -> None:
                          "return variance, directly comparable to the Parkinson variance target."),
         "P0_anchor": ("P0 (pooled HAR on standardized features, from the ladder) is the deep-pipeline "
                       "HAR anchor; the HAR row here is a per-ticker OLS on raw volatility."),
-        "GARCH_coverage": ("GARCH/GJR/EGARCH are scored on {gv} val / {gt} test observations "
-                           "({nt} of {tot} tickers); tickers {ex} lack raw OHLCV so returns cannot "
-                           "be formed. Persistence/EWMA/HAR/HARQ/logHAR cover the full "
-                           "{v}/{t} observation set (exact ladder alignment).").format(
-                               gv=payload["garch_n_val_obs"], gt=payload["garch_n_test_obs"],
-                               nt=payload["n_tickers"] - len(payload["garch_excluded_tickers"]),
-                               tot=payload["n_tickers"], ex=payload["garch_excluded_tickers"] or "none",
-                               v=payload["n_val_obs"], t=payload["n_test_obs"]),
+        "GARCH_coverage": (
+            "GARCH/GJR/EGARCH cover all {tot} of {tot} tickers on the full {gv} val / {gt} test "
+            "observation set (exact ladder alignment), same as the vol-only baselines."
+            if not payload["garch_excluded_tickers"] else
+            "GARCH/GJR/EGARCH are scored on {gv} val / {gt} test observations ({nt} of {tot} "
+            "tickers); tickers {ex} lack raw OHLCV so returns cannot be formed. Persistence/EWMA/"
+            "HAR/HARQ/logHAR cover the full {v}/{t} observation set (exact ladder alignment).").format(
+                gv=payload["garch_n_val_obs"], gt=payload["garch_n_test_obs"],
+                nt=payload["n_tickers"] - len(payload["garch_excluded_tickers"]),
+                tot=payload["n_tickers"], ex=payload["garch_excluded_tickers"],
+                v=payload["n_val_obs"], t=payload["n_test_obs"]),
+        "LPB_provenance": ("LPB raw OHLCV was recovered from the SSI iBoard API (2020-11-09..2026-"
+                           "08-10); Parkinson variance recomputed from its High/Low reproduces "
+                           "LPB_processed.csv (median |diff| 4.8e-6). SSI uses a different price-"
+                           "adjustment convention than the other tickers (immaterial for return-"
+                           "GARCH: log-returns are scale-invariant except on a few ex-dividend "
+                           "days). This lifts the GARCH family from 32/33 to 33/33 tickers."),
+        "GARCH_calendar_gap": ("18 LPB observations fall on holidays (Tet 2025, Apr/May 2025, New "
+                               "Year 2026) present in the processed series but absent from the SSI "
+                               "trading calendar; for those the GARCH forecast is carried forward "
+                               "from the last trading origin (persistent conditional variance; "
+                               "0.12% of test observations)."),
     }
     out_dir = _ROOT / "docs" / "reports"
     out_dir.mkdir(parents=True, exist_ok=True)

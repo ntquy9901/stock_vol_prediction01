@@ -157,10 +157,10 @@ def test_har_and_harq_wrappers_predict():
     assert (0, "2020-02-01") in cb.predict_harq(train, ev, series)
 
 
-def test_load_ticker_series_without_ohlcv_has_empty_returns():
-    if (cb.data_root() / "raw" / "prices" / "LPB_ohlcv.csv").exists():
-        pytest.skip("LPB unexpectedly has OHLCV")
-    assert cb.load_ticker_series("LPB").logret.empty
+def test_load_log_returns_without_ohlcv_is_empty():
+    """A ticker without a raw OHLCV file yields no returns (GARCH-ineligible branch)."""
+
+    assert cb._load_log_returns("NONEXISTENT_TICKER_XYZ").empty
 
 
 def test_garch_rejects_too_few_returns():
@@ -168,6 +168,35 @@ def test_garch_rejects_too_few_returns():
     series.logret = pd.Series(np.full(30, 0.01), index=series.dates[:30])
     with pytest.raises(ValueError):
         cb.garch_ticker_forecast(series, series.dates[24:27], horizon=5, spec_name="garch")
+
+
+def test_garch_requires_at_least_one_trading_day_origin():
+    """If no requested origin is a trading day, the forecast raises rather than guessing."""
+
+    dates = pd.bdate_range("2020-01-01", periods=200).strftime("%Y-%m-%d").tolist()
+    r = pd.Series(np.random.default_rng(1).normal(0.0, 0.01, len(dates)), index=dates)
+    vol = np.abs(r.to_numpy())
+    series = cb.TickerSeries(
+        ticker="X", dates=dates, vol=vol, sigma_d=vol, sigma_w=vol, sigma_m=vol,
+        ewma_pred=vol, train_end_date=dates[120], pos={d: i for i, d in enumerate(dates)}, logret=r)
+    with pytest.raises(ValueError):
+        cb.garch_ticker_forecast(series, ["1800-01-01", "1800-01-02"], horizon=5, spec_name="garch")
+
+
+def test_garch_carry_forward_over_calendar_gap():
+    """An origin on a non-trading day (calendar gap, e.g. LPB holidays) is carried forward, not dropped."""
+
+    dates = pd.bdate_range("2020-01-01", periods=200).strftime("%Y-%m-%d").tolist()
+    gap = dates.pop(150)  # a date absent from this ticker's trading calendar
+    rng = np.random.default_rng(0)
+    r = pd.Series(rng.normal(0.0, 0.01, len(dates)), index=dates)
+    vol = np.abs(r.to_numpy())
+    series = cb.TickerSeries(
+        ticker="X", dates=dates, vol=vol, sigma_d=vol, sigma_w=vol, sigma_m=vol,
+        ewma_pred=vol, train_end_date=dates[120], pos={d: i for i, d in enumerate(dates)}, logret=r)
+    fc = cb.garch_ticker_forecast(series, [dates[140], gap, dates[160]], horizon=5, spec_name="garch")
+    assert {dates[140], gap, dates[160]}.issubset(fc)
+    assert np.isfinite(fc[gap]) and fc[gap] > 0
 
 
 def test_assert_full_coverage_detects_extra_keys():

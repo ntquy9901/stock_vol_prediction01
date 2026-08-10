@@ -223,17 +223,35 @@ def garch_ticker_forecast(series: TickerSeries, origin_dates, horizon: int, spec
                     q=spec["q"], dist="normal", rescale=False)
     res = am.fit(last_obs=train_count, disp="off")
     pos = {d: i for i, d in enumerate(dates)}
-    needed = sorted({d for d in origin_dates if d in pos})
-    start = min(pos[d] for d in needed)
+    requested = sorted(set(origin_dates))
+    aligned = [d for d in requested if d in pos]
+    if not aligned:
+        raise ValueError(f"{series.ticker}: no requested origin is a trading day for {spec_name}")
+    start = min(pos[d] for d in aligned)
     kwargs = {"horizon": horizon, "start": start, "reindex": True}
     if spec["method"] == "simulation":
         kwargs.update(method="simulation", simulations=1000,
                       rng=np.random.default_rng(seed).standard_normal)
     fc = res.forecast(**kwargs)
     variance = fc.variance.to_numpy()  # rows aligned to r index, cols h.1..h.h
+
+    def _forecast_row(obs_date: str) -> int:
+        """Forecast-origin row for obs_date, carrying forward across non-trading-day gaps.
+
+        A few observation dates fall on holidays absent from this ticker's trading calendar
+        (e.g. LPB's SSI feed misses Tet / national holidays present in the processed series). For
+        those the freshest available origin <= obs_date is used, since the conditional variance
+        forecast is persistent across a short gap.
+        """
+
+        if obs_date in pos and pos[obs_date] >= start:
+            return pos[obs_date]
+        prior = [i for d, i in pos.items() if d <= obs_date and i >= start]
+        return max(prior) if prior else start
+
     out: dict[str, float] = {}
-    for d in needed:
-        v = variance[pos[d], horizon - 1]
+    for d in requested:
+        v = variance[_forecast_row(d), horizon - 1]
         out[d] = float(v / 1e4) if np.isfinite(v) and v > 0 else FLOOR
     return out
 

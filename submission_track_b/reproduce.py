@@ -49,7 +49,7 @@ _LADDER = (
     ("G1", "Backbone + graph kNN-8", "FINAL / PROPOSED"),
 )
 
-# Classical econometric baselines (display order); GARCH family on a 32/33-ticker subset.
+# Classical econometric baselines (display order); GARCH family now covers all 33 tickers.
 _CLASSICAL = ("Persistence", "EWMA", "HAR", "HARQ", "logHAR", "GARCH", "GJR-GARCH", "EGARCH")
 
 
@@ -162,7 +162,7 @@ def _table_lines(val: dict[str, dict[str, float]], g1_test: dict[str, float] | N
         lines.append("")
     # Classical econometric baselines, held-out test.
     classical = _load_classical_test()
-    lines.append("Classical econometric baselines - held-out TEST (same obs; GARCH family on 32/33 tickers):")
+    lines.append("Classical econometric baselines - held-out TEST (same obs; GARCH family 33/33 tickers):")
     chead = f"{'Baseline':<12}" + "".join(f"{_METRIC_LABELS[name]:>12}" for name in _METRICS)
     lines.append(chead)
     lines.append("-" * len(chead))
