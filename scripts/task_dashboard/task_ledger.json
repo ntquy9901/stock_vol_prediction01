@@ -2526,5 +2526,79 @@
       }
     },
     "result_summary": "Added docs/paper/diagrams/generate_current_architecture.py (matplotlib, Agg, svg.fonttype='none' so labels stay searchable) rendering docs/paper/diagrams/current_g1_architecture.svg: the current proposed G1 (Track B) model as encoder -> graph layer -> head, plus the P0->P1->P2->P3->G1 ablation-ladder strip. Encoder: price seq = 3 HAR scales (Parkinson variance) -> price-LSTM; news = PhoBERT dual-group 146-dim -> news-LSTM; per-ticker gate g=sigma(gate_logits); base = h_price (+) g*h_news. Graph layer G1: A = masked k-NN top-8 Pearson volatility-correlation (undirected, static per split, present-node masked), base' = base + MP(base,A) (single residual correlation-weighted step; 'remove => P3'). Head: floor(Linear(base')) + denormalize + eps*softplus positivity -> 5-day-ahead Parkinson variance. Notes: P3 = G1 with message passing disabled (determinism 0.0); graph effect G1 vs P3 null at all horizons (DM n.s.) -> parsimony. Smoke test asserts non-empty SVG + searchable labels (HAR, k-NN, news, G1, P3, PhoBERT, gate, message passing, Parkinson, present-node, parsimony)."
+  },
+  {
+    "id": "garch-33-tickers-lpb-recovered-2026-08-10",
+    "task_type": "code",
+    "phase": "Track-B / classical baselines",
+    "title": "GARCH family lifted 32/33 -> 33/33 tickers (LPB OHLCV recovered from SSI); canonical + paper + bundle updated consistently",
+    "status": "done",
+    "timestamp": "2026-08-10 22:41",
+    "branch": "master",
+    "commits": [
+      "6fef6b3"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "OHLC validity + Parkinson reproduction on LPB_ohlcv.csv",
+        "result": "high>=low>=0, dates strictly increasing, no dup dates; Parkinson variance recomputed from High/Low == LPB_processed.csv (corr 1.0 with variance formula, median |diff| ~4.8e-6)."
+      },
+      {
+        "cmd": "python run_classical_baselines.py 2026-08-10_221043 5",
+        "result": "GARCH/GJR/EGARCH now 33/33 tickers, full 14418 val / 14464 test. TEST QLIKE 1.75138/1.81412/1.86327 (was 1.76100/1.82432/1.87379); RMSE ~0.004733 (was ~0.004761); coverage 14292->14464. Vol-only rows byte-identical to prior run."
+      },
+      {
+        "cmd": "pytest baselines/classical_baselines/test",
+        "result": "19 pass (18 unit + 1 smoke). New: GARCH carry-forward over calendar gap (18 LPB holiday obs), GARCH raises when no requested origin is a trading day."
+      },
+      {
+        "cmd": "ruff check + diff-cover coverage.xml --compare-branch=origin/master",
+        "result": "ruff clean; C0=100% on 12 changed lines."
+      },
+      {
+        "cmd": "check_schema() (Pandera)",
+        "result": "PASS 34/34 processed artifacts valid. LPB_ohlcv.csv (raw) validated manually (outside processed-schema scope). Evidently N/A (no processed feature-distribution change)."
+      },
+      {
+        "cmd": "cross-artifact consistency scan",
+        "result": "GARCH values match canonical JSON == bundle JSON == paper .md == .tex (macros+table) == reproduce.py view; no stale 1.7610/0.004761/32-33/14,292 refs in paper/bundle."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "19 pytest pass incl carry-forward + trading-day-origin guard + obs-alignment smoke"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on baselines/classical_baselines"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "C0=100% on 12 changed lines (origin/master...HEAD)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera check_schema PASS 34/34; LPB_ohlcv.csv OHLC-validity + Parkinson-reproduction verified manually; Evidently N/A (no processed feature change)"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "carry-forward is a genuine GARCH forecast (unit-tested), LPB provenance/caveat documented; no fabricated numbers"
+      }
+    },
+    "code_review": {
+      "status": "pass",
+      "detail": "self-review: units unchanged, carry-forward persistence justified, cross-artifact consistency verified"
+    },
+    "dod": {
+      "status": "met",
+      "detail": "33/33 GARCH on exact ladder obs; canonical(new)+old-superseded; paper .md/.tex/PAPER_MAP/bundle/reproduce updated + consistent; TDD green; Pandera PASS; LPB files committed"
+    },
+    "result_summary": "LPB OHLCV recovered (SSI) -> GARCH family 32/33->33/33 tickers on the exact 14418/14464 obs. TEST QLIKE 1.751/1.814/1.863, RMSE ~0.00473, R2 ~0 (unchanged conclusion: GARCH far worse, HAR/HARQ tie deep models). Numbers consistent across JSON/md/tex/PAPER_MAP/reproduce.",
+    "report_md": "docs/reports/2026-08-10_2241_summaryOfUpdate_report.md"
   }
 ]
