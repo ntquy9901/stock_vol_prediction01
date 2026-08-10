@@ -2490,5 +2490,41 @@
     },
     "result_summary": "Final assembly of the Track-B SOICT-2026 submission. (1) Copied beat-HAR sweep report (2026-08-10_0412) and price-only GAT report (2026-08-10_0130) onto master docs/reports. (2) Filled the paper §7 'attempts to strengthen the graph' placeholder in BOTH track_b_paper_draft.md and soict2026_trackb_v1.tex with the real sweep outcome: a leaner price-only GAT + five levers (QLIKE-loss C1, HAR+graph-residual C2, directed spillover C3, spillover+omit-self C5, learned adjacency C6) — NONE beats P0 pooled-HAR (test QLIKE 0.5676) at a DM-significant level; best C2 (0.5662) ties (paired-t p=0.562). Added the one-line thoroughness note to Abstract + Discussion in both files. All numbers trace to the sweep report/analysis.json; no win claimed. (3) Appended the sweep ledger entry + this entry. (4) Measured the repro-bundle diff-cover for real: reproduce.py 83.5% on changed lines (added 8 offline tests), full-bundle 28% (vendored trackb_code + data/GPU run-entry); recorded pass on the authored offline surface. (5) Regenerated task_dashboard.html, 0 red cards. (6) Consistency-verified G1/P3/P2/HAR/HARQ + C1/C2 numbers across md/tex/PAPER_MAP/reproduce. NOTE (sweep card red, documented): This card renders red only because the entry's commits list predates the branch's final two commits; the sweep's real verified-green gate result is 52b9e75.json (tests_passed:true, diff-cover 90%, overall:pass). Completing the commits list with 52b9e75 is an accurate provenance fix awaiting the user's explicit authorization. Gate status and commits are left unchanged (no tampering). gat-quick and repro-bundle cards are green from real passing gate-results (gat-quick pushed clean: a5a792d green, diff-cover 87%, 200 passed).",
     "report_md": "docs/reports/2026-08-10_0412_beat_har_sweep_results.md"
+  },
+  {
+    "id": "g1-architecture-diagram-2026-08-10",
+    "task_type": "code",
+    "phase": "Track-B / paper figures",
+    "title": "Publication-quality SVG of the current proposed model (G1, Track B): matplotlib generator + smoke test",
+    "status": "done",
+    "timestamp": "2026-08-10 22:30",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "pytest docs/paper/diagrams/test_generate_current_architecture.py -> 2 passed (smoke): build() carries the architecture labels; main() writes a non-empty searchable SVG"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff check clean on generate_current_architecture.py + test_generate_current_architecture.py"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "self-review against ground truth: 3 HAR node features (Parkinson variance), PhoBERT dual-group 146-dim news-LSTM, per-ticker sigmoid gate, base=h_price(+)g*h_news, single residual message-passing over masked k-NN-8 Pearson vol-corr adjacency (correlation-weighted, NOT multi-head attention), floor+denorm+softplus head, 5-day-ahead sigma^2; ladder P0..G1 with P3=graph-off. Cross-checked vs models.py (feature/masked-gnn), ladder_consistent_h5 + old-vs-new-g1 diagnosis reports"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "diff-cover temp xml vs origin/master = 100% on 112 changed lines (generator 100%, test 100%); C0=100%. __main__ guard pragma-excluded"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A (no data change) - diagram generator + smoke test only; no data/features/manifest/pipeline touched"
+      }
+    },
+    "result_summary": "Added docs/paper/diagrams/generate_current_architecture.py (matplotlib, Agg, svg.fonttype='none' so labels stay searchable) rendering docs/paper/diagrams/current_g1_architecture.svg: the current proposed G1 (Track B) model as encoder -> graph layer -> head, plus the P0->P1->P2->P3->G1 ablation-ladder strip. Encoder: price seq = 3 HAR scales (Parkinson variance) -> price-LSTM; news = PhoBERT dual-group 146-dim -> news-LSTM; per-ticker gate g=sigma(gate_logits); base = h_price (+) g*h_news. Graph layer G1: A = masked k-NN top-8 Pearson volatility-correlation (undirected, static per split, present-node masked), base' = base + MP(base,A) (single residual correlation-weighted step; 'remove => P3'). Head: floor(Linear(base')) + denormalize + eps*softplus positivity -> 5-day-ahead Parkinson variance. Notes: P3 = G1 with message passing disabled (determinism 0.0); graph effect G1 vs P3 null at all horizons (DM n.s.) -> parsimony. Smoke test asserts non-empty SVG + searchable labels (HAR, k-NN, news, G1, P3, PhoBERT, gate, message passing, Parkinson, present-node, parsimony)."
   }
 ]
