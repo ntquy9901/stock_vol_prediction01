@@ -2721,5 +2721,103 @@
     },
     "result_summary": "Applied the approved val/test reporting convention to the Track-B paper (docs/paper/track_b_paper_draft.md + docs/paper/soict2026_trackb_v1.tex): headline result is now the held-out TEST set, validation is a labelled model-selection-only diagnostic (not a co-equal results block). Reordered the ladder table (Table 2 / tab:ladder) to TEST-first with a VAL block relabelled 'selection only'; relabelled the paired-t table (Table 3 / tab:pairedt) caption so TEST rows are the reported significance and VAL rows a selection-period diagnostic (primary graph significance = Diebold-Mariano on TEST); put the TEST row above VAL in the .md graph-ablation table (Table 4) and relabelled the multi-horizon table's companion validation column as diagnostic-only. Added a single 'Reporting protocol' sentence in Experimental Setup of both files (plus a one-liner in each abstract). Reframed the val-good/test-null divergence as a robustness finding for the graph (selection-period optimism), the gate (val-only squared-error gain that does not carry to test), and the h22 val->test reversal; added an EDA-grounded parsimony sentence (market-factor redundancy + neighbour instability, cited to EDA_GRAPH_REPORT.md). No metric value changed (numeric-token diff vs HEAD verified); PAPER_MAP.md + reproduce.py view left untouched and remain consistent (view runs clean, all headline numbers unchanged). Report: docs/reports/2026-08-11_1600_summaryOfUpdate_report.md.",
     "report_md": "docs/reports/2026-08-11_1600_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "eda-recommended-gnn-ladder-2026-08-11",
+    "task_type": "code",
+    "phase": "Track-B / EDA-recommended GNN",
+    "title": "Build+test the graph-EDA recommended GNN (HAR+MarketPK+volume_zscore_20 node features, directed vol->PK Top-5 edge) vs HAR: E0->E1->E2->E3 ladder + E3off/G1corr controls, 3 seeds, DM",
+    "status": "done",
+    "timestamp": "2026-08-11 16:55",
+    "branch": "feature/eda-gnn",
+    "commits": [
+      "9b21fc2",
+      "983d2ca",
+      "32b949a",
+      "ec13ca6",
+      "5c3c9a8"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "requesting-code-review",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "pytest baselines/2026-08-11_eda_gnn_baseline/test/ -q",
+        "result": "17 pass (leakage/causality/nesting/positivity/masking + full-pipeline smoke + aggregate DM)."
+      },
+      {
+        "cmd": "obs-set parity vs pilot 3-feature manifest",
+        "result": "byte-identical: train 73026 / val 14418 / test 14464; HAR feature columns bit-identical -> E0 == pilot HAR P0, val/test comparable to ladder_consistent."
+      },
+      {
+        "cmd": "python code/eda_ladder.py 2026-08-11_144700 cuda (.venv_gpu_encode, 3 seeds x {E0,E1,E2,E3,E3off,G1corr}, 20 epochs, h5)",
+        "result": "basis 6470 snapshots, 198 vol2pk edges (33 targets x 5 sources + self-loop). Real run, every number sourced."
+      },
+      {
+        "cmd": "python code/aggregate.py 2026-08-11_144700 (metric means + Diebold-Mariano)",
+        "result": "E1 vs HAR QLIKE DM p=0.017; E2 vs HAR QLIKE DM p=0.012 (partial win, features). E3 (vol2pk GNN) vs HAR QLIKE p=0.116 (NOT sig), SE p=0.19; E3 vs G1corr QLIKE p=0.044 (corr edge better). Graph adds no OOS value -> confirms EDA Conclusion C. No win beyond DM claimed."
+      },
+      {
+        "cmd": "diff-cover cov.xml --compare-branch=feature/masked-gnn",
+        "result": "93% on changed lines (aggregate 95.7 / eda_ladder 92.9 / eda_model 93.1 / edges 94.0 / features 93.5); above 80% floor."
+      },
+      {
+        "cmd": "git push origin feature/eda-gnn",
+        "result": "pushed 5c3c9a8; pre-push 4-step quality gate PASSED (TDD, pytest+coverage, diff-cover>=80, ruff, data-quality)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "17 pytest tests pass incl. smoke; leakage tests (vol_z causal, MarketPK contemporaneous, vol2pk train-only + heterogeneous-history), nesting (E3off==graph-off), positivity/masking."
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on baselines/2026-08-11_eda_gnn_baseline/code + test."
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "adversarial 3-layer review (code_review_2026-08-11.md): 2 HIGH found+fixed BEFORE the result run - H1 vol2pk global-boundary leakage (per-ticker split fix + heterogeneous-history test), H2 QLIKE positivity-floor confound (identical floor on all rungs); M2/L3 fixed."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "93% diff-cover on changed lines vs feature/masked-gnn (floor 80); pre-push hook diff-cover gate accepted the push."
+      },
+      "data_quality": {
+        "status": "n/a",
+        "detail": "no data change: consumes data/processed + data/raw/prices read-only; adds no dataset/manifest/pipeline-train artifact."
+      }
+    },
+    "code_review": {
+      "layers": 3,
+      "type": "adversarial-blind+edgecase+acceptance",
+      "findings_fixed": 4,
+      "findings_deferred": 5,
+      "note": "HIGH H1 (leakage) + H2 (QLIKE confound) fixed before results; M2 obs-set guard + L3 cross-seed target check fixed; L1/L2/L4/L5/L6 documented (L1: softmax self-loop may under-weight weak edges - caveat, not a bug)."
+    },
+    "dod": [
+      {
+        "item": "EDA-recommended GNN built + tested vs HAR on leakage-safe basis (same val/test obs as ladder_consistent)",
+        "ok": true
+      },
+      {
+        "item": "6-metric val+test ladder E0..E3 + E3off/G1corr, 3 seeds, real run",
+        "ok": true
+      },
+      {
+        "item": "Diebold-Mariano vs HAR and vs correlation-edge control; honest verdict (features beat HAR QLIKE-sig; graph null)",
+        "ok": true
+      },
+      {
+        "item": "TDD leakage tests + smoke + adversarial review (HIGH fixed) + ruff + diff-cover 93%",
+        "ok": true
+      },
+      {
+        "item": "results report + summaryOfUpdate report; feature/eda-gnn pushed through the gate",
+        "ok": true
+      }
+    ]
   }
 ]
