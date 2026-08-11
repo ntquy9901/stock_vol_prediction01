@@ -2819,5 +2819,46 @@
         "ok": true
       }
     ]
+  },
+  {
+    "id": "eda-ablation-diagram-2026-08-11",
+    "task_type": "code",
+    "phase": "Track-B / paper figures",
+    "title": "Review-quality SVG of the EDA-GNN E0->E1->E2->E3 ablation (node features accumulate; graph only at E3): matplotlib generator + smoke test",
+    "status": "done",
+    "timestamp": "2026-08-11 16:45",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "pytest docs/paper/diagrams/test_generate_eda_ablation.py -> 2 passed (smoke): build() carries the ablation labels (E0..E3, MarketPK, volume_zscore, QLIKE, HAR, graph) + all reported test-QLIKE and DM p-values; main() writes a non-empty searchable SVG"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff 0.16.1 check clean on generate_eda_ablation.py + test_generate_eda_ablation.py (removed drafting dead code: unused headers var + unused top/bottom helpers)"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "self-review against ground truth (docs/reports/2026-08-11_1631_eda_gnn_results.md task brief + docs/eda/graph_recommendation.json): E0=HAR reference test QLIKE 0.5735; E1=+MarketPK backbone LSTM QLIKE 0.5686 DM-vs-HAR p=0.017; E2=+volume_zscore_20 QLIKE 0.5681 p=0.012 (best); E3=+directed vol->PK lead-lag Top-5 dynamic TRAIN-frozen masked-residual graph QLIKE 0.5709 p=0.116 (no HAR-beat); comparison rungs E3off 0.5760, G1corr 0.5708 (E3 vs G1corr p=0.044). Every rendered number matches the brief; no invented components. Node-feature accumulation shown as a staircase; graph added only at E3; honest takeaway banner (features drive the DM-significant beat; graph erodes it 0.5681->0.5709)."
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "diff-cover 10.4.1 temp xml vs origin/master = 100% on 141 changed lines (generator 100%, test 100%); C0=100%. __main__ guard pragma-excluded"
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "N/A (no data change) - diagram generator + smoke test only; no data/features/manifest/pipeline touched"
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "result_summary": "Added docs/paper/diagrams/generate_eda_ablation.py (matplotlib, Agg, svg.fonttype=none so labels stay searchable) rendering docs/paper/diagrams/eda_ablation_E0_E3.svg: the EDA-GNN E0->E1->E2->E3 ablation as an accumulation strip over a shared spine (node features -> pooled LSTM -> base embedding -> graph message-passing [E3 only] -> head -> 5-day Parkinson variance). Rungs: E0 HAR reference (3 HAR scales, linear) test QLIKE 0.5735; E1 + MarketPK (cross-sectional median PK) pooled-LSTM backbone 0.5686, beats HAR DM p=0.017; E2 + volume_zscore_20 0.5681, beats HAR DM p=0.012 (BEST); E3 + directed vol->PK lead-lag graph (Top-5, dynamic, TRAIN-frozen adjacency, masked residual MP) 0.5709, no HAR-beat DM p=0.116. Side checks: E3off (graph disabled) 0.5760, G1corr (correlation edge) 0.5708, E3 vs G1corr p=0.044. Takeaway banner: node features (MarketPK, volume_zscore_20) drive the DM-significant HAR-beat; the graph (E3) does not help and erodes the win. Smoke test asserts non-empty searchable SVG + all task-required labels and every reported value."
   }
 ]
