@@ -90,8 +90,9 @@ $\text{P0 (HAR)}\to\text{P1 (price LSTM)}\to\text{P2 (+news)}\to\text{P3 (+gate)
 where P3 is exactly G1 with the message-passing residual disabled (graph-off readout determinism $0.0$).
 All rungs and seven classical econometric baselines score on the same \nval{} validation and \ntest{}
 test observations. News content carries the forecast gain: adding the news branch lowers QLIKE
-significantly on validation ($t=\newsValT$) and held-out test ($t=\newsTestT$), and the parsimonious
-news backbone (P2) attains the lowest test QLIKE in the study (\PtwoTestQ). The per-ticker gate raises
+significantly on held-out test ($t=\newsTestT$) and validation ($t=\newsValT$), and the parsimonious
+news backbone (P2) attains the lowest test QLIKE in the study (\PtwoTestQ). Throughout, the held-out
+test set is the reported result; validation is used for model selection only. The per-ticker gate raises
 QLIKE and earns no place. Enabling the cross-stock graph (G1 vs P3) yields no statistically significant
 QLIKE improvement at any of four horizons under a Diebold--Mariano test (verdict B, graph null). A
 targeted sweep confirms this: neither the base graph nor five research-backed enhancements (QLIKE-loss
@@ -306,6 +307,13 @@ QLIKE is a lever the literature identifies as decisive for beating HAR~\cite{zha
 training here so the ablation isolates architecture rather than objective, and flag QLIKE training as
 future work.
 
+\subsubsection{Reporting protocol.}
+Model selection---early-stopping and best-checkpoint---uses the validation split only; all reported
+results and significance tests are computed on the held-out test set, which is consulted once.
+Validation metrics appear solely to expose the selection-period behaviour of each component; the
+held-out test column is the reported result, and where the two diverge (the gate and the graph) the
+test column governs the verdict.
+
 \subsubsection{Significance.}
 With three seeds the two-sided 5\% paired-$t$ threshold at two degrees of freedom is $|t|>\tcrit$. We
 complement the paired-$t$ with a Diebold--Mariano (DM) test on the per-observation QLIKE and MSE loss
@@ -368,39 +376,44 @@ EGARCH            & $1.8633$          & $0.004747$          & $-0.0029$         
 
 \subsection{The nested ladder: news is decisive, the gate does not pay its way}
 \label{sec:ladder}
-Table~\ref{tab:ladder} reports the full ladder, validation and test, \nseed-seed mean. The price-only LSTM
-(P1) lowers test RMSE against HAR-linear P0 and lowers QLIKE on both splits, so temporal learning already
-buys a proportional-loss gain. Adding news (P2) is the decisive step: it lowers validation QLIKE from
-\PoneValQ{} to \PtwoValQ{} and test QLIKE from \PoneTestQ{} to \PtwoTestQ. P2---the parsimonious
-news-augmented backbone with neither gate nor graph---attains the lowest test QLIKE of any configuration
-in the study, below HARQ's~\HARQtestQ. Adding the gate (P3) does not extend the gain: its test QLIKE
-(\PthreeTestQ) is above P2's. Table~\ref{tab:pairedt} gives paired-$t$ tests derived from the per-seed
-ladder entries. Adding news lowers QLIKE significantly on both splits ($t=\newsValT$ validation,
-$t=\newsTestT$ test); on validation it also improves MSE, RMSE, and $R^2$, while on test it trades a small
-significant increase in squared error for the QLIKE and MAE gain. Adding the gate does not lower QLIKE---it
-raises it significantly ($t=\gateTestT$ on test).
+Table~\ref{tab:ladder} reports the full ladder, \nseed-seed mean; the held-out test block is the
+reported result and the validation block below it is the selection-period diagnostic. Reading the
+held-out test ladder up: the price-only LSTM (P1) lowers test RMSE against HAR-linear P0 and lowers test
+QLIKE, so temporal learning already buys a proportional-loss gain. Adding news (P2) is the decisive step:
+it lowers test QLIKE from \PoneTestQ{} to \PtwoTestQ{} (and validation QLIKE from \PoneValQ{} to
+\PtwoValQ). P2---the parsimonious news-augmented backbone with neither gate nor graph---attains the lowest
+test QLIKE of any configuration in the study, below HARQ's~\HARQtestQ. Adding the gate (P3) does not
+extend the gain: its test QLIKE (\PthreeTestQ) is above P2's. Table~\ref{tab:pairedt} gives paired-$t$
+tests derived from the per-seed ladder entries; its test rows are the reported significance and its
+validation rows are a selection-period diagnostic. Adding news lowers QLIKE significantly on held-out test
+($t=\newsTestT$) and validation ($t=\newsValT$); on test it trades a small significant increase in
+squared error for the QLIKE and MAE gain, while on validation it also improves MSE, RMSE, and $R^2$.
+Adding the gate does not lower QLIKE---it raises it significantly ($t=\gateTestT$ on test), and its
+squared-error improvement is confined to validation and does not carry to test.
 
 \begin{table}[t]
-\caption{Five-day-ahead ladder metrics, validation and test, \nseed-seed mean (42/123/2026). Same \nval{}
-validation / \ntest{} test observations across rows. Bold marks the best value per column within each
-split. Source: \texttt{ladder\_consistent\_h5}.}
+\caption{Five-day-ahead ladder metrics, \nseed-seed mean (42/123/2026). The held-out TEST block is the
+reported result; the VALIDATION block is shown below it for the model-selection period only
+(early-stopping / best-checkpoint) and is not a co-equal result. Same \nval{} validation / \ntest{} test
+observations across rows. Bold marks the best value per column within each block. Source:
+\texttt{ladder\_consistent\_h5}.}
 \label{tab:ladder}
 \centering
 \begin{tabular}{llccccc}
 \toprule
 Split & Config & RMSE & MAE & $R^2$ & QLIKE & DirAcc (\%) \\
 \midrule
-VAL  & P0 HAR         & $0.001472$          & $0.0004737$          & $0.7394$          & $0.5096$          & $48.52$ \\
-VAL  & P1 price LSTM  & $0.001492$          & $0.0004859$          & $0.7324$          & $0.5062$          & $48.54$ \\
-VAL  & P2 +news       & $0.001479$          & $0.0004763$          & $0.7371$          & $\mathbf{0.5031}$ & $48.52$ \\
-VAL  & P3 +gate       & $0.001468$          & $0.0004668$          & $0.7410$          & $0.5130$          & $48.44$ \\
-VAL  & G1 +graph      & $\mathbf{0.001455}$ & $\mathbf{0.0004619}$ & $\mathbf{0.7454}$ & $0.5091$          & $\mathbf{48.68}$ \\
+TEST (reported) & P0 HAR         & $0.002289$          & $0.0006027$          & $0.7668$          & $0.5676$          & $\mathbf{48.53}$ \\
+TEST (reported) & P1 price LSTM  & $\mathbf{0.002265}$ & $0.0006065$          & $\mathbf{0.7718}$ & $0.5648$          & $47.98$ \\
+TEST (reported) & P2 +news       & $0.002270$          & $0.0006016$          & $0.7706$          & $\mathbf{0.5599}$ & $48.04$ \\
+TEST (reported) & P3 +gate       & $0.002313$          & $0.0006014$          & $0.7620$          & $0.5765$          & $47.88$ \\
+TEST (reported) & G1 +graph      & $0.002305$          & $\mathbf{0.0005996}$ & $0.7635$          & $0.5759$          & $48.22$ \\
 \midrule
-TEST & P0 HAR         & $0.002289$          & $0.0006027$          & $0.7668$          & $0.5676$          & $\mathbf{48.53}$ \\
-TEST & P1 price LSTM  & $\mathbf{0.002265}$ & $0.0006065$          & $\mathbf{0.7718}$ & $0.5648$          & $47.98$ \\
-TEST & P2 +news       & $0.002270$          & $0.0006016$          & $0.7706$          & $\mathbf{0.5599}$ & $48.04$ \\
-TEST & P3 +gate       & $0.002313$          & $0.0006014$          & $0.7620$          & $0.5765$          & $47.88$ \\
-TEST & G1 +graph      & $0.002305$          & $\mathbf{0.0005996}$ & $0.7635$          & $0.5759$          & $48.22$ \\
+VAL (selection)  & P0 HAR         & $0.001472$          & $0.0004737$          & $0.7394$          & $0.5096$          & $48.52$ \\
+VAL (selection)  & P1 price LSTM  & $0.001492$          & $0.0004859$          & $0.7324$          & $0.5062$          & $48.54$ \\
+VAL (selection)  & P2 +news       & $0.001479$          & $0.0004763$          & $0.7371$          & $\mathbf{0.5031}$ & $48.52$ \\
+VAL (selection)  & P3 +gate       & $0.001468$          & $0.0004668$          & $0.7410$          & $0.5130$          & $48.44$ \\
+VAL (selection)  & G1 +graph      & $\mathbf{0.001455}$ & $\mathbf{0.0004619}$ & $\mathbf{0.7454}$ & $0.5091$          & $\mathbf{48.68}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -408,7 +421,9 @@ TEST & G1 +graph      & $0.002305$          & $\mathbf{0.0005996}$ & $0.7635$   
 \begin{table}[t]
 \caption{Paired-$t$ tests across three seeds (df=2, threshold $|t|>\tcrit$), derived from the per-seed
 entries of the ladder JSON. Sign is (upper rung $-$ lower rung); negative $t$ on QLIKE means the added
-component lowers QLIKE. Source: \texttt{ladder\_consistent\_h5} (per-seed values).}
+component lowers QLIKE. The TEST rows are the reported significance; the VAL rows are a selection-period
+diagnostic, not a co-equal result (the primary graph significance is the Diebold--Mariano test on the
+held-out test set, Table~\ref{tab:graph}). Source: \texttt{ladder\_consistent\_h5} (per-seed values).}
 \label{tab:pairedt}
 \centering
 \begin{tabular}{llccccc}
@@ -429,11 +444,14 @@ LSTM (P1 vs P0) & TEST & $-25.7$ (better) & $-25.6$ (better) & $+25.7$ (better) 
 \label{sec:graph}
 Table~\ref{tab:graph} isolates the cross-stock graph by the exactly-nested G1-versus-P3 pair. Because P3
 is G1 read out with the residual disabled (determinism $0.0$), the pair differs only in cross-stock
-propagation. On validation the graph lowers loss on all three seeds (paired-$t$ $p=\graphValP$), but the
-per-observation DM test on QLIKE is not significant-negative on all seeds, so the validation verdict is B.
-On the held-out test the case disappears: G1's QLIKE (\GtestQ) improves on P3's (\PthreeTestQ) by less than
-its fourth significant figure, holds on only two of three seeds, and the paired-$t$ is not significant
-($p=\graphTestP$).
+propagation. On the held-out test---the reported basis---the case disappears: G1's QLIKE (\GtestQ)
+improves on P3's (\PthreeTestQ) by less than its fourth significant figure, holds on only two of three
+seeds, the paired-$t$ is not significant ($p=\graphTestP$), and the per-observation DM test on QLIKE is
+not significant, so the test verdict is B (graph null). The graph does lower validation QLIKE on all
+three seeds (paired-$t$ $p=\graphValP$), but that gain does not carry to the untouched test split; we
+therefore report the graph as null on the held-out test set and read the validation improvement as
+selection-period optimism rather than a second result
+(Section~\ref{sec:discussion} ties this to the graph's correlation edge).
 
 \begin{table}[t]
 \caption{Multi-horizon graph ablation G1 vs P3 (exactly nested), held-out test, \nseed-seed mean. QLIKE
@@ -462,9 +480,10 @@ nuances are worth stating plainly. At h1 the graph does improve the squared-erro
 loss series is significant-negative on all three test seeds---but its QLIKE is unstable: seed 2026 inflates
 G1's QLIKE through near-floor one-day predictions (the val G1 QLIKE outlier of $0.878$), so the
 QLIKE-based verdict stays B. At h22 the graph improves validation QLIKE (paired-$t$ $p=0.0002$) but the
-gain does not carry to the held-out test, where G1 is worse than P3 on all three seeds. h5 and h10 are the
-cleanest nulls. Across all four horizons the graph does not deliver a statistically significant QLIKE
-improvement over the news-augmented backbone.
+gain reverses on the held-out test, where G1 is worse than P3 on all three seeds---the same
+selection-period optimism seen at h5, here an outright validation-to-test reversal, so the test column
+governs and the verdict stays null. h5 and h10 are the cleanest nulls. Across all four horizons the graph
+does not deliver a statistically significant QLIKE improvement over the news-augmented backbone.
 
 \subsection{Direction is near-random for every model}
 \label{sec:direction}
@@ -492,10 +511,17 @@ panel is small. Second, VN30's listing-date imbalance thins the early-year neigh
 masking. Third, the masked formulation removes the data-volume confound a synchronized-intersection graph
 would suffer, and the exact nesting (P3 is G1 with the graph off, determinism $0.0$) removes any
 training-setup confound, so the null speaks to the cross-stock signal itself. It replicates across four
-horizons and under a DM test. It aligns with the best-controlled published GNN-vs-HAR study, GNNHAR on
-DJIA-30, where multi-hop graph spillover gave no clear advantage under a Model Confidence Set and the
-gains came from nonlinearity and a QLIKE loss, not the graph~\cite{zhang2025gnnhar}, and with the broader
-finding that a well-specified HAR is hard to beat on a limited information set~\cite{audrino2025}.
+horizons and under a DM test. The validation-good, test-null pattern that surfaces at h5 and reverses at
+h22 is the expected behaviour of a correlation-edge graph on a market-factor-dominated, regime-shifting,
+small (\ntick-ticker) universe: our graph EDA finds about 77\% of cross-stock Parkinson correlation is a
+single market factor HAR already captures (mean $R^2$ on the market factor $0.4241$; only $23.1\%$ of
+$|\text{corr}|$ survives market adjustment), and that the $k$-NN neighbourhoods reshuffle out of sample
+(consecutive-snapshot Top-5 neighbour Jaccard $0.3900$, edge turnover $0.5982$), so an edge selected on
+the train/validation window need not persist into the later test regime. The null aligns with the
+best-controlled published GNN-vs-HAR study, GNNHAR on DJIA-30, where multi-hop graph spillover gave no
+clear advantage under a Model Confidence Set and the gains came from nonlinearity and a QLIKE loss, not
+the graph~\cite{zhang2025gnnhar}, and with the broader finding that a well-specified HAR is hard to beat
+on a limited information set~\cite{audrino2025}.
 
 \subsubsection{Classical baselines confirm the ceiling.}
 HAR and HARQ tie the deep models on the level metrics (test QLIKE~\HARtestQ/\HARQtestQ, $R^2\approx0.767$),

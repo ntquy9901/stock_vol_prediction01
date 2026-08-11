@@ -2679,5 +2679,47 @@
     },
     "result_summary": "Data-evidence EDA for GNN edge design. Cross-stock Parkinson structure is real but ~77% is one market factor; the plain PK-correlation edge G1 used is significantly worse than HAR+market OOS (direct explanation of the G1 null). Only own feature beating HAR is volume_zscore_20; only edge with positive lift over HAR+market is directed volume->PK (marginal, p=0.08). Recommend building that config and DM-testing; add MarketPK global feature first.",
     "report_md": "docs/eda/reports/EDA_GRAPH_REPORT.md"
+  },
+  {
+    "id": "val-test-reporting-fix-2026-08-11",
+    "task_type": "doc",
+    "phase": "Track-B / paper presentation",
+    "title": "Paper: lead with held-out TEST as the reported result; demote validation to model-selection-only (both .md + LNCS .tex); reframe val-vs-test divergence as robustness finding",
+    "status": "done",
+    "timestamp": "2026-08-11 16:00",
+    "branch": "master",
+    "commits": [],
+    "skills_applied": [
+      "verification-before-completion"
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "na",
+        "detail": "docs-only presentation reorg; no code/test changed. reproduce.py view run as consistency smoke (numbers unchanged)."
+      },
+      "lint": {
+        "status": "pass",
+        "detail": ".tex structurally linted: 18 balanced begin/end envs, all ref/cite/macro references resolve to a defined label/bibitem/newcommand; no unused macro."
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "self-review: numeric-token diff vs HEAD confirms no metric value changed (.tex removed 0 numeric tokens; .md removals are punctuation-variants + one prose copy of 0.513001 still in Tables 2/4); EDA figures (77/0.4241/23.1/0.3900/0.5982) verified against docs/eda/reports/EDA_GRAPH_REPORT.md; grep-confirmed both main tables lead with TEST and label validation selection-only; .md/.tex/PAPER_MAP/reproduce.py view consistent."
+      },
+      "diff_cover": {
+        "status": "na",
+        "detail": "no code change (docs presentation reorg); diff-cover/pytest-cov not installed (standing repo tooling gap)."
+      },
+      "data_quality": {
+        "status": "na",
+        "detail": "no change to data/features/manifest/train pipeline (paper text only)."
+      }
+    },
+    "code_review": {
+      "layers": 1,
+      "findings_fixed": 0,
+      "findings_deferred": 0
+    },
+    "result_summary": "Applied the approved val/test reporting convention to the Track-B paper (docs/paper/track_b_paper_draft.md + docs/paper/soict2026_trackb_v1.tex): headline result is now the held-out TEST set, validation is a labelled model-selection-only diagnostic (not a co-equal results block). Reordered the ladder table (Table 2 / tab:ladder) to TEST-first with a VAL block relabelled 'selection only'; relabelled the paired-t table (Table 3 / tab:pairedt) caption so TEST rows are the reported significance and VAL rows a selection-period diagnostic (primary graph significance = Diebold-Mariano on TEST); put the TEST row above VAL in the .md graph-ablation table (Table 4) and relabelled the multi-horizon table's companion validation column as diagnostic-only. Added a single 'Reporting protocol' sentence in Experimental Setup of both files (plus a one-liner in each abstract). Reframed the val-good/test-null divergence as a robustness finding for the graph (selection-period optimism), the gate (val-only squared-error gain that does not carry to test), and the h22 val->test reversal; added an EDA-grounded parsimony sentence (market-factor redundancy + neighbour instability, cited to EDA_GRAPH_REPORT.md). No metric value changed (numeric-token diff vs HEAD verified); PAPER_MAP.md + reproduce.py view left untouched and remain consistent (view runs clean, all headline numbers unchanged). Report: docs/reports/2026-08-11_1600_summaryOfUpdate_report.md.",
+    "report_md": "docs/reports/2026-08-11_1600_summaryOfUpdate_report.md"
   }
 ]
