@@ -15,7 +15,6 @@ Writes results/eda_gnn_seed{seed}_<TS>/h5/<rung>/ with metrics + per-observation
 from __future__ import annotations
 
 import copy
-import json
 import sys
 import time
 from pathlib import Path
@@ -37,13 +36,15 @@ from data import (  # noqa: E402
     PooledManifest, PooledSample, build_masked_graph_manifest, build_pooled_manifest,
     load_and_split_price_data,
 )
+from sklearn.linear_model import LinearRegression  # noqa: E402
+
 from edges import build_vol2pk_adjacency, swap_adjacency  # noqa: E402
 from eda_model import PriceGraphModel  # noqa: E402
 from features import EXTRA_FEATURE_COLUMNS, augment_split_frames, build_extended_store  # noqa: E402
-from models import PooledPriceLSTM  # noqa: E402
+from models import POSITIVITY_EPSILON, PooledPriceLSTM  # noqa: E402
 from run_pilot import (  # noqa: E402
     _ManifestDataset, _mean_snapshot_mse, _stacked_snapshot_inputs, _write_graph_predictions,
-    _write_json, resolve_graph_device, run_har_reference,
+    _write_json, resolve_graph_device,
 )
 from train import _set_seed, evaluate_records  # noqa: E402
 
@@ -107,8 +108,7 @@ def build_basis(stamp: Path):
     pooled = build_pooled_manifest(augmented, store, seq_length=SEQ, horizon=HORIZON)
     _log(stamp, "pooled 5-feature manifest built; building masked corr knn-8 graph ...")
     graph_corr = build_masked_graph_manifest(pooled, store, adjacency="knn", top_k=CORR_TOP_K)
-    vol2pk = build_vol2pk_adjacency(augmented, graph_corr.ticker_to_id, graph_corr.train_end_date,
-                                    top_k=VOL2PK_TOP_K)
+    vol2pk = build_vol2pk_adjacency(augmented, graph_corr.ticker_to_id, top_k=VOL2PK_TOP_K)
     graph_vol2pk = swap_adjacency(graph_corr, vol2pk)
     allowed = tuple(s for s in pooled.samples["train"] if s.key.target_date <= graph_corr.train_end_date)
     if not allowed:
@@ -127,35 +127,52 @@ def build_basis(stamp: Path):
             "allowed": allowed, "vol2pk_edges": edge_count}
 
 
-def _har_predictions(results_path: Path) -> list[dict[str, Any]]:
-    """Convert a run_har_reference results.json into per-observation DM rows."""
+def _floor_norm_records(records: list[dict[str, Any]], store, eps: float = POSITIVITY_EPSILON) -> None:
+    """Apply the graph model's per-ticker denormalized positivity floor to pooled predictions.
 
-    payload = json.loads(results_path.read_text(encoding="utf-8"))
-    keys = payload["ordered_validation_keys"]  # "ticker_id:target_date" strings
-    rows = []
-    for key, target, prediction in zip(keys, payload["targets_raw"], payload["predictions_raw"], strict=True):
-        ticker_id, target_date = key.split(":", 1)
-        rows.append({"ticker_id": int(ticker_id), "target_date": str(target_date),
-                     "target_raw": float(target), "prediction_raw": float(prediction)})
-    return rows
+    ``raw = z*std + mean`` -> ``eps*softplus(raw/eps) + eps`` -> back to normalized. This makes the
+    non-graph rungs (E0/E1/E2) share the identical floor the graph rungs (E3/E3off/G1corr) apply
+    inside the model, so QLIKE -- dominated by tiny-prediction tail spikes -- is compared like for
+    like (review finding H2). An identity for raw >> eps, so the bulk of predictions are unchanged.
+    """
+
+    for record in records:
+        scaler = store.get(int(record["ticker_id"])).target_scaler
+        mean = float(scaler.mean[0])
+        std = float(scaler.std[0])
+        raw = record["prediction_norm"] * std + mean
+        raw_positive = eps * np.logaddexp(0.0, raw / eps) + eps
+        record["prediction_norm"] = float((raw_positive - mean) / std)
 
 
 def run_e0(pooled: PooledManifest, allowed, store, out: Path) -> dict[str, Any]:
-    """E0: pooled HAR regression on the 3 HAR features, scored on val and test observations."""
+    """E0: pooled HAR regression on the 3 HAR features (floored), scored on val and test."""
 
     train3 = _slice_samples(allowed, 3)
-    val3 = _slice_samples(pooled.samples["val"], 3)
-    test3 = _slice_samples(pooled.samples["test"], 3)
-    val_manifest = PooledManifest({"train": train3, "val": val3, "test": test3},
-                                  pooled.exclusions, pooled.ticker_to_id, pooled.preprocessing_hash)
-    test_manifest = PooledManifest({"train": train3, "val": test3, "test": test3},
-                                   pooled.exclusions, pooled.ticker_to_id, pooled.preprocessing_hash)
-    val_path = run_har_reference(val_manifest, store, out / "val")
-    test_path = run_har_reference(test_manifest, store, out / "test")
-    val = json.loads(val_path.read_text(encoding="utf-8"))
-    test = json.loads(test_path.read_text(encoding="utf-8"))
-    _write_json(out / "predictions_test.json", _har_predictions(test_path))
-    return {"validation_metrics": val["validation_metrics"], "test_metrics": test["validation_metrics"]}
+    x_train = np.asarray([sample.x_price_raw[-1] for sample in train3], dtype=float)
+    y_train = np.asarray([
+        store.get(sample.key.ticker_id).target_scaler.transform(np.asarray([
+            sample.y_model_raw if sample.y_model_raw is not None else sample.y_raw]))[0]
+        for sample in train3], dtype=float)
+    model = LinearRegression().fit(x_train, y_train)
+
+    def _score(samples, dump: bool) -> dict[str, float]:
+        sliced = _slice_samples(samples, 3)
+        x = np.asarray([sample.x_price_raw[-1] for sample in sliced], dtype=float)
+        predictions = model.predict(x)
+        records = [{"ticker_id": sample.key.ticker_id, "target_date": sample.key.target_date,
+                    "prediction_norm": float(prediction),
+                    "target_raw": float(sample.y_eval_raw if sample.y_eval_raw is not None else sample.y_raw)}
+                   for sample, prediction in zip(sliced, predictions, strict=True)]
+        _floor_norm_records(records, store)
+        evaluation = evaluate_records(records, store)
+        if dump:
+            out.mkdir(parents=True, exist_ok=True)
+            _write_graph_predictions(records, evaluation, out / "predictions_test.json")
+        return evaluation["metrics"]
+
+    return {"validation_metrics": _score(pooled.samples["val"], dump=False),
+            "test_metrics": _score(pooled.samples["test"], dump=True)}
 
 
 def _train_pooled_lstm(width: int, allowed, pooled, store, out: Path, seed: int,
@@ -210,6 +227,7 @@ def _pooled_eval(model, loader, store, device) -> tuple[dict[str, Any], list[dic
             ):
                 records.append({"ticker_id": int(ticker_id), "target_date": str(target_date),
                                 "prediction_norm": float(prediction), "target_raw": float(target_raw)})
+    _floor_norm_records(records, store)  # same positivity floor as the graph rungs (finding H2)
     return evaluate_records(records, store), records
 
 

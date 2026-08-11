@@ -23,29 +23,28 @@ import numpy as np
 import pandas as pd
 
 from data import GraphManifest, GraphSnapshot
-from features import VOLUME_ZSCORE_COLUMN, _full_series
+from features import VOLUME_ZSCORE_COLUMN
 
 _MIN_PAIRS = 30
 
 
-def _train_panels(
-    augmented_frames, train_end_date: str
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Wide date x ticker vshock and sqrt(PK) panels restricted to TRAIN dates (<= train_end)."""
+def _train_panels(augmented_frames) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Wide date x ticker vshock and sqrt(PK) panels over each ticker's OWN train split.
 
-    boundary = pd.Timestamp(train_end_date)
+    Splits are per-ticker chronological, so using each ticker's own ``["train"]`` rows (rather than
+    a single global date boundary applied to the full series) guarantees no ticker contributes a
+    validation/test observation to the frozen lead-lag topology -- the leakage-safe estimate.
+    """
+
     vshock: dict[str, pd.Series] = {}
     pk_vol: dict[str, pd.Series] = {}
     for ticker in augmented_frames.frames:
-        full = _full_series(augmented_frames, ticker)
-        train_rows = full[full["date"] <= boundary]
-        index = pd.DatetimeIndex(train_rows["date"])
+        train = augmented_frames.frames[ticker]["train"]
+        index = pd.DatetimeIndex(pd.to_datetime(train["date"]))
         pk_vol[ticker] = pd.Series(
-            np.sqrt(train_rows["parkinson_volatility"].to_numpy(dtype=float)), index=index
+            np.sqrt(train["parkinson_volatility"].to_numpy(dtype=float)), index=index
         )
-        vshock[ticker] = pd.Series(
-            train_rows[VOLUME_ZSCORE_COLUMN].to_numpy(dtype=float), index=index
-        )
+        vshock[ticker] = pd.Series(train[VOLUME_ZSCORE_COLUMN].to_numpy(dtype=float), index=index)
     return pd.DataFrame(vshock).sort_index(), pd.DataFrame(pk_vol).sort_index()
 
 
@@ -73,13 +72,13 @@ def _cross_lead_lag(source_wide: pd.DataFrame, target_wide: pd.DataFrame, k: int
 
 
 def build_vol2pk_adjacency(
-    augmented_frames, ticker_to_id: Mapping[str, int], train_end_date: str, top_k: int = 5
+    augmented_frames, ticker_to_id: Mapping[str, int], top_k: int = 5
 ) -> np.ndarray:
     """Fixed directed adjacency: each target's Top-K volume->PK lead-lag sources (train-frozen)."""
 
     if top_k < 1:
         raise ValueError("top_k must be >= 1")
-    vshock_wide, pk_vol_wide = _train_panels(augmented_frames, train_end_date)
+    vshock_wide, pk_vol_wide = _train_panels(augmented_frames)
     tv2p = _cross_lead_lag(vshock_wide, pk_vol_wide, 1)
     node_count = len(ticker_to_id)
     adjacency = np.zeros((node_count, node_count), dtype=np.float32)

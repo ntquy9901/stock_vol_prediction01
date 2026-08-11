@@ -25,15 +25,9 @@ def _augmented_frames(seed: int = 0, n: int = 400, tickers=("AAA", "BBB", "CCC",
     return SplitFrames(frames=frames, ticker_to_id=ticker_to_id)
 
 
-def _train_end(frames: SplitFrames) -> str:
-    train = frames.frames["AAA"]["train"]
-    return str(pd.Timestamp(train["date"].iloc[-1]).strftime("%Y-%m-%d"))
-
-
 def test_adjacency_has_self_loops_and_bounded_degree():
     frames = _augmented_frames()
-    train_end = _train_end(frames)
-    adjacency = edges.build_vol2pk_adjacency(frames, frames.ticker_to_id, train_end, top_k=2)
+    adjacency = edges.build_vol2pk_adjacency(frames, frames.ticker_to_id, top_k=2)
     node_count = len(frames.ticker_to_id)
     assert adjacency.shape == (node_count, node_count)
     assert np.allclose(np.diag(adjacency), 1.0)  # self-loop on every node
@@ -48,8 +42,7 @@ def test_adjacency_uses_train_dates_only():
     """Altering post-train (val/test) rows must not change the frozen adjacency (no leakage)."""
 
     frames = _augmented_frames(seed=1)
-    train_end = _train_end(frames)
-    base = edges.build_vol2pk_adjacency(frames, frames.ticker_to_id, train_end, top_k=2)
+    base = edges.build_vol2pk_adjacency(frames, frames.ticker_to_id, top_k=2)
 
     bumped = {t: {s: frames.frames[t][s].copy() for s in frames.frames[t]} for t in frames.frames}
     for ticker in bumped:
@@ -58,7 +51,38 @@ def test_adjacency_uses_train_dates_only():
             part["volume_zscore_20"] = 999.0
             part["parkinson_volatility"] = 5.0
     bumped_frames = SplitFrames(frames=bumped, ticker_to_id=dict(frames.ticker_to_id))
-    after = edges.build_vol2pk_adjacency(bumped_frames, bumped_frames.ticker_to_id, train_end, top_k=2)
+    after = edges.build_vol2pk_adjacency(bumped_frames, bumped_frames.ticker_to_id, top_k=2)
+    assert np.array_equal(base, after)
+
+
+def test_adjacency_no_leak_with_heterogeneous_histories():
+    """Per-ticker splits: a SHORT-history ticker's val/test overlaps others' train calendar dates.
+
+    Bumping every ticker's own val/test rows must still not move the frozen topology -- guards the
+    per-ticker (not global-boundary) train restriction (review finding H1).
+    """
+
+    rng = np.random.default_rng(7)
+    dates_long = pd.bdate_range("2015-01-01", periods=500)
+    dates_short = pd.bdate_range("2015-01-01", periods=250)  # ends inside the long ticker's train
+    frames = {}
+    for ticker, dates in (("AAA", dates_long), ("BBB", dates_long), ("CCC", dates_short),
+                          ("DDD", dates_short)):
+        n = len(dates)
+        pk = np.abs(rng.normal(1e-3, 3e-4, size=n)) + 1e-5
+        frame = pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "parkinson_volatility": pk,
+                              "market_pk": np.sqrt(pk), "volume_zscore_20": rng.normal(0, 1, size=n)})
+        frames[ticker] = chronological_split(frame)
+    split_frames = SplitFrames(frames=frames, ticker_to_id={t: i for i, t in enumerate(frames)})
+    base = edges.build_vol2pk_adjacency(split_frames, split_frames.ticker_to_id, top_k=2)
+
+    bumped = {t: {s: split_frames.frames[t][s].copy() for s in split_frames.frames[t]} for t in frames}
+    for ticker in bumped:
+        for split in ("val", "test"):
+            bumped[ticker][split]["volume_zscore_20"] = 999.0
+            bumped[ticker][split]["parkinson_volatility"] = 5.0
+    bumped_frames = SplitFrames(frames=bumped, ticker_to_id=dict(split_frames.ticker_to_id))
+    after = edges.build_vol2pk_adjacency(bumped_frames, bumped_frames.ticker_to_id, top_k=2)
     assert np.array_equal(base, after)
 
 

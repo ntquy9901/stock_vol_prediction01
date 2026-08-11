@@ -190,6 +190,12 @@ class ExtendedTickerPreprocessor:
         y_model = np.clip(y_eval, self.lower_bound, self.upper_bound)
         features = self._stack(y_model, result, self.extra_columns)
         valid_rows = np.isfinite(features).all(axis=1)
+        # Guard the observation-set invariant: the extra features must not drop (or keep) any row
+        # the 3-feature HAR pipeline would not, so E0 stays comparable to the pilot HAR P0 and the
+        # val/test set matches ladder_consistent (finding M2).
+        har_valid = np.isfinite(features[:, :3]).all(axis=1)
+        if not np.array_equal(valid_rows, har_valid):
+            raise ValueError("extra features changed the HAR-eligible window set (observation drift)")
         result = result.loc[valid_rows].copy()
         normalized = self.feature_scaler.transform(features[valid_rows])
         result["y_model_raw"] = y_model[valid_rows]
