@@ -15,3 +15,4 @@ ignore = ["E402"]
 [lint.per-file-ignores]
 "__init__.py" = ["F401"]   # re-exports / package markers
 "src/data_aggregation/update_design_23.py" = ["E501"]   # doc generator: long markdown lines intentional
+"graph_eda/run_eda.py" = ["E501"]   # report/figure generator: long f-string report lines intentional
