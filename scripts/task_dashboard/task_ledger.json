@@ -2600,5 +2600,84 @@
     },
     "result_summary": "LPB OHLCV recovered (SSI) -> GARCH family 32/33->33/33 tickers on the exact 14418/14464 obs. TEST QLIKE 1.751/1.814/1.863, RMSE ~0.00473, R2 ~0 (unchanged conclusion: GARCH far worse, HAR/HARQ tie deep models). Numbers consistent across JSON/md/tex/PAPER_MAP/reproduce.",
     "report_md": "docs/reports/2026-08-10_2241_summaryOfUpdate_report.md"
+  },
+  {
+    "id": "graph-eda-gnn-justification-2026-08-11",
+    "task_type": "code",
+    "phase": "Graph/GNN EDA (data-evidence for edge design)",
+    "title": "Leakage-safe Parkinson-vol graph EDA: rank node/edge features over HAR -> recommend directed volume->PK GNN (MAYBE); plain PK-corr edge (G1's) measured significantly worse than HAR+market, explaining the G1 null",
+    "status": "done",
+    "timestamp": "2026-08-11 13:20",
+    "branch": "master",
+    "commits": [
+      "45c1322"
+    ],
+    "skills_applied": [
+      "test-driven-development",
+      "requesting-code-review",
+      "verification-before-completion"
+    ],
+    "evidence": [
+      {
+        "cmd": "python -m graph_eda.run_eda (common panel 1296 days, 33 tickers, 2021-03-24..2026-06-09)",
+        "result": "mean |PK corr| 0.378 >> shuffle-null p95 0.023 (p=0.002); mean R^2 PK on MarketPK 0.42; only 23% of |corr| survives market adjustment."
+      },
+      {
+        "cmd": "edge-definition ranking over HAR+market (incremental OOS, per-stock sign test)",
+        "result": "plain PK-corr edge (G1's kNN-8) -2.20% (p=0.014, WORSE); directed PK lead-lag -1.15%; residual-corr -0.92% (p=0.035); directed volume->PK +0.17% (67% stocks, p=0.08, only positive edge)."
+      },
+      {
+        "cmd": "node-feature ranking over HAR (incremental OOS)",
+        "result": "only volume_zscore_20 beats HAR (+0.55% RMSE, 31/33 stocks, sign p=1.3e-7); pk_lag2/pk_std_20/pk_vol/log_return_1d/return_5d all hurt."
+      },
+      {
+        "cmd": "python -m pytest graph_eda/tests --cov=graph_eda --cov-report=xml",
+        "result": "63 pass (incl. 2 smoke: real-universe alignment + full end-to-end orchestrator run). No failures."
+      },
+      {
+        "cmd": "diff-cover coverage.xml --compare-branch=origin/master",
+        "result": "C0=100% on changed lines; every module incl. run_eda.py 100%."
+      },
+      {
+        "cmd": "ruff check graph_eda",
+        "result": "All checks passed (added run_eda.py E501 per-file ignore, report generator, matching existing precedent)."
+      },
+      {
+        "cmd": "Pandera check_schema() on data/processed",
+        "result": "PASS 34/34 artifacts (read-only EDA; data/processed unchanged)."
+      }
+    ],
+    "quality_gate": {
+      "tests": {
+        "status": "pass",
+        "detail": "63 pytest pass incl 2 smoke (alignment + end-to-end run_eda into tmp)"
+      },
+      "lint": {
+        "status": "pass",
+        "detail": "ruff clean on graph_eda"
+      },
+      "diff_cover": {
+        "status": "pass",
+        "detail": "C0=100% on changed lines vs origin/master (run_eda.py covered by end-to-end integration test)"
+      },
+      "data_quality": {
+        "status": "pass",
+        "detail": "Pandera check_schema PASS 34/34; Evidently N/A (read-only EDA, no data/processed/manifest/pipeline change)"
+      },
+      "code_review": {
+        "status": "pass",
+        "detail": "adversarial 3-layer review: 2 MAJOR fixed (M1 shared valid mask across A/B/C; M2 per-stock sign test + margin gate), N1/N3/N4 metric fixes; no look-ahead leakage found. docs/eda/reports/code_review_2026-08-11.md"
+      }
+    },
+    "code_review": {
+      "status": "pass",
+      "detail": "M1/M2 majors fixed + verified (pooled n identical=6369; per-stock binomial sign test); incremental.py self-reviewed to same leakage standard"
+    },
+    "dod": {
+      "status": "met",
+      "detail": "verdict MAYBE with concrete recommended_config (directed volume->PK Top-5, HAR+volume_zscore nodes); RQ1-10 + decision matrix + Conclusion C in EDA_GRAPH_REPORT.md; 27 tables + 16 figures; TDD green; diff-cover 100%; Pandera PASS; pushed"
+    },
+    "result_summary": "Data-evidence EDA for GNN edge design. Cross-stock Parkinson structure is real but ~77% is one market factor; the plain PK-correlation edge G1 used is significantly worse than HAR+market OOS (direct explanation of the G1 null). Only own feature beating HAR is volume_zscore_20; only edge with positive lift over HAR+market is directed volume->PK (marginal, p=0.08). Recommend building that config and DM-testing; add MarketPK global feature first.",
+    "report_md": "docs/eda/reports/EDA_GRAPH_REPORT.md"
   }
 ]
