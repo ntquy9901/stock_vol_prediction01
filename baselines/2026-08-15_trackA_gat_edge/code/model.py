@@ -38,13 +38,15 @@ class TrackAGatModel(nn.Module):
         b, n, seq, d = x.shape
         flat = x.reshape(b * n, seq, d)
         if proj is not None:
-            flat = proj(flat)
+            flat = torch.relu(proj(flat))          # news branch: Linear -> ReLU (per ARCHITECTURE)
         out, _ = lstm(flat)
         return out[:, -1].reshape(b, n, -1)                 # last hidden [B,N,hidden]
 
     def forward(self, price, news, news_mask, ticker_ids, adjacency, apply_graph: bool = True):
         h_lstm = self._encode_seq(self.price_lstm, price)                          # [B,N,64]
-        news_hidden = self._encode_seq(self.news_lstm, news, proj=self.news_proj)  # [B,N,64]
+        # zero out news on no-news timesteps (causal mask) before the news encoder
+        news_masked = news * news_mask.unsqueeze(-1)
+        news_hidden = self._encode_seq(self.news_lstm, news_masked, proj=self.news_proj)  # [B,N,64]
         gate = torch.sigmoid(self.gate_logits[ticker_ids]).unsqueeze(-1)
         gated_news = gate * news_hidden
         b, n, _ = h_lstm.shape
