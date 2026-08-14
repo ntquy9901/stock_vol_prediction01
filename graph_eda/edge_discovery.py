@@ -49,6 +49,7 @@ def predictive_dqlike_edges(
     horizon: int = 5,
     lam: float = 1e-4,
     with_regime: bool = False,
+    predict_fn=None,
 ) -> pd.DataFrame:
     """Directed ΔQLIKE edge table: for each ordered (source i -> target j), the OOS QLIKE reduction
     from adding source i's PK history to the E2 base model of target j.
@@ -57,7 +58,13 @@ def predictive_dqlike_edges(
     are fit on the SAME per-pair valid mask so the comparison is like-for-like. Returns one row per
     ordered pair with val/test ΔQLIKE, a paired-t p-value on the test per-obs QLIKE difference,
     BH-FDR q, a sign-stability flag, and (optional) low/high-MarketPK-regime test ΔQLIKE.
+
+    ``predict_fn(x_tr, y_tr, x_te) -> preds`` overrides the model (default: ridge); the nonlinear
+    (gradient-boosting) edge test reuses this same leakage-safe harness with a GB predictor.
     """
+    if predict_fn is None:
+        def predict_fn(x_tr, y_tr, x_te):
+            return _ridge_fit_predict(x_tr, y_tr, x_te, lam)
     idx = pk_var.index
     tickers = list(pk_var.columns)
     tr = pd.Series(train_mask, index=idx)
@@ -90,8 +97,8 @@ def predictive_dqlike_edges(
             floor = float(np.percentile(pos_tr, 1)) if pos_tr.size else 1e-8
 
             def _fit(x_te_key):
-                pb = _ridge_fit_predict(base[trm].values, y_tr, x_te_key(base), lam)
-                pf = _ridge_fit_predict(full[trm].values, y_tr, x_te_key(full), lam)
+                pb = predict_fn(base[trm].values, y_tr, x_te_key(base))
+                pf = predict_fn(full[trm].values, y_tr, x_te_key(full))
                 return np.clip(pb, floor, None), np.clip(pf, floor, None)
 
             pb_val, pf_val = _fit(lambda X: X[vam].values)
