@@ -72,3 +72,18 @@ def test_market_adjust_reduces_common_factor_corr():
     adj = resid.corr().loc["X", "Y"]
     assert raw > 0.6
     assert abs(adj) < raw - 0.3  # market removal materially shrinks pairwise correlation
+
+
+def test_bootstrap_ci_mean_brackets_true_mean():
+    rng = np.random.default_rng(0)
+    vals = rng.normal(0.5, 0.1, 500)
+    lo, hi = rel.bootstrap_ci_mean(vals, n_boot=500, seed=0)
+    assert lo < 0.5 < hi
+    assert lo < hi
+
+
+def test_bootstrap_ci_mean_abs_and_empty():
+    lo, hi = rel.bootstrap_ci_mean(np.array([-0.4, 0.4, -0.4, 0.4]), n_boot=200, seed=1, use_abs=True)
+    assert lo > 0.0  # |values| are all 0.4 -> CI around 0.4
+    lo2, hi2 = rel.bootstrap_ci_mean(np.array([np.nan, np.nan]), n_boot=50, seed=0)
+    assert np.isnan(lo2) and np.isnan(hi2)

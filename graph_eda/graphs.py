@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import networkx as nx
 import numpy as np
 import pandas as pd
+
+from graph_eda.leakage import assert_snapshot_no_lookahead
 
 
 def top_k_neighbors(corr: pd.DataFrame, k: int, use_abs: bool = True) -> dict[str, list[str]]:
@@ -134,3 +137,135 @@ def random_matched_neighbors(
         others = [x for x in nodes if x != n]
         out[n] = list(rng.choice(others, size=min(k, len(others)), replace=False))
     return out
+
+
+def _edge_graph(corr: pd.DataFrame, k: int | None, tau: float | None, use_abs: bool) -> nx.Graph:
+    """Undirected weighted graph from a correlation matrix (Top-K union or threshold)."""
+    if k is None and tau is None:
+        raise ValueError("clustering_metrics requires exactly one of k or tau")
+    g = nx.Graph()
+    g.add_nodes_from(corr.index)
+    a = corr.values
+    cols = list(corr.index)
+    if k is not None:
+        nbrs = top_k_neighbors(corr, k, use_abs)
+        for node, ms in nbrs.items():
+            for m in ms:
+                w = abs(corr.loc[node, m])
+                if not np.isnan(w):  # a node with <k finite corrs yields NaN neighbours
+                    g.add_edge(node, m, weight=w)
+    else:
+        n = len(cols)
+        for i in range(n):
+            for j in range(i + 1, n):
+                w = abs(a[i, j])
+                if not np.isnan(w) and w > tau:
+                    g.add_edge(cols[i], cols[j], weight=w)
+    return g
+
+
+def clustering_metrics(
+    corr: pd.DataFrame, k: int | None = None, tau: float | None = None, use_abs: bool = True
+) -> dict:
+    """Graph-clustering diagnostics for a correlation matrix (plan section 23).
+
+    Build an undirected graph from either Top-K neighbours (``k``) or a ``tau`` absolute
+    threshold, then report component structure, degree, clustering coefficient and greedy
+    modularity communities. Weights are ``|corr|``.
+    """
+    g = _edge_graph(corr, k, tau, use_abs)
+    n = g.number_of_nodes()
+    e = g.number_of_edges()
+    comps = list(nx.connected_components(g))
+    largest = max((len(c) for c in comps), default=0)
+    if e > 0:
+        communities = list(nx.community.greedy_modularity_communities(g, weight="weight"))
+        modularity = float(nx.community.modularity(g, communities, weight="weight"))
+    else:
+        communities = [{node} for node in g.nodes]
+        modularity = 0.0
+    return {
+        "n_nodes": int(n),
+        "n_edges": int(e),
+        "density": float(nx.density(g)) if n > 1 else 0.0,
+        "avg_degree": float(2 * e / n) if n else 0.0,
+        "n_connected_components": len(comps),
+        "largest_component_frac": float(largest / n) if n else 0.0,
+        "avg_clustering": float(nx.average_clustering(g)) if n else 0.0,
+        "n_communities": len(communities),
+        "modularity": modularity,
+    }
+
+
+def sector_purity(neighbors: dict[str, list[str]], same_sector: pd.DataFrame) -> float:
+    """Fraction of directed (node, neighbour) pairs that are same-sector (plan section 50)."""
+    hits, total = 0, 0
+    for node, ms in neighbors.items():
+        for m in ms:
+            total += 1
+            if int(same_sector.loc[node, m]) == 1:
+                hits += 1
+    return float(hits / total) if total else float("nan")
+
+
+def mean_edge_strength(
+    corr: pd.DataFrame, neighbors: dict[str, list[str]], use_abs: bool = True
+) -> float:
+    """Mean (absolute) correlation over selected Top-K edges (plan section 50)."""
+    vals = []
+    for node, ms in neighbors.items():
+        for m in ms:
+            v = corr.loc[node, m]
+            if not np.isnan(v):
+                vals.append(abs(v) if use_abs else v)
+    return float(np.mean(vals)) if vals else float("nan")
+
+
+def snapshots_to_long(
+    snaps: list[tuple[pd.Timestamp, pd.DataFrame]], value_name: str
+) -> pd.DataFrame:
+    """Long-format (date, source, target, value) table of unique unordered pairs.
+
+    Used to assemble the multi-window ``dynamic_edge_features`` panel (plan sections 18/46).
+    """
+    rows = []
+    for date, corr in snaps:
+        cols = list(corr.index)
+        for i in range(len(cols)):
+            for j in range(i + 1, len(cols)):
+                rows.append((date, cols[i], cols[j], corr.iloc[i, j]))
+    return pd.DataFrame(rows, columns=["date", "source", "target", value_name])
+
+
+def multi_window_edge_panel(
+    panels: dict[str, pd.DataFrame],
+    windows,
+    ends,
+    index: pd.DatetimeIndex,
+) -> pd.DataFrame:
+    """Long-format multi-window rolling edge panel (plan sections 18/46), leakage-safe.
+
+    For each feature panel in ``panels`` (all sharing ``index``) and each ``window`` in
+    ``windows``, compute trailing-window correlation snapshots at the row positions in
+    ``ends`` and emit column ``{feature}_{window}``; the panels are outer-merged on
+    (date, source, target). Every snapshot uses rows ``[end-window+1 .. end]`` only and is
+    asserted not to look past its ``end`` date. Returns an empty-but-typed frame when no
+    end position yields a valid snapshot (e.g. a panel shorter than the largest window).
+    """
+    dyn: pd.DataFrame | None = None
+    for w in windows:
+        for fname, fpanel in panels.items():
+            snaps = []
+            for end in ends:
+                block = fpanel.iloc[end - w + 1 : end + 1]
+                if block.dropna(how="any").shape[0] >= max(10, w // 2):
+                    d = index[end]
+                    assert_snapshot_no_lookahead(block.index, d)
+                    snaps.append((d, block.corr()))
+            long = snapshots_to_long(snaps, f"{fname}_{w}")
+            dyn = long if dyn is None else dyn.merge(
+                long, on=["date", "source", "target"], how="outer"
+            )
+    if dyn is None or dyn.empty:
+        return pd.DataFrame(columns=["date", "source", "target"])
+    return dyn

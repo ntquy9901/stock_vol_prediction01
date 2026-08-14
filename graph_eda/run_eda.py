@@ -30,14 +30,15 @@ from graph_eda import graphs, incremental, leakage, predictive
 from graph_eda import relationships as rel
 from graph_eda.data_quality import universe_quality
 from graph_eda.io_data import build_common_panel, chrono_split, load_universe
+from graph_eda.parkinson import build_features
 from graph_eda.sectors import same_sector_matrix
 
 ROOT = Path(__file__).resolve().parent.parent
 PRICE_DIR = ROOT / "data" / "raw" / "prices"
 OUT = ROOT / "docs" / "eda"
-TAB, FIG, REP = OUT / "tables", OUT / "figures", OUT / "reports"
+TAB, FIG, REP, GRAPHS = OUT / "tables", OUT / "figures", OUT / "reports", OUT / "graphs"
 SEED = 0
-for d in (TAB, FIG, REP):
+for d in (TAB, FIG, REP, GRAPHS):
     d.mkdir(parents=True, exist_ok=True)
 
 
@@ -75,11 +76,11 @@ def main(
     ``out_base`` overrides the output directory (used by the integration test to write
     into a tmp dir); ``n_perm_*`` control permutation-null iterations (reduced in tests).
     """
-    global OUT, TAB, FIG, REP
+    global OUT, TAB, FIG, REP, GRAPHS
     if out_base is not None:
         OUT = Path(out_base)
-        TAB, FIG, REP = OUT / "tables", OUT / "figures", OUT / "reports"
-        for d in (TAB, FIG, REP):
+        TAB, FIG, REP, GRAPHS = OUT / "tables", OUT / "figures", OUT / "reports", OUT / "graphs"
+        for d in (TAB, FIG, REP, GRAPHS):
             d.mkdir(parents=True, exist_ok=True)
     print("Loading universe ...")
     frames = load_universe(price_dir)
@@ -91,6 +92,30 @@ def main(
     dq = universe_quality(frames)
     dq.to_csv(TAB / "data_quality_summary.csv", index=False)
 
+    # per-ticker coverage vs the union calendar (plan section 46: ticker_coverage.csv)
+    union_dates = sorted({d for f in frames.values() for d in f["date"]})
+    n_union = len(union_dates)
+    cov = pd.DataFrame(
+        [
+            {
+                "ticker": t,
+                "start_date": f["date"].min().date().isoformat(),
+                "end_date": f["date"].max().date().isoformat(),
+                "n_rows": int(len(f)),
+                "coverage_vs_union": float(len(f) / n_union) if n_union else float("nan"),
+            }
+            for t, f in sorted(frames.items())
+        ]
+    )
+    cov.to_csv(TAB / "ticker_coverage.csv", index=False)
+
+    # leakage-safe per-ticker daily feature panel (plan section 46: daily_stock_features)
+    feat_panel = pd.concat(
+        [build_features(f).assign(ticker=t) for t, f in sorted(frames.items())],
+        ignore_index=True,
+    )
+    feat_panel.to_parquet(TAB / "daily_stock_features.parquet", index=False)
+
     # ---- aligned panels (returns, pk_var, pk_vol, volume shock) ----------------
     close = build_common_panel(frames, "close")
     ret = np.log(close / close.shift(1))
@@ -101,6 +126,7 @@ def main(
     vol_mu = logvol.rolling(20).mean()
     vol_sd = logvol.rolling(20).std()
     vshock = (logvol - vol_mu) / vol_sd.replace(0.0, np.nan)
+    logvol_change = logvol.diff()  # plan section 10: Delta log-volume
 
     panel = pd.DataFrame({"n_dates": [len(close)]})
     panel["date_start"] = close.index.min().date().isoformat()
@@ -121,14 +147,18 @@ def main(
     pk_corr_p = rel.pairwise_corr(pk_vol.dropna(how="all"), "pearson")
     pk_corr_s = rel.pairwise_corr(pk_vol.dropna(how="all"), "spearman")
     ret_corr_p = rel.pairwise_corr(ret.dropna(how="all"), "pearson")
+    ret_corr_s = rel.pairwise_corr(ret.dropna(how="all"), "spearman")
     vshock_corr = rel.pairwise_corr(vshock.dropna(how="all"), "pearson")
+    vchange_corr = rel.pairwise_corr(logvol_change.dropna(how="all"), "pearson")
     leakage.assert_corr_matrix_valid(pk_corr_p)
     leakage.assert_corr_matrix_valid(ret_corr_p)
     for m, name in [
         (pk_corr_p, "pk_corr_pearson"),
         (pk_corr_s, "pk_corr_spearman"),
         (ret_corr_p, "return_corr_pearson"),
+        (ret_corr_s, "return_corr_spearman"),
         (vshock_corr, "volume_corr"),
+        (vchange_corr, "volume_change_corr"),
     ]:
         m.to_csv(TAB / f"{name}.csv")
 
@@ -179,12 +209,14 @@ def main(
     lead = {k: rel.lead_lag_matrix(pk_vol, k) for k in (1, 2, 5, 10)}
     for k, m in lead.items():
         m.to_csv(TAB / f"pk_leadlag_{k}.csv")
-    ret_lead1 = rel.lead_lag_matrix(ret, 1)
-    ret_lead1.to_csv(TAB / "return_leadlag_1.csv")
+    for k in (1, 2, 5):  # plan section 13: return lead-lag k=1,2,5
+        rel.lead_lag_matrix(ret, k).to_csv(TAB / f"return_leadlag_{k}.csv")
+    for k in (1, 2, 5):  # plan section 14: volume-shock -> future PK k=1,2,5
+        rel.cross_lead_lag_matrix(vshock, pk_vol, k).to_csv(TAB / f"volume_to_pk_lag{k}.csv")
     v2pk1 = rel.cross_lead_lag_matrix(vshock, pk_vol, 1)
-    v2pk5 = rel.cross_lead_lag_matrix(vshock, pk_vol, 5)
-    v2pk1.to_csv(TAB / "volume_to_pk_lag1.csv")
-    v2pk5.to_csv(TAB / "volume_to_pk_lag5.csv")
+    # plan section 11: same-day (contemporaneous) cross-feature associations (descriptive)
+    rel.cross_lead_lag_matrix(vshock, pk_vol, 0).to_csv(TAB / "contemp_vshock_to_pk.csv")
+    rel.cross_lead_lag_matrix(ret, pk_vol, 0).to_csv(TAB / "contemp_return_to_pk.csv")
 
     asym = rel.directional_asymmetry(lead[1])
     off = ~np.eye(len(tickers), dtype=bool)
@@ -249,6 +281,32 @@ def main(
         b = graphs.random_matched_neighbors(tickers, 5, seed=int(rng2.integers(1e9)))
         rand_j.append(np.mean([graphs.jaccard(a[n], b[n]) for n in tickers]))
     ev["neighbor_jaccard_random_k5"] = float(np.mean(rand_j))
+
+    # ---- P2/P3: multi-window rolling edge panel (plan section 18/46) -------------
+    print("P3 multi-window rolling edge panel ...")
+    idx_all = close.index
+    ends = list(range(119, len(idx_all), 21))  # from row 119 so all of 20/60/120 are valid
+    dyn = graphs.multi_window_edge_panel(
+        {"pk_corr": pk_vol, "return_corr": ret, "volume_corr": vshock},
+        (20, 60, 120), ends, idx_all,
+    )
+    dyn["same_sector"] = [int(same_sec.loc[a, b]) for a, b in zip(dyn.source, dyn.target)]
+    dyn.to_parquet(TAB / "dynamic_edge_features.parquet", index=False)
+
+    # ---- P3: graph-clustering diagnostics (plan section 23) ---------------------
+    clust_rows = []
+    for label, mat, kk, tt in [
+        ("pk_topk5", pk_corr_p, 5, None),
+        ("pk_topk8", pk_corr_p, 8, None),
+        ("pk_threshold_0.3", pk_corr_p, None, 0.3),
+    ]:
+        clust_rows.append({"config": label, **graphs.clustering_metrics(mat, k=kk, tau=tt)})
+    clust = pd.DataFrame(clust_rows)
+    clust.to_csv(TAB / "graph_clustering.csv", index=False)
+    _pk5 = clust[clust["config"] == "pk_topk5"].iloc[0]
+    ev["clustering_modularity_topk5"] = float(_pk5["modularity"])
+    ev["clustering_n_communities_topk5"] = int(_pk5["n_communities"])
+    ev["clustering_avg_coeff_topk5"] = float(_pk5["avg_clustering"])
 
     # ---- P3: market-factor adjustment (KEY test) --------------------------------
     print("P3 market-factor adjustment ...")
@@ -361,6 +419,44 @@ def main(
         ev["neighbor_rmse_gain_vs_market_pct"] > 100 * margin and ev["C_beats_B_winrate"] > 0.5
     )
 
+    # ---- P4a: Top-K search (plan section 50): density / stability / sector purity /
+    # edge strength / predictive usefulness per K, on TRAIN-selected neighbours ----------
+    print("P4a Top-K search ...")
+    topk_rows = []
+    n_nodes = len(tickers)
+    max_edges = n_nodes * (n_nodes - 1) / 2
+    for kk in (3, 5, 8, 10):
+        nb_k = graphs.top_k_neighbors(train_corr, kk, use_abs=True)
+        res_k = predictive.run_baselines(pk_var, market, tr, te, train_corr, horizon=1, k=kk)
+        rmse_b = float(res_k.loc["B_own+market", "rmse"]) if "B_own+market" in res_k.index else np.nan
+        rmse_c = float(res_k.loc["C_own+neighbors", "rmse"]) if "C_own+neighbors" in res_k.index else np.nan
+        n_edges = len({frozenset((node, m)) for node, ms in nb_k.items() for m in ms})
+        topk_rows.append(
+            {
+                "k": kk,
+                "graph_density": float(n_edges / max_edges),
+                "neighbor_jaccard": nb_stab.get(kk, np.nan),
+                "sector_purity": graphs.sector_purity(nb_k, same_sec),
+                "mean_edge_strength": graphs.mean_edge_strength(train_corr, nb_k),
+                "pred_rmse_gain_vs_market_pct": float(100 * (rmse_b - rmse_c) / rmse_b)
+                if rmse_b and not np.isnan(rmse_b) else np.nan,
+            }
+        )
+    pd.DataFrame(topk_rows).to_csv(TAB / "topk_search.csv", index=False)
+
+    # ---- confidence intervals for headline means (plan section 56) --------------
+    # bootstrap over the 528 UNIQUE pairs (pk_pairs), not the 1056 duplicated off-diagonal
+    # entries, so the CI reflects the true number of independent pairs
+    ev["pk_corr_mean_ci_lo"], ev["pk_corr_mean_ci_hi"] = rel.bootstrap_ci_mean(
+        pk_pairs["corr"].values, n_boot=1000, seed=SEED, use_abs=True
+    )
+    ev["same_sector_ci_lo"], ev["same_sector_ci_hi"] = rel.bootstrap_ci_mean(
+        pk_pairs.loc[pk_pairs["same_sector"] == 1, "corr"].values, n_boot=1000, seed=SEED
+    )
+    ev["cross_sector_ci_lo"], ev["cross_sector_ci_hi"] = rel.bootstrap_ci_mean(
+        pk_pairs.loc[pk_pairs["same_sector"] == 0, "corr"].values, n_boot=1000, seed=SEED
+    )
+
     # ---- P4b: incremental-over-HAR ranking of node features + edge definitions ---
     print("P4b incremental-over-HAR ranking ...")
     node_rank, edge_rank = _incremental(
@@ -384,6 +480,7 @@ def main(
         close, ret_corr_p, pk_corr_p, vshock_corr, merged, pk_pairs, lead[1], v2pk1,
         stab, snaps60, density03, market, pk_hi, pk_lo, radj, resid_corr, tickers,
     )
+    _graph_plots(snaps60, market, lo_thr, hi_thr, lead[1], pk_corr_p, tickers)
     verdict = _decide(ev)
     _write_report(ev, verdict, dq, panel, tickers, pred, node_rank, edge_rank, rec_cfg)
     _write_json(ev, verdict, rec_cfg)
@@ -619,6 +716,79 @@ def _save(fig, name: str) -> None:
     plt.close(fig)
 
 
+def _draw_graph(g, title: str, path: Path, directed: bool = False) -> None:
+    """Draw a node-link graph coloured by sector, labelled by ticker (plan section 48)."""
+    import networkx as nx
+
+    from graph_eda.sectors import sector_of
+
+    sectors = sorted({sector_of(n) for n in g.nodes})
+    palette = plt.get_cmap("tab20")
+    color = {s: palette(i % 20) for i, s in enumerate(sectors)}
+    node_colors = [color[sector_of(n)] for n in g.nodes]
+    pos = nx.spring_layout(g, seed=SEED, k=0.6)
+    fig, ax = plt.subplots(figsize=(9, 8))
+    nx.draw_networkx_nodes(g, pos, node_color=node_colors, node_size=420, ax=ax)
+    nx.draw_networkx_labels(g, pos, font_size=7, ax=ax)
+    edge_kw = {"arrows": True, "arrowstyle": "-|>", "arrowsize": 9} if directed else {}
+    nx.draw_networkx_edges(g, pos, ax=ax, alpha=0.4, **edge_kw)
+    ax.set_title(title)
+    ax.axis("off")
+    fig.tight_layout()
+    fig.savefig(path, dpi=110)
+    plt.close(fig)
+
+
+def _graph_plots(snaps, market, lo_thr, hi_thr, lead1, pk_corr, tickers):
+    """Plan section 48: PK Top-5 graphs at low/normal/high-vol dates + directed + multi-edge."""
+    import networkx as nx
+
+    print("Graph plots ...")
+    # pick one representative snapshot per market regime (snapshot dates are a subset of
+    # market.index by construction: market is the cross-sectional median of pk_vol)
+    regimes = {"low": None, "normal": None, "high": None}
+    for date, corr in snaps:
+        mv = market.loc[date]
+        r = "low" if mv <= lo_thr else ("high" if mv > hi_thr else "normal")
+        if regimes[r] is None:
+            regimes[r] = (date, corr)
+    for r, item in regimes.items():
+        if item is None:
+            continue
+        date, corr = item
+        nbrs = graphs.top_k_neighbors(corr, 5, use_abs=True)
+        g = nx.Graph()
+        g.add_nodes_from(tickers)
+        for node, ms in nbrs.items():
+            for m in ms:
+                g.add_edge(node, m)
+        _draw_graph(g, f"PK-corr Top-5 graph ({r}-vol {date.date()})",
+                    GRAPHS / f"pk_top5_{r}_vol.png")
+
+    # directed PK lead-lag graph (top-5 incoming sources per target, full period)
+    gd = nx.DiGraph()
+    gd.add_nodes_from(tickers)
+    inc = incremental._incoming_neighbors(lead1, 5, use_abs=True)
+    for tgt, srcs in inc.items():
+        for s in srcs:
+            gd.add_edge(s, tgt)
+    _draw_graph(gd, "Directed PK lead-lag L(1) graph (Top-5 incoming)",
+                GRAPHS / "pk_leadlag_directed.png", directed=True)
+
+    # multi-edge graph: union of Top-5 PK-corr and Top-5 lead-lag edges
+    gm = nx.Graph()
+    gm.add_nodes_from(tickers)
+    corr_nbrs = graphs.top_k_neighbors(pk_corr, 5, use_abs=True)
+    for node, ms in corr_nbrs.items():
+        for m in ms:
+            gm.add_edge(node, m)
+    for tgt, srcs in inc.items():
+        for s in srcs:
+            gm.add_edge(s, tgt)
+    _draw_graph(gm, "Multi-edge graph (PK-corr + lead-lag Top-5 union)",
+                GRAPHS / "multi_edge_graph.png")
+
+
 def _cov_figure(close):
     fig, ax = plt.subplots(figsize=(9, 5))
     ax.bar(range(len(close.columns)), close.notna().sum().values)
@@ -737,7 +907,7 @@ def _write_report(ev, verdict, dq, panel, tickers, pred, node_rank, edge_rank, r
     L.append(f"- Tickers: {len(tickers)} (VN30 universe incl. LPB)\n- Common panel: {panel['n_dates'][0]} trading days, {panel['date_start'][0]} to {panel['date_end'][0]}\n- Alignment: intersection of trading dates across all 33 tickers, no forward-fill. VPB/VRE tz-aware dates normalised; price-scale differences immaterial (log-ratios).\n- Data quality: {int(dq['high_below_low_count'].sum())} high<low rows, {int(dq['nonpositive_price_count'].sum())} nonpositive-price rows, {int(dq['duplicate_date_count'].sum())} duplicate dates across the universe (see `tables/data_quality_summary.csv`).\n")
 
     L.append("## Parkinson Volatility Summary\n")
-    L.append(f"- Mean |PK corr| (full period) = {_fmt(ev['pk_corr_mean'])}, median PK corr = {_fmt(ev['pk_corr_median'])}. FDR-significant pairs (q<0.05): {_fmt(100*ev['pk_pairs_sig_fdr_frac'],1)}%.\n- High-vol regime mean |PK corr| = {_fmt(ev['pk_corr_high_regime_mean'])} vs low-vol {_fmt(ev['pk_corr_low_regime_mean'])} (train-defined thresholds).\n")
+    L.append(f"- Mean |PK corr| (full period) = {_fmt(ev['pk_corr_mean'])} (95% bootstrap CI [{_fmt(ev['pk_corr_mean_ci_lo'])}, {_fmt(ev['pk_corr_mean_ci_hi'])}]), median PK corr = {_fmt(ev['pk_corr_median'])}. FDR-significant pairs (q<0.05): {_fmt(100*ev['pk_pairs_sig_fdr_frac'],1)}%.\n- High-vol regime mean |PK corr| = {_fmt(ev['pk_corr_high_regime_mean'])} vs low-vol {_fmt(ev['pk_corr_low_regime_mean'])} (train-defined thresholds).\n")
 
     L.append("## Return / Volume Relationships\n")
     L.append(f"- Mean |return corr| = {_fmt(ev['ret_corr_mean_abs'])}; median volume-shock corr = {_fmt(ev['vshock_corr_median'])}.\n- PK vs return: |PK corr| exceeds |return corr| for {_fmt(100*ev['pk_stronger_than_ret_frac'],1)}% of pairs (mean D = {_fmt(ev['pk_minus_ret_abs_corr_mean'])}). See `05_pk_vs_return_corr_scatter.png`.\n")
@@ -747,10 +917,18 @@ def _write_report(ev, verdict, dq, panel, tickers, pred, node_rank, edge_rank, r
 
     L.append("## Sector Findings\n")
     smw = ev.get("sector_mannwhitney_p", float("nan"))
-    L.append(f"- Same-sector mean PK corr = {_fmt(ev['pk_corr_same_sector_mean'])} vs cross-sector = {_fmt(ev['pk_corr_cross_sector_mean'])} (Mann-Whitney one-sided p = {_fmt(smw,4)}).\n- After market adjustment: same-sector residual corr = {_fmt(ev['resid_corr_same_sector_mean'])} vs cross = {_fmt(ev['resid_corr_cross_sector_mean'])}. Sector map is constructed (no metadata file); see `graph_eda/sectors.py`.\n")
+    ci_overlap = (
+        ev["cross_sector_ci_hi"] >= ev["same_sector_ci_lo"]
+        and ev["same_sector_ci_hi"] >= ev["cross_sector_ci_lo"]
+    )
+    ci_txt = "overlapping CIs" if ci_overlap else "non-overlapping CIs"
+    L.append(f"- Same-sector mean PK corr = {_fmt(ev['pk_corr_same_sector_mean'])} (95% CI [{_fmt(ev['same_sector_ci_lo'])}, {_fmt(ev['same_sector_ci_hi'])}]) vs cross-sector = {_fmt(ev['pk_corr_cross_sector_mean'])} (95% CI [{_fmt(ev['cross_sector_ci_lo'])}, {_fmt(ev['cross_sector_ci_hi'])}]) (Mann-Whitney one-sided p = {_fmt(smw,4)}); {ci_txt}.\n- After market adjustment: same-sector residual corr = {_fmt(ev['resid_corr_same_sector_mean'])} vs cross = {_fmt(ev['resid_corr_cross_sector_mean'])}. Sector map is constructed (no metadata file); see `graph_eda/sectors.py`.\n")
 
     L.append("## Dynamic Graph Evidence\n")
     L.append(f"- Top-5 neighbour Jaccard (consecutive 60d/21d snapshots) = {_fmt(ev['neighbor_jaccard_k5'])} vs random-control {_fmt(ev['neighbor_jaccard_random_k5'])}. Edge turnover mean = {_fmt(ev['edge_turnover_mean'])}.\n- Edge rolling-corr: median mean_corr = {_fmt(ev['edge_mean_corr_median'])}, median std = {_fmt(ev['edge_std_corr_median'])}, median sign-consistency = {_fmt(ev['edge_sign_consistency_median'])}.\n")
+
+    L.append("## Graph Clustering & Multi-Window Dynamics (plan sections 18/23/50)\n")
+    L.append(f"- PK Top-5 graph (full period): {ev['clustering_n_communities_topk5']} greedy-modularity communities, modularity = {_fmt(ev['clustering_modularity_topk5'])}, avg clustering coeff = {_fmt(ev['clustering_avg_coeff_topk5'])}. Full table: `tables/graph_clustering.csv`.\n- Multi-window rolling edge panel (20/60/120-day PK/return/volume correlations, leakage-safe trailing windows): `tables/dynamic_edge_features.parquet`.\n- Top-K search over K in 3/5/8/10 (density, neighbour Jaccard, sector purity, edge strength, OOS predictive gain vs HAR+market): `tables/topk_search.csv`. K=5 remains the most defensible if any graph is used.\n- Node-link graph visualisations (PK Top-5 at low/normal/high-vol dates, directed lead-lag, multi-edge): `graphs/*.png`.\n")
 
     L.append("## Market-Factor Adjustment (key test)\n")
     L.append(f"- Mean |PK corr| raw = {_fmt(ev['pk_corr_mean_abs_raw'])} -> market-adjusted residual = {_fmt(ev['pk_corr_mean_abs_market_adj'])} (**{_fmt(100*ev['market_adj_retained_frac'],1)}% retained**).\n- Mean R^2 of PK on the market factor (train) = {_fmt(ev['mean_r2_pk_on_market_train'])}. See `16_raw_vs_market_adjusted_pk_corr.png`.\n")

@@ -35,6 +35,26 @@ def test_run_eda_end_to_end(tmp_path):
     rec = json.loads((tmp_path / "graph_recommendation.json").read_text())
     assert rec["use_gnn"] == verdict["use_gnn"]
 
+    # Tier-1+2 gap-fill deliverables (plan sections 10/18/23/46/48/50/56)
+    for name in (
+        "return_corr_spearman.csv", "volume_change_corr.csv", "ticker_coverage.csv",
+        "daily_stock_features.parquet", "dynamic_edge_features.parquet",
+        "graph_clustering.csv", "topk_search.csv", "return_leadlag_5.csv",
+        "volume_to_pk_lag2.csv", "contemp_vshock_to_pk.csv",
+    ):
+        assert (tmp_path / "tables" / name).exists(), name
+    for name in ("pk_leadlag_directed.png", "multi_edge_graph.png"):
+        assert (tmp_path / "graphs" / name).exists(), name
+    # at least one regime PK graph rendered
+    assert list((tmp_path / "graphs").glob("pk_top5_*_vol.png"))
+    # multi-window dynamic panel carries all three windows
+    import pandas as pd
+    dyn = pd.read_parquet(tmp_path / "tables" / "dynamic_edge_features.parquet")
+    for col in ("pk_corr_20", "pk_corr_60", "pk_corr_120", "return_corr_60", "volume_corr_120"):
+        assert col in dyn.columns, col
+    # confidence intervals present and ordered
+    assert ev["pk_corr_mean_ci_lo"] <= ev["pk_corr_mean_ci_hi"]
+
     # a concrete GNN config is always produced (user will build + DM-test it)
     cfg = rec["recommended_config"]
     assert cfg["top_k"] == 5
@@ -47,3 +67,23 @@ def test_run_eda_end_to_end(tmp_path):
     assert ev["pred_h1_n_stocks"] == 33
     for key in ("gate6_C_beats_A", "gate7_C_beats_B"):
         assert isinstance(ev[key], bool)
+
+
+def test_graph_plots_handles_missing_regime(tmp_path, monkeypatch):
+    """_graph_plots must skip a regime with no snapshot (plan section 48 safety branch)."""
+    import numpy as np
+    import pandas as pd
+
+    monkeypatch.setattr(run_eda, "GRAPHS", tmp_path)
+    idx = pd.date_range("2021-01-01", periods=5, freq="B")
+    tickers = list("ABCD")
+    corr = pd.DataFrame(np.eye(4) + 0.3 * (1 - np.eye(4)), index=tickers, columns=tickers)
+    # market values all below lo_thr -> only the "low" regime is populated; normal/high stay None
+    market = pd.Series(0.001, index=idx)
+    snaps = [(idx[0], corr)]
+    lead1 = pd.DataFrame(0.1 * (1 - np.eye(4)), index=tickers, columns=tickers)
+    run_eda._graph_plots(snaps, market, lo_thr=0.5, hi_thr=0.9, lead1=lead1,
+                         pk_corr=corr, tickers=tickers)
+    assert (tmp_path / "pk_top5_low_vol.png").exists()
+    assert not (tmp_path / "pk_top5_high_vol.png").exists()  # empty regime skipped
+    assert (tmp_path / "multi_edge_graph.png").exists()

@@ -100,6 +100,27 @@ def permutation_null_mean_abs_corr(
     }
 
 
+def bootstrap_ci_mean(
+    values, n_boot: int = 1000, alpha: float = 0.05, seed: int = 0, use_abs: bool = False
+) -> tuple[float, float]:
+    """Percentile bootstrap CI for the mean of ``values`` (plan section 56).
+
+    NaNs are dropped; ``use_abs`` takes absolute values first (for |correlation| means).
+    Returns (nan, nan) when no finite value remains.
+    """
+    v = np.asarray(values, dtype=float)
+    v = v[~np.isnan(v)]
+    if use_abs:
+        v = np.abs(v)
+    if v.size == 0:
+        return (float("nan"), float("nan"))
+    rng = np.random.default_rng(seed)
+    means = v[rng.integers(0, v.size, size=(n_boot, v.size))].mean(axis=1)
+    lo = float(np.percentile(means, 100 * alpha / 2))
+    hi = float(np.percentile(means, 100 * (1 - alpha / 2)))
+    return (lo, hi)
+
+
 def _mean_abs_offdiag(mat: np.ndarray) -> float:
     k = mat.shape[0]
     mask = ~np.eye(k, dtype=bool)

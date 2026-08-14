@@ -41,7 +41,7 @@ Recommended config is in the section below and in `graph_recommendation.json`: b
 
 ## Parkinson Volatility Summary
 
-- Mean |PK corr| (full period) = 0.3778, median PK corr = 0.3707. FDR-significant pairs (q<0.05): 99.4%.
+- Mean |PK corr| (full period) = 0.3778 (95% bootstrap CI [0.3655, 0.3903]), median PK corr = 0.3707. FDR-significant pairs (q<0.05): 99.4%.
 - High-vol regime mean |PK corr| = 0.2686 vs low-vol 0.0789 (train-defined thresholds).
 
 ## Return / Volume Relationships
@@ -57,13 +57,20 @@ Recommended config is in the section below and in `graph_recommendation.json`: b
 
 ## Sector Findings
 
-- Same-sector mean PK corr = 0.5003 vs cross-sector = 0.3450 (Mann-Whitney one-sided p = 0.0000).
+- Same-sector mean PK corr = 0.5003 (95% CI [0.4738, 0.5285]) vs cross-sector = 0.3450 (95% CI [0.3342, 0.3564]) (Mann-Whitney one-sided p = 0.0000); non-overlapping CIs.
 - After market adjustment: same-sector residual corr = 0.0912 vs cross = -0.0298. Sector map is constructed (no metadata file); see `graph_eda/sectors.py`.
 
 ## Dynamic Graph Evidence
 
 - Top-5 neighbour Jaccard (consecutive 60d/21d snapshots) = 0.3900 vs random-control 0.0917. Edge turnover mean = 0.5982.
 - Edge rolling-corr: median mean_corr = 0.3015, median std = 0.1978, median sign-consistency = 0.9322.
+
+## Graph Clustering & Multi-Window Dynamics (plan sections 18/23/50)
+
+- PK Top-5 graph (full period): 4 greedy-modularity communities, modularity = 0.3059, avg clustering coeff = 0.5477. Full table: `tables/graph_clustering.csv`.
+- Multi-window rolling edge panel (20/60/120-day PK/return/volume correlations, leakage-safe trailing windows): `tables/dynamic_edge_features.parquet`.
+- Top-K search over K in 3/5/8/10 (density, neighbour Jaccard, sector purity, edge strength, OOS predictive gain vs HAR+market): `tables/topk_search.csv`. K=5 remains the most defensible if any graph is used.
+- Node-link graph visualisations (PK Top-5 at low/normal/high-vol dates, directed lead-lag, multi-edge): `graphs/*.png`.
 
 ## Market-Factor Adjustment (key test)
 

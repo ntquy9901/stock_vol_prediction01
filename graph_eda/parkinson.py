@@ -17,7 +17,8 @@ def parkinson_var(high: pd.Series | np.ndarray, low: pd.Series | np.ndarray):
     """Parkinson variance sigma^2 = (ln(H/L))^2 / (4 ln 2). Non-negative by construction."""
     high = np.asarray(high, dtype=float)
     low = np.asarray(low, dtype=float)
-    return (np.log(high / low) ** 2) / _FOUR_LN2
+    with np.errstate(divide="ignore", invalid="ignore"):  # nonpositive low -> inf, sanitised by caller
+        return (np.log(high / low) ** 2) / _FOUR_LN2
 
 
 def parkinson_vol(high, low):
@@ -32,7 +33,11 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     Input must be one ticker, sorted ascending by date.
     """
     d = df.sort_values("date").copy()
-    d["pk_var"] = parkinson_var(d["high"], d["low"])
+    # sanitise inf from any nonpositive-price row (mirrors _pk_var_wide) so the serialised
+    # feature panel never carries inf into a downstream model
+    d["pk_var"] = pd.Series(parkinson_var(d["high"], d["low"]), index=d.index).replace(
+        [np.inf, -np.inf], np.nan
+    )
     d["pk_vol"] = np.sqrt(d["pk_var"])
     d["log_return_1d"] = np.log(d["close"] / d["close"].shift(1))
     d["log_volume"] = np.log1p(d["volume"])

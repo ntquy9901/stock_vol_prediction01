@@ -47,3 +47,23 @@ def test_build_features_leakage_safe_shift():
     assert f["pk_lag1"].iloc[5] == pytest.approx(f["pk_var"].iloc[4])
     # rolling means need a full trailing window -> first rows are NaN (no future fill)
     assert np.isnan(f["pk_mean_22"].iloc[10])
+
+
+def test_build_features_sanitises_inf_from_nonpositive_price():
+    # a low<=0 row would make log(high/low) -> inf; build_features must emit NaN, not inf,
+    # so the serialised feature panel never carries inf (Edge-Case review F1)
+    d = pd.DataFrame(
+        {
+            "date": pd.date_range("2021-01-01", periods=3, freq="B"),
+            "open": [10.0, 11.0, 12.0],
+            "high": [11.0, 12.0, 13.0],
+            "low": [9.0, 0.0, 11.0],  # middle row nonpositive low
+            "close": [10.5, 11.5, 12.5],
+            "volume": [1000, 1100, 1200],
+            "ticker": "TST",
+        }
+    )
+    f = parkinson.build_features(d)
+    assert not np.isinf(f["pk_var"]).any()
+    assert not np.isinf(f["pk_vol"]).any()
+    assert np.isnan(f["pk_var"].iloc[1])  # the nonpositive-low row became NaN
