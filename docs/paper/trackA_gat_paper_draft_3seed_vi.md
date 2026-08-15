@@ -257,8 +257,7 @@ QLIKE. QLIKE, hàm mất mát tựa-hợp-lý (quasi-likelihood) chuẩn trong t
 
 $$\text{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{\hat{\sigma}^2_t}{\sigma^2_t} - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).$$
 
-Độ chính xác định hướng không được báo cáo; mục Hạn chế nêu lý do nó không mang thông tin cho mục tiêu
-này.
+Độ chính xác định hướng không được báo cáo.
 
 **Hàm mục tiêu huấn luyện.** Tất cả cấu hình sâu tối thiểu hóa sai số bình phương trung bình giữa đầu
 ra mô hình và mục tiêu chuẩn hóa theo từng mã; QLIKE và các metric khác chỉ được tính khi đánh giá, sau
@@ -474,14 +473,6 @@ h10 và có giá trị thấp hơn có ý nghĩa tại h22, và backbone LSTM ch
 nghĩa so với mô hình đầy đủ tại h1, h5, và h22. Các thành phần đồ thị, cổng, và tin tức không cung cấp
 một cải thiện có ý nghĩa nhất quán qua các horizon trên bất kỳ metric nào.
 
-**Liên hệ với các phát hiện dự án trước (đã thiết lập trước đó, không phải kết quả mới của nghiên cứu
-này).** Một phân tích khám phá an toàn với rò rỉ dữ liệu trên dữ liệu này trước đó phát hiện rằng các
-đặc trưng node bổ sung (`market_pk` và `volume_zscore`) vượt HAR trên QLIKE dưới một kiểm định
-Diebold-Mariano, nhưng một cạnh chéo giữa các cổ phiếu dựa trên tương quan đối xứng không mang lại giá
-trị ngoài mẫu đáng tin cậy vì một yếu tố thị trường đơn lẻ chi phối sự đồng biến động chéo giữa các cổ
-phiếu và các lân cận được chọn xáo trộn ngoài mẫu. Nghiên cứu hiện tại kiểm tra liệu thay cạnh tương
-quan đó bằng một cạnh dẫn-trễ có hướng khối lượng→độ biến động, và đặt nó trong một nhánh GAT song song
-trên các đặc trưng node thô, có thay đổi kết luận đó hay không.
 
 **Liên hệ với tài liệu.** Một hiệu ứng đồ thị null hoặc không đáng kể phù hợp với nghiên cứu GNN-vs-HAR
 được kiểm soát tốt nhất đã công bố, GNNHAR trên DJIA-30, nơi hiệu ứng lan truyền đồ thị đa bước không
@@ -506,10 +497,7 @@ nghiêm ngặt đã công bố dựa vào phương sai thực hiện dẫn xuấ
 OHLCV hàng ngày này không có. Thứ ba, các con số báo cáo tổng hợp ba seed (42, 123, 2026) với các kiểm
 định Diebold-Mariano seed-ensembled; một mở rộng năm seed và một Model Confidence Set là công việc tương
 lai khả thi để thắt chặt thêm các ước lượng ý nghĩa thống kê. Thứ tư, huấn luyện dùng một hàm mục tiêu
-MSE thay vì hàm mục tiêu QLIKE mà tài liệu ghi công cho việc thu hẹp khoảng cách HAR. Thứ năm, độ chính
-xác định hướng không được báo cáo: sự thay đổi từ ngày này sang ngày khác của mục tiêu Parkinson hàng
-ngày có tính phản-bền-vững (tự tương quan dấu lag-1 khoảng $-0.30$), nên metric này không có trần kỹ
-năng trên mức ngẫu nhiên và không phân biệt giữa các mô hình.
+MSE thay vì hàm mục tiêu QLIKE mà tài liệu ghi công cho việc thu hẹp khoảng cách HAR.
 
 ---
 
@@ -527,8 +515,7 @@ trên QLIKE mô hình đầy đủ không có khác biệt có ý nghĩa so vớ
 hơn có ý nghĩa tại h22. Các thao tác gỡ thành phần trong ablation cho các hiệu ứng QLIKE hỗn hợp, phần
 lớn ở horizon ngắn — gỡ nhánh GAT làm giảm QLIKE có ý nghĩa tại h1 và h22, gỡ cổng theo từng mã tại h1,
 và gỡ nhánh tin tức tại h1 và h5 trong khi làm tăng nó tại h22 — và một backbone LSTM chỉ-giá có QLIKE
-thấp hơn hoặc bằng có ý nghĩa so với mô hình đầy đủ tại h1, h5, và h22. Độ chính xác định hướng bị bỏ
-qua vì không mang thông tin cho một mục tiêu hàng ngày phản-bền-vững. Với một thị trường mới nổi Việt
+thấp hơn hoặc bằng có ý nghĩa so với mô hình đầy đủ tại h1, h5, và h22. Với một thị trường mới nổi Việt
 Nam, nghiên cứu cho thấy cách xây dựng và đánh giá một cách trung thực một bộ dự báo tin tức
 graph-attention với hiệu ứng lan truyền có hướng đối chiếu với HAR chuẩn ngành.
 

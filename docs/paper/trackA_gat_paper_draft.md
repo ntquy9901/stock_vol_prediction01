@@ -250,7 +250,7 @@ penalizes under-prediction more than over-prediction and tolerates the noise in 
 
 $$\text{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{\hat{\sigma}^2_t}{\sigma^2_t} - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).$$
 
-Directional accuracy is not reported; the Limitations section notes why it is uninformative for this target.
+Directional accuracy is not reported.
 
 **Training objective.** All deep configurations minimize the mean squared error between the model output
 and the per-ticker normalized target; QLIKE and the other metrics are computed only at evaluation, after
@@ -463,13 +463,6 @@ the lower value at h10 and h22, mirroring the full model; on the squared-error m
 about 1% at all horizons, so the deep temporal model matches HAR at the short horizons and does not
 overtake the linear baseline at the long horizons.
 
-**Relation to prior project findings (established earlier, not this study's new results).** A leakage-safe
-exploratory analysis on this data previously found that the extra node features (`market_pk` and
-`volume_zscore`) beat HAR on QLIKE under a Diebold-Mariano test, but that a symmetric correlation-based
-cross-stock edge added no reliable out-of-sample value because a single market factor dominates
-cross-stock volatility co-movement and the selected neighbourhoods reshuffle out of sample. The present
-study tests whether replacing that correlation edge with a directed volume→volatility lead-lag edge, and
-placing it in a parallel GAT branch on raw node features, changes that conclusion.
 
 **Relation to the literature.** A null or negligible graph effect would align with the best-controlled
 published GNN-vs-HAR study, GNNHAR on DJIA-30, where multi-hop graph spillover gave no clear advantage
@@ -493,10 +486,7 @@ this daily-OHLCV panel does not have. Third, the reported numbers are **single-s
 Diebold-Mariano test is not yet applied, so no gap is established as significant; a two-additional-seed
 extension (seeds 123, 2026) with seed-ensembled Diebold-Mariano tests, and a Model Confidence Set, are
 required to confirm the single-seed reading. Fourth, training uses an MSE objective rather than
-the QLIKE objective the literature credits for closing the HAR gap. Fifth, directional accuracy is not
-reported: the day-to-day change in the daily Parkinson target is anti-persistent (lag-1 sign
-autocorrelation about $-0.30$), so the metric has no skill ceiling above chance and does not discriminate
-between models.
+the QLIKE objective the literature credits for closing the HAR gap.
 
 ---
 
@@ -513,7 +503,7 @@ across horizons; on QLIKE, HAR is lowest at h10 and h22 and the full model is ma
 a Diebold-Mariano test on QLIKE finds the full model significantly better than HAR only at h1 and
 significantly worse at h10 and h22. Across all five metrics no configuration consistently or
 significantly outperforms HAR — a provisional reading to be confirmed by a multi-seed extension.
-Directional accuracy is omitted as uninformative for an anti-persistent daily target. For a Vietnamese
+For a Vietnamese
 emerging market, the study shows how to build and honestly evaluate a directed-spillover graph-attention
 news forecaster against the field-standard HAR.
 
