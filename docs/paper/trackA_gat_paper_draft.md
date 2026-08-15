@@ -288,11 +288,11 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 | Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
 |---|---|---|---|---|---|
 | HAR | 5.23 | 2.287 | 6.05 | 0.7672 | 0.5735 |
-| LSTM-only | 5.11 | 2.261 | 6.02 | 0.7725 | 0.5696 |
 | FULL | **5.09** | **2.257** | 5.99 | **0.7733** | 0.5724 |
 | minus_graph | 5.13 | 2.264 | 6.02 | 0.7719 | **0.5692** |
 | minus_gate | 5.13 | 2.265 | 5.99 | 0.7718 | 0.5741 |
 | minus_news | 5.12 | 2.264 | **5.98** | 0.7720 | 0.5715 |
+| LSTM-only | 5.11 | 2.261 | 6.02 | 0.7725 | 0.5696 |
 
 **Table 2. Five-day-ahead VALIDATION metrics (selection period only, not a reported result).** Source:
 `ladder_metrics.json` (`rungs.*.validation_metrics`).
@@ -300,11 +300,11 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 | Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
 |---|---|---|---|---|---|
 | HAR | 2.20 | 1.485 | 4.80 | 0.7351 | 0.5167 |
-| LSTM-only | 2.19 | 1.478 | 4.74 | 0.7374 | **0.5024** |
 | FULL | 2.20 | 1.484 | 4.75 | 0.7352 | 0.5081 |
 | minus_graph | 2.18 | 1.476 | 4.74 | 0.7380 | 0.5034 |
 | minus_gate | **2.16** | **1.471** | **4.69** | **0.7400** | 0.5058 |
 | minus_news | **2.16** | **1.471** | **4.69** | **0.7400** | 0.5056 |
+| LSTM-only | 2.19 | 1.478 | 4.74 | 0.7374 | **0.5024** |
 
 ### 6.2 Component contributions across horizons
 
