@@ -1,6 +1,6 @@
 # Stock Volatility Prediction for the Vietnamese Stock Market
 
-*Single-seed draft, 2026-08-15. **Status**: the four-horizon **single-seed** (seed 42) leave-one-out run
+*Single-seed draft, 2026-08-15. **Status**: the four-horizon **single-seed** (seed 42) ablation run
 is complete; its metrics are filled below from `results/trackA_ablation_h{1,5,10,22}_seed42_2026-08-15_085544_loo/ladder_metrics.json`.
 The single-seed Diebold-Mariano
 table (Table 5) is complete. The only remaining extension is the two-additional-seed (123, 2026) run,
@@ -25,7 +25,7 @@ per-node price LSTM over five node features, a real multi-head Graph Attention N
 gate. The GAT branch consumes the raw node-feature vector at the forecast origin rather than the LSTM
 hidden state, which matches the edge semantics (a source ticker's volume shock at $t$ leading a target
 ticker's volatility at $t{+}1$) and keeps the graph branch an independent cross-sectional view for a
-fair ablation. We evaluate the model with a **leave-one-out** ablation: from the full model we retrain
+fair ablation. We evaluate the model with an **ablation**: from the full model we retrain
 one variant per removed component (minus-graph removes the entire GAT branch, minus-gate removes the
 per-ticker gate, minus-news removes the news branch), and we measure each component's contribution as
 $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$ on the held-out test set,
@@ -37,7 +37,7 @@ per-ticker gate does not consistently help, and the news branch lowers QLIKE onl
 h22. A Diebold-Mariano test (single seed) confirms that removing the entire GAT branch significantly
 lowers QLIKE at every horizon (the graph significantly hurts), that news significantly helps only at h10
 and h22, and that a price-only LSTM backbone matches or beats the full model. This paper's contribution
-is a leakage-safe, leave-one-out
+is a leakage-safe ablation-based
 attribution of a directed-spillover graph-attention news model against a strong HAR baseline on sparse
 daily VN30 data.
 
@@ -72,7 +72,7 @@ that a contemporaneous correlation edge cannot.
 
 We build this edge into a parallel multi-branch architecture (an LSTM temporal branch, a GAT graph
 branch, and a gated news branch, concatenated at a shared head) and we ask, per component and per
-horizon, whether each part earns its place. We answer with a **leave-one-out** ablation: we build the
+horizon, whether each part earns its place. We answer with an **ablation**: we build the
 full model, then retrain a variant with exactly one component removed, and attribute each component's
 contribution as the change in held-out QLIKE it causes. This paper makes three contributions.
 
@@ -81,7 +81,7 @@ contribution as the change in held-out QLIKE it causes. This paper makes three c
    gated PhoBERT news branch. The GAT consumes the raw node-feature vector at the forecast origin, which
    matches the edge semantics and keeps the graph branch an independent cross-sectional view (Section 4).
 
-2. **A leave-one-out ablation against a strong HAR baseline.** From the full model we retrain one
+2. **An ablation against a strong HAR baseline.** From the full model we retrain one
    variant per removed component — minus-graph (the whole GAT branch), minus-gate, minus-news — so every
    effect is measured on the same footing, and we report each component's marginal contribution
    $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$ with a Diebold-Mariano test
@@ -114,7 +114,7 @@ relevant, Zhang, Pu, Cucuringu and Dong [10] build a graph-neural-network HAR (G
 under a Model Confidence Set, find that multi-hop cross-stock graph spillover gives no clear advantage:
 the gains come from modeling nonlinearity and from switching the training loss from MSE to QLIKE. Their
 controlled null on the graph component motivates our shift from a symmetric correlation edge to a
-directed lead-lag edge, tested here under a leave-one-out ablation.
+directed lead-lag edge, tested here under an ablation.
 
 **Directed spillover and lead-lag graphs.** A symmetric correlation edge conflates contemporaneous
 co-movement (largely a market factor) with predictive structure. Directed spillover measures — for
@@ -185,7 +185,7 @@ of eligible windows.
 
 ## 4. Method
 
-We describe the proposed full model first, then define the leave-one-out variants as component removals
+We describe the proposed full model first, then define the ablation variants as component removals
 from it. The model forecasts one ticker's $h$-day-ahead Parkinson variance from four inputs: a 22-day
 price window of the five node features, a 22-day news window of PhoBERT features with a mask, the ticker
 identity, and the directed vol→PK adjacency over the tickers present on the same date.
@@ -216,11 +216,11 @@ The head concatenates $[h_{\text{lstm}}(64),\ h_{\text{gnn}}(256),\ \text{news}^
 **positivity floor** ($\varepsilon=10^{-6}$, applied in the denormalized space and identical across all
 compared rungs) clamps predictions away from non-positive variance before QLIKE.
 
-**The leave-one-out variants.** We build the full model, then retrain one variant per removed component,
+**The ablation variants.** We build the full model, then retrain one variant per removed component,
 so every effect is measured on the same footing (each variant trains in the same graph on/off regime it
 is evaluated in — no train/eval mismatch):
 
-![Leave-one-out ablation: from FULL, one component is removed per variant (−graph, −gate, −news); HAR and a price-only LSTM-only model are reference baselines. effect(X) = QLIKE(FULL) − QLIKE(FULL−X).](diagrams/trackA_gat_ablation.svg)
+![Ablation: from FULL, one component is removed per variant (−graph, −gate, −news); HAR and a price-only LSTM-only model are reference baselines. effect(X) = QLIKE(FULL) − QLIKE(FULL−X).](diagrams/trackA_gat_ablation.svg)
 
 
 - **FULL** — LSTM + directed vol→PK GAT graph + news + per-ticker gate.
@@ -279,9 +279,9 @@ external graph library) and use a CUDA GPU. Runs used an NVIDIA GeForce RTX 4060
 *All cells below are placeholders pending the four-horizon run. Every table's source will be
 `results/trackA_ablation_h{h}_seed42_<TS>/ladder_metrics.json`.*
 
-### 6.1 Leave-one-out ablation at the five-day horizon
+### 6.1 Ablation at the five-day horizon
 
-**Table 1. Five-day-ahead held-out TEST metrics, leave-one-out rungs.** Same test observations across all
+**Table 1. Five-day-ahead held-out TEST metrics, ablation rungs.** Same test observations across all
 rows. Lower is better for MSE, RMSE, MAE, QLIKE; higher for $R^2$. Bold marks the best value per column.
 Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 
@@ -443,7 +443,7 @@ continuous-error metrics (MSE, RMSE, MAE, $R^2$) and the proportional QLIKE loss
 We propose a parallel multi-branch model for multi-horizon VN30 Parkinson-variance forecasting that
 fuses a price LSTM, a real multi-head GAT over a directed volume→volatility lead-lag edge, and a gated
 PhoBERT news branch, with the GAT consuming raw node features to match the edge semantics. We evaluate it
-with a leave-one-out ablation that retrains one variant per removed component and attributes each
+with an ablation that retrains one variant per removed component and attributes each
 component's contribution as the change it causes in held-out QLIKE, against a strong HAR baseline and
 with Diebold-Mariano significance, at horizons 1, 5, 10, and 22 trading days. On a single-seed run, the
 directed graph does not help at any horizon (removing the whole GAT branch never raises held-out QLIKE
