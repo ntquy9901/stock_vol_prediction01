@@ -61,7 +61,7 @@ volume z-score) beats HAR on QLIKE, but that a *correlation-based* cross-stock e
 out-of-sample value because a single market factor dominates cross-stock volatility co-movement. This
 motivates the present study's central design choice: rather than a symmetric correlation edge, we test a
 **directed, lead-lag volume→volatility edge** — a source ticker's abnormal volume today linked to a
-target ticker's range volatility tomorrow — which encodes a predictive, causal-direction relationship
+target ticker's range volatility tomorrow — which encodes a predictive, causal lead-lag relationship
 that a contemporaneous correlation edge cannot.
 
 We build this edge into a parallel multi-branch architecture (an LSTM temporal branch, a GAT graph
@@ -221,7 +221,6 @@ is evaluated in — no train/eval mismatch):
 
 ![Ablation: from FULL, one component is removed per variant (−graph, −gate, −news); HAR and a price-only LSTM-only model are reference baselines. effect(X) = QLIKE(FULL) − QLIKE(FULL−X).](diagrams/trackA_gat_ablation.svg)
 
-
 - **FULL** — LSTM + directed vol→PK GAT graph + news + per-ticker gate.
 - **minus_graph** — FULL with the **entire GAT branch removed** (no node/edge/GAT built; the head takes
   $[h_{\text{lstm}},\ \text{news}^{\text{gated}}]\in\mathbb{R}^{128}$). This isolates the whole graph
@@ -250,8 +249,6 @@ and QLIKE. QLIKE, the quasi-likelihood loss standard in the realized-volatility 
 penalizes under-prediction more than over-prediction and tolerates the noise in the volatility proxy:
 
 $$\text{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{\hat{\sigma}^2_t}{\sigma^2_t} - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).$$
-
-Directional accuracy is not reported.
 
 **Training objective.** All deep configurations minimize the mean squared error between the model output
 and the per-ticker normalized target; QLIKE and the other metrics are computed only at evaluation, after
@@ -468,7 +465,6 @@ less, within seed dispersion, at every horizon; on QLIKE, HAR shows no significa
 full model at h1, h5, and h10 and a significantly lower value at h22, and the price-only LSTM backbone
 matches or has a significantly lower QLIKE than the full model at h1, h5, and h22. The graph, gate, and
 news components do not provide a consistent significant improvement across horizons on any metric.
-
 
 **Relation to the literature.** A null or negligible graph effect aligns with the best-controlled
 published GNN-vs-HAR study, GNNHAR on DJIA-30, where multi-hop graph spillover gave no clear advantage

@@ -66,7 +66,7 @@ không mang lại giá trị ngoài mẫu (out-of-sample) đáng tin cậy vì m
 sự đồng biến động chéo giữa các cổ phiếu. Điều này thúc đẩy lựa chọn thiết kế trung tâm của nghiên cứu
 hiện tại: thay vì một cạnh tương quan đối xứng, nghiên cứu kiểm tra một **cạnh dẫn-trễ có hướng
 khối lượng→độ biến động** — khối lượng bất thường hôm nay của một mã nguồn liên kết với độ biến động
-biên độ ngày mai của một mã đích — mã hóa một quan hệ dự báo, theo hướng nhân quả mà một cạnh tương
+biên độ ngày mai của một mã đích — mã hóa một quan hệ dự báo, nhân quả (dẫn-trễ) mà một cạnh tương
 quan đồng thời không thể có.
 
 Nghiên cứu tích hợp cạnh này vào một kiến trúc đa nhánh song song (một nhánh thời gian LSTM, một nhánh
@@ -228,7 +228,6 @@ thành phần bị gỡ, nên mọi hiệu ứng được đo trên cùng một 
 
 ![Ablation: từ FULL, mỗi biến thể gỡ một thành phần (−graph, −gate, −news); HAR và một mô hình LSTM-only chỉ-giá là các baseline tham chiếu. effect(X) = QLIKE(FULL) − QLIKE(FULL−X).](diagrams/trackA_gat_ablation.svg)
 
-
 - **FULL** — LSTM + đồ thị GAT vol→PK có hướng + tin tức + cổng theo từng mã.
 - **minus_graph** — FULL với **toàn bộ nhánh GAT bị gỡ** (không xây node/cạnh/GAT; head lấy
   $[h_{\text{lstm}},\ \text{news}^{\text{gated}}]\in\mathbb{R}^{128}$). Điều này cô lập toàn bộ hệ thống
@@ -256,8 +255,6 @@ QLIKE. QLIKE, hàm mất mát tựa-hợp-lý (quasi-likelihood) chuẩn trong t
 [patton], phạt việc dự báo thiếu nặng hơn dự báo thừa và chịu được nhiễu trong proxy độ biến động:
 
 $$\text{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{\hat{\sigma}^2_t}{\sigma^2_t} - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).$$
-
-Độ chính xác định hướng không được báo cáo.
 
 **Hàm mục tiêu huấn luyện.** Tất cả cấu hình sâu tối thiểu hóa sai số bình phương trung bình giữa đầu
 ra mô hình và mục tiêu chuẩn hóa theo từng mã; QLIKE và các metric khác chỉ được tính khi đánh giá, sau
@@ -472,7 +469,6 @@ seed, tại mọi horizon; trên QLIKE, HAR không có khác biệt có ý nghĩ
 h10 và có giá trị thấp hơn có ý nghĩa tại h22, và backbone LSTM chỉ-giá bằng hoặc có QLIKE thấp hơn có ý
 nghĩa so với mô hình đầy đủ tại h1, h5, và h22. Các thành phần đồ thị, cổng, và tin tức không cung cấp
 một cải thiện có ý nghĩa nhất quán qua các horizon trên bất kỳ metric nào.
-
 
 **Liên hệ với tài liệu.** Một hiệu ứng đồ thị null hoặc không đáng kể phù hợp với nghiên cứu GNN-vs-HAR
 được kiểm soát tốt nhất đã công bố, GNNHAR trên DJIA-30, nơi hiệu ứng lan truyền đồ thị đa bước không

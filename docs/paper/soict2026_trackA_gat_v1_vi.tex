@@ -89,7 +89,7 @@ trên tương quan} không mang lại giá trị ngoài mẫu (out-of-sample) đ
 đơn lẻ chi phối sự đồng biến động chéo giữa các cổ phiếu. Điều này thúc đẩy lựa chọn thiết kế trung tâm
 của nghiên cứu hiện tại: thay vì một cạnh tương quan đối xứng, nghiên cứu kiểm tra một \textbf{cạnh
 dẫn-trễ có hướng khối lượng$\to$độ biến động} --- khối lượng bất thường hôm nay của một mã nguồn liên kết
-với độ biến động biên độ ngày mai của một mã đích --- mã hóa một quan hệ dự báo, theo hướng nhân quả mà
+với độ biến động biên độ ngày mai của một mã đích --- mã hóa một quan hệ dự báo, nhân quả (dẫn-trễ) mà
 một cạnh tương quan đồng thời không thể có.
 
 Nghiên cứu tích hợp cạnh này vào một kiến trúc đa nhánh song song (một nhánh thời gian LSTM, một nhánh
@@ -311,7 +311,6 @@ việc dự báo thiếu nặng hơn dự báo thừa và chịu được nhiễ
  - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).
 \label{eq:qlike}
 \end{equation}
-Độ chính xác định hướng không được báo cáo.
 
 \subsubsection{Hàm mục tiêu huấn luyện.}
 Tất cả cấu hình sâu tối thiểu hóa sai số bình phương trung bình giữa đầu ra mô hình và mục tiêu chuẩn hóa
