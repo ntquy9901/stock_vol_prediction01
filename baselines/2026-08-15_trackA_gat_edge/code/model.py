@@ -15,16 +15,21 @@ POSITIVITY_EPSILON = 1e-6
 class TrackAGatModel(nn.Module):
     def __init__(self, price_dim: int, news_dim: int, num_tickers: int,
                  hidden: int = 64, heads: int = 4, dropout: float = 0.2,
-                 use_news: bool = True, use_gate: bool = True):
+                 use_news: bool = True, use_gate: bool = True, use_graph: bool = True):
         super().__init__()
-        self.use_news, self.use_gate, self.hidden = use_news, use_gate, hidden
+        self.use_news, self.use_gate, self.use_graph, self.hidden = use_news, use_gate, use_graph, hidden
         self.price_lstm = nn.LSTM(price_dim, hidden, num_layers=2, batch_first=True, dropout=dropout)
         self.news_proj = nn.Linear(news_dim, hidden)
         self.news_lstm = nn.LSTM(hidden, hidden, num_layers=2, batch_first=True, dropout=dropout)
         self.gate_logits = nn.Parameter(torch.zeros(num_tickers))
-        self.gat1 = GATLayer(hidden, hidden, heads)          # 64 -> 256
-        self.gat2 = GATLayer(hidden * heads, hidden, heads)  # 256 -> 256
-        gnn_dim = hidden * heads
+        # GAT consumes RAW node features at t (Track-A parallel branch), NOT h_lstm: matches the
+        # vol->PK edge semantics (volume_shock_i(t) -> sqrt(PK_j)(t+1)) and keeps the graph branch
+        # an independent cross-sectional view of the LSTM branch. use_graph=False removes the WHOLE
+        # graph subsystem (no node/edge/GAT built) -> a clean leave-one-out "no graph" variant.
+        gnn_dim = hidden * heads if use_graph else 0
+        if use_graph:
+            self.gat1 = GATLayer(price_dim, hidden, heads)       # price_dim -> 256
+            self.gat2 = GATLayer(hidden * heads, hidden, heads)  # 256 -> 256
         self.head = nn.Sequential(
             nn.Linear(hidden + gnn_dim + hidden, hidden), nn.ReLU(),
             nn.Dropout(dropout), nn.Linear(hidden, 1))
@@ -56,9 +61,13 @@ class TrackAGatModel(nn.Module):
             gated_news = gate * news_hidden                                        # [B,N,64]
         else:
             gated_news = torch.zeros(b, n, self.hidden, device=h_lstm.device)
-        adj = adjacency if apply_graph else torch.eye(n, device=h_lstm.device).unsqueeze(0).expand(b, n, n)
-        h_gnn = self.gat2(self.gat1(h_lstm, adj), adj)                             # [B,N,256]
-        h = torch.cat([h_lstm, h_gnn, gated_news], dim=-1)                        # [B,N,384]
+        parts = [h_lstm]
+        if self.use_graph:
+            adj = adjacency if apply_graph else torch.eye(n, device=h_lstm.device).unsqueeze(0).expand(b, n, n)
+            node_raw = price[:, :, -1, :]                                          # raw feats at t [B,N,price_dim]
+            parts.append(self.gat2(self.gat1(node_raw, adj), adj))                 # h_gnn [B,N,256]
+        parts.append(gated_news)                                                   # [B,N,64] (zeros if no news)
+        h = torch.cat(parts, dim=-1)                                               # [B,N,384] or 128 if no graph
         raw = self.head(h).squeeze(-1)
         mean = self.scaler_mean[ticker_ids]
         std = self.scaler_std[ticker_ids]

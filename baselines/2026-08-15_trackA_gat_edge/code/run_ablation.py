@@ -1,12 +1,14 @@
-"""Full component ablation of the Track-A GAT model across horizons h in {1,5,10,22}.
+"""LEAVE-ONE-OUT ablation of the Track-A GAT model across horizons h in {1,5,10,22}.
 
-Rungs (each deeper one adds one component; separately TRAINED where the component changes weights):
-  HAR   = pooled HAR linear regression (external baseline).
-  LSTM  = price LSTM on 5 node features only (no news, no gate, no graph)   [trained]
-  NEWS  = + news branch (no gate, no graph)                                 [trained]
-  NODE  = + per-ticker gate (no graph)  == full model read graph-off        [trained]
-  GNN   = + directed vol->PK GAT graph  == same full model read graph-on    [NODE's checkpoint]
+Build the FULL model, then RETRAIN each variant with exactly one component removed (per CLAUDE.md
+ablation rule) so all effects are on the same footing (no rung is a train/eval mismatch):
+  HAR         = pooled HAR linear regression (external baseline).
+  FULL        = LSTM(5 node feats) + vol->PK GAT graph + news + per-ticker gate     [trained]
+  minus_graph = FULL retrained with the WHOLE GAT branch removed (no node/edge)     [trained]
+  minus_gate  = FULL retrained without the per-ticker gate (news, graph-on)         [trained]
+  minus_news  = FULL retrained without the news branch (graph-on)                   [trained]
 
+Component contribution = QLIKE(FULL) - QLIKE(minus_X): negative means removing X hurt (X helped).
 Reuses the combo basis (5 features + news + vol->PK edge) per horizon. 1 seed first (extend later).
 Run: python <.../code/run_ablation.py> <TS> [device] [seed] [epochs] [horizons...]
 Writes results/trackA_ablation_h{h}_seed{seed}_<TS>/ladder_metrics.json.
@@ -36,14 +38,13 @@ from train_resume import load_checkpoint, train_with_resume  # noqa: E402
 
 
 def _train(basis, train_snaps, val_snaps, ckpt: Path, epochs, seed, device,
-           use_news: bool, use_gate: bool, apply_graph_train: bool):
+           use_news: bool, use_gate: bool, use_graph: bool):
     model = TrackAGatModel(basis["price_dim"], basis["news_dim"], basis["num_tickers"],
-                           use_news=use_news, use_gate=use_gate)
+                           use_news=use_news, use_gate=use_gate, use_graph=use_graph)
     model.configure_positivity(basis["scaler_mean"], basis["scaler_std"])
-    # train the graph on/off consistently with how the rung is read out (no train/eval mismatch):
-    # LSTM/NEWS/NODE are graph-off rungs; only the full/GNN rung trains with the vol->PK graph.
-    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed,
-                      apply_graph=apply_graph_train)
+    # no_graph drops the whole GAT branch (use_graph=False) so adjacency is never consulted; the
+    # other variants keep the graph on. apply_graph is True here and inert when use_graph is False.
+    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed, apply_graph=True)
     model.load_state_dict(load_checkpoint(ckpt)["best_state"])
     return model.to(device)
 
@@ -64,25 +65,35 @@ def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.dev
         return {"validation_metrics": v["metrics"], "test_metrics": t["metrics"],
                 "floor_hit_fraction": t["floor_hit_fraction"]}
 
-    lstm = _train(basis, tr, va, out_base / "lstm.pt", epochs, seed, device,
-                  use_news=False, use_gate=False, apply_graph_train=False)
-    news = _train(basis, tr, va, out_base / "news.pt", epochs, seed, device,
-                  use_news=True, use_gate=False, apply_graph_train=False)
-    # full trains WITH the vol->PK graph; NODE = read it graph-off (nested), GNN = read graph-on
+    # FULL has all components; each variant RETRAINS from scratch with exactly one removed, so the
+    # three effects are on the same footing (all retrain-based, no train/eval mismatch on any rung).
     full = _train(basis, tr, va, out_base / "full.pt", epochs, seed, device,
-                  use_news=True, use_gate=True, apply_graph_train=True)
+                  use_news=True, use_gate=True, use_graph=True)
+    no_graph = _train(basis, tr, va, out_base / "no_graph.pt", epochs, seed, device,
+                      use_news=True, use_gate=True, use_graph=False)  # drop whole GAT branch
+    no_gate = _train(basis, tr, va, out_base / "no_gate.pt", epochs, seed, device,
+                     use_news=True, use_gate=False, use_graph=True)   # remove per-ticker gate
+    no_news = _train(basis, tr, va, out_base / "no_news.pt", epochs, seed, device,
+                     use_news=False, use_gate=False, use_graph=True)  # remove news (gate is a
+    #        no-op without news: model.py applies the gate only inside the `if use_news` branch)
 
     har = basis["har"]
     rungs = {
         "HAR": {"validation_metrics": har["val"], "test_metrics": har["test"],
                 "floor_hit_fraction": har.get("floor_hit_fraction", 0.0)},
-        "LSTM": _metrics(lstm, "LSTM", apply_graph=False),
-        "NEWS": _metrics(news, "NEWS", apply_graph=False),
-        "NODE": _metrics(full, "NODE", apply_graph=False),
-        "GNN": _metrics(full, "GNN", apply_graph=True),
+        "FULL": _metrics(full, "FULL", apply_graph=True),
+        "minus_graph": _metrics(no_graph, "minus_graph", apply_graph=True),  # GAT branch absent
+        "minus_gate": _metrics(no_gate, "minus_gate", apply_graph=True),
+        "minus_news": _metrics(no_news, "minus_news", apply_graph=True),
+    }
+    full_q = rungs["FULL"]["test_metrics"]["qlike"]
+    effects = {  # QLIKE(FULL) - QLIKE(FULL minus X): negative => removing X hurt (X helped)
+        "graph": full_q - rungs["minus_graph"]["test_metrics"]["qlike"],
+        "gate": full_q - rungs["minus_gate"]["test_metrics"]["qlike"],
+        "news": full_q - rungs["minus_news"]["test_metrics"]["qlike"],
     }
     ladder = {"horizon": horizon, "seed": seed, "epochs": epochs, "rungs": rungs,
-              "graph_effect": rungs["GNN"]["test_metrics"]["qlike"] - rungs["NODE"]["test_metrics"]["qlike"]}
+              "leave_one_out_effects": effects}
     _write_json(out_base / "ladder_metrics.json", ladder)
     return ladder
 
@@ -95,11 +106,11 @@ def main(ts: str, device_name: str = "cuda", seed: int = 42, epochs: int = 15,
         for h in horizons:
             t0 = time.perf_counter()
             ladder = run_horizon(h, seed, epochs, ts, device)
-            ql = [round(ladder["rungs"][r]["test_metrics"]["qlike"], 4)
-                  for r in ("HAR", "LSTM", "NEWS", "NODE", "GNN")]
+            rung_order = ("HAR", "FULL", "minus_graph", "minus_gate", "minus_news")
+            ql = [round(ladder["rungs"][r]["test_metrics"]["qlike"], 4) for r in rung_order]
+            eff = {k: round(v, 6) for k, v in ladder["leave_one_out_effects"].items()}
             print(f"h={h} seed={seed} elapsed={time.perf_counter() - t0:.1f}s "
-                  f"graph_effect={ladder['graph_effect']:.6f} HAR/LSTM/NEWS/NODE/GNN qlike={ql}",
-                  flush=True)
+                  f"effects(FULL-minusX){eff} {rung_order} qlike={ql}", flush=True)
     finally:
         combo_ladder.HORIZON = previous
 

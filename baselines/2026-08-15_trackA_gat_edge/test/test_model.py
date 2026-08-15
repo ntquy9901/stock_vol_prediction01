@@ -50,3 +50,18 @@ def test_ablation_flags_lstm_only_and_no_gate():
     news.configure_positivity(torch.zeros(4), torch.full((4,), 1e-4))
     p2 = news(b["price"], b["news"], b["news_mask"], b["ticker_ids"], b["adjacency"], apply_graph=False)
     assert p2.shape == (2, 4)
+
+
+def test_use_graph_false_drops_gat_branch():
+    torch.manual_seed(0)
+    b = _batch()
+    no_graph = TrackAGatModel(5, 146, 4, use_graph=False)
+    no_graph.configure_positivity(torch.zeros(4), torch.full((4,), 1e-4))
+    # GAT layers are not built and the head takes only h_lstm(64)+gated_news(64)=128
+    assert not hasattr(no_graph, "gat1") and no_graph.head[0].in_features == 128
+    no_graph.eval()  # disable dropout so the two forward passes are deterministic
+    # adjacency is never consulted: output identical for any apply_graph and any adjacency
+    p_off = no_graph(b["price"], b["news"], b["news_mask"], b["ticker_ids"], b["adjacency"], apply_graph=False)
+    p_on = no_graph(b["price"], b["news"], b["news_mask"], b["ticker_ids"], torch.ones(2, 4, 4), apply_graph=True)
+    assert p_off.shape == (2, 4) and bool((p_off > 0).all())
+    assert torch.allclose(p_off, p_on)
