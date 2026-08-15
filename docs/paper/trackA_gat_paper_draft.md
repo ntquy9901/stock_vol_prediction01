@@ -276,14 +276,25 @@ external graph library) and use a CUDA GPU. Runs used an NVIDIA GeForce RTX 4060
 
 ## 6. Results
 
-*All cells below are placeholders pending the four-horizon run. Every table's source will be
-`results/trackA_ablation_h{h}_seed42_<TS>/ladder_metrics.json`.*
+### 6.1 Held-out test metrics across horizons
 
-### 6.1 Ablation at the five-day horizon
+**Table 1. Held-out TEST metrics by horizon (single seed 42).** Lower is better for MSE, RMSE, MAE,
+QLIKE; higher for $R^2$. Bold marks the best value per column within each horizon; the same test
+observations are shared across all rows of a horizon. Source: `ladder_metrics.json` and
+`lstm_only_metrics.json` (`*.test_metrics`).
 
-**Table 1. Five-day-ahead held-out TEST metrics, ablation rungs.** Same test observations across all
-rows. Lower is better for MSE, RMSE, MAE, QLIKE; higher for $R^2$. Bold marks the best value per column.
-Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
+*h = 1 trading day*
+
+| Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
+|---|---|---|---|---|---|
+| HAR | 4.05 | 2.014 | 5.41 | 0.8192 | 0.4813 |
+| FULL | 3.99 | 1.998 | 5.39 | 0.8221 | 0.4780 |
+| minus_graph | 3.99 | 1.998 | 5.35 | 0.8220 | 0.4741 |
+| minus_gate | **3.94** | **1.984** | **5.33** | **0.8245** | 0.4731 |
+| minus_news | 3.95 | 1.987 | 5.35 | 0.8239 | **0.4724** |
+| LSTM-only | 3.96 | 1.991 | 5.36 | 0.8232 | 0.4729 |
+
+*h = 5 trading days*
 
 | Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
 |---|---|---|---|---|---|
@@ -293,6 +304,34 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 | minus_gate | 5.13 | 2.265 | 5.99 | 0.7718 | 0.5741 |
 | minus_news | 5.12 | 2.264 | **5.98** | 0.7720 | 0.5715 |
 | LSTM-only | 5.11 | 2.261 | 6.02 | 0.7725 | 0.5696 |
+
+*h = 10 trading days*
+
+| Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
+|---|---|---|---|---|---|
+| HAR | 5.56 | 2.358 | 6.30 | 0.7532 | **0.6139** |
+| FULL | 5.73 | 2.393 | 6.15 | 0.7458 | 0.6924 |
+| minus_graph | 5.61 | 2.368 | 6.31 | 0.7511 | 0.6222 |
+| minus_gate | **5.53** | **2.352** | 6.22 | **0.7545** | 0.6261 |
+| minus_news | 5.72 | 2.392 | **6.12** | 0.7461 | 0.7348 |
+| LSTM-only | 5.56 | 2.357 | 6.28 | 0.7534 | 0.6245 |
+
+*h = 22 trading days*
+
+| Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
+|---|---|---|---|---|---|
+| HAR | **6.02** | **2.453** | 6.56 | **0.7303** | **0.6742** |
+| FULL | 6.11 | 2.473 | **6.53** | 0.7260 | 0.7012 |
+| minus_graph | 6.16 | 2.482 | 6.53 | 0.7239 | 0.6890 |
+| minus_gate | 6.05 | 2.459 | 6.55 | 0.7290 | 0.6962 |
+| minus_news | 6.17 | 2.484 | 6.61 | 0.7235 | 0.7064 |
+| LSTM-only | 6.11 | 2.473 | 6.58 | 0.7260 | 0.6985 |
+
+Reading across horizons: on **QLIKE**, HAR is best at h10 and h22 while FULL edges the field at h1/h5;
+on the squared-error metrics (MSE/RMSE/$R^2$) the differences are within ~1% and the best row alternates
+(FULL at h5, minus_gate at h1/h10, HAR at h22), so no single configuration dominates. The remaining
+subsections isolate each component (Section 6.2), compare FULL against HAR (Section 6.3), and test
+significance (Section 6.4).
 
 **Table 2. Five-day-ahead VALIDATION metrics (selection period only, not a reported result).** Source:
 `ladder_metrics.json` (`rungs.*.validation_metrics`).
@@ -366,7 +405,10 @@ significantly *hurts* the forecast at all four horizons. FULL beats HAR only at 
 ties at h5, and is significantly worse than HAR at h10 and h22. News (FULL vs minus_news) significantly
 helps only at the long horizons h10 ($-3.58$) and h22 ($-2.45$) and significantly hurts at h1. The
 price-only LSTM-only backbone significantly matches or beats FULL at h1, h5, and h10, confirming that the
-added components do not improve the forecast. All statistics are single-seed; the three-seed
+added components do not improve the forecast. The QLIKE result is specific to the proportional loss: on
+the squared-error loss, FULL vs minus_graph is **not** significant at any horizon (DM $p=0.33$–$0.96$),
+so the graph's sub-1% differences on MSE/RMSE/$R^2$ are noise. The graph therefore never helps — it is a
+wash on the level metrics and a significant loss on QLIKE. All statistics are single-seed; the three-seed
 seed-ensembled DM is reported in the companion three-seed paper.
 
 ---
