@@ -79,7 +79,21 @@ if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
   if ruff check $CHANGED 2>&1 | tail -5; then RUFF_STATUS="pass"; else RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff findings on changed files." >&2; fi
 fi
 
-echo "[pre-push] 4/4 data-quality gate (Pandera + Evidently) if data/manifest touched"
+echo "[pre-push] 4/4 data-quality: tests (every push) + Pandera/Evidently (if data touched)"
+# Data-quality test scripts run on EVERY push (cheap ~2s; enforces regardless of branch/base, since
+# on a master push the merge-base collapses to HEAD and a diff-gated check would silently no-op).
+DQ=""
+for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py; do
+  [ -f "$MAINROOT/$t" ] && DQ="$DQ $MAINROOT/$t"
+done
+if [ -n "$DQ" ]; then
+  echo "[pre-push]   data-quality tests (raw+processed)"
+  if ! python -m pytest $DQ -q; then
+    echo "[pre-push] BLOCK: data-quality tests failed." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push]   data-quality tests not found on this branch (skipped)"
+fi
 DATA_TOUCHED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -iE 'data|manifest|scaling|dataset|panel' || true)
 if [ -n "$DATA_TOUCHED" ]; then
   # scripts/quality_gate lives in the MAIN repo root (not in feature-branch
@@ -100,22 +114,8 @@ if sf:
     pathlib.Path(sf).write_text(f"{s.status}\n{d.status}\n", encoding="utf-8")
 sys.exit(0 if s.status != "FAIL" else 3)
 PY
-  # Enforce the data-quality test scripts (raw + processed) on any data change.
-  # New raw data must pass these before it can be pushed/used (harness rule).
-  DQ=""
-  for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py; do
-    [ -f "$MAINROOT/$t" ] && DQ="$DQ $MAINROOT/$t"
-  done
-  if [ -n "$DQ" ]; then
-    echo "[pre-push]   data-quality tests (raw+processed)"
-    if ! python -m pytest $DQ -q; then
-      echo "[pre-push] BLOCK: data-quality tests failed." >&2; FAIL=1
-    fi
-  else
-    echo "[pre-push]   data-quality tests not found (skipped)"
-  fi
 else
-  echo "[pre-push]   N/A (no data/manifest change)"
+  echo "[pre-push]   Pandera/Evidently: N/A (no data/manifest change)"
 fi
 
 # --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
