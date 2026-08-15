@@ -278,8 +278,7 @@ external graph library) and use a CUDA GPU. Runs used an NVIDIA GeForce RTX 4060
 
 **Table 1. Held-out TEST metrics by horizon (single seed 42).** Lower is better for MSE, RMSE, MAE,
 QLIKE; higher for $R^2$. Bold marks the best value per column within each horizon; the same test
-observations are shared across all rows of a horizon. Source: `ladder_metrics.json` and
-`lstm_only_metrics.json` (`*.test_metrics`).
+observations are shared across all rows of a horizon.
 
 *h = 1 trading day*
 
@@ -336,8 +335,7 @@ and test significance (Section 6.4).
 ### 6.2 Component contributions across horizons
 
 **Table 2. Component contribution on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$.**
-Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: `ladder_metrics.json`
-(`leave_one_out_effects`).
+Negative = removing $X$ raised QLIKE, i.e. $X$ helped.
 
 | Horizon | effect(graph) | effect(gate) | effect(news) |
 |---|---|---|---|
@@ -355,8 +353,7 @@ configurations are within about 1% (Table 1).
 
 ### 6.3 FULL versus HAR across horizons
 
-**Table 3. FULL vs HAR, held-out test, all four horizons.** Source: `ladder_metrics.json`
-(`rungs.FULL.test_metrics`, `rungs.HAR.test_metrics`).
+**Table 3. FULL vs HAR, held-out test, all four horizons.**
 
 | Horizon | HAR QLIKE | FULL QLIKE | HAR $R^2$ | FULL $R^2$ | HAR RMSE (×10⁻³) | FULL RMSE (×10⁻³) |
 |---|---|---|---|---|---|---|
@@ -381,7 +378,6 @@ MSE/RMSE/$R^2$ family), and absolute error (AE; MAE). Each cell is the HLN-corre
 its two-sided $p$-value in parentheses and a trailing `*` when $p<0.05$; a **negative** statistic means
 FULL has the lower loss, a **positive** statistic means the comparator does. HAC truncation lag $h{-}1$;
 $n$ per horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22) present-node test observations.
-Source: `dm_report.py` over the per-rung `predictions_test.json` dumps.
 
 *h = 1 trading day*
 

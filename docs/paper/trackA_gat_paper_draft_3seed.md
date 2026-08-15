@@ -281,8 +281,7 @@ external graph library) and use a CUDA GPU. Runs used an NVIDIA GeForce RTX 4060
 **Table 1. Held-out TEST metrics by horizon, mean(std) over three seeds (42, 123, 2026).** Lower is
 better for MSE, RMSE, MAE, QLIKE; higher for $R^2$. Bold marks the best mean per column within each
 horizon; the same test observations are shared across all rows of a horizon. HAR is a deterministic
-linear regression (std 0.00). Source: three-seed `ladder_metrics.json` and `lstm_only_metrics.json`
-(`*.test_metrics`).
+linear regression (std 0.00).
 
 *h = 1 trading day*
 
@@ -341,8 +340,7 @@ significance (Section 6.4).
 ### 6.2 Component contributions across horizons
 
 **Table 2. Component contribution on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$, three-seed mean.**
-Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: three-seed `ladder_metrics.json`
-(`leave_one_out_effects`).
+Negative = removing $X$ raised QLIKE, i.e. $X$ helped.
 
 | Horizon | effect(graph) | effect(gate) | effect(news) |
 |---|---|---|---|
@@ -363,8 +361,7 @@ seed-ensembled predictions.
 ### 6.3 FULL versus HAR across horizons
 
 **Table 3. FULL vs HAR, held-out test, all four horizons, mean(std) over three seeds.** Columns pair
-each metric HAR-then-FULL; bold marks the better mean of the pair. Source: three-seed
-`ladder_metrics.json` (`rungs.FULL.test_metrics`, `rungs.HAR.test_metrics`).
+each metric HAR-then-FULL; bold marks the better mean of the pair.
 
 | Horizon | HAR QLIKE | FULL QLIKE | HAR $R^2$ | FULL $R^2$ | HAR RMSE (×10⁻³) | FULL RMSE (×10⁻³) |
 |---|---|---|---|---|---|---|
@@ -388,48 +385,47 @@ loss family.** Each cell is the HLN-corrected DM statistic with its two-sided $p
 $p<0.05$. A **negative** statistic means FULL has the lower loss; a **positive** statistic means the
 comparator has the lower loss. DM is run on three per-observation loss families: QLIKE, squared error
 (SE; the MSE/RMSE/$R^2$ family), and absolute error (AE; MAE). HAC truncation lag $h{-}1$; $n$ per
-horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22). Source: `dm_report.py` over the
-seed-ensembled per-rung `predictions_test.json` dumps.
+horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22).
 
 *h = 1 trading day*
 
 | Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
 |---|---|---|---|
-| FULL vs HAR | $+0.73$ (p .46) | $-0.69$ (p .49) | $+0.88$ (p .38) |
-| FULL vs minus_graph | **$+8.70$ (p<.001)** | $-0.21$ (p .83) | **$+2.66$ (p .01)** |
-| FULL vs minus_gate | **$+6.78$ (p<.001)** | **$+2.37$ (p .02)** | **$+6.24$ (p<.001)** |
-| FULL vs minus_news | **$+8.04$ (p<.001)** | **$+3.93$ (p<.001)** | **$+5.35$ (p<.001)** |
-| FULL vs LSTM-only | **$+6.07$ (p<.001)** | $-1.78$ (p .07) | **$+6.77$ (p<.001)** |
+| FULL vs HAR | $+0.73$ ($p = 0.46$) | $-0.69$ ($p = 0.49$) | $+0.88$ ($p = 0.38$) |
+| FULL vs minus_graph | **$+8.70$ ($p < 0.001$)** | $-0.21$ ($p = 0.83$) | **$+2.66$ ($p = 0.01$)** |
+| FULL vs minus_gate | **$+6.78$ ($p < 0.001$)** | **$+2.37$ ($p = 0.02$)** | **$+6.24$ ($p < 0.001$)** |
+| FULL vs minus_news | **$+8.04$ ($p < 0.001$)** | **$+3.93$ ($p < 0.001$)** | **$+5.35$ ($p < 0.001$)** |
+| FULL vs LSTM-only | **$+6.07$ ($p < 0.001$)** | $-1.78$ ($p = 0.07$) | **$+6.77$ ($p < 0.001$)** |
 
 *h = 5 trading days*
 
 | Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
 |---|---|---|---|
-| FULL vs HAR | $-0.34$ (p .74) | $-1.03$ (p .30) | **$-4.20$ (p<.001)** |
-| FULL vs minus_graph | $+1.29$ (p .20) | $+0.27$ (p .79) | $-0.58$ (p .56) |
-| FULL vs minus_gate | $+0.93$ (p .35) | $+0.23$ (p .82) | $-0.53$ (p .60) |
-| FULL vs minus_news | **$+4.45$ (p<.001)** | $-0.94$ (p .35) | $-0.94$ (p .35) |
-| FULL vs LSTM-only | **$+2.58$ (p .01)** | $+0.65$ (p .52) | $-0.49$ (p .62) |
+| FULL vs HAR | $-0.34$ ($p = 0.74$) | $-1.03$ ($p = 0.30$) | **$-4.20$ ($p < 0.001$)** |
+| FULL vs minus_graph | $+1.29$ ($p = 0.20$) | $+0.27$ ($p = 0.79$) | $-0.58$ ($p = 0.56$) |
+| FULL vs minus_gate | $+0.93$ ($p = 0.35$) | $+0.23$ ($p = 0.82$) | $-0.53$ ($p = 0.60$) |
+| FULL vs minus_news | **$+4.45$ ($p < 0.001$)** | $-0.94$ ($p = 0.35$) | $-0.94$ ($p = 0.35$) |
+| FULL vs LSTM-only | **$+2.58$ ($p = 0.01$)** | $+0.65$ ($p = 0.52$) | $-0.49$ ($p = 0.62$) |
 
 *h = 10 trading days*
 
 | Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
 |---|---|---|---|
-| FULL vs HAR | $+1.28$ (p .20) | $-0.20$ (p .84) | $-1.07$ (p .28) |
-| FULL vs minus_graph | $+0.80$ (p .42) | **$+2.25$ (p .02)** | **$-5.20$ (p<.001)** |
-| FULL vs minus_gate | $+0.08$ (p .94) | **$+2.06$ (p .04)** | **$-4.34$ (p<.001)** |
-| FULL vs minus_news | $+1.10$ (p .27) | $+1.30$ (p .19) | **$-2.08$ (p .04)** |
-| FULL vs LSTM-only | $+0.56$ (p .58) | **$+2.62$ (p .01)** | **$-4.74$ (p<.001)** |
+| FULL vs HAR | $+1.28$ ($p = 0.20$) | $-0.20$ ($p = 0.84$) | $-1.07$ ($p = 0.28$) |
+| FULL vs minus_graph | $+0.80$ ($p = 0.42$) | **$+2.25$ ($p = 0.02$)** | **$-5.20$ ($p < 0.001$)** |
+| FULL vs minus_gate | $+0.08$ ($p = 0.94$) | **$+2.06$ ($p = 0.04$)** | **$-4.34$ ($p < 0.001$)** |
+| FULL vs minus_news | $+1.10$ ($p = 0.27$) | $+1.30$ ($p = 0.19$) | **$-2.08$ ($p = 0.04$)** |
+| FULL vs LSTM-only | $+0.56$ ($p = 0.58$) | **$+2.62$ ($p = 0.01$)** | **$-4.74$ ($p < 0.001$)** |
 
 *h = 22 trading days*
 
 | Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
 |---|---|---|---|
-| FULL vs HAR | **$+5.10$ (p<.001)** | $+1.09$ (p .27) | $-1.21$ (p .22) |
-| FULL vs minus_graph | **$+5.88$ (p<.001)** | $+0.08$ (p .94) | **$+2.50$ (p .01)** |
-| FULL vs minus_gate | $+1.56$ (p .12) | $-1.52$ (p .13) | **$-3.22$ (p<.001)** |
-| FULL vs minus_news | **$-3.14$ (p<.001)** | $-1.90$ (p .06) | **$-4.25$ (p<.001)** |
-| FULL vs LSTM-only | **$+2.23$ (p .03)** | $+0.75$ (p .45) | $+0.25$ (p .80) |
+| FULL vs HAR | **$+5.10$ ($p < 0.001$)** | $+1.09$ ($p = 0.27$) | $-1.21$ ($p = 0.22$) |
+| FULL vs minus_graph | **$+5.88$ ($p < 0.001$)** | $+0.08$ ($p = 0.94$) | **$+2.50$ ($p = 0.01$)** |
+| FULL vs minus_gate | $+1.56$ ($p = 0.12$) | $-1.52$ ($p = 0.13$) | **$-3.22$ ($p < 0.001$)** |
+| FULL vs minus_news | **$-3.14$ ($p < 0.001$)** | $-1.90$ ($p = 0.06$) | **$-4.25$ ($p < 0.001$)** |
+| FULL vs LSTM-only | **$+2.23$ ($p = 0.03$)** | $+0.75$ ($p = 0.45$) | $+0.25$ ($p = 0.80$) |
 
 Reading (all loss families): For FULL vs HAR, the QLIKE loss differs significantly only at h22 (HAR
 lower, $p<0.001$) with no significant difference at h1, h5, or h10; the squared-error loss shows no
