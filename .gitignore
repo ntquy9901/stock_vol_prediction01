@@ -109,3 +109,4 @@ temp_github_dataset
 
 # Local Git worktrees
 .worktrees/
+data/raw/prices_backup_pre_update_2026-08-16/
