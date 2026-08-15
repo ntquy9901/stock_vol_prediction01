@@ -139,8 +139,8 @@ def diagram_full_model():
     ax.text(5.0, 6.9, "BRANCH 2  -  GAT graph (cross-sectional, RAW features @ t)",
             ha="left", fontsize=9.5, fontweight="bold", color="#8a4b1f")
     node_raw = box(ax, 5.6, 5.9, 2.6, 1.1,
-                   "node_raw = price[:, :, -1, :]\nRAW features @ t\n(NOT h_lstm)   [B, N, 5]",
-                   COLOR_RAW, fontsize=8.3, fontweight="bold")
+                   "node_raw = price[:, :, -1, :]\nraw features at t  [B, N, 5]",
+                   COLOR_RAW, fontsize=8.5, fontweight="bold")
     gat1 = box(ax, 8.6, 5.9, 1.75, 1.05,
                "GATLayer\n5 -> 64 x4 heads\nconcat [B,N,256]", COLOR_GAT, fontsize=8.0)
     gat2 = box(ax, 10.85, 5.9, 1.85, 1.05,
@@ -207,51 +207,46 @@ def diagram_full_model():
 def diagram_ablation():
     fig, ax = new_fig(15, 8.5)
 
-    full = box(ax, 6.0, 7.2, 4.4, 1.1,
-               "FULL\nLSTM + vol->PK GAT graph + news + per-ticker gate\n(retrained)",
-               COLOR_FULL, fontsize=9.5, fontweight="bold")
+    full = box(ax, 6.0, 7.2, 4.0, 0.95,
+               "FULL\nLSTM + GAT + news + gate",
+               COLOR_FULL, fontsize=10, fontweight="bold")
 
-    # Retrained leave-one-out variants (each = FULL minus exactly one component)
-    y_var = 4.4
-    minus_graph = box(ax, 2.0, y_var, 3.0, 1.5,
-                      "minus_graph\nremove the WHOLE\nGAT branch\n(no node / edge / GAT)\nretrained",
-                      COLOR_ABLATION, fontsize=8.5)
-    minus_gate = box(ax, 5.5, y_var, 3.0, 1.5,
-                     "minus_gate\ngate turned OFF\n(news always on)\ngraph + news kept\nretrained",
-                     COLOR_ABLATION, fontsize=8.5)
-    minus_news = box(ax, 9.0, y_var, 3.0, 1.5,
-                     "minus_news\ndrop the news branch\n(gate is a no-op)\ngraph kept\nretrained",
-                     COLOR_ABLATION, fontsize=8.5)
+    # Leave-one-out variants (each = FULL minus exactly one component)
+    y_var = 4.5
+    minus_graph = box(ax, 2.0, y_var, 3.0, 1.05,
+                      "− graph\n(remove GAT branch)",
+                      COLOR_ABLATION, fontsize=9)
+    minus_gate = box(ax, 5.5, y_var, 3.0, 1.05,
+                     "− gate\n(remove per-ticker gate)",
+                     COLOR_ABLATION, fontsize=9)
+    minus_news = box(ax, 9.0, y_var, 3.0, 1.05,
+                     "− news\n(remove news branch)",
+                     COLOR_ABLATION, fontsize=9)
 
-    # External references (not a leave-one-out of FULL)
-    har = box(ax, 12.7, 5.55, 3.0, 1.15,
-              "HAR (external)\npooled linear regression\nnot a variant of FULL",
-              COLOR_HAR, fontsize=8.5, dashed=True)
-    lstm_only = box(ax, 12.7, 3.55, 3.0, 1.15,
-                    "LSTM-only (price-only)\nno graph, no news\nreference",
-                    COLOR_REF, fontsize=8.5, dashed=True)
+    # External references
+    har = box(ax, 12.7, 5.6, 3.0, 0.95,
+              "HAR\n(pooled linear baseline)",
+              COLOR_HAR, fontsize=9, dashed=True)
+    lstm_only = box(ax, 12.7, 3.7, 3.0, 0.95,
+                    "LSTM-only\n(price-only)",
+                    COLOR_REF, fontsize=9, dashed=True)
 
     # arrows FULL -> each retrained variant (solid: leave-one-out)
     arrow(ax, (full[0] - 1.4, bottom(full)[1]), top(minus_graph), curve=0.05)
     arrow(ax, bottom(full), top(minus_gate))
     arrow(ax, (full[0] + 1.4, bottom(full)[1]), top(minus_news), curve=-0.05)
 
-    # dashed arrows FULL -> external references (comparison, not ablation)
-    arrow(ax, right(full), left(har), curve=-0.1, dashed=True,
-          label="external comparison", label_dy=0.25, fontsize=7.8)
+    # dashed arrows FULL -> external references
+    arrow(ax, right(full), left(har), curve=-0.1, dashed=True)
     arrow(ax, (full[0] + 1.9, bottom(full)[1] + 0.1), left(lstm_only),
           curve=-0.25, dashed=True)
 
-    # effect / significance annotation
-    note = ("effect(X) = QLIKE(FULL) - QLIKE(minus_X)      (same test set, same positivity floor)\n"
-            "negative  =>  removing X raised QLIKE  =>  X HELPED\n"
-            "positive  =>  removing X lowered QLIKE  =>  X did not help\n"
-            "Significance: Diebold-Mariano (HLN correction) on seed-ensembled test predictions,\n"
-            "for FULL vs each minus_X and FULL vs HAR;  horizons h in {1, 5, 10, 22}.")
-    box(ax, 6.2, 1.3, 11.4, 1.9, note, "#f4f4f4", fontsize=8.8)
+    # effect / significance annotation (concise)
+    note = ("effect(X) = QLIKE(FULL) − QLIKE(FULL − X);   negative ⇒ X lowers QLIKE (helps).\n"
+            "Significance: Diebold–Mariano (HLN) on test predictions,  horizons h ∈ {1, 5, 10, 22}.")
+    box(ax, 6.2, 1.5, 11.0, 1.1, note, "#f4f4f4", fontsize=9.2)
 
-    ax.set_title("Leave-one-out ablation: retrain FULL with exactly one component removed",
-                 fontsize=12.5, pad=12)
+    ax.set_title("Leave-one-out ablation", fontsize=12.5, pad=12)
     save(fig, "trackA_gat_ablation.svg")
 
 

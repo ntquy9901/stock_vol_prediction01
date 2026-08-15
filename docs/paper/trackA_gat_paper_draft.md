@@ -220,7 +220,7 @@ compared rungs) clamps predictions away from non-positive variance before QLIKE.
 so every effect is measured on the same footing (each variant trains in the same graph on/off regime it
 is evaluated in — no train/eval mismatch):
 
-![Leave-one-out ablation: from FULL, retrain minus_graph (whole GAT branch removed), minus_gate, and minus_news; HAR and a price-only LSTM-only model are reference anchors. effect(X) = QLIKE(FULL) − QLIKE(minus_X).](diagrams/trackA_gat_ablation.svg)
+![Leave-one-out ablation: from FULL, one component is removed per variant (−graph, −gate, −news); HAR and a price-only LSTM-only model are reference baselines. effect(X) = QLIKE(FULL) − QLIKE(FULL−X).](diagrams/trackA_gat_ablation.svg)
 
 
 - **FULL** — LSTM + directed vol→PK GAT graph + news + per-ticker gate.
@@ -308,7 +308,7 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 
 ### 6.2 Component contributions across horizons
 
-**Table 3. Leave-one-out effect on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$.**
+**Table 3. Component contribution on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$.**
 Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: `ladder_metrics.json`
 (`leave_one_out_effects`).
 
@@ -376,8 +376,8 @@ seed-ensembled DM is reported in the companion three-seed paper.
 *The reading below is single-seed; the Diebold-Mariano table (Table 5) provides significance, and the
 three-seed replication (companion paper) is required before the reading is treated as final.*
 
-**What each component contributes.** The leave-one-out effects (Table 3) attribute each component's
-marginal value in the presence of all others. `effect(graph)` is positive at all four horizons, so even a
+**What each component contributes.** Table 3 reports each component's marginal contribution.
+`effect(graph)` is positive at all four horizons, so even a
 *directed* lead-lag edge — the design chosen specifically to avoid the market-factor redundancy of a
 correlation edge — adds no measurable out-of-sample value, and at h10/h22 removing the graph branch
 improves QLIKE. This strengthens the parsimony conclusion beyond the earlier correlation-edge result: the
