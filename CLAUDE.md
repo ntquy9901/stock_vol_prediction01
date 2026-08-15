@@ -194,6 +194,27 @@ Khi **thử nghiệm** model (không phải final run):
 - **Full run (vd 40/70 epoch)** chỉ khi user approve sau khi xem 5/10 epoch.
 - Lý do: training dài tốn thời gian; nhiều baseline no-lift (4/4 news + body) → checkpoint sớm đỡ lãng phí.
 
+## Ablation study — LEAVE-ONE-OUT (ENFORCED)
+
+> Áp dụng theo yêu cầu user 2026-08-15. Lý do: một pass trước làm ablation kiểu incremental
+> (cộng dần HAR→+LSTM→+news→+gate→+graph) trong khi user muốn ablation ĐÚNG nghĩa = gỡ từng
+> thành phần khỏi model đầy đủ. Rule này để không tái lập.
+
+- **Ablation study BẮT BUỘC theo kiểu LEAVE-ONE-OUT:** build **model ĐẦY ĐỦ (full)** trước, rồi
+  tạo các biến thể bằng cách **GỠ ĐÚNG 1 thành phần** khỏi full (Full, Full−graph, Full−gate,
+  Full−news, …). Mỗi biến thể = full thiếu 1 cái → đo *"thiếu thành phần đó thì model tệ đi bao
+  nhiêu"* (đóng góp biên của thành phần KHI CÓ MẶT tất cả cái khác).
+- **KHÔNG dùng incremental (cộng dần từ nhỏ) LÀM ABLATION CHÍNH.** Incremental ladder
+  (baseline → +A → +B → …) là *component-addition / ladder study*, trả lời câu hỏi khác và cho số
+  khác với leave-one-out ở model phi tuyến (do tương tác giữa thành phần). Có thể báo cáo kèm như
+  phụ, nhưng **ablation study mặc định = leave-one-out**.
+- **Cách đo đóng góp:** `effect(X) = metric(Full) − metric(Full−X)` trên cùng test set, cùng basis,
+  cùng positivity floor; báo cáo dấu rõ ràng (giảm loss = thành phần giúp). So sánh thống kê
+  (Diebold-Mariano/paired) giữa Full và Full−X.
+- **Thành phần chung nhiều nhánh:** node features (vd 5 feature dùng CHUNG cho LSTM và GAT — GAT
+  nhận node representation từ LSTM, KHÔNG có node feature riêng); edge (graph) là quan hệ giữa node,
+  KHÔNG phải node feature. Khi mô tả ablation phải phân biệt rõ NODE feature vs EDGE.
+
 ## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
 - **Language/toolchain:** Python 3.11 (pip)
 - **Test command:** `python -m pytest`
