@@ -100,6 +100,20 @@ if sf:
     pathlib.Path(sf).write_text(f"{s.status}\n{d.status}\n", encoding="utf-8")
 sys.exit(0 if s.status != "FAIL" else 3)
 PY
+  # Enforce the data-quality test scripts (raw + processed) on any data change.
+  # New raw data must pass these before it can be pushed/used (harness rule).
+  DQ=""
+  for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py; do
+    [ -f "$MAINROOT/$t" ] && DQ="$DQ $MAINROOT/$t"
+  done
+  if [ -n "$DQ" ]; then
+    echo "[pre-push]   data-quality tests (raw+processed)"
+    if ! python -m pytest $DQ -q; then
+      echo "[pre-push] BLOCK: data-quality tests failed." >&2; FAIL=1
+    fi
+  else
+    echo "[pre-push]   data-quality tests not found (skipped)"
+  fi
 else
   echo "[pre-push]   N/A (no data/manifest change)"
 fi
