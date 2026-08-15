@@ -1,15 +1,5 @@
 # Stock Volatility Prediction for the Vietnamese Stock Market
 
-*Three-seed report (seeds 42, 123, 2026), 2026-08-15. **Status**: the four-horizon three-seed
-ablation is complete. All test metrics below are reported as **mean(std)** over the three seeds,
-and every Diebold-Mariano test is computed on the **seed-ensembled** test predictions
-(seeds 42, 123, 2026). This file is the companion to the single-seed draft
-(`trackA_gat_paper_draft.md`) and does not overwrite it. A five-seed extension is possible future
-work. Per-table source lines appear below each table. Directional accuracy is deliberately not
-reported (Section 8): the day-to-day change in the daily Parkinson target is anti-persistent, so
-sign prediction has no skill ceiling above chance and the metric is uninformative for model
-comparison.*
-
 ---
 
 ## Abstract
@@ -29,15 +19,19 @@ fair ablation. We evaluate the model with an **ablation**: from the full model w
 one variant per removed component (minus-graph removes the entire GAT branch, minus-gate removes the
 per-ticker gate, minus-news removes the news branch), and we measure each component's contribution as
 $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$ on the held-out test set,
-with a Diebold-Mariano test for significance. The classical HAR is the baseline every
-component must beat. Across three seeds and four horizons, the full model shows no significant QLIKE
-difference from HAR at h1, h5, and h10 (DM $p=0.46/0.74/0.20$) and higher QLIKE than HAR at h22
-($p<0.001$). Removing the GAT branch significantly lowers QLIKE at h1 and h22 ($p<0.001$) with no
-significant difference at h5 or h10; removing the per-ticker gate significantly lowers QLIKE at h1
-($p<0.001$) with no significant difference at the other horizons; and removing the news branch
-significantly lowers QLIKE at h1 and h5 ($p<0.001$) and significantly raises it at h22 ($p=0.0017$). A
-price-only LSTM backbone has significantly lower or equal QLIKE relative to the full model at h1, h5, and
-h22. This paper's contribution
+with a Diebold-Mariano test for significance. The classical HAR is the reference baseline. Across three seeds and four horizons the differences among
+HAR, the full model, and the ablation variants are small on every metric. On MSE, RMSE, and $R^2$ the
+configuration means lie within about 1% of one another and the best mean alternates across horizons; on
+MAE the differences are similarly small and the lowest mean varies by horizon. On QLIKE, HAR has the
+lowest mean at h5, h10, and h22 and the price-only LSTM backbone the lowest at h1. A Diebold-Mariano test
+on the seed-ensembled predictions finds no significant QLIKE difference between the full model and HAR at
+h1, h5, and h10 (DM $p=0.46/0.74/0.20$) and a significantly higher QLIKE for the full model at h22
+($p<0.001$); the price-only LSTM backbone has significantly lower or equal QLIKE relative to the full
+model at h1, h5, and h22. The ablation removals show mixed, mostly short-horizon QLIKE effects: removing
+the GAT branch significantly lowers QLIKE at h1 and h22 with no significant difference at h5 or h10,
+removing the per-ticker gate significantly lowers QLIKE at h1 only, and removing the news branch
+significantly lowers QLIKE at h1 and h5 and raises it at h22. Across all five metrics no configuration
+consistently or significantly outperforms HAR. This paper's contribution
 is a leakage-safe ablation-based
 attribution of a directed-spillover graph-attention news model against a strong HAR baseline on sparse
 daily VN30 data.
@@ -259,7 +253,7 @@ penalizes under-prediction more than over-prediction and tolerates the noise in 
 
 $$\text{QLIKE} = \frac{1}{T}\sum_{t=1}^{T}\left(\frac{\hat{\sigma}^2_t}{\sigma^2_t} - \ln\frac{\hat{\sigma}^2_t}{\sigma^2_t} - 1\right).$$
 
-Directional accuracy is not reported; Section 8 explains why it is uninformative for this target.
+Directional accuracy is not reported; the Limitations section notes why it is uninformative for this target.
 
 **Training objective.** All deep configurations minimize the mean squared error between the model output
 and the per-ticker normalized target; QLIKE and the other metrics are computed only at evaluation, after
@@ -336,13 +330,15 @@ linear regression (std 0.00). Source: three-seed `ladder_metrics.json` and `lstm
 | minus_news | 6.19 (0.09) | 2.489 (0.018) | 6.60 (0.01) | 0.7225 (0.0041) | 0.7097 (0.0107) |
 | LSTM-only | 6.09 (0.02) | 2.468 (0.004) | 6.54 (0.05) | 0.7271 (0.0009) | 0.7003 (0.0067) |
 
-Reading across horizons: on **QLIKE**, HAR has the lowest mean at h5, h10, and h22, while the price-only
-LSTM-only has the lowest QLIKE mean at h1; on the squared-error metrics (MSE/RMSE/$R^2$) the means fall
-within about 1% of each other and the best row alternates (minus_news at h1, minus_gate/LSTM-only at
-h5/h10, HAR at h22). The reported standard deviations are small relative to the between-configuration
-gaps except at h10, where the FULL and minus_news QLIKE means carry larger seed dispersion
-(std 0.034 and 0.053). The remaining subsections isolate each component (Section 6.2), compare FULL
-against HAR (Section 6.3), and test significance (Section 6.4).
+Reading across horizons: on the squared-error metrics (MSE, RMSE, $R^2$) the configuration means fall
+within about 1% of one another and the best row alternates (minus_news at h1, minus_gate/LSTM-only at
+h5/h10, HAR at h22); on MAE the differences are similarly small and the lowest mean varies by horizon
+(LSTM-only at h1, four configurations tied near 5.97 at h5, FULL at h10, minus_graph at h22); on QLIKE,
+HAR has the lowest mean at h5, h10, and h22 while the price-only LSTM-only has the lowest mean at h1. The
+reported standard deviations are small relative to the between-configuration gaps except at h10, where the
+FULL and minus_news QLIKE means carry larger seed dispersion (std 0.034 and 0.053). The remaining
+subsections isolate each component (Section 6.2), compare FULL against HAR (Section 6.3), and test
+significance (Section 6.4).
 
 ### 6.2 Component contributions across horizons
 
@@ -357,12 +353,14 @@ Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: three-seed `ladde
 | 10 | $+0.02617$ | $+0.02159$ | $-0.01541$ |
 | 22 | $+0.00979$ | $-0.00041$ | $-0.00432$ |
 
-Reading: `effect(graph)` is positive at h1, h10, and h22 (removing the GAT branch raises QLIKE there) and
+Reading: `effect(graph)` is positive at h1, h10, and h22 (removing the GAT branch lowers QLIKE there) and
 marginally negative at h5 ($-0.0013$). `effect(gate)` is positive at h1, h5, and h10 and marginally
 negative at h22 ($-0.0004$). `effect(news)` is positive at h1 and h5 and negative at h10 ($-0.0154$) and
-h22 ($-0.0043$), so removing the news branch raises QLIKE only at the longer horizons. The magnitudes at
-h10 are the largest, but the seed dispersion at h10 (Table 1) is also the largest; the Diebold-Mariano
-test (Section 6.4) determines which differences are significant on the seed-ensembled predictions.
+h22 ($-0.0043$), so removing the news branch raises QLIKE only at the longer horizons. These are QLIKE
+effects; the corresponding MSE, RMSE, and $R^2$ differences among the same configurations are within about
+1% (Table 1). The magnitudes at h10 are the largest, but the seed dispersion at h10 (Table 1) is also the
+largest; the Diebold-Mariano test (Section 6.4) determines which differences are significant on the
+seed-ensembled predictions.
 
 ### 6.3 FULL versus HAR across horizons
 
@@ -377,11 +375,12 @@ each metric HAR-then-FULL; bold marks the better mean of the pair. Source: three
 | 10 | **0.6139 (0.0000)** | 0.6441 (0.0342) | 0.7532 (0.0000) | **0.7534 (0.0054)** | 2.358 (0.000) | **2.357 (0.026)** |
 | 22 | **0.6742 (0.0000)** | 0.7053 (0.0066) | **0.7303 (0.0000)** | 0.7262 (0.0014) | **2.453 (0.000)** | 2.472 (0.006) |
 
-Reading: HAR has the lower QLIKE mean at all four horizons, with the gap widening from h1 (0.0040) to h22
-(0.0311). On $R^2$ and RMSE the two are within their seed dispersion at h1, h5, and h10, and HAR is ahead
-at h22. The Diebold-Mariano table (Table 4) tests these gaps on the seed-ensembled predictions: FULL
-shows no significant QLIKE difference from HAR at h1, h5, and h10, and HAR has significantly lower QLIKE
-than FULL at h22.
+Reading: on RMSE and $R^2$ the full model and HAR are within their seed dispersion at h1, h5, and h10,
+and HAR is marginally ahead at h22 (MSE and MAE follow the same pattern in Table 1). On QLIKE, HAR has
+the lower mean at all four horizons, with the gap widening from h1 (0.0040) to h22 (0.0311). The
+Diebold-Mariano table (Table 4) tests the QLIKE gaps on the seed-ensembled predictions: the full model
+shows no significant difference from HAR at h1, h5, and h10, and HAR has significantly lower QLIKE than
+the full model at h22.
 
 ### 6.4 Diebold-Mariano significance
 
@@ -416,8 +415,9 @@ significantly lower or equal QLIKE relative to the full model at those horizons.
 
 ## 7. Discussion
 
-**What each component contributes.** Table 2 reports each component's marginal contribution, and Table 4
-its significance on the seed-ensembled predictions. For the GAT branch, removing it significantly lowers
+**What each component contributes.** Table 2 reports each component's marginal QLIKE contribution, and
+Table 4 its significance on the seed-ensembled predictions; on the MSE, RMSE, and $R^2$ metrics the same
+configurations differ by about 1% or less (Table 1). For the GAT branch, removing it significantly lowers
 QLIKE at h1 and h22 ($p<0.001$) with no significant difference at h5 or h10, so the directed lead-lag edge
 — the design chosen specifically to avoid the market-factor redundancy of a correlation edge — yields no
 significant out-of-sample QLIKE improvement at any horizon. This is consistent with the earlier
@@ -436,11 +436,12 @@ LSTM-only and the full model show no significant QLIKE advantage at h1–h10 and
 h22, so the deep temporal model matches HAR at the short horizons and does not overtake the linear
 baseline at the long horizon.
 
-**Overall reading.** Across three seeds, HAR and the price-only LSTM backbone are the strongest
-configurations on QLIKE: HAR is not significantly beaten by the full model at any horizon and is
-significantly better at h22, and the price-only backbone matches or improves on the full model at h1, h5,
-and h22. The graph, gate, and news components do not provide a consistent significant QLIKE improvement
-across horizons.
+**Overall reading.** Across three seeds and all five metrics, no configuration consistently or
+significantly outperforms HAR. On MSE, RMSE, MAE, and $R^2$ the configurations differ by about 1% or
+less, within seed dispersion, at every horizon; on QLIKE, HAR shows no significant difference from the
+full model at h1, h5, and h10 and a significantly lower value at h22, and the price-only LSTM backbone
+matches or has a significantly lower QLIKE than the full model at h1, h5, and h22. The graph, gate, and
+news components do not provide a consistent significant improvement across horizons on any metric.
 
 **Relation to prior project findings (established earlier, not this study's new results).** A leakage-safe
 exploratory analysis on this data previously found that the extra node features (`market_pk` and
@@ -463,18 +464,7 @@ These remain future work.
 
 ---
 
-## 8. Why directional accuracy is not reported
-
-Directional accuracy is omitted because it is uninformative for this target. The sign of the day-to-day
-change in the daily Parkinson target is anti-persistent (lag-1 sign autocorrelation about $-0.30$,
-negative for all 33 tickers), so no forecaster of the volatility *level* can beat chance on the day-to-day
-sign, and the metric is a structural property of the target rather than a discriminating measure of model
-quality. Model comparison therefore rests on the continuous-error metrics (MSE, RMSE, MAE, $R^2$) and the
-proportional QLIKE loss.
-
----
-
-## 9. Limitations
+## 8. Limitations
 
 First, the 33-ticker universe is a fixed, point-in-time VN30-like set that excludes two short-history
 current members (BSR, VPL), so it is not the live index. Second, the study covers a single market at
@@ -484,11 +474,13 @@ this daily-OHLCV panel does not have. Third, the reported numbers aggregate thre
 with seed-ensembled Diebold-Mariano tests; a five-seed extension and a Model Confidence Set are possible
 future work to further tighten the significance estimates. Fourth, training uses an MSE objective rather
 than the QLIKE objective the literature credits for closing the HAR gap. Fifth, directional accuracy is
-not reported for the structural reason given in Section 8.
+not reported: the day-to-day change in the daily Parkinson target is anti-persistent (lag-1 sign
+autocorrelation about $-0.30$), so the metric has no skill ceiling above chance and does not discriminate
+between models.
 
 ---
 
-## 10. Conclusion
+## 9. Conclusion
 
 We propose a parallel multi-branch model for multi-horizon VN30 Parkinson-variance forecasting that
 fuses a price LSTM, a real multi-head GAT over a directed volume→volatility lead-lag edge, and a gated
@@ -496,13 +488,15 @@ PhoBERT news branch, with the GAT consuming raw node features to match the edge 
 with an ablation that retrains one variant per removed component and attributes each
 component's contribution as the change it causes in held-out QLIKE, against a strong HAR baseline and
 with seed-ensembled Diebold-Mariano significance, at horizons 1, 5, 10, and 22 trading days over three
-seeds. The full model shows no significant QLIKE difference from HAR at h1, h5, and h10 and significantly
-higher QLIKE at h22; removing the GAT branch significantly lowers QLIKE at h1 and h22; removing the
-per-ticker gate significantly lowers QLIKE at h1; removing the news branch significantly lowers QLIKE at
-h1 and h5 and raises it at h22; and a price-only LSTM backbone has significantly lower or equal QLIKE
-relative to the full model at h1, h5, and h22. Directional accuracy is omitted as uninformative for an
-anti-persistent daily target. For a Vietnamese emerging market, the study shows how to build and honestly
-evaluate a directed-spillover graph-attention news forecaster against the field-standard HAR.
+seeds. Across all five metrics no configuration consistently or significantly outperforms HAR: on MSE,
+RMSE, MAE, and $R^2$ the configurations differ by about 1% or less at every horizon, and on QLIKE the
+full model shows no significant difference from HAR at h1, h5, and h10 and a significantly higher value at
+h22. The ablation removals give mixed, mostly short-horizon QLIKE effects — removing the GAT branch
+significantly lowers QLIKE at h1 and h22, removing the per-ticker gate at h1, and removing the news branch
+at h1 and h5 while raising it at h22 — and a price-only LSTM backbone has significantly lower or equal
+QLIKE relative to the full model at h1, h5, and h22. Directional accuracy is omitted as uninformative for
+an anti-persistent daily target. For a Vietnamese emerging market, the study shows how to build and
+honestly evaluate a directed-spillover graph-attention news forecaster against the field-standard HAR.
 
 ---
 
@@ -549,10 +543,3 @@ volatility spillovers. *International Journal of Forecasting* 28(1), 57–66 (20
 
 [19] Chen, Q., Robert, C.-Y. Multivariate realized volatility forecasting with graph neural network. In
 *ACM ICAIF* (2022). arXiv:2112.09015.
-
-*Internal provenance (not for the reference list): architecture
-`baselines/2026-08-15_trackA_gat_edge/design/ARCHITECTURE_DETAILED.md`; ablation runner
-`baselines/2026-08-15_trackA_gat_edge/code/run_ablation.py`; three-seed results
-`results/trackA_ablation_h{1,5,10,22}_seed{42,123,2026}_<TS>/ladder_metrics.json`; seed-ensembled DM
-via `dm_report.py`; prior EDA graph findings (node features beat HAR on QLIKE; correlation edge adds no
-OOS value) as recorded in the project's EDA reports.*
