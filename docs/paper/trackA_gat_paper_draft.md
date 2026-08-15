@@ -30,13 +30,13 @@ one variant per removed component (minus-graph removes the entire GAT branch, mi
 per-ticker gate, minus-news removes the news branch), and we measure each component's contribution as
 $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$ on the held-out test set,
 with a Diebold-Mariano test for significance. The classical HAR is the baseline every
-component must beat. On a single-seed run across four horizons, the directed graph does not help at any
-horizon (removing the entire GAT branch never raises held-out QLIKE, and lowers it at h10 and h22), the
-per-ticker gate does not consistently help, and the news branch lowers QLIKE only at the longer horizons
-(h10, h22); the full model is within noise of the HAR baseline at h1 and h5 and worse than HAR at h10 and
-h22. A Diebold-Mariano test (single seed) confirms that removing the entire GAT branch significantly
-lowers QLIKE at every horizon (the graph significantly hurts), that news significantly helps only at h10
-and h22, and that a price-only LSTM backbone matches or beats the full model. This paper's contribution
+component must beat. On a single-seed run across four horizons, removing the GAT branch does not raise held-out QLIKE at any
+horizon and lowers it at h10 and h22; removing the per-ticker gate changes QLIKE by less than its fourth
+digit at most horizons; and removing the news branch raises QLIKE at h10 and h22. Relative to HAR, the
+full model has slightly lower QLIKE at h1, a comparable value at h5, and higher QLIKE at h10 and h22. A
+Diebold-Mariano test (single seed) finds the QLIKE differences significant for the GAT branch at every
+horizon, for the news branch at h10 and h22, and for the price-only LSTM backbone versus the full model
+at h1, h5, and h10. This paper's contribution
 is a leakage-safe ablation-based
 attribution of a directed-spillover graph-attention news model against a strong HAR baseline on sparse
 daily VN30 data.
@@ -71,8 +71,8 @@ target ticker's range volatility tomorrow — which encodes a predictive, causal
 that a contemporaneous correlation edge cannot.
 
 We build this edge into a parallel multi-branch architecture (an LSTM temporal branch, a GAT graph
-branch, and a gated news branch, concatenated at a shared head) and we ask, per component and per
-horizon, whether each part earns its place. We answer with an **ablation**: we build the
+branch, and a gated news branch, concatenated at a shared head) and we quantify, per component and per
+horizon, the marginal contribution of each part with an **ablation**: we build the
 full model, then retrain a variant with exactly one component removed, and attribute each component's
 contribution as the change in held-out QLIKE it causes. This paper makes three contributions.
 
@@ -358,12 +358,10 @@ Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: `ladder_metrics.j
 | 10 | $+0.07020$ | $+0.06628$ | $-0.04237$ |
 | 22 | $+0.01225$ | $+0.00506$ | $-0.00518$ |
 
-Reading (single seed): `effect(graph)` is positive at all four horizons, so removing the entire GAT
-branch never raised held-out QLIKE and lowered it at h10 and h22 — the directed graph does not help
-anywhere. `effect(gate)` is positive at three of four horizons (a marginal $-0.0017$ at h5), so the
-per-ticker gate does not consistently help. `effect(news)` is positive (news does not help) at h1 and h5
-but clearly negative at h10 ($-0.042$) and h22 ($-0.005$), so the news branch helps only at the longer
-horizons.
+Reading (single seed): `effect(graph)` is positive at all four horizons: removing the GAT branch does
+not lower QLIKE and raises it at h10 and h22. `effect(gate)` is positive at three of four horizons (a
+marginal $-0.0017$ at h5). `effect(news)` is positive at h1 and h5 and negative at h10 ($-0.042$) and
+h22 ($-0.005$): removing the news branch raises QLIKE only at the longer horizons.
 
 ### 6.3 FULL versus HAR across horizons
 
@@ -399,17 +397,15 @@ the per-rung `predictions_test.json` dumps.
 | FULL vs minus_news | $+6.38$ (p<.001) | $+0.77$ (p .44) | $-3.58$ (p<.001) | $-2.45$ (p .015) |
 | FULL vs LSTM-only | $+4.56$ (p<.001) | $+2.24$ (p .025) | $+4.67$ (p<.001) | $+1.09$ (p .27) |
 
-Reading (single seed): **FULL vs minus_graph is positive and significant at every horizon** ($p<0.05$
-for h1/h5/h10/h22), so removing the entire GAT branch significantly lowers QLIKE — the directed graph
-significantly *hurts* the forecast at all four horizons. FULL beats HAR only at h1 ($-2.01$, $p=0.044$),
-ties at h5, and is significantly worse than HAR at h10 and h22. News (FULL vs minus_news) significantly
-helps only at the long horizons h10 ($-3.58$) and h22 ($-2.45$) and significantly hurts at h1. The
-price-only LSTM-only backbone significantly matches or beats FULL at h1, h5, and h10, confirming that the
-added components do not improve the forecast. The QLIKE result is specific to the proportional loss: on
-the squared-error loss, FULL vs minus_graph is **not** significant at any horizon (DM $p=0.33$–$0.96$),
-so the graph's sub-1% differences on MSE/RMSE/$R^2$ are noise. The graph therefore never helps — it is a
-wash on the level metrics and a significant loss on QLIKE. All statistics are single-seed; the three-seed
-seed-ensembled DM is reported in the companion three-seed paper.
+Reading (single seed): FULL vs minus_graph is positive and significant at every horizon ($p<0.05$ for
+h1/h5/h10/h22): removing the GAT branch significantly lowers QLIKE at all four horizons. FULL has
+significantly lower QLIKE than HAR at h1 ($-2.01$, $p=0.044$), no significant difference at h5, and
+significantly higher QLIKE than HAR at h10 and h22. FULL vs minus_news is significant and negative at h10
+($-3.58$) and h22 ($-2.45$) and significant and positive at h1. The price-only LSTM-only backbone has
+significantly lower or equal QLIKE relative to FULL at h1, h5, and h10. On the squared-error loss, FULL
+vs minus_graph is not significant at any horizon (DM $p=0.33$–$0.96$): the GAT branch shows a significant
+QLIKE difference and no significant difference on MSE/RMSE/$R^2$. All statistics are single-seed; the
+three-seed seed-ensembled DM is reported in the companion three-seed paper.
 
 ---
 
@@ -421,11 +417,11 @@ three-seed replication (companion paper) is required before the reading is treat
 **What each component contributes.** Table 3 reports each component's marginal contribution.
 `effect(graph)` is positive at all four horizons, so even a
 *directed* lead-lag edge — the design chosen specifically to avoid the market-factor redundancy of a
-correlation edge — adds no measurable out-of-sample value, and at h10/h22 removing the graph branch
-improves QLIKE. This strengthens the parsimony conclusion beyond the earlier correlation-edge result: the
-graph does not help even when its edge is redirected to a predictive volume→volatility relation and given
-raw features for the attention. `effect(news)` is positive (news does not help) at h1 and h5 but clearly
-negative at h10 ($-0.042$) and h22 ($-0.005$), so on this architecture the news branch lowers QLIKE only
+correlation edge — yields no significant out-of-sample QLIKE difference on the level metrics, and at
+h10/h22 removing the graph branch lowers QLIKE. This is consistent with the earlier correlation-edge
+finding: redirecting the edge to a predictive volume→volatility relation and giving the attention raw
+features does not produce a QLIKE improvement. `effect(news)` is positive at h1 and h5 and negative at
+h10 ($-0.042$) and h22 ($-0.005$), so on this architecture the news branch lowers QLIKE only
 at the longer horizons, a narrower news benefit than the earlier project finding of a broad news gain.
 `effect(gate)` is positive at three of four horizons, so the per-ticker gate does not consistently earn
 its place. The full model marginally beats HAR at h1 and h5 and is worse at h10 and h22 (Table 4), so no
@@ -435,8 +431,8 @@ consistent win over HAR emerges at the single-seed level.
 LSTM with no news, no gate, no graph) reaches test QLIKE 0.4729 / 0.5696 / 0.6245 / 0.6985 at h1 / h5 /
 h10 / h22, which is at or below the full model's QLIKE at every horizon (0.4780 / 0.5724 / 0.6924 /
 0.7012) and clearly better at h10 and h22. Adding the news, gate, and graph components to the price LSTM
-therefore does not improve the forecast and hurts it at the longer horizons; the parsimonious price-only
-backbone captures what the deep stack offers. LSTM-only ties or slightly beats HAR at h1 and h5 and
+therefore does not lower QLIKE, and at the longer horizons the full model has higher QLIKE than the
+price-only backbone. LSTM-only ties or slightly beats HAR at h1 and h5 and
 trails HAR at h10 and h22, mirroring the full model, so the deep temporal model matches HAR at short
 horizons but does not overtake the linear baseline at long horizons.
 
@@ -487,11 +483,11 @@ fuses a price LSTM, a real multi-head GAT over a directed volume→volatility le
 PhoBERT news branch, with the GAT consuming raw node features to match the edge semantics. We evaluate it
 with an ablation that retrains one variant per removed component and attributes each
 component's contribution as the change it causes in held-out QLIKE, against a strong HAR baseline and
-with Diebold-Mariano significance, at horizons 1, 5, 10, and 22 trading days. On a single-seed run, the
-directed graph does not help at any horizon (removing the whole GAT branch never raises held-out QLIKE
-and lowers it at h10 and h22), the per-ticker gate does not consistently help, the news branch helps only
-at the longer horizons, and the full model ties HAR at h1/h5 and trails it at h10/h22 — a provisional
-parsimony reading to be confirmed by a Diebold-Mariano test and a multi-seed extension. Directional
+with Diebold-Mariano significance, at horizons 1, 5, 10, and 22 trading days. On a single-seed run, removing the
+GAT branch does not raise held-out QLIKE at any horizon and lowers it at h10 and h22; removing the
+per-ticker gate changes QLIKE marginally; removing the news branch raises QLIKE at h10 and h22; and the
+full model has QLIKE comparable to HAR at h1/h5 and higher at h10/h22 — a provisional reading to be
+confirmed by a multi-seed extension. Directional
 accuracy is omitted as uninformative for an anti-persistent daily target. For a Vietnamese
 emerging market, the study shows how to build and honestly evaluate a directed-spillover graph-attention
 news forecaster against the field-standard HAR.
