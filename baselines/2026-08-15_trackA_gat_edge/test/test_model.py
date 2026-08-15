@@ -35,3 +35,18 @@ def test_forward_shape_and_graph_changes_output():
     vol2pk = torch.ones(2, 4, 4)                          # a non-identity graph
     pred_on = m(b["price"], b["news"], b["news_mask"], b["ticker_ids"], vol2pk, apply_graph=True)
     assert not torch.allclose(pred_off, pred_on)         # graph residual moves predictions
+
+
+def test_ablation_flags_lstm_only_and_no_gate():
+    torch.manual_seed(0)
+    b = _batch()
+    # LSTM-only: use_news=False -> gated_news is a zero vector; still valid positive output
+    lstm = TrackAGatModel(5, 146, 4, use_news=False, use_gate=False)
+    lstm.configure_positivity(torch.zeros(4), torch.full((4,), 1e-4))
+    p = lstm(b["price"], b["news"], b["news_mask"], b["ticker_ids"], b["adjacency"], apply_graph=False)
+    assert p.shape == (2, 4) and bool((p > 0).all())
+    # +news, no gate: gate fixed at 1.0
+    news = TrackAGatModel(5, 146, 4, use_news=True, use_gate=False)
+    news.configure_positivity(torch.zeros(4), torch.full((4,), 1e-4))
+    p2 = news(b["price"], b["news"], b["news_mask"], b["ticker_ids"], b["adjacency"], apply_graph=False)
+    assert p2.shape == (2, 4)
