@@ -751,7 +751,6 @@ Before implementing ANY model architecture:
 ```
 Day 1 (BEFORE implementation):
   - Study: src/lstm_har_enhanced/model_enhanced.py
-  - Study: src/lstm_har_enhanced/train_with_overfitting_prevention.py
   - Document: "They use StandardScaler + linear output + inverse_transform"
   
 Day 2:
@@ -972,7 +971,6 @@ Day 3: FINALLY checked LSTM-HAR Enhanced
 
 ### **References**
 
-- **Proven implementation (67.90% Dir Acc):** `src/lstm_har_enhanced/train_with_overfitting_prevention.py`
 - **Normalizer utility:** `src/common/data_normalization.py`
 - **Universal patterns:** `ml-ds-common-rules/NORMALIZATION_BEST_PRACTICES.md`
 
