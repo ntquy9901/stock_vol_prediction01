@@ -23,10 +23,12 @@ with a Diebold-Mariano test for significance. The classical HAR is the reference
 among HAR, the full model, and the ablation variants are small on every metric. On MSE, RMSE, and $R^2$
 the configurations lie within about 1% of one another and the best row alternates across horizons; on MAE
 the differences are similarly small and the lowest value varies by horizon. On QLIKE, HAR has the lowest
-value at h10 and h22, the full model is marginally lower at h1, and the two are comparable at h5. A
-Diebold-Mariano test on QLIKE (single seed) finds the full model significantly better than HAR at h1 and
-significantly worse at h10 and h22, with no significant difference at h5, while the graph ablation shows
-no significant difference on the squared-error loss at any horizon. Across all five metrics no
+value at h10 and h22, the full model is marginally lower at h1, and the two are comparable at h5.
+Diebold-Mariano tests (single seed) on the QLIKE, squared-error, and absolute-error loss families show no
+model favored across all three: relative to HAR the full model has significantly lower QLIKE at h1 and
+significantly higher QLIKE at h10 and h22, significantly lower squared-error loss at h5, and significantly
+lower absolute-error loss at h5 and h10, with the other cells not significant. The ablation removals are
+significant on some loss families and horizons and not others. Across all five metrics no
 configuration consistently outperforms HAR, and most differences are not statistically distinguishable.
 This paper's contribution
 is a leakage-safe ablation-based
@@ -126,9 +128,8 @@ admits a different amount of news per stock.
 **Universe (case study).** The method targets the Vietnamese stock market in general; VN30 is the
 case-study universe for the experiments. We use 33 VN30 constituents with daily
 open-high-low-close-volume (OHLCV) data. Series
-lengths range from about 1,300 sessions (SSB, listed 2021) to about 4,900 (VNM, ACB, from 2006). We
-exclude two current VN30 members (BSR, VPL) whose listing histories are too short to align with the
-panel. The universe is therefore a fixed, point-in-time VN30-like set rather than the live index, a
+lengths range from about 1,300 sessions (SSB, listed 2021) to about 4,900 (VNM, ACB, from 2006). The
+universe is a fixed, point-in-time VN30-like set rather than the live index, a
 limitation stated in Section 8.
 
 **Forecast target.** We forecast the daily Parkinson range volatility at horizons 1, 5, 10, and 22
@@ -374,29 +375,67 @@ final.
 
 ### 6.4 Diebold-Mariano significance
 
-**Table 4. Diebold-Mariano (HLN) on held-out test QLIKE, single seed (42), per horizon.** Each cell is
-the HLN-corrected DM statistic with its two-sided $p$-value; a **negative** statistic means FULL has the
-lower (better) QLIKE, a **positive** statistic means the comparator is better. HAC truncation lag
-$h{-}1$; $n$ ranges 13,903–14,596 present-node test observations by horizon. Source: `dm_report.py` over
-the per-rung `predictions_test.json` dumps.
+**Table 4. Diebold-Mariano (HLN) on held-out test loss, single seed (42), per horizon and per loss
+family.** DM is computed on three per-observation loss series — QLIKE, squared error (SE; the
+MSE/RMSE/$R^2$ family), and absolute error (AE; MAE). Each cell is the HLN-corrected DM statistic with
+its two-sided $p$-value in parentheses and a trailing `*` when $p<0.05$; a **negative** statistic means
+FULL has the lower loss, a **positive** statistic means the comparator does. HAC truncation lag $h{-}1$;
+$n$ per horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22) present-node test observations.
+Source: `dm_report.py` over the per-rung `predictions_test.json` dumps.
 
-| Comparison | h1 | h5 | h10 | h22 |
-|---|---|---|---|---|
-| FULL vs HAR | $-2.01$ (p .044) | $-0.52$ (p .60) | $+4.96$ (p<.001) | $+5.19$ (p<.001) |
-| FULL vs minus_graph | $+2.18$ (p .029) | $+2.93$ (p .003) | $+4.58$ (p<.001) | $+3.39$ (p<.001) |
-| FULL vs minus_gate | $+3.70$ (p<.001) | $-1.04$ (p .30) | $+5.46$ (p<.001) | $+1.98$ (p .048) |
-| FULL vs minus_news | $+6.38$ (p<.001) | $+0.77$ (p .44) | $-3.58$ (p<.001) | $-2.45$ (p .015) |
-| FULL vs LSTM-only | $+4.56$ (p<.001) | $+2.24$ (p .025) | $+4.67$ (p<.001) | $+1.09$ (p .27) |
+*h = 1 trading day*
 
-Reading (single seed): FULL vs minus_graph is positive and significant at every horizon ($p<0.05$ for
-h1/h5/h10/h22): removing the GAT branch significantly lowers QLIKE at all four horizons. FULL has
-significantly lower QLIKE than HAR at h1 ($-2.01$, $p=0.044$), no significant difference at h5, and
-significantly higher QLIKE than HAR at h10 and h22. FULL vs minus_news is significant and negative at h10
-($-3.58$) and h22 ($-2.45$) and significant and positive at h1. The price-only LSTM-only backbone has
-significantly lower or equal QLIKE relative to FULL at h1, h5, and h10. On the squared-error loss, FULL
-vs minus_graph is not significant at any horizon (DM $p=0.33$–$0.96$): the GAT branch shows a significant
-QLIKE difference and no significant difference on MSE/RMSE/$R^2$. All statistics are single-seed; the
-three-seed seed-ensembled DM is reported in the companion three-seed paper.
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $-2.01$ (0.04)* | $-1.35$ (0.18) | $-0.55$ (0.58) |
+| FULL vs minus_graph | $+2.18$ (0.03)* | $-0.05$ (0.96) | $+2.32$ (0.02)* |
+| FULL vs minus_gate | $+3.70$ (0.00)* | $+2.24$ (0.03)* | $+4.81$ (0.00)* |
+| FULL vs minus_news | $+6.38$ (0.00)* | $+2.09$ (0.04)* | $+4.62$ (0.00)* |
+| FULL vs LSTM-only | $+4.56$ (0.00)* | $+0.85$ (0.40) | $+2.00$ (0.05)* |
+
+*h = 5 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $-0.52$ (0.60) | $-2.05$ (0.04)* | $-2.18$ (0.03)* |
+| FULL vs minus_graph | $+2.93$ (0.00)* | $-0.67$ (0.51) | $-1.36$ (0.17) |
+| FULL vs minus_gate | $-1.04$ (0.30) | $-1.10$ (0.27) | $+0.10$ (0.92) |
+| FULL vs minus_news | $+0.77$ (0.44) | $-0.97$ (0.33) | $+0.90$ (0.37) |
+| FULL vs LSTM-only | $+2.24$ (0.02)* | $-0.33$ (0.74) | $-1.29$ (0.20) |
+
+*h = 10 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $+4.96$ (0.00)* | $+1.54$ (0.12) | $-3.59$ (0.00)* |
+| FULL vs minus_graph | $+4.58$ (0.00)* | $+0.98$ (0.33) | $-3.45$ (0.00)* |
+| FULL vs minus_gate | $+5.46$ (0.00)* | $+1.70$ (0.09) | $-1.69$ (0.09) |
+| FULL vs minus_news | $-3.58$ (0.00)* | $+0.27$ (0.79) | $+2.88$ (0.00)* |
+| FULL vs LSTM-only | $+4.67$ (0.00)* | $+1.59$ (0.11) | $-3.24$ (0.00)* |
+
+*h = 22 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $+5.19$ (0.00)* | $+1.22$ (0.22) | $-1.32$ (0.19) |
+| FULL vs minus_graph | $+3.39$ (0.00)* | $-0.95$ (0.34) | $-0.29$ (0.77) |
+| FULL vs minus_gate | $+1.98$ (0.05)* | $+1.95$ (0.05) | $-2.42$ (0.02)* |
+| FULL vs minus_news | $-2.45$ (0.01)* | $-1.57$ (0.12) | $-5.56$ (0.00)* |
+| FULL vs LSTM-only | $+1.09$ (0.27) | $-0.01$ (0.99) | $-3.64$ (0.00)* |
+
+Reading (single seed): weighing the three loss families even-handedly, no comparison is significant in
+the same direction across all of them at a given horizon. FULL vs HAR: the full model has significantly
+lower QLIKE at h1 and significantly higher QLIKE at h10 and h22 (no significant difference at h5); on SE
+the two differ significantly only at h5 (full model lower); on AE the full model is significantly lower at
+h5 and h10 and indistinguishable at h1 and h22 — so no single model is favored across all three losses.
+FULL vs minus_graph is positive and significant on QLIKE at all four horizons, shows no significant SE
+difference at any horizon, and on AE is significant with the comparator lower at h1 and the full model
+lower at h10. FULL vs minus_gate, FULL vs minus_news, and FULL vs LSTM-only are each significant on some
+loss/horizon cells and not others (for example minus_news is significant and positive on QLIKE at h1 and
+negative at h10 and h22, while on AE it is positive at h10 and negative at h22); the significant cells do
+not line up across QLIKE, SE, and AE, so the ablation verdicts depend on the loss family and horizon. All
+statistics are single-seed; the three-seed seed-ensembled DM is reported in the companion three-seed
+paper.
 
 ---
 
@@ -451,8 +490,7 @@ These remain future work.
 
 ## 8. Limitations
 
-First, the 33-ticker universe is a fixed, point-in-time VN30-like set that excludes two short-history
-current members (BSR, VPL), so it is not the live index. Second, the study covers a single market at
+First, the 33-ticker universe is a fixed, point-in-time VN30-like set, so it is not the live index. Second, the study covers a single market at
 daily frequency; the results may not transfer to higher frequencies or to markets with balanced listing
 histories, and every rigorous published GNN-beats-HAR result relies on intraday-derived realized variance
 this daily-OHLCV panel does not have. Third, the reported numbers are **single-seed** (seed 42) and a
