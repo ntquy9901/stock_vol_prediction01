@@ -1,6 +1,6 @@
 # Stock Volatility Prediction for the Vietnamese Stock Market
 
-*Track-A GAT draft, 2026-08-15. **Status**: the four-horizon **single-seed** (seed 42) leave-one-out run
+*Single-seed draft, 2026-08-15. **Status**: the four-horizon **single-seed** (seed 42) leave-one-out run
 is complete; its metrics are filled below from `results/trackA_ablation_h{1,5,10,22}_seed42_2026-08-15_085544_loo/ladder_metrics.json`.
 The single-seed Diebold-Mariano
 table (Table 5) is complete. The only remaining extension is the two-additional-seed (123, 2026) run,
@@ -18,8 +18,8 @@ Volatility forecasts set risk limits, margin, and option prices across the Vietn
 work targets volatility forecasting for Vietnamese equities in general and uses the VN30 constituents
 (the most liquid stocks on Vietnam's Ho Chi Minh Stock Exchange) as the empirical case study. Two
 structural signals a univariate Heterogeneous AutoRegressive (HAR) model discards are Vietnamese-language
-news and cross-stock spillover. We propose a Track-A-style
-parallel model that fuses three branches for one ticker's multi-horizon Parkinson-variance forecast: a
+news and cross-stock spillover. We propose a parallel
+multi-branch model that fuses three branches for one ticker's multi-horizon Parkinson-variance forecast: a
 per-node price LSTM over five node features, a real multi-head Graph Attention Network (GAT) over a
 **directed volume-to-volatility (vol→PK) lead-lag edge**, and a PhoBERT news LSTM with a per-ticker
 gate. The GAT branch consumes the raw node-feature vector at the forecast origin rather than the LSTM
@@ -70,13 +70,13 @@ motivates the present study's central design choice: rather than a symmetric cor
 target ticker's range volatility tomorrow — which encodes a predictive, causal-direction relationship
 that a contemporaneous correlation edge cannot.
 
-We build this edge into a Track-A-style parallel architecture (an LSTM temporal branch, a GAT graph
+We build this edge into a parallel multi-branch architecture (an LSTM temporal branch, a GAT graph
 branch, and a gated news branch, concatenated at a shared head) and we ask, per component and per
 horizon, whether each part earns its place. We answer with a **leave-one-out** ablation: we build the
 full model, then retrain a variant with exactly one component removed, and attribute each component's
 contribution as the change in held-out QLIKE it causes. This paper makes three contributions.
 
-1. **A directed vol→PK graph-attention news model on a Track-A parallel backbone.** The model fuses a
+1. **A directed vol→PK graph-attention news model on a parallel multi-branch backbone.** The model fuses a
    per-node price LSTM, a real multi-head GAT over a directed volume-to-volatility lead-lag edge, and a
    gated PhoBERT news branch. The GAT consumes the raw node-feature vector at the forecast origin, which
    matches the edge semantics and keeps the graph branch an independent cross-sectional view (Section 4).
@@ -190,7 +190,7 @@ from it. The model forecasts one ticker's $h$-day-ahead Parkinson variance from 
 price window of the five node features, a 22-day news window of PhoBERT features with a mask, the ticker
 identity, and the directed vol→PK adjacency over the tickers present on the same date.
 
-![Track-A model architecture: parallel price-LSTM, directed vol→PK GAT (on raw node features), and gated PhoBERT news branches, concatenated into a head with a softplus positivity floor.](diagrams/trackA_gat_architecture.svg)
+![Model architecture: parallel price-LSTM, directed vol→PK GAT (on raw node features), and gated PhoBERT news branches, concatenated into a head with a softplus positivity floor.](diagrams/trackA_gat_architecture.svg)
 
 **The proposed full model.** Three branches run in parallel and concatenate at a shared head.
 
@@ -287,7 +287,7 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 
 | Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
 |---|---|---|---|---|---|
-| HAR (external) | 5.23 | 2.287 | 6.05 | 0.7672 | 0.5735 |
+| HAR | 5.23 | 2.287 | 6.05 | 0.7672 | 0.5735 |
 | LSTM-only | 5.11 | 2.261 | 6.02 | 0.7725 | 0.5696 |
 | FULL | **5.09** | **2.257** | 5.99 | **0.7733** | 0.5724 |
 | minus_graph | 5.13 | 2.264 | 6.02 | 0.7719 | **0.5692** |
@@ -299,7 +299,7 @@ Source: `ladder_metrics.json` (`rungs.*.test_metrics`).
 
 | Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
 |---|---|---|---|---|---|
-| HAR (external) | 2.20 | 1.485 | 4.80 | 0.7351 | 0.5167 |
+| HAR | 2.20 | 1.485 | 4.80 | 0.7351 | 0.5167 |
 | LSTM-only | 2.19 | 1.478 | 4.74 | 0.7374 | **0.5024** |
 | FULL | 2.20 | 1.484 | 4.75 | 0.7352 | 0.5081 |
 | minus_graph | 2.18 | 1.476 | 4.74 | 0.7380 | 0.5034 |
@@ -440,7 +440,7 @@ continuous-error metrics (MSE, RMSE, MAE, $R^2$) and the proportional QLIKE loss
 
 ## 9. Conclusion
 
-We propose a Track-A-style parallel model for multi-horizon VN30 Parkinson-variance forecasting that
+We propose a parallel multi-branch model for multi-horizon VN30 Parkinson-variance forecasting that
 fuses a price LSTM, a real multi-head GAT over a directed volume→volatility lead-lag edge, and a gated
 PhoBERT news branch, with the GAT consuming raw node features to match the edge semantics. We evaluate it
 with a leave-one-out ablation that retrains one variant per removed component and attributes each

@@ -196,7 +196,7 @@ def diagram_full_model():
     arrow(ax, bottom(head2), top(floor))
     arrow(ax, bottom(floor), top(out))
 
-    ax.set_title("Track-A model: parallel Price-LSTM + directed vol->PK GAT + gated news -> fused head",
+    ax.set_title("Parallel Price-LSTM + directed vol->PK GAT + gated news -> fused head",
                  fontsize=12.5, pad=12)
     save(fig, "trackA_gat_architecture.svg")
 
@@ -250,7 +250,7 @@ def diagram_ablation():
             "for FULL vs each minus_X and FULL vs HAR;  horizons h in {1, 5, 10, 22}.")
     box(ax, 6.2, 1.3, 11.4, 1.9, note, "#f4f4f4", fontsize=8.8)
 
-    ax.set_title("Track-A leave-one-out ablation: retrain FULL with exactly one component removed",
+    ax.set_title("Leave-one-out ablation: retrain FULL with exactly one component removed",
                  fontsize=12.5, pad=12)
     save(fig, "trackA_gat_ablation.svg")
 
