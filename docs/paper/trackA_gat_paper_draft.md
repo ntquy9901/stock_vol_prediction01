@@ -3,7 +3,7 @@
 *Single-seed draft, 2026-08-15. **Status**: the four-horizon **single-seed** (seed 42) ablation run
 is complete; its metrics are filled below from `results/trackA_ablation_h{1,5,10,22}_seed42_2026-08-15_085544_loo/ladder_metrics.json`.
 The single-seed Diebold-Mariano
-table (Table 5) is complete. The only remaining extension is the two-additional-seed (123, 2026) run,
+table (Table 4) is complete. The only remaining extension is the two-additional-seed (123, 2026) run,
 reported in a **separate companion three-seed paper** (this file is the single-seed report and is not
 overwritten). All numbers here are single-seed and read as provisional pending the three-seed replication. Per-table source lines appear below each
 table. Directional accuracy is deliberately not reported (Section 8): the day-to-day change in the daily
@@ -172,7 +172,11 @@ $\text{corr}(\text{volume\_shock}_i(t),\ \sqrt{\text{PK}_j}(t{+}1))$. Edges are 
 rows only and frozen for validation and test (leakage-safe), and self-loops are kept on the diagonal.
 
 **Temporal split and leakage control.** Each ticker's series is split chronologically into 70% train,
-15% validation, and 15% test before generating features, fitting scalers, or building windows. Per-ticker
+15% validation, and 15% test before generating features, fitting scalers, or building windows; the
+earliest series begin in 2006. The split is applied per ticker on its own timeline, so the
+train/validation/test calendar boundaries differ across tickers — a ticker listed in 2021 has later
+boundaries than one trading since 2006 — which is precisely why a fixed-node synchronized panel would
+collapse and why the pooled per-ticker split is used. Per-ticker
 price and target scalers are fit on the training partition only and selected at evaluation by explicit
 `ticker_id`. A news feature for a sample uses only information available by that sample's forecast
 origin. Evaluation reads stored raw targets rather than inverse-transforming a clipped normalized target.
@@ -260,8 +264,8 @@ inverting the normalization to the raw variance scale, so the proportional QLIKE
 gradient.
 
 **Reporting protocol.** Model selection (early-stopping, best-checkpoint) uses the validation split only;
-all reported results and significance tests are computed on the held-out test set. Validation metrics
-appear solely to expose the selection-period behaviour of each component.
+all reported results and significance tests are computed on the held-out test set; validation is used
+only for model selection, and no validation metrics are reported.
 
 **Significance.** We complement metric comparisons with a Diebold-Mariano (DM) test on the
 per-observation QLIKE (and squared-error) loss series (HAC truncation lag $h{-}1$,
@@ -333,21 +337,9 @@ on the squared-error metrics (MSE/RMSE/$R^2$) the differences are within ~1% and
 subsections isolate each component (Section 6.2), compare FULL against HAR (Section 6.3), and test
 significance (Section 6.4).
 
-**Table 2. Five-day-ahead VALIDATION metrics (selection period only, not a reported result).** Source:
-`ladder_metrics.json` (`rungs.*.validation_metrics`).
-
-| Config | MSE (×10⁻⁶) ↓ | RMSE (×10⁻³) ↓ | MAE (×10⁻⁴) ↓ | $R^2$ ↑ | QLIKE ↓ |
-|---|---|---|---|---|---|
-| HAR | 2.20 | 1.485 | 4.80 | 0.7351 | 0.5167 |
-| FULL | 2.20 | 1.484 | 4.75 | 0.7352 | 0.5081 |
-| minus_graph | 2.18 | 1.476 | 4.74 | 0.7380 | 0.5034 |
-| minus_gate | **2.16** | **1.471** | **4.69** | **0.7400** | 0.5058 |
-| minus_news | **2.16** | **1.471** | **4.69** | **0.7400** | 0.5056 |
-| LSTM-only | 2.19 | 1.478 | 4.74 | 0.7374 | **0.5024** |
-
 ### 6.2 Component contributions across horizons
 
-**Table 3. Component contribution on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$.**
+**Table 2. Component contribution on held-out test QLIKE, $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$.**
 Negative = removing $X$ raised QLIKE, i.e. $X$ helped. Source: `ladder_metrics.json`
 (`leave_one_out_effects`).
 
@@ -365,7 +357,7 @@ h22 ($-0.005$): removing the news branch raises QLIKE only at the longer horizon
 
 ### 6.3 FULL versus HAR across horizons
 
-**Table 4. FULL vs HAR, held-out test, all four horizons.** Source: `ladder_metrics.json`
+**Table 3. FULL vs HAR, held-out test, all four horizons.** Source: `ladder_metrics.json`
 (`rungs.FULL.test_metrics`, `rungs.HAR.test_metrics`).
 
 | Horizon | HAR QLIKE | FULL QLIKE | HAR $R^2$ | FULL $R^2$ | HAR RMSE (×10⁻³) | FULL RMSE (×10⁻³) |
@@ -377,13 +369,13 @@ h22 ($-0.005$): removing the news branch raises QLIKE only at the longer horizon
 
 Reading (single seed): the full model marginally beats HAR on QLIKE, $R^2$, and RMSE at the short
 horizons h1 and h5 (differences at the third-to-fourth significant figure), and is clearly worse than
-HAR at h10 and h22. The Diebold-Mariano table (Table 5) tests these gaps: FULL beats HAR significantly
+HAR at h10 and h22. The Diebold-Mariano table (Table 4) tests these gaps: FULL beats HAR significantly
 only at h1, and HAR beats FULL significantly at h10 and h22. The three-seed replication (companion paper)
 is required before the single-seed reading is treated as final.
 
 ### 6.4 Diebold-Mariano significance
 
-**Table 5. Diebold-Mariano (HLN) on held-out test QLIKE, single seed (42), per horizon.** Each cell is
+**Table 4. Diebold-Mariano (HLN) on held-out test QLIKE, single seed (42), per horizon.** Each cell is
 the HLN-corrected DM statistic with its two-sided $p$-value; a **negative** statistic means FULL has the
 lower (better) QLIKE, a **positive** statistic means the comparator is better. HAC truncation lag
 $h{-}1$; $n$ ranges 13,903–14,596 present-node test observations by horizon. Source: `dm_report.py` over
@@ -411,10 +403,10 @@ three-seed seed-ensembled DM is reported in the companion three-seed paper.
 
 ## 7. Discussion
 
-*The reading below is single-seed; the Diebold-Mariano table (Table 5) provides significance, and the
+*The reading below is single-seed; the Diebold-Mariano table (Table 4) provides significance, and the
 three-seed replication (companion paper) is required before the reading is treated as final.*
 
-**What each component contributes.** Table 3 reports each component's marginal contribution.
+**What each component contributes.** Table 2 reports each component's marginal contribution.
 `effect(graph)` is positive at all four horizons, so even a
 *directed* lead-lag edge — the design chosen specifically to avoid the market-factor redundancy of a
 correlation edge — yields no significant out-of-sample QLIKE difference on the level metrics, and at
@@ -424,7 +416,7 @@ features does not produce a QLIKE improvement. `effect(news)` is positive at h1 
 h10 ($-0.042$) and h22 ($-0.005$), so on this architecture the news branch lowers QLIKE only
 at the longer horizons, a narrower news benefit than the earlier project finding of a broad news gain.
 `effect(gate)` is positive at three of four horizons, so the per-ticker gate does not consistently earn
-its place. The full model marginally beats HAR at h1 and h5 and is worse at h10 and h22 (Table 4), so no
+its place. The full model marginally beats HAR at h1 and h5 and is worse at h10 and h22 (Table 3), so no
 consistent win over HAR emerges at the single-seed level.
 
 **The price-only backbone is as good as the full stack.** The LSTM-only reference (a shared pooled price
