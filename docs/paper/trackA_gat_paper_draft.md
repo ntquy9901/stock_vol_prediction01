@@ -140,7 +140,8 @@ panel. The universe is therefore a fixed, point-in-time VN30-like set rather tha
 limitation stated in Section 8.
 
 **Forecast target.** We forecast the daily Parkinson range volatility at horizons 1, 5, 10, and 22
-trading days ahead, a single-day value at $t{+}h$. The Parkinson estimator uses the intraday high $H$
+trading days ahead: the target is the single-day estimator value on day $t{+}h$ (i.e.
+$\text{PK}(t{+}h)$), not an average over the next $h$ days. The Parkinson estimator uses the intraday high $H$
 and low $L$:
 
 $$\sigma^2_{\text{Park}} = \frac{(\ln(H/L))^2}{4\ln 2}.$$
