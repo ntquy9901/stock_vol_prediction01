@@ -36,11 +36,14 @@ from train_resume import load_checkpoint, train_with_resume  # noqa: E402
 
 
 def _train(basis, train_snaps, val_snaps, ckpt: Path, epochs, seed, device,
-           use_news: bool, use_gate: bool):
+           use_news: bool, use_gate: bool, apply_graph_train: bool):
     model = TrackAGatModel(basis["price_dim"], basis["news_dim"], basis["num_tickers"],
                            use_news=use_news, use_gate=use_gate)
     model.configure_positivity(basis["scaler_mean"], basis["scaler_std"])
-    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed)
+    # train the graph on/off consistently with how the rung is read out (no train/eval mismatch):
+    # LSTM/NEWS/NODE are graph-off rungs; only the full/GNN rung trains with the vol->PK graph.
+    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed,
+                      apply_graph=apply_graph_train)
     model.load_state_dict(load_checkpoint(ckpt)["best_state"])
     return model.to(device)
 
@@ -61,9 +64,13 @@ def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.dev
         return {"validation_metrics": v["metrics"], "test_metrics": t["metrics"],
                 "floor_hit_fraction": t["floor_hit_fraction"]}
 
-    lstm = _train(basis, tr, va, out_base / "lstm.pt", epochs, seed, device, use_news=False, use_gate=False)
-    news = _train(basis, tr, va, out_base / "news.pt", epochs, seed, device, use_news=True, use_gate=False)
-    full = _train(basis, tr, va, out_base / "full.pt", epochs, seed, device, use_news=True, use_gate=True)
+    lstm = _train(basis, tr, va, out_base / "lstm.pt", epochs, seed, device,
+                  use_news=False, use_gate=False, apply_graph_train=False)
+    news = _train(basis, tr, va, out_base / "news.pt", epochs, seed, device,
+                  use_news=True, use_gate=False, apply_graph_train=False)
+    # full trains WITH the vol->PK graph; NODE = read it graph-off (nested), GNN = read graph-on
+    full = _train(basis, tr, va, out_base / "full.pt", epochs, seed, device,
+                  use_news=True, use_gate=True, apply_graph_train=True)
 
     har = basis["har"]
     rungs = {

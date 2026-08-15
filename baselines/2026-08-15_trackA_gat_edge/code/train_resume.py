@@ -17,12 +17,12 @@ def _forward_snap(model, snap, device, apply_graph=True):
     return pred.squeeze(0)
 
 
-def _val_loss(model, snaps, device):
+def _val_loss(model, snaps, device, apply_graph=True):
     model.eval()
     tot, cnt = 0.0, 0
     with torch.no_grad():
         for s in snaps:
-            p = _forward_snap(model, s, device)
+            p = _forward_snap(model, s, device, apply_graph)
             t = s["target"].to(device)
             tot += torch.mean((p - t) ** 2).item() * len(t)
             cnt += len(t)
@@ -39,7 +39,7 @@ def load_checkpoint(path):
 
 
 def train_with_resume(model, train_snaps, val_snaps, ckpt_path: Path, epochs: int,
-                      device, seed: int, resume: bool = False):
+                      device, seed: int, resume: bool = False, apply_graph: bool = True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     model.to(device)
@@ -57,13 +57,13 @@ def train_with_resume(model, train_snaps, val_snaps, ckpt_path: Path, epochs: in
         for i in rng.permutation(len(train_snaps)):
             s = train_snaps[i]
             optimizer.zero_grad()
-            loss = torch.mean((_forward_snap(model, s, device) - s["target"].to(device)) ** 2)
+            loss = torch.mean((_forward_snap(model, s, device, apply_graph) - s["target"].to(device)) ** 2)
             if not torch.isfinite(loss):
                 raise ValueError("non-finite training loss")
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
-        vl = _val_loss(model, val_snaps, device)
+        vl = _val_loss(model, val_snaps, device, apply_graph)
         if vl < best_val:
             best_val, best_state = vl, copy.deepcopy(model.state_dict())
     save_checkpoint(ckpt_path, model, optimizer, start_epoch + epochs, best_val, best_state)
