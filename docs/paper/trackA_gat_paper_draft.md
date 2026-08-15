@@ -368,12 +368,12 @@ h22 ($-0.005$): removing the news branch raises QLIKE only at the longer horizon
 **Table 4. FULL vs HAR, held-out test, all four horizons.** Source: `ladder_metrics.json`
 (`rungs.FULL.test_metrics`, `rungs.HAR.test_metrics`).
 
-| Horizon | HAR QLIKE | FULL QLIKE | FULL $R^2$ | HAR $R^2$ | FULL RMSE (×10⁻³) | HAR RMSE (×10⁻³) |
+| Horizon | HAR QLIKE | FULL QLIKE | HAR $R^2$ | FULL $R^2$ | HAR RMSE (×10⁻³) | FULL RMSE (×10⁻³) |
 |---|---|---|---|---|---|---|
-| 1 | 0.4813 | **0.4780** | **0.8221** | 0.8192 | **1.998** | 2.014 |
-| 5 | 0.5735 | **0.5724** | **0.7733** | 0.7672 | **2.257** | 2.287 |
-| 10 | **0.6139** | 0.6924 | 0.7458 | **0.7532** | 2.393 | **2.358** |
-| 22 | **0.6742** | 0.7012 | 0.7260 | **0.7303** | 2.473 | **2.453** |
+| 1 | 0.4813 | **0.4780** | 0.8192 | **0.8221** | 2.014 | **1.998** |
+| 5 | 0.5735 | **0.5724** | 0.7672 | **0.7733** | 2.287 | **2.257** |
+| 10 | **0.6139** | 0.6924 | **0.7532** | 0.7458 | **2.358** | 2.393 |
+| 22 | **0.6742** | 0.7012 | **0.7303** | 0.7260 | **2.453** | 2.473 |
 
 Reading (single seed): the full model marginally beats HAR on QLIKE, $R^2$, and RMSE at the short
 horizons h1 and h5 (differences at the third-to-fourth significant figure), and is clearly worse than
