@@ -31,6 +31,10 @@ def test_dm_pair_favors_closer_model(tmp_path, monkeypatch):
     assert r["n"] == 40
     assert r["favors"] == "A"          # FULL closer -> lower QLIKE
     assert r["mean_diff"] < 0
+    # all-metric support: FULL is closer on squared error and absolute error too
+    for loss in ("se", "ae"):
+        rl = dm.dm_pair(ts, h, "FULL", "HAR", seeds, loss=loss)
+        assert rl["favors"] == "A" and rl["n"] == 40
 
 
 def test_ensemble_averages_seeds(tmp_path, monkeypatch):

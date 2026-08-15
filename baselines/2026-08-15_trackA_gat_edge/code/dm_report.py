@@ -61,28 +61,42 @@ def _qlike(target: np.ndarray, prediction: np.ndarray) -> np.ndarray:
     return ratio - np.log(ratio) - 1.0
 
 
-def dm_pair(ts: str, horizon: int, rung_a: str, rung_b: str, seeds) -> dict[str, Any]:
+# per-observation loss families: QLIKE (proportional), squared error (MSE/RMSE/R2 family),
+# absolute error (MAE). DM on each answers "does model A beat B under that loss".
+LOSSES = {
+    "qlike": _qlike,
+    "se": lambda t, p: (t - p) ** 2,
+    "ae": lambda t, p: np.abs(t - p),
+}
+
+
+def dm_pair(ts: str, horizon: int, rung_a: str, rung_b: str, seeds, loss: str = "qlike") -> dict[str, Any]:
     keys_a, target_a, pred_a = _ensemble(ts, horizon, rung_a, seeds)
     keys_b, target_b, pred_b = _ensemble(ts, horizon, rung_b, seeds)
     if keys_a != keys_b or not np.allclose(target_a, target_b):
         raise ValueError(f"DM {rung_a} vs {rung_b}: misaligned observations or targets")
-    result = diebold_mariano(_qlike(target_a, pred_a), _qlike(target_b, pred_b), h=horizon)
+    loss_fn = LOSSES[loss]
+    result = diebold_mariano(loss_fn(target_a, pred_a), loss_fn(target_b, pred_b), h=horizon)
     favors = "tie" if result.mean_diff == 0 else ("A" if result.mean_diff < 0 else "B")
     return {"dm_hln": result.dm_hln, "p_value": result.p_value, "mean_diff": result.mean_diff,
             "favors": favors, "n": len(keys_a)}
 
 
 def main(ts: str, horizon: int, seeds) -> None:
-    print(f"# DM (HLN) h{horizon} seeds={list(seeds)} -- QLIKE, negative dm favors A=FULL\n")
-    print("| A vs B | dm_hln | p_value | mean_diff (A-B) | favors | n |")
-    print("|---|---|---|---|---|---|")
+    print(f"# DM (HLN) h{horizon} seeds={list(seeds)} -- dm_hln(p); negative dm favors A=FULL; *=p<.05\n")
+    print("| A vs B | QLIKE | SE (MSE/RMSE/R2) | AE (MAE) | n |")
+    print("|---|---|---|---|---|")
     for rung_b in ("HAR", "minus_graph", "minus_gate", "minus_news", "LSTM_only"):
-        try:
-            r = dm_pair(ts, horizon, "FULL", rung_b, seeds)
-            print(f"| FULL vs {rung_b} | {r['dm_hln']:.3f} | {r['p_value']:.4f} "
-                  f"| {r['mean_diff']:+.6f} | {r['favors']} | {r['n']} |")
-        except (FileNotFoundError, ValueError) as exc:
-            print(f"| FULL vs {rung_b} | n/a | n/a | n/a | {exc} | n/a |")
+        cells = []
+        n = "n/a"
+        for loss in ("qlike", "se", "ae"):
+            try:
+                r = dm_pair(ts, horizon, "FULL", rung_b, seeds, loss=loss)
+                n = r["n"]
+                cells.append(f"{r['dm_hln']:+.2f}({r['p_value']:.2f})" + ("*" if r["p_value"] < 0.05 else ""))
+            except (FileNotFoundError, ValueError) as exc:
+                cells.append(f"err:{exc}")
+        print(f"| FULL vs {rung_b} | {cells[0]} | {cells[1]} | {cells[2]} | {n} |")
 
 
 if __name__ == "__main__":  # pragma: no cover
