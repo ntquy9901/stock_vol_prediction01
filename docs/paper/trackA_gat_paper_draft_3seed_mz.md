@@ -378,38 +378,71 @@ each metric HAR-then-FULL; bold marks the better mean of the pair. Source: three
 Reading: on RMSE and $R^2$ the full model and HAR are within their seed dispersion at h1, h5, and h10,
 and HAR is marginally ahead at h22 (MSE and MAE follow the same pattern in Table 1). On QLIKE, HAR has
 the lower mean at all four horizons, with the gap widening from h1 (0.0040) to h22 (0.0311). The
-Diebold-Mariano table (Table 4) tests the QLIKE gaps on the seed-ensembled predictions: the full model
-shows no significant difference from HAR at h1, h5, and h10, and HAR has significantly lower QLIKE than
-the full model at h22.
+Diebold-Mariano table (Table 4) tests these gaps across loss families on the seed-ensembled predictions:
+on QLIKE the full model shows no significant difference from HAR at h1, h5, and h10 and HAR is
+significantly lower at h22; on squared error there is no significant difference at any horizon; on
+absolute error the full model is significantly lower at h5.
 
-### 6.4 Diebold-Mariano significance
+### 6.4 Diebold-Mariano significance across metrics
 
-**Table 4. Diebold-Mariano (HLN) on held-out test QLIKE, seed-ensembled (42, 123, 2026), per horizon.**
-Each cell is the HLN-corrected DM statistic with its two-sided $p$-value; a **negative** statistic means
-FULL has the lower (better) QLIKE, a **positive** statistic means the comparator is better. HAC
-truncation lag $h{-}1$; $n$ per horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22)
-present-node test observations. Source: `dm_report.py` over the seed-ensembled per-rung
-`predictions_test.json` dumps.
+**Table 4. Diebold-Mariano (HLN) on held-out test, seed-ensembled (42, 123, 2026), per horizon and per
+loss family.** Each cell is the HLN-corrected DM statistic with its two-sided $p$-value; **bold** marks
+$p<0.05$. A **negative** statistic means FULL has the lower loss; a **positive** statistic means the
+comparator has the lower loss. DM is run on three per-observation loss families: QLIKE, squared error
+(SE; the MSE/RMSE/$R^2$ family), and absolute error (AE; MAE). HAC truncation lag $h{-}1$; $n$ per
+horizon is 14,596 (h1), 14,464 (h5), 14,299 (h10), 13,903 (h22).
 
-| Comparison | h1 | h5 | h10 | h22 |
-|---|---|---|---|---|
-| FULL vs HAR | $+0.732$ (p .46) | $-0.337$ (p .74) | $+1.279$ (p .20) | $+5.104$ (p<.001) |
-| FULL vs minus_graph | $+8.697$ (p<.001) | $+1.291$ (p .20) | $+0.799$ (p .42) | $+5.883$ (p<.001) |
-| FULL vs minus_gate | $+6.781$ (p<.001) | $+0.935$ (p .35) | $+0.076$ (p .94) | $+1.562$ (p .12) |
-| FULL vs minus_news | $+8.045$ (p<.001) | $+4.455$ (p<.001) | $+1.098$ (p .27) | $-3.142$ (p .0017) |
-| FULL vs LSTM-only | $+6.074$ (p<.001) | $+2.578$ (p .0099) | $+0.559$ (p .58) | $+2.231$ (p .026) |
+*h = 1 trading day*
 
-Reading: FULL vs HAR is not significant at h1, h5, and h10 ($p=0.46/0.74/0.20$) and is positive and
-significant at h22 ($+5.104$, $p<0.001$), so HAR has significantly lower QLIKE at h22 and there is no
-significant difference at the shorter horizons. FULL vs minus_graph is positive and significant at h1 and
-h22 ($p<0.001$) and not significant at h5 and h10, so removing the GAT branch significantly lowers QLIKE
-at h1 and h22 and shows no significant difference at h5/h10. FULL vs minus_gate is positive and
-significant at h1 ($+6.781$, $p<0.001$) and not significant at h5, h10, or h22, so removing the gate
-significantly lowers QLIKE only at h1. FULL vs minus_news is positive and significant at h1 and h5
-($p<0.001$), not significant at h10, and negative and significant at h22 ($-3.142$, $p=0.0017$), so
-removing the news branch lowers QLIKE at h1 and h5 and raises it at h22. FULL vs LSTM-only is positive
-and significant at h1, h5, and h22 and not significant at h10, so the price-only LSTM backbone has
-significantly lower or equal QLIKE relative to the full model at those horizons.
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $+0.73$ ($p = 0.46$) | $-0.69$ ($p = 0.49$) | $+0.88$ ($p = 0.38$) |
+| FULL vs minus_graph | **$+8.70$ ($p < 0.001$)** | $-0.21$ ($p = 0.83$) | **$+2.66$ ($p = 0.01$)** |
+| FULL vs minus_gate | **$+6.78$ ($p < 0.001$)** | **$+2.37$ ($p = 0.02$)** | **$+6.24$ ($p < 0.001$)** |
+| FULL vs minus_news | **$+8.04$ ($p < 0.001$)** | **$+3.93$ ($p < 0.001$)** | **$+5.35$ ($p < 0.001$)** |
+| FULL vs LSTM-only | **$+6.07$ ($p < 0.001$)** | $-1.78$ ($p = 0.07$) | **$+6.77$ ($p < 0.001$)** |
+
+*h = 5 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $-0.34$ ($p = 0.74$) | $-1.03$ ($p = 0.30$) | **$-4.20$ ($p < 0.001$)** |
+| FULL vs minus_graph | $+1.29$ ($p = 0.20$) | $+0.27$ ($p = 0.79$) | $-0.58$ ($p = 0.56$) |
+| FULL vs minus_gate | $+0.93$ ($p = 0.35$) | $+0.23$ ($p = 0.82$) | $-0.53$ ($p = 0.60$) |
+| FULL vs minus_news | **$+4.45$ ($p < 0.001$)** | $-0.94$ ($p = 0.35$) | $-0.94$ ($p = 0.35$) |
+| FULL vs LSTM-only | **$+2.58$ ($p = 0.01$)** | $+0.65$ ($p = 0.52$) | $-0.49$ ($p = 0.62$) |
+
+*h = 10 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | $+1.28$ ($p = 0.20$) | $-0.20$ ($p = 0.84$) | $-1.07$ ($p = 0.28$) |
+| FULL vs minus_graph | $+0.80$ ($p = 0.42$) | **$+2.25$ ($p = 0.02$)** | **$-5.20$ ($p < 0.001$)** |
+| FULL vs minus_gate | $+0.08$ ($p = 0.94$) | **$+2.06$ ($p = 0.04$)** | **$-4.34$ ($p < 0.001$)** |
+| FULL vs minus_news | $+1.10$ ($p = 0.27$) | $+1.30$ ($p = 0.19$) | **$-2.08$ ($p = 0.04$)** |
+| FULL vs LSTM-only | $+0.56$ ($p = 0.58$) | **$+2.62$ ($p = 0.01$)** | **$-4.74$ ($p < 0.001$)** |
+
+*h = 22 trading days*
+
+| Comparison | QLIKE | SE (MSE/RMSE/$R^2$) | AE (MAE) |
+|---|---|---|---|
+| FULL vs HAR | **$+5.10$ ($p < 0.001$)** | $+1.09$ ($p = 0.27$) | $-1.21$ ($p = 0.22$) |
+| FULL vs minus_graph | **$+5.88$ ($p < 0.001$)** | $+0.08$ ($p = 0.94$) | **$+2.50$ ($p = 0.01$)** |
+| FULL vs minus_gate | $+1.56$ ($p = 0.12$) | $-1.52$ ($p = 0.13$) | **$-3.22$ ($p < 0.001$)** |
+| FULL vs minus_news | **$-3.14$ ($p < 0.001$)** | $-1.90$ ($p = 0.06$) | **$-4.25$ ($p < 0.001$)** |
+| FULL vs LSTM-only | **$+2.23$ ($p = 0.03$)** | $+0.75$ ($p = 0.45$) | $+0.25$ ($p = 0.80$) |
+
+Reading (all loss families): For FULL vs HAR, the QLIKE loss differs significantly only at h22 (HAR
+lower, $p<0.001$) with no significant difference at h1, h5, or h10; the squared-error loss shows no
+significant difference at any horizon; the absolute-error loss differs significantly only at h5 (FULL
+lower, $p<0.001$). No single model has the lower loss across all three families. For the component
+removals, significance depends on the loss and the horizon: removing the GAT branch is significant on
+QLIKE at h1 and h22 and on the squared-error loss at h10 only; removing the per-ticker gate is
+significant on QLIKE at h1; removing the news branch is significant on QLIKE at h1, h5, and h22. The
+price-only LSTM backbone has the lower or equal loss relative to the full model on QLIKE at h1, h5, and
+h22. Across the three loss families, no configuration is uniformly favored over HAR.
+
+---
 
 ### 6.5 Mincer-Zarnowitz forecast efficiency
 
