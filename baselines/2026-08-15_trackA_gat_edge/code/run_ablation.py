@@ -44,7 +44,9 @@ def _train(basis, train_snaps, val_snaps, ckpt: Path, epochs, seed, device,
     model.configure_positivity(basis["scaler_mean"], basis["scaler_std"])
     # no_graph drops the whole GAT branch (use_graph=False) so adjacency is never consulted; the
     # other variants keep the graph on. apply_graph is True here and inert when use_graph is False.
-    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed, apply_graph=True)
+    # Pooled models converge ~epoch 5-6 then overfit -> early-stop (patience 3, min 6) under the cap.
+    train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed, apply_graph=True,
+                      patience=3, min_epochs=6)
     model.load_state_dict(load_checkpoint(ckpt)["best_state"])
     return model.to(device)
 

@@ -127,4 +127,24 @@ effect(X) = QLIKE(FULL) - QLIKE(minus_X)
 
 Significance: Diebold-Mariano (HLN correction) on seed-ensembled test predictions, for
 FULL vs each minus_X and FULL vs HAR.
+
+---
+
+## 4. The 5 node features (shared by the LSTM and GAT branches)
+
+Column order: `[pk_daily, har_weekly, har_monthly, market_pk, volume_zscore(22)]`.
+
+| # | Feature | Definition | Causal/leakage |
+|---|---------|------------|----------------|
+| 1 | pk_daily | `parkinson_volatility` (the variance), clipped ±3σ (train stats) | uses day `t` only |
+| 2 | har_weekly | rolling-5 mean of pk | trailing |
+| 3 | har_monthly | rolling-22 mean of pk | trailing |
+| 4 | market_pk | cross-sectional MEDIAN of `sqrt(PK)` across present tickers at `t` (market factor) | contemporaneous (col `t`) |
+| 5 | volume_zscore | `(log1p(volume) − roll.mean) / roll.std`, **rolling-22** window; no-volume tickers → 0.0 | trailing |
+
+Feature 5 uses a **22-trading-day (1-month) window**, unified with `har_monthly`'s rolling(22)
+(TrackA-local override in `run_trackA.build_trackA_basis`; the underlying column key retains the
+legacy name `volume_zscore_20` from the 2026-08-11 EDA baseline, which stays at window 20 so its
+recorded results remain reproducible). SEQ (LSTM lookback) = 22. The GAT node input is the
+last-timestep feature vector, which already encodes multi-scale rolling context via features 2/3/5.
 ```

@@ -25,6 +25,8 @@ for _p in (str(CODE), str(PILOT), str(EDA), str(COMBO), str(ROOT)):
 import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
+import features as _eda_features  # noqa: E402
+
 from combo_ladder import build_basis  # noqa: E402
 from eda_ladder import run_e0  # noqa: E402
 from model import POSITIVITY_EPSILON, TrackAGatModel  # noqa: E402
@@ -41,6 +43,11 @@ def build_trackA_basis(stamp: Path) -> dict[str, Any]:
     """
 
     stamp = Path(stamp)
+    # TrackA-local override: use a 22-day (1-month) volume z-score window, unified with har_monthly
+    # rolling(22). Isolated to this run only (module global read at call time) so the 2026-08-11/14
+    # baselines and their recorded audit results stay reproducible at their original window=20.
+    _eda_features._VOLUME_WINDOW = 22
+    print(f"[trackA] volume z-score window = {_eda_features._VOLUME_WINDOW} trading days", flush=True)
     pooled, graph, store, allowed, _edge_count = build_basis(stamp)
     num_tickers = max(graph.ticker_to_id.values()) + 1
     scaler_mean = torch.zeros(num_tickers, dtype=torch.float32)

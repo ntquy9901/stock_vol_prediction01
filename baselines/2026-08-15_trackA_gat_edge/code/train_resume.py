@@ -39,7 +39,12 @@ def load_checkpoint(path):
 
 
 def train_with_resume(model, train_snaps, val_snaps, ckpt_path: Path, epochs: int,
-                      device, seed: int, resume: bool = False, apply_graph: bool = True):
+                      device, seed: int, resume: bool = False, apply_graph: bool = True,
+                      patience: int = 0, min_epochs: int = 0):
+    """Train up to `epochs`, keeping the best-val checkpoint. If patience>0, stop early once val
+    loss has not improved for `patience` consecutive epochs (but never before `min_epochs`).
+    Pooled models converge ~epoch 5-6 then overfit, so early stopping saves compute without cost.
+    """
     torch.manual_seed(seed)
     np.random.seed(seed)
     model.to(device)
@@ -52,7 +57,8 @@ def train_with_resume(model, train_snaps, val_snaps, ckpt_path: Path, epochs: in
         optimizer.load_state_dict(ck["optimizer_state"])
         start_epoch, best_val, best_state = ck["epoch"], ck["best_val"], ck["best_state"]
     rng = np.random.default_rng(seed + start_epoch)
-    for _epoch in range(start_epoch, start_epoch + epochs):
+    since_improved, last_epoch = 0, start_epoch
+    for epoch in range(start_epoch, start_epoch + epochs):
         model.train()
         for i in rng.permutation(len(train_snaps)):
             s = train_snaps[i]
@@ -64,7 +70,12 @@ def train_with_resume(model, train_snaps, val_snaps, ckpt_path: Path, epochs: in
             nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
         vl = _val_loss(model, val_snaps, device, apply_graph)
+        last_epoch = epoch + 1
         if vl < best_val:
-            best_val, best_state = vl, copy.deepcopy(model.state_dict())
-    save_checkpoint(ckpt_path, model, optimizer, start_epoch + epochs, best_val, best_state)
-    return {"epoch": start_epoch + epochs, "best_val": best_val, "best_state": best_state}
+            best_val, best_state, since_improved = vl, copy.deepcopy(model.state_dict()), 0
+        else:
+            since_improved += 1
+        if patience and last_epoch >= min_epochs and since_improved >= patience:
+            break  # val loss plateaued -> stop (best_state already captured)
+    save_checkpoint(ckpt_path, model, optimizer, last_epoch, best_val, best_state)
+    return {"epoch": last_epoch, "best_val": best_val, "best_state": best_state}
