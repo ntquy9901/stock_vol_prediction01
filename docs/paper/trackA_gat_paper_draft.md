@@ -29,7 +29,7 @@ fair ablation. We evaluate the model with a **leave-one-out** ablation: from the
 one variant per removed component (minus-graph removes the entire GAT branch, minus-gate removes the
 per-ticker gate, minus-news removes the news branch), and we measure each component's contribution as
 $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$ on the held-out test set,
-with a Diebold-Mariano test for significance. The classical HAR is the external baseline every
+with a Diebold-Mariano test for significance. The classical HAR is the baseline every
 component must beat. On a single-seed run across four horizons, the directed graph does not help at any
 horizon (removing the entire GAT branch never raises held-out QLIKE, and lowers it at h10 and h22), the
 per-ticker gate does not consistently help, and the news branch lowers QLIKE only at the longer horizons
@@ -229,7 +229,7 @@ is evaluated in — no train/eval mismatch):
   subsystem, not merely the edges.
 - **minus_gate** — FULL without the per-ticker gate.
 - **minus_news** — FULL without the news branch (the gate is a no-op without news).
-- **HAR** — an external pooled per-ticker HAR linear regression on the three HAR scales; the floor every
+- **HAR** — a pooled per-ticker HAR linear regression on the three HAR scales; the floor every
   component must beat.
 
 The contribution of component $X$ is $\text{effect}(X)=\text{QLIKE}(\text{FULL})-\text{QLIKE}(\text{FULL}{-}X)$
