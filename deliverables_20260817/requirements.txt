@@ -1,0 +1,12 @@
+# Runtime dependencies inferred from imports in the copied code.
+# Unpinned on purpose: install compatible current versions for your platform.
+# torch: install the build matching your CUDA/CPU setup (see https://pytorch.org).
+torch
+pandas
+numpy
+scikit-learn
+scipy
+networkx
+matplotlib
+# Test runner (baselines/*/test/):
+pytest

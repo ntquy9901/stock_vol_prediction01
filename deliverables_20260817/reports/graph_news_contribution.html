@@ -1,0 +1,59 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Graph &amp; News contribution — VN30 volatility</title><style>
+body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:24px;color:#1a1a1a;background:#fafafa}
+h1{font-size:22px} h2{font-size:17px;margin-top:28px;border-bottom:2px solid #ddd;padding-bottom:4px}
+table{border-collapse:collapse;margin:8px 0;font-size:13px}
+td,th{border:1px solid #ccc;padding:6px 10px;text-align:center}
+th{background:#eee}
+.helps{background:#c8e6c9} .hurts{background:#ffcdd2} .none{background:#eceff1;color:#666}
+.row{display:flex;align-items:center;margin:3px 0;font-size:12px}
+.lbl{width:130px;text-align:right;padding-right:8px;color:#333}
+.track{flex:1;position:relative;height:18px;background:#f0f0f0;border-left:2px solid #888}
+.bar{position:absolute;height:18px;top:0}
+.better{background:#43a047;right:50%} .worse{background:#e53935;left:50%}
+.center{position:absolute;left:50%;top:-2px;bottom:-2px;border-left:1px dashed #888}
+.val{width:70px;padding-left:8px;color:#333}
+.collapsed{color:#e53935;font-weight:bold} .strengthened{color:#2e7d32;font-weight:bold} .robust{color:#555}
+.note{color:#555;font-size:13px;max-width:820px}
+.legend span{display:inline-block;padding:2px 8px;margin-right:6px;border-radius:3px;font-size:12px}
+</style></head><body>
+<h1>Do the graph and news branches contribute? — VN30 volatility (QLIKE, 3-seed unless noted)</h1>
+<p class="note">Reading: the graph (GAT over the vol&rarr;PK edge) and news (gated PhoBERT) branches
+were added to beat HAR. Below, near-zero bars and grey/red cells show they do not add reliable
+out-of-sample value; the model's small edge comes from the node features + LSTM nonlinearity at the
+short horizons, not from the graph or news.</p>
+
+<h2>1. QLIKE difference vs HAR (bars near the centre line = no contribution)</h2>
+<p class="note"><span class="legend"><span class="better" style="color:#fff">left / green = better than HAR</span>
+<span class="worse" style="color:#fff">right / red = worse than HAR</span></span>
+Half-track = a QLIKE gap of 0.03. Most bars hug the centre: FULL, minus_graph, minus_gate are
+within ~0.01 of HAR at every horizon; the only visibly-left bars are lstm_only / minus_news at h1&ndash;h5.</p>
+<h3 style="font-size:14px;margin:14px 0 4px">Horizon h1 (HAR QLIKE = 0.4633)</h3><div class="row"><div class="lbl">FULL</div><div class="track"><div class="center"></div><div class="bar better" style="width:5.7%"></div></div><div class="val">-0.0034</div></div><div class="row"><div class="lbl">minus_graph</div><div class="track"><div class="center"></div><div class="bar better" style="width:6.8%"></div></div><div class="val">-0.0041</div></div><div class="row"><div class="lbl">minus_gate</div><div class="track"><div class="center"></div><div class="bar better" style="width:8.7%"></div></div><div class="val">-0.0052</div></div><div class="row"><div class="lbl">minus_news</div><div class="track"><div class="center"></div><div class="bar better" style="width:11.9%"></div></div><div class="val">-0.0071</div></div><div class="row"><div class="lbl">lstm_only</div><div class="track"><div class="center"></div><div class="bar better" style="width:13.4%"></div></div><div class="val">-0.0080</div></div><h3 style="font-size:14px;margin:14px 0 4px">Horizon h5 (HAR QLIKE = 0.5503)</h3><div class="row"><div class="lbl">FULL</div><div class="track"><div class="center"></div><div class="bar better" style="width:2.8%"></div></div><div class="val">-0.0017</div></div><div class="row"><div class="lbl">minus_graph</div><div class="track"><div class="center"></div><div class="bar worse" style="width:2.6%"></div></div><div class="val">+0.0016</div></div><div class="row"><div class="lbl">minus_gate</div><div class="track"><div class="center"></div><div class="bar better" style="width:1.7%"></div></div><div class="val">-0.0010</div></div><div class="row"><div class="lbl">minus_news</div><div class="track"><div class="center"></div><div class="bar better" style="width:12.0%"></div></div><div class="val">-0.0072</div></div><div class="row"><div class="lbl">lstm_only</div><div class="track"><div class="center"></div><div class="bar better" style="width:5.8%"></div></div><div class="val">-0.0035</div></div><h3 style="font-size:14px;margin:14px 0 4px">Horizon h10 (HAR QLIKE = 0.5933)</h3><div class="row"><div class="lbl">FULL</div><div class="track"><div class="center"></div><div class="bar worse" style="width:12.5%"></div></div><div class="val">+0.0075</div></div><div class="row"><div class="lbl">minus_graph</div><div class="track"><div class="center"></div><div class="bar worse" style="width:8.3%"></div></div><div class="val">+0.0050</div></div><div class="row"><div class="lbl">minus_gate</div><div class="track"><div class="center"></div><div class="bar worse" style="width:11.5%"></div></div><div class="val">+0.0069</div></div><div class="row"><div class="lbl">minus_news</div><div class="track"><div class="center"></div><div class="bar worse" style="width:10.3%"></div></div><div class="val">+0.0062</div></div><div class="row"><div class="lbl">lstm_only</div><div class="track"><div class="center"></div><div class="bar worse" style="width:3.3%"></div></div><div class="val">+0.0020</div></div><h3 style="font-size:14px;margin:14px 0 4px">Horizon h22 (HAR QLIKE = 0.6474)</h3><div class="row"><div class="lbl">FULL</div><div class="track"><div class="center"></div><div class="bar worse" style="width:30.6%"></div></div><div class="val">+0.0184</div></div><div class="row"><div class="lbl">minus_graph</div><div class="track"><div class="center"></div><div class="bar worse" style="width:28.7%"></div></div><div class="val">+0.0172</div></div><div class="row"><div class="lbl">minus_gate</div><div class="track"><div class="center"></div><div class="bar worse" style="width:30.9%"></div></div><div class="val">+0.0185</div></div><div class="row"><div class="lbl">minus_news</div><div class="track"><div class="center"></div><div class="bar worse" style="width:28.5%"></div></div><div class="val">+0.0171</div></div><div class="row"><div class="lbl">lstm_only</div><div class="track"><div class="center"></div><div class="bar worse" style="width:23.4%"></div></div><div class="val">+0.0140</div></div>
+
+<h2>2. Leave-one-out contribution (Diebold-Mariano, FULL vs FULL&minus;component)</h2>
+<p class="note">"helps" (green) = removing the component significantly worsens QLIKE. "no help" (red) =
+removing it significantly <b>improves</b> QLIKE (the component hurts). "ns" (grey) = no significant
+difference. The graph is never green; news/gate are red at the short horizons.</p>
+<table><tr><th>component</th><th>h1</th><th>h5</th><th>h10</th><th>h22</th></tr><tr><th>graph</th><td class="none">ns<br><small>dm=-0.21, p=0.831</small></td><td class="none">ns<br><small>dm=-0.59, p=0.556</small></td><td class="hurts">no help<br><small>dm=+2.01, p=0.045</small></td><td class="none">ns<br><small>dm=+1.60, p=0.110</small></td></tr><tr><th>news</th><td class="hurts">no help<br><small>dm=+9.41, p=0.000</small></td><td class="hurts">no help<br><small>dm=+6.58, p=0.000</small></td><td class="none">ns<br><small>dm=+0.65, p=0.513</small></td><td class="none">ns<br><small>dm=+0.22, p=0.826</small></td></tr><tr><th>gate</th><td class="hurts">no help<br><small>dm=+3.70, p=0.000</small></td><td class="none">ns<br><small>dm=-0.28, p=0.782</small></td><td class="none">ns<br><small>dm=+1.15, p=0.250</small></td><td class="none">ns<br><small>dm=+0.33, p=0.739</small></td></tr></table>
+
+<h2>3. Robustness of the marginal cells (3-seed &rarr; 5-seed)</h2>
+<p class="note">Cells near p=0.05 were re-estimated at 5 seeds. The one apparent "graph beats HAR"
+result (graphical-LASSO @ h5) collapses; the LSTM-nonlinearity result strengthens &mdash; confirming
+the value is nonlinearity over the node features, not the graph edge.</p>
+<table><tr><th>marginal cell</th><th>3-seed</th><th>5-seed</th><th>outcome</th><th>meaning</th></tr><tr><td style="text-align:left">graph edge (graphical-LASSO) beats HAR @ h5</td><td>p=0.048 *</td><td>p=0.286</td><td class="collapsed">collapsed</td><td style="text-align:left">graph edge does NOT beat HAR once multi-seed</td></tr><tr><td style="text-align:left">LSTM nonlinearity beats fair HAR-X @ h5</td><td>p=0.07</td><td>p=0.03 *</td><td class="strengthened">strengthened</td><td style="text-align:left">nonlinearity edge is real at h5 too (not the graph)</td></tr><tr><td style="text-align:left">FULL vs HAR @ h10 (HAR better)</td><td>p=0.014 *</td><td>p=0.023 *</td><td class="robust">robust</td><td style="text-align:left">HAR stays better at h10</td></tr><tr><td style="text-align:left">graph HURTS @ h10 (FULL vs minus_graph)</td><td>p=0.045 *</td><td>p=0.001 *</td><td class="robust">robust</td><td style="text-align:left">removing the graph significantly improves QLIKE at h10</td></tr></table>
+
+<h2>4. Root cause</h2>
+<ul class="note">
+<li><b>Graph edge:</b> the vol&rarr;PK / correlation / graphical-LASSO edges mostly re-encode a common
+market factor that is already a node feature (<code>market_pk</code>); conditional on it, no edge beats
+HAR or the graph-removed model out-of-sample (it even significantly hurts at h10).</li>
+<li><b>News:</b> removing the news branch significantly lowers QLIKE at h1&ndash;h5 (news does not help
+under this architecture/data); its signal is weak/noisy at daily frequency and overlaps price history.</li>
+<li><b>Where value is:</b> node features (market factor + volume z-score) read through a non-linear LSTM
+give a small, significant edge over a same-feature linear model (HAR-X) at h1 and h5; the linear HAR
+family remains the standard to beat at h10&ndash;h22.</li>
+</ul>
+<p class="note">Source: <code>docs/reports/2026-08-16_1600_gnnhar_p1p2p3_results_report.md</code>,
+<code>2026-08-16_2330_p5_glasso_edge_vs_vol2pk_report.md</code>. Regenerate:
+<code>python scripts/viz/graph_news_contribution.py</code>.</p>
+</body></html>
