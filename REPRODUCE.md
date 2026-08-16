@@ -34,12 +34,12 @@ The same three scripts work for any universe by pointing at its folder (e.g. VN1
 
 ## 3. Path A — quick re-evaluation from prediction dumps (CPU, seconds)
 
-Held-out test prediction dumps are provided under `results/trackA_ablation_h{h}_seed{s}_<TS>/`.
+Held-out test prediction dumps are provided under `results/volatility_ablation_h{h}_seed{s}_<TS>/`.
 Re-run the Diebold-Mariano comparison (HLN small-sample correction, HAC lag h-1) over the 3 seeds:
 
 ```bash
 PY=.venv_gpu_encode/Scripts/python.exe   # or any python with numpy
-$PY baselines/2026-08-15_trackA_gat_edge/code/dm_report.py <TS> <h> 42,123,2026
+$PY baselines/2026-08-15_volatility/code/dm_report.py <TS> <h> 42,123,2026
 # e.g. ... dm_report.py 2026-08-15_085544_loo 5 42,123,2026
 ```
 
@@ -54,7 +54,7 @@ Leave-one-out ablation (FULL and each minus-one variant) + the price-only LSTM a
 
 ```bash
 PY=.venv_gpu_encode/Scripts/python.exe
-CODE=baselines/2026-08-15_trackA_gat_edge/code
+CODE=baselines/2026-08-15_volatility/code
 for S in 42 123 2026; do
   TS=run_seed${S}
   # one call trains every rung: FULL, minus_graph, minus_gate, minus_news, lstm_only (+ HAR baseline)
@@ -66,23 +66,23 @@ $PY $CODE/dm_report.py run_seed42 5 42   # single seed, or seed-ensemble by pass
 
 Notes:
 - `run_ablation.py <TS> <device> <seed> <epochs> <horizons...>` — trains each rung and writes
-  `results/trackA_ablation_h{h}_seed{seed}_<TS>/` (per-rung test dumps + `ladder_metrics.json`).
+  `results/volatility_ablation_h{h}_seed{seed}_<TS>/` (per-rung test dumps + `ladder_metrics.json`).
 - Convergence is early-stopped (patience 3, min 6) under the epoch cap; the paper used a 12-epoch cap.
 - `run_retrain_trainval.py` provides the train+val-merged variant (fixed epochs, no early stop).
 
 ## 5. Model (what is trained)
 
-`model.py::TrackAGatModel` = three parallel branches on the pooled masked graph snapshots: a price
+`model.py::VolatilityModel` = three parallel branches on the pooled masked graph snapshots: a price
 LSTM, a multi-head GAT over a directed volume→volatility (vol→PK) lead-lag edge, and a gated news
 branch (PhoBERT features); concatenated → head → softplus positivity floor. HAR is a pooled linear
-baseline. See `baselines/2026-08-15_trackA_gat_edge/design/` and the explainer docs under
+baseline. See `baselines/2026-08-15_volatility/design/` and the explainer docs under
 `docs/paper/explainers/`.
 
 ## 6. Layout
 
-- `baselines/2026-08-15_trackA_gat_edge/code/` — model, training, evaluation (entry points above).
+- `baselines/2026-08-15_volatility/code/` — model, training, evaluation (entry points above).
 - `baselines/2026-08-{08,11,14}_*/code/` — reused basis builders (pooled manifest, edges, features)
-  that the trackA code imports.
+  that the volatility code imports.
 - `src/common/`, `src/data/` — data pipeline (Parkinson processing, OHLC cleaning, verification).
 - `tests/` — data-quality tests (enforced on every push via `scripts/git_hooks/pre-push`).
 - `data/`, `results/`, `docs/paper/` — data, run outputs/dumps, paper drafts + explainers.

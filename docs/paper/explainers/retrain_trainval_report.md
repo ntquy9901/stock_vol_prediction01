@@ -22,8 +22,8 @@ all rungs on that test. It answers two questions raised during review:
 - Seed 42, single seed. The primary reported study uses a 5-seed ensemble; the numbers here are one
   seed and carry more sampling noise (see Caveats).
 - Volume z-score window 22 (unified), directed vol→PK Top-5 edge frozen on the training portion.
-- Code: `baselines/2026-08-15_trackA_gat_edge/code/run_retrain_trainval.py` (training),
-  `dm_retrain.py` (Diebold-Mariano). Runs: `results/trackA_retrain_h{h}_seed42_2026-08-15_182005_retrain/`.
+- Code: `baselines/2026-08-15_volatility/code/run_retrain_trainval.py` (training),
+  `dm_retrain.py` (Diebold-Mariano). Runs: `results/volatility_retrain_h{h}_seed42_2026-08-15_182005_retrain/`.
 - No leakage: test is never used for selection; every model uses the same held-out test observations
   per horizon (n reported below). Scalers and the vol→PK edge are estimated on training data only.
 
@@ -131,9 +131,9 @@ family), absolute error (AE; the MAE family).
 
 ## Files
 
-- Training: `baselines/2026-08-15_trackA_gat_edge/code/run_retrain_trainval.py`
+- Training: `baselines/2026-08-15_volatility/code/run_retrain_trainval.py`
   (+ test `test/test_retrain_trainval.py`).
-- DM: `baselines/2026-08-15_trackA_gat_edge/code/dm_retrain.py`
+- DM: `baselines/2026-08-15_volatility/code/dm_retrain.py`
   (+ test `test/test_dm_retrain.py`).
 - Raw metrics + per-observation test dumps:
-  `results/trackA_retrain_h{1,5,10,22}_seed42_2026-08-15_182005_retrain/`.
+  `results/volatility_retrain_h{1,5,10,22}_seed42_2026-08-15_182005_retrain/`.

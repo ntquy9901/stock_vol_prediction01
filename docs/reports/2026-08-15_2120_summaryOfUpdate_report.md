@@ -2,7 +2,7 @@
 
 ## What changed
 
-Two parallel robustness studies on the trackA-GAT leave-one-out ablation, both scored on the existing
+Two parallel robustness studies on the volatility-GAT leave-one-out ablation, both scored on the existing
 held-out test with no leakage:
 
 1. **Retrain-on-(train+val) variant (Task 1).** Merge train+validation into one training set, keep the
@@ -17,15 +17,15 @@ held-out test with no leakage:
 
 | Path | Purpose |
 |---|---|
-| `baselines/2026-08-15_trackA_gat_edge/code/run_retrain_trainval.py` | Retrain-on-(train+val) runner (fixed epochs, HAR refit on train+val, test-only eval) |
-| `baselines/2026-08-15_trackA_gat_edge/test/test_retrain_trainval.py` | Smoke test for the runner |
-| `baselines/2026-08-15_trackA_gat_edge/code/dm_retrain.py` | DM (HLN) for the retrain dumps; reuses `dm_report` loss families |
-| `baselines/2026-08-15_trackA_gat_edge/test/test_dm_retrain.py` | Unit test (reads retrain dirs, seed-ensemble) |
-| `baselines/2026-08-15_trackA_gat_edge/code/robustness_report.py` | Per-year / per-ticker / block-bootstrap over existing dumps |
-| `baselines/2026-08-15_trackA_gat_edge/test/test_robustness_report.py` | 5 unit/smoke tests |
+| `baselines/2026-08-15_volatility/code/run_retrain_trainval.py` | Retrain-on-(train+val) runner (fixed epochs, HAR refit on train+val, test-only eval) |
+| `baselines/2026-08-15_volatility/test/test_retrain_trainval.py` | Smoke test for the runner |
+| `baselines/2026-08-15_volatility/code/dm_retrain.py` | DM (HLN) for the retrain dumps; reuses `dm_report` loss families |
+| `baselines/2026-08-15_volatility/test/test_dm_retrain.py` | Unit test (reads retrain dirs, seed-ensemble) |
+| `baselines/2026-08-15_volatility/code/robustness_report.py` | Per-year / per-ticker / block-bootstrap over existing dumps |
+| `baselines/2026-08-15_volatility/test/test_robustness_report.py` | 5 unit/smoke tests |
 | `docs/paper/explainers/retrain_trainval_report.md` | Task 1 report (metrics + DM + reading + caveats) |
 | `docs/paper/explainers/robustness_test_report.md` | Task 2 report (per-year/ticker/CI) |
-| `results/trackA_retrain_h{1,5,10,22}_seed42_2026-08-15_182005_retrain/` | Raw metrics + per-obs test dumps |
+| `results/volatility_retrain_h{1,5,10,22}_seed42_2026-08-15_182005_retrain/` | Raw metrics + per-obs test dumps |
 
 ## Key results (held-out test)
 
