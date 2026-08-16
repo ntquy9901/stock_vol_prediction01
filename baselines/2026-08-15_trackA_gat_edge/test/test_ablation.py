@@ -29,6 +29,6 @@ def test_run_horizon_leave_one_out_rungs(tmp_path, monkeypatch):
                 "har": {"val": six, "test": six, "floor_hit_fraction": 0.0}}
     monkeypatch.setattr(ra, "build_trackA_basis", _fake_basis)
     ladder = ra.run_horizon(5, seed=0, epochs=1, ts="T", device=torch.device("cpu"))
-    assert set(ladder["rungs"]) == {"HAR", "FULL", "minus_graph", "minus_gate", "minus_news"}
+    assert set(ladder["rungs"]) == {"HAR", "FULL", "minus_graph", "minus_gate", "minus_news", "lstm_only"}
     assert set(ladder["leave_one_out_effects"]) == {"graph", "gate", "news"}
     assert (tmp_path / "results").exists()
