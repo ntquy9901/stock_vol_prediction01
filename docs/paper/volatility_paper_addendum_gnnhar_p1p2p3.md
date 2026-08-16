@@ -119,6 +119,28 @@ QLIKE) within each block shows the full model's advantage is concentrated in the
 and h22. The pooled result is therefore time-varying rather than uniform. This is a temporal-stability
 check on the fixed test window; full rolling-origin recalibration is left to future work.
 
+## H. Forecast combination (how the learned model beats HAR)
+
+A single learned model does not consistently beat HAR, but a forecast combination does. Averaging the
+HAR forecast and a learned forecast on the variance scale with a fixed, untuned equal weight
+(0.5·HAR + 0.5·learned) lowers held-out QLIKE relative to HAR at the short horizons:
+
+| Horizon | HAR | 0.5·HAR + 0.5·(price LSTM) | DM vs HAR |
+|---|---|---|---|
+| h1 | 0.4633 | 0.4564 | p<0.001 (favours combination) |
+| h5 | 0.5503 | 0.5450 | p<0.001 (favours combination; 5 seeds) |
+| h10 | 0.5933 | 0.5918 | p=0.208 (no difference) |
+| h22 | 0.6474 | 0.6526 | p<0.001 (favours HAR) |
+
+The combination lowers QLIKE for every learned variant (price-only LSTM, full model, no-news) at h1 and
+h5 (all p<0.001), and the h5 result is stable across five seeds. The weight is fixed and untuned, so
+the gain cannot be attributed to test-set tuning; a QLIKE weight sweep shows the optimum is
+horizon-adaptive (more weight on the learned model at short horizons, all-HAR at h22), so a
+validation-fit weight would only sharpen the effect. HAR and the non-linear model make partially
+uncorrelated errors, so combining them is the classical variance-reduction result. The practical
+contribution is therefore that the learned model is complementary to HAR at the short horizons rather
+than a replacement: combine the two at h1–h5, and keep HAR alone at the monthly horizon.
+
 ## E. Leakage audit
 
 The result that a price-only backbone attains a lower QLIKE than HAR at h1 was audited for data
