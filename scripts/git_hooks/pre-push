@@ -118,6 +118,23 @@ else
   echo "[pre-push]   Pandera/Evidently: N/A (no data/manifest change)"
 fi
 
+# Delivered-baseline tests run on EVERY push using the GPU venv (torch), since the fallback pytest
+# above runs system python which lacks torch. This gates the shipped volatility model's own tests
+# (config-coverage guard, batching, ablation rungs, DM) that the generic step cannot execute.
+echo "[pre-push] 5/5 delivered-baseline tests (volatility + feature guards, GPU venv)"
+GPUPY="$MAINROOT/.venv_gpu_encode/Scripts/python.exe"
+BDIRS=""
+for d in baselines/2026-08-15_volatility/test baselines/2026-08-11_eda_gnn_baseline/test; do
+  [ -d "$MAINROOT/$d" ] && BDIRS="$BDIRS $MAINROOT/$d"
+done
+if [ -x "$GPUPY" ] && [ -n "$BDIRS" ]; then
+  if ! PYTHONIOENCODING=utf-8 "$GPUPY" -m pytest $BDIRS -q; then
+    echo "[pre-push] BLOCK: delivered-baseline tests failed." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push]   (GPU venv or baseline test dirs absent — skipped)"
+fi
+
 # --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
 SHORT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"

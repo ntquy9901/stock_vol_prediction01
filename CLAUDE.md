@@ -190,6 +190,20 @@ Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<Y
 - No secrets in code (secrets manager / env).
 - No hardcoded absolute local paths.
 - No production logic chỉ sống trong notebook.
+- **No silent degradation (ENFORCED, per root-cause 2026-08-16):** data/feature code KHÔNG được âm
+  thầm trả giá trị "trung tính" (zeros/NaN→0/fallback) khi input thiếu/sai config — phải **fail loud**
+  (raise) hoặc bounded-allowlist (chỉ dung thứ ≤ ngưỡng nhỏ đã ghi rõ, vượt là raise). Lý do: một
+  wrapper set `_PROCESSED`=VN100 nhưng quên `_PRICE_DIR` khiến `volume_zscore` bị zero âm thầm cho
+  71/104 mã mà không gate nào bắt được (silent semantic bug). Guard: `augment_split_frames`
+  `_check_price_coverage` raise khi >1 mã thiếu raw.
+- **Coupled config phải validate cùng nhau / dùng CLI có test, KHÔNG monkeypatch global rời rạc:** các
+  global đi cặp (`_PROCESSED`↔`_PRICE_DIR`, SEQ, HORIZON) khi đổi universe phải set đồng bộ + có assert
+  nhất quán; ưu tiên `--processed/--price-dir/--universe` (đã test) hơn là patch global trong wrapper
+  throwaway (đường thoát khỏi quality gate).
+- **Experiment/wrapper scripts cũng phải qua chất lượng:** script thí nghiệm (dù throwaway) đụng
+  train/eval phải có smoke-assert bất biến cơ bản (vd feature không bị all-zero cho mã hợp lệ) trước
+  khi tin số; và **test của baseline giao nộp chạy trong pre-push gate** (hook step 5, GPU venv) — không
+  để test baseline nằm ngoài gate.
 
 ## Performance & batching (ENFORCED — quality gate + code review)
 

@@ -102,6 +102,26 @@ def market_pk_series(split_frames: SplitFrames) -> pd.Series:
     return median.sort_index()
 
 
+_MAX_MISSING_PRICE = 1   # tolerate at most one legitimately volume-less ticker; more => config error
+
+
+def _check_price_coverage(tickers, price_dir: Path | str) -> None:
+    """Fail LOUD if many tickers lack a raw ``*_ohlcv.csv`` in ``price_dir``.
+
+    ``volume_zscore_series`` silently returns zeros for a missing ticker (intended for a rare
+    volume-less name). A MASS of missing tickers instead means ``price_dir`` does not match the
+    processed universe (e.g. an experiment set the processed dir to VN100 but left price_dir at
+    VN30) — which would silently neutralise the volume feature. Raise so the misconfig surfaces.
+    """
+    missing = [t for t in tickers if not (Path(price_dir) / f"{t}_ohlcv.csv").exists()]
+    if len(missing) > _MAX_MISSING_PRICE:
+        raise ValueError(
+            f"{len(missing)} of {len(list(tickers))} tickers have no *_ohlcv.csv in {price_dir} "
+            f"(e.g. {sorted(missing)[:5]}). price_dir must match the processed universe — the "
+            f"volume_zscore feature would otherwise be silently zeroed for those tickers."
+        )
+
+
 def augment_split_frames(split_frames: SplitFrames, price_dir: Path | str) -> SplitFrames:
     """Return a copy of ``split_frames`` with market_pk + volume_zscore_20 columns added per split.
 
@@ -110,6 +130,7 @@ def augment_split_frames(split_frames: SplitFrames, price_dir: Path | str) -> Sp
     market value.
     """
 
+    _check_price_coverage(split_frames.frames, price_dir)   # fail loud on price_dir/universe mismatch
     market = market_pk_series(split_frames)
     market_by_date = {pd.Timestamp(date): float(value) for date, value in market.items()}
     frames: dict[str, dict[str, pd.DataFrame]] = {}
