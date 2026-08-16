@@ -53,22 +53,26 @@ _RUNGS = (
 
 
 def _train(basis, train_snaps, val_snaps, ckpt: Path, epochs, seed, device,
-           use_news: bool, use_gate: bool, use_graph: bool):
+           use_news: bool, use_gate: bool, use_graph: bool, loss: str = "mse"):
     model = VolatilityModel(basis["price_dim"], basis["news_dim"], basis["num_tickers"],
                            use_news=use_news, use_gate=use_gate, use_graph=use_graph)
     model.configure_positivity(basis["scaler_mean"], basis["scaler_std"])
     # no_graph drops the whole GAT branch (use_graph=False) so adjacency is never consulted; the
     # other variants keep the graph on. apply_graph is True here and inert when use_graph is False.
     # Pooled models converge ~epoch 5-6 then overfit -> early-stop (patience 3, min 6) under the cap.
+    # `loss` selects the training/val-selection criterion ('mse'|'qlike'); QLIKE trains + selects on
+    # the physical-scale QLIKE (paper: training-loss choice matters as much as architecture).
     train_with_resume(model, train_snaps, val_snaps, ckpt, epochs, device, seed, apply_graph=True,
-                      patience=3, min_epochs=6)
+                      patience=3, min_epochs=6, loss=loss)
     model.load_state_dict(load_checkpoint(ckpt)["best_state"])
     return model.to(device)
 
 
-def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.device) -> dict[str, Any]:
+def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.device,
+                loss: str = "mse") -> dict[str, Any]:
     combo_ladder.HORIZON = horizon                              # combo build_basis reads this global
-    out_base = ROOT / "results" / f"volatility_ablation_h{horizon}_seed{seed}_{ts}"
+    suffix = "" if loss == "mse" else f"_{loss}"
+    out_base = ROOT / "results" / f"volatility_ablation_h{horizon}_seed{seed}_{ts}{suffix}"
     out_base.mkdir(parents=True, exist_ok=True)
     basis = build_volatility_basis(out_base)
     store = _StoreShim(basis["scaler_mean"], basis["scaler_std"])
@@ -92,7 +96,7 @@ def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.dev
     }
     for name, use_news, use_gate, use_graph in _RUNGS:
         model = _train(basis, tr, va, out_base / f"{name}.pt", epochs, seed, device,
-                       use_news=use_news, use_gate=use_gate, use_graph=use_graph)
+                       use_news=use_news, use_gate=use_gate, use_graph=use_graph, loss=loss)
         rungs[name] = _metrics(model, name, apply_graph=True)
     full_q = rungs["FULL"]["test_metrics"]["qlike"]
     effects = {  # QLIKE(FULL) - QLIKE(FULL minus X): negative => removing X hurt (X helped)
@@ -100,20 +104,20 @@ def run_horizon(horizon: int, seed: int, epochs: int, ts: str, device: torch.dev
         "gate": full_q - rungs["minus_gate"]["test_metrics"]["qlike"],
         "news": full_q - rungs["minus_news"]["test_metrics"]["qlike"],
     }
-    ladder = {"horizon": horizon, "seed": seed, "epochs": epochs, "rungs": rungs,
+    ladder = {"horizon": horizon, "seed": seed, "epochs": epochs, "loss": loss, "rungs": rungs,
               "leave_one_out_effects": effects}
     _write_json(out_base / "ladder_metrics.json", ladder)
     return ladder
 
 
 def main(ts: str, device_name: str = "cuda", seed: int = 42, epochs: int = 15,
-         horizons: tuple[int, ...] = (1, 5, 10, 22)) -> None:
+         horizons: tuple[int, ...] = (1, 5, 10, 22), loss: str = "mse") -> None:
     device = resolve_graph_device(device_name)
     previous = combo_ladder.HORIZON
     try:
         for h in horizons:
             t0 = time.perf_counter()
-            ladder = run_horizon(h, seed, epochs, ts, device)
+            ladder = run_horizon(h, seed, epochs, ts, device, loss=loss)
             rung_order = ("HAR", "FULL", "minus_graph", "minus_gate", "minus_news", "lstm_only")
             ql = [round(ladder["rungs"][r]["test_metrics"]["qlike"], 4) for r in rung_order]
             eff = {k: round(v, 6) for k, v in ladder["leave_one_out_effects"].items()}
@@ -124,9 +128,11 @@ def main(ts: str, device_name: str = "cuda", seed: int = 42, epochs: int = 15,
 
 
 if __name__ == "__main__":  # pragma: no cover
+    import os
     _ts = sys.argv[1]
     _device = sys.argv[2] if len(sys.argv) > 2 else "cuda"
     _seed = int(sys.argv[3]) if len(sys.argv) > 3 else 42
     _epochs = int(sys.argv[4]) if len(sys.argv) > 4 else 15
     _horizons = tuple(int(x) for x in sys.argv[5:]) if len(sys.argv) > 5 else (1, 5, 10, 22)
-    main(_ts, _device, _seed, _epochs, _horizons)
+    _loss = os.environ.get("ABLATION_LOSS", "mse")   # 'qlike' to train + select on QLIKE
+    main(_ts, _device, _seed, _epochs, _horizons, loss=_loss)
