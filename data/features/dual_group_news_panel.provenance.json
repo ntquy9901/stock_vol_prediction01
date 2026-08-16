@@ -1,0 +1,8 @@
+{
+  "fit_period_end": "2010-06-29",
+  "fit_period_rule": "PCA fit used effective trading dates strictly before 2010-06-30",
+  "missing_value_policy": "zero_fill",
+  "missing_values_in_artifact": "NaN; converted to 0.0 by the pooled-news loader at consumption time",
+  "basis_scope": "shared PCA basis pooled across dual news groups",
+  "provenance_status": "source-derived from committed PCA builder configuration; artifact build hash unavailable"
+}
