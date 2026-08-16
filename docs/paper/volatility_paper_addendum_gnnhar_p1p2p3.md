@@ -89,6 +89,36 @@ lower QLIKE on the 90% of days that are calm. Both models under-predict the turb
 under-predicts it less. This regime dependence is consistent with the observation that a pooled
 average can obscure where a model attains its advantage.
 
+## F. Fair linear baseline (HAR-X)
+
+The classical HAR uses three own-history features; the price LSTM uses five (adding a market factor
+and a volume z-score). To separate the contribution of the two extra features from the contribution
+of the LSTM nonlinearity, an augmented-HAR linear model (HAR-X) is fitted on all five features by
+ordinary least squares, with the same train-only target scaler and the same positivity floor.
+
+| Horizon | HAR | HAR-X | price-only LSTM | DM: HAR-X vs HAR | DM: LSTM vs HAR-X |
+|---|---|---|---|---|---|
+| h1 | 0.4633 | 0.4627 | 0.4547 | −0.30, p=0.76 (no difference) | −3.95, p<0.001 (favours LSTM) |
+| h5 | 0.5503 | 0.5486 | 0.5445 | −1.31, p=0.19 (no difference) | −1.80, p=0.07 (no difference) |
+| h10 | 0.5933 | 0.5965 | 0.5945 | +2.82, p=0.003 (favours HAR) | −1.11, p=0.27 (no difference) |
+| h22 | 0.6474 | 0.6501 | 0.6602 | +5.37, p<0.001 (favours HAR) | +3.76, p<0.001 (favours HAR-X) |
+
+Adding the two features to a linear model does not lower QLIKE at the short horizons (HAR-X versus HAR
+is not significant at h1 and h5) and raises it at h10 and h22. Against this same-feature linear
+baseline the price LSTM attains a lower QLIKE only at h1 (significant), which attributes the h1 result
+to the LSTM nonlinearity rather than to the additional features; at h5 the difference is not
+significant, and at h10 and h22 the HAR family is lower. Section B's short-horizon results should
+therefore be read against HAR-X: the significant learned-model advantage over a fair linear baseline
+holds at h1 only.
+
+## G. Temporal stability
+
+Splitting the held-out test window into four sequential blocks and running DM (full model versus HAR,
+QLIKE) within each block shows the full model's advantage is concentrated in the middle sub-periods
+(significant in the second block at every horizon) while the most recent block favours HAR at h5, h10,
+and h22. The pooled result is therefore time-varying rather than uniform. This is a temporal-stability
+check on the fixed test window; full rolling-origin recalibration is left to future work.
+
 ## E. Leakage audit
 
 The result that a price-only backbone attains a lower QLIKE than HAR at h1 was audited for data

@@ -138,7 +138,48 @@ the same with DM (E2 = HAR+MarketPK+volume_zscore, no graph, beats HAR on QLIKE,
 `project_eda_gnn_result`); lstm_only ≈ E2, so this run reproduces a previously DM-verified result
 from a separate baseline, not a pipeline artifact.
 
-## Follow-ups (remaining)
-- FU2: report calm/turbulent + P1/P2 in the paper (with the DM tables above). [done — see paper]
-- FU3a: MAD-by-depth over-smoothing number. [done — see below/paper]
-- FU3b: rolling-origin (P4) robustness.
+## Fairness baseline HAR-X (5-feature LINEAR) — corrects the attribution
+
+The earlier tables compare the deep models against HAR (3 own-history features). But lstm_only has
+two features HAR lacks (market_pk, volume_zscore). HAR-X = an augmented-HAR LINEAR regression on all
+5 features isolates the extra-feature contribution (HAR-X vs HAR) from the LSTM nonlinearity
+(lstm_only vs HAR-X). 3-seed test QLIKE + DM:
+
+| h | HAR | HAR-X | lstm_only | HAR-X vs HAR | lstm_only vs HAR-X |
+|---|---|---|---|---|---|
+| 1 | 0.4633 | 0.4627 | 0.4547 | −0.30, p=0.76 (ns) | −3.95, p<0.001* (lstm) |
+| 5 | 0.5503 | 0.5486 | 0.5445 | −1.31, p=0.19 (ns) | −1.80, p=0.07 (ns) |
+| 10 | 0.5933 | 0.5965 | 0.5945 | +2.82, p=0.003* (HAR) | −1.11, p=0.27 (ns) |
+| 22 | 0.6474 | 0.6501 | 0.6602 | +5.37, p<0.001* (HAR) | +3.76, p<0.001* (HAR-X) |
+
+**This materially corrects the conclusion.** Adding the two features to a LINEAR model does not lower
+QLIKE at any short horizon (HAR-X vs HAR is not significant at h1/h5, and HAR-X is significantly worse
+at h10/h22). Against this fair same-feature linear baseline, the deep model's significant advantage
+survives at **h1 only** (lstm_only vs HAR-X, p<0.001), and it is attributable to **LSTM nonlinearity**,
+not the extra features. At h5 the deep-vs-HAR-X gap is not significant (p=0.07); at h10/h22 HAR is
+best. So the honest headline is: a nonlinear price model beats a same-feature linear model at h1;
+elsewhere the linear HAR family is as good or better.
+
+## Follow-up 3b — temporal-stability robustness (DM FULL vs HAR per time block)
+
+Sub-period DM (test window split into 4 sequential blocks, FULL vs HAR, QLIKE, 3-seed). This is a
+temporal-stability check on the fixed test window, NOT full rolling recalibration.
+
+| h | block 0 (early) | block 1 | block 2 | block 3 (late) |
+|---|---|---|---|---|
+| 1 | FULL (p=0.16) | FULL (p<0.001*) | FULL (p=0.01*) | HAR (p=0.24) |
+| 5 | FULL (p=0.27) | FULL (p<0.001*) | HAR (p=0.22) | HAR (p=0.48) |
+| 10 | FULL (p=0.64) | FULL (p<0.001*) | HAR (p<0.001*) | HAR (p<0.001*) |
+| 22 | HAR (p=0.66) | FULL (p=0.04*) | HAR (p<0.001*) | HAR (p<0.001*) |
+
+The FULL advantage is concentrated in the middle sub-periods (block 1 at every horizon); the most
+recent block favours HAR at h5/h10/h22. So the pooled result is time-varying, not uniform — the deep
+model's edge is not stable across the whole test window. Full rolling-origin recalibration (retraining
+per window, paper protocol) is a larger separate run and was not executed.
+
+## Follow-ups status
+- FU1 reconcile (news): done (loss-independent; architecture/data). 
+- FU2 paper addendum: done (`docs/paper/volatility_paper_addendum_gnnhar_p1p2p3.md`).
+- FU3a MAD-by-depth: done (over-smoothing present, 2-hop still helps).
+- FU3b: temporal-stability done (above); full rolling recalibration NOT run (multi-hour).
+- Fairness HAR-X: done (corrects attribution — only h1 survives, nonlinearity-driven).
