@@ -14,6 +14,7 @@ Author: Stock Volatility Prediction Team
 Date: 2026-06-17
 """
 
+import argparse
 import os
 import sys
 import pandas as pd
@@ -77,25 +78,42 @@ def process_all_stocks(raw_dir: str, output_dir: str):
     print("=" * 80)
 
 
-def main():
-    """Main execution function."""
+def main(argv=None) -> int:
+    """Process any raw OHLCV universe to Parkinson variance.
+
+    Works for VN30, VN100, HOSE, HNX, UPCoM, ... — the universe is just a folder of
+    ``<TICKER>_ohlcv.csv`` files; point ``--raw`` at it and ``--out`` at the target processed dir.
+    Examples:
+        python -m src.common.process_parkinson_pipeline                                   # VN30 (default)
+        python -m src.common.process_parkinson_pipeline --raw data/raw/prices/vn100 --out data/processed/vn100
+        python -m src.common.process_parkinson_pipeline --raw data/raw/prices/hnx   --out data/processed/hnx
+    """
+
+    parser = argparse.ArgumentParser(
+        description="Process a raw OHLCV universe (VN30/VN100/HOSE/HNX/...) to Parkinson variance."
+    )
+    parser.add_argument(
+        "--raw", default=os.path.join(project_root, "data/raw/prices"),
+        help="dir of <TICKER>_ohlcv.csv (default: data/raw/prices = VN30)",
+    )
+    parser.add_argument(
+        "--out", default=os.path.join(project_root, "data/processed"),
+        help="output dir for <TICKER>_processed.csv (default: data/processed)",
+    )
+    args = parser.parse_args(argv)
+
     print("=" * 80)
     print("PROCESS RAW OHLCV DATA TO PARKINSON VOLATILITY")
+    print(f"  raw = {args.raw}\n  out = {args.out}")
     print("=" * 80)
 
-    # Define directories (relative to project root)
-    raw_dir = os.path.join(project_root, 'data/raw/prices')
-    output_dir = os.path.join(project_root, 'data/processed')
+    if not os.path.exists(args.raw):
+        print(f"[ERROR] Raw data directory not found: {args.raw}")
+        return 1
 
-    # Check if raw directory exists
-    if not os.path.exists(raw_dir):
-        print(f"[ERROR] Raw data directory not found: {raw_dir}")
-        print("Please ensure raw OHLCV files are in data/raw/prices/")
-        return
-
-    # Process all stocks
-    process_all_stocks(raw_dir, output_dir)
+    process_all_stocks(args.raw, args.out)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
