@@ -57,8 +57,8 @@ PY=.venv_gpu_encode/Scripts/python.exe
 CODE=baselines/2026-08-15_trackA_gat_edge/code
 for S in 42 123 2026; do
   TS=run_seed${S}
-  $PY $CODE/run_ablation.py    $TS cuda $S 12 1 5 10 22   # FULL, minus_graph/gate/news, HAR
-  $PY $CODE/run_lstm_only.py   $TS cuda $S 12 1 5 10 22   # price-only LSTM anchor
+  # one call trains every rung: FULL, minus_graph, minus_gate, minus_news, lstm_only (+ HAR baseline)
+  $PY $CODE/run_ablation.py    $TS cuda $S 12 1 5 10 22
 done
 # then evaluate (Path A) with the matching TS across the 3 seeds:
 $PY $CODE/dm_report.py run_seed42 5 42   # single seed, or seed-ensemble by passing a shared TS scheme
