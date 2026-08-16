@@ -1,6 +1,6 @@
 # Raw price files data-quality report
 
-Generated: 2026-08-16 01:07
+Generated: 2026-08-16 10:11
 
 Source: `data/raw/prices/*_ohlcv.csv` (33 tickers). Read-only; no CSV was modified.
 
@@ -13,7 +13,7 @@ Checks 1-4 (schema, dates, OHLC validity, NaN/inf) are enforced as hard assertio
 | ticker | rows | first_date | last_date | leading_synthetic_run | first_real_date | flat_frac | zerovol_frac | any_OHLC_violation |
 |---|---|---|---|---|---|---|---|---|
 | ACB | 4916 | 2006-11-21 | 2026-08-14 | 0 | 2006-11-21 | 0.0120 | 0.0000 | False |
-| BCM | 2113 | 2018-02-21 | 2026-08-14 | 0 | 2018-02-21 | 0.0345 | 0.0071 | False |
+| BCM | 2113 | 2018-02-21 | 2026-08-14 | 0 | 2018-02-21 | 0.0345 | 0.0047 | False |
 | BID | 3131 | 2014-01-24 | 2026-08-14 | 0 | 2014-01-24 | 0.0019 | 0.0006 | False |
 | BVH | 4280 | 2009-06-25 | 2026-08-14 | 0 | 2009-06-25 | 0.0061 | 0.0005 | False |
 | CTG | 4265 | 2009-07-16 | 2026-08-14 | 0 | 2009-07-16 | 0.0026 | 0.0005 | False |
@@ -33,7 +33,7 @@ Checks 1-4 (schema, dates, OHLC validity, NaN/inf) are enforced as hard assertio
 | SAB | 2420 | 2016-12-06 | 2026-08-14 | 3 | 2016-12-09 | 0.0037 | 0.0008 | False |
 | SHB | 4323 | 2009-04-20 | 2026-08-14 | 0 | 2009-04-20 | 0.0012 | 0.0000 | False |
 | SSB | 1347 | 2021-03-24 | 2026-08-14 | 3 | 2021-03-29 | 0.0022 | 0.0000 | False |
-| SSI | 4890 | 2006-12-15 | 2026-08-14 | 0 | 2006-12-15 | 0.0331 | 0.0006 | False |
+| SSI | 4890 | 2006-12-15 | 2026-08-14 | 0 | 2006-12-15 | 0.0331 | 0.0004 | False |
 | STB | 4935 | 2006-10-27 | 2026-08-14 | 1 | 2006-10-30 | 0.0320 | 0.0004 | False |
 | TCB | 2050 | 2018-06-04 | 2026-08-14 | 0 | 2018-06-04 | 0.0005 | 0.0000 | False |
 | TPB | 2079 | 2018-04-19 | 2026-08-14 | 0 | 2018-04-19 | 0.0005 | 0.0000 | False |
