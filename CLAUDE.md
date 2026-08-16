@@ -82,10 +82,13 @@ folder/artifact trùng lặp):**
 3. **Clarify** — Rà lại spec tìm chỗ mơ hồ/thiếu, đánh dấu `[NEEDS CLARIFICATION]`, hỏi user resolve
    trước khi sang Plan — không suy diễn thay user.
 4. **Plan** — Kiến trúc, data flow, quyết định design, dependency. Dùng `design/design.md`
-   (đã bắt buộc §3.F) làm plan.md. Qua 2 gate trước khi implement:
+   (đã bắt buộc §3.F) làm plan.md. Qua 3 gate trước khi implement:
    - **Simplicity Gate:** không thêm project/abstraction/config vượt mức cần (per §2 Simplicity First).
    - **Anti-Abstraction Gate:** dùng thẳng thư viện/framework có sẵn, không tự wrap khi không cần.
-   - Nếu buộc phải phá 1 trong 2 gate → ghi rõ lý do (complexity tracking) trong `design.md`.
+   - **Performance/Batching Gate:** với code train/inference/data-processing, design PHẢI nêu rõ
+     chiến lược batch + song song (per §Performance & batching ENFORCED bên dưới) — KHÔNG mặc định
+     vòng lặp per-item batch=1 trên main thread. Không có kế hoạch batch → không qua gate.
+   - Nếu buộc phải phá 1 trong 3 gate → ghi rõ lý do (complexity tracking) trong `design.md`.
 5. **Tasks** — Tách plan thành danh sách task đánh số, mỗi task có tiêu chí verify được (test/smoke
    pass) — LIỆT KÊ rõ trước khi code (siết §4 Goal-Driven Execution thành checklist tường minh).
 6. **Implement** — Test-First bắt buộc: viết test → xác nhận test FAIL → implement code → test pass
@@ -121,6 +124,7 @@ Task chỉ "done" khi TẤT CẢ đúng:
   directory to explore will not otherwise know `archive/` is off-limits. `archive/README.md`
   carries the same notice for anyone who lands there directly.
 - **Code review (LUÔN, mọi change):** chạy `/code-review` (hoặc adversarial PR review) + xử lý findings trước khi done. **Bắt buộc mọi thay đổi — kể cả docs/config/scripts — không ngoại lệ.** Tóm tắt result + actions trong summary report.
+- **Performance/batching (khi đụng train/inference/data-processing):** phải đạt §Performance & batching (ENFORCED) — batch tối đa (không batch=1 mặc định), ưu tiên GPU, song song hoá, tận dụng RAM/VRAM; code review flag batch=1/GPU-underuse/main-thread-only là finding phải xử lý. Ghi kết luận hiệu năng vào summary report.
 - **Summary report:** sinh `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md` (context-appropriate, không rigid template).
 - **Push remote ngay sau mỗi task done:** khi 1 task đã verify xong (có evidence — test pass,
   smoke pass, hoặc kết quả đo được cụ thể), commit VÀ `git push origin master` ngay, không đợi
@@ -151,7 +155,7 @@ Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial rev
   - `pytest --cov` xanh KHÔNG đủ — `diff-cover` trên changed lines mới là gate thật.
 - **Test I/O runner, không chỉ pure helper.** Unit test hàm thuần dễ bỏ sót bug ở code load-data/ghi-report/train-loop. Mọi hàm `run_*()`/report-builder/`train_epoch`-style phải có ít nhất 1 test tích hợp (monkeypatch path hoặc dùng tmp fixture) trước khi coi task done.
 - **Data-pipeline test phải có real-data-sample smoke.** Synthetic fixture bỏ sót lỗi encoding (UTF-8 vs cp1252), mixed date format (ISO vs DD/MM), mixed timezone, schema drift giữa nguồn crawl khác nhau (đúng loại lỗi từng gặp ở `aggregate_news_sources.py`). Ít nhất 1 test/phase đọc 1 lát cắt nhỏ dữ liệu thật (không phải toàn bộ) và assert chạy không exception + output hợp lý.
-- **Code review = 3-layer (Blind Hunter + Edge Case Hunter + Acceptance Auditor) qua `/code-review`, chạy TRƯỚC khi coi done.** Self-review KHÔNG thay thế được. Xử lý hết finding critical/major trước khi done; ghi minor thành follow-up trong summary report.
+- **Code review = 3-layer (Blind Hunter + Edge Case Hunter + Acceptance Auditor) qua `/code-review`, chạy TRƯỚC khi coi done.** Self-review KHÔNG thay thế được. Xử lý hết finding critical/major trước khi done; ghi minor thành follow-up trong summary report. **Với code train/inference/data-processing: review PHẢI có 1 lăng kính hiệu năng** — bắt batch=1 anti-pattern, GPU under-utilization, transfer/sync mỗi step, loop chỉ main-thread (per §Performance & batching ENFORCED).
 
 **Tooling gap hiện tại:** `diff-cover --fail-under=100` chưa từng được set up/chạy thật trong repo này (xem "Tooling gaps" ở §Per-project setup) — cho tới khi cài xong, ghi `Not run` + lý do trong summary report thay vì claim đã đạt C0=100%.
 
@@ -186,6 +190,35 @@ Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<Y
 - No secrets in code (secrets manager / env).
 - No hardcoded absolute local paths.
 - No production logic chỉ sống trong notebook.
+
+## Performance & batching (ENFORCED — quality gate + code review)
+
+> Áp dụng theo yêu cầu user 2026-08-16. Lý do: đo thực tế cho thấy train **batch=1/snapshot** làm
+> GPU (RTX 4060) **~97% nhàn rỗi** (batch=1 và batch=32 cùng ~10ms/step) — nghẽn ở overhead
+> Python/kernel-launch/host→device copy, KHÔNG phải compute. Batch lại cho **~20–32× miễn phí** trên
+> GPU hiện tại (xem `docs/reports/2026-08-16_training_acceleration_eval.md` +
+> `2026-08-16_perf_audit_optimization_plan.md`). Vì vậy hiệu năng là 1 tiêu chí done, không phải
+> tối ưu-sau.
+
+Mọi code **train/inference/data-processing** (và design/plan sinh ra nó) PHẢI, theo thứ tự ưu tiên:
+1. **Batch tối đa, KHÔNG batch=1 mặc định.** Xử lý nhiều mẫu/snapshot mỗi bước (batched tensor
+   `[B, ...]`, batched/block-diagonal adjacency + mask-aware loss cho graph). Vòng lặp Python per-item
+   trên main thread là anti-pattern — chỉ chấp nhận khi có lý do ghi rõ (vd phụ thuộc tuần tự thật).
+2. **Ưu tiên GPU rồi mới CPU.** Giữ tensor trên GPU, giảm tối đa transfer host↔device và điểm đồng bộ
+   (`.item()`/`.cpu()` trong vòng nóng); dùng `pin_memory`+`non_blocking`, cân nhắc AMP.
+3. **Song song hoá, không chỉ main thread.** Dùng `DataLoader(num_workers>0)`/multiprocessing/thread
+   cho load-data + tiền xử lý overlap với compute; tách việc độc lập ra process/thread.
+4. **Tận dụng RAM + VRAM sẵn có** (vd 32GB RAM): preload dữ liệu lên device/pinned buffer, batch lớn
+   trong giới hạn VRAM.
+
+**Enforce:**
+- **Quality gate + code review:** mỗi change đụng train/inference/data-processing phải được rà điểm
+  hiệu năng này; `/code-review` PHẢI flag batch=1 anti-pattern / GPU under-utilization / per-step
+  transfer / main-thread-only loop như finding (mặc định MAJOR nếu ở vòng nóng). Không xử lý →
+  không done. Ghi kết luận hiệu năng (đã batch/song song ra sao, hoặc lý do không) vào summary report.
+- **Design/Plan:** qua **Performance/Batching Gate** ở §5 SDD trước khi implement.
+- **Không** hy sinh tính đúng/không-leakage để lấy tốc độ; batch phải giữ nguyên ngữ nghĩa (mask,
+  thứ tự thời gian, per-ticker scaler).
 
 ## Training policy (experimentation) ⭐
 Khi **thử nghiệm** model (không phải final run):
