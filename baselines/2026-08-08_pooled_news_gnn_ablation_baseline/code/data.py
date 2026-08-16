@@ -296,13 +296,64 @@ def chronological_split(
     return parts
 
 
+CalendarSpec = tuple[tuple[str, str], tuple[str, str], tuple[str, str]]
+
+
+def _validate_calendar(calendar: CalendarSpec) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
+    """Validate a (train, val, test) tuple of (start, end) date pairs: each start<=end, and the
+    blocks strictly ordered and non-overlapping (end_train < start_val, end_val < start_test).
+    Non-overlap is the leakage constraint: with the per-split windowing used downstream, date-disjoint
+    blocks guarantee no train/val target ever falls inside a later block."""
+    if calendar is None or len(calendar) != len(_SPLIT_NAMES):
+        raise ValueError("calendar must be a (train, val, test) tuple of (start, end) date pairs")
+    parsed = []
+    for name, block in zip(_SPLIT_NAMES, calendar):
+        if block is None or len(block) != 2:
+            raise ValueError(f"{name} must be a (start, end) date pair")
+        start, end = pd.Timestamp(block[0]), pd.Timestamp(block[1])
+        if start > end:
+            raise ValueError(f"{name} start {block[0]} must be <= end {block[1]}")
+        parsed.append((start, end))
+    (_ts, te), (vs, ve), (xs, _xe) = parsed
+    if not (te < vs and ve < xs):
+        raise ValueError("blocks must be ordered/non-overlapping: end_train < start_val and end_val < start_test")
+    return parsed
+
+
+def calendar_split(df: pd.DataFrame, calendar: CalendarSpec) -> dict[str, pd.DataFrame]:
+    """Partition one ticker's rows into train/val/test by fixed calendar date ranges (inclusive).
+
+    A block MAY be empty (e.g. a ticker listed after the train window) — unlike ``chronological_split``
+    this does not raise; ``load_and_split_price_data`` applies a minimum-train-rows guard so tickers
+    with too little history are excluded (per-ticker availability, not a global common-date cut).
+    Leakage-safe: blocks are date-disjoint and windows are built per split downstream.
+    """
+    parsed = _validate_calendar(calendar)
+    dates = _validated_dates(df)
+    parts: dict[str, pd.DataFrame] = {}
+    for (start, end), name in zip(parsed, _SPLIT_NAMES):
+        mask = ((dates >= start) & (dates <= end)).to_numpy()
+        part = df.loc[mask].copy()
+        part["date"] = dates.loc[part.index].to_numpy()
+        parts[name] = part
+    return parts
+
+
 def load_and_split_price_data(
     data_dir: Path | str,
     ratios: tuple[float, float, float] = (0.7, 0.15, 0.15),
+    calendar: CalendarSpec | None = None,
+    min_train_rows: int = 60,
 ) -> SplitFrames:
-    """Load all processed ticker files and split each ticker without reordering rows."""
+    """Load all processed ticker files and split each ticker without reordering rows.
 
-    _validate_ratios(ratios)
+    Two modes: RATIO (default) splits each ticker's rows 70/15/15 by row index; CALENDAR (pass
+    ``calendar=((train_start,train_end),(val_start,val_end),(test_start,test_end))``) splits by fixed
+    dates shared across tickers. In calendar mode tickers with fewer than ``min_train_rows`` train rows
+    (e.g. listed after the train window) are excluded and logged, so heterogeneous listing dates are
+    handled by per-ticker availability rather than a common-date intersection.
+    """
+
     directory = Path(data_dir)
     paths = sorted(directory.glob("*_processed.csv"))
     if not paths:
@@ -312,13 +363,31 @@ def load_and_split_price_data(
     if len(set(tickers)) != len(tickers):
         raise ValueError("ticker file stems must be unique")
 
-    frames = {
-        ticker: chronological_split(pd.read_csv(path), ratios)
-        for ticker, path in zip(tickers, paths, strict=True)
-    }
+    if calendar is None:
+        _validate_ratios(ratios)
+        frames = {ticker: chronological_split(pd.read_csv(path), ratios)
+                  for ticker, path in zip(tickers, paths, strict=True)}
+        kept = tickers
+    else:
+        _validate_calendar(calendar)
+        frames, excluded = {}, []
+        for ticker, path in zip(tickers, paths, strict=True):
+            parts = calendar_split(pd.read_csv(path), calendar)
+            if len(parts["train"]) < min_train_rows:
+                excluded.append(ticker)
+                continue
+            frames[ticker] = parts
+        if not frames:
+            raise ValueError(f"calendar split left no ticker with >= {min_train_rows} train rows")
+        if excluded:
+            print(f"[split] calendar mode excluded {len(excluded)} of {len(tickers)} tickers with "
+                  f"< {min_train_rows} train rows: {excluded[:10]}"
+                  f"{'...' if len(excluded) > 10 else ''}", flush=True)
+        kept = [ticker for ticker in tickers if ticker in frames]
+
     return SplitFrames(
         frames=frames,
-        ticker_to_id={ticker: ticker_id for ticker_id, ticker in enumerate(tickers)},
+        ticker_to_id={ticker: ticker_id for ticker_id, ticker in enumerate(kept)},
     )
 
 
