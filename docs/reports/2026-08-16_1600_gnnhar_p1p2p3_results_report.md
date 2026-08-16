@@ -60,8 +60,14 @@ confirm whether news adds value under any current configuration.
 
 On VN30, 2-hop is significantly better than 1-hop at h1 and h10 and never worse — the opposite of
 Zhang et al. (1-hop enough on DJIA; 2-hop over-smooths). Dropping to 1-hop also loses the significant
-h1 win over HAR (p=0.003 → p=0.098). Conclusion: keep 2-hop on VN. (MAD-by-depth diagnostic
-available via `model.gat_layer_outputs` + `mad.mad` for a future over-smoothing quantification.)
+h1 win over HAR (p=0.003 → p=0.098). Conclusion: keep 2-hop on VN.
+
+**MAD-by-depth (FU3a, FULL 2-hop QLIKE, h1 seed42, n=710 test snaps):** gat1 (1-hop) MAD = 0.3063 →
+gat2 (2-hop) MAD = 0.1915, i.e. MAD DROPS 0.115 at the 2nd hop — over-smoothing IS present (node
+embeddings become more similar). But unlike the paper, that smoothing does not translate into a
+predictive loss: 2-hop still beats 1-hop (above). Interpretation: on the VN vol→PK graph the 2nd
+hop's larger receptive field outweighs the mild over-smoothing. (`mad_report.py`: reproduce via
+`python code/mad_report.py <TS_qlike> <h> <seed>`.)
 
 ## P3 — regime split (calm 90% / turbulent 10%), QLIKE-2hop, 3-seed, DM FULL vs HAR
 
@@ -90,8 +96,49 @@ helped in turbulence; on VN both models under-predict spikes and HAR under-predi
    tail (where HAR wins and both under-predict) dominates the pooled loss.
 5. QLIKE-training helps mainly by narrowing the long-horizon gap, not reversing it.
 
-## Follow-ups
-- Reconcile the news no-lift here vs the earlier MSE-trained news-helps result (loss? batching? data
-  refresh?).
-- Report calm/turbulent separately in the paper (with the DM table above).
-- Optional: MAD-by-depth number; rolling-origin (P4) robustness.
+## Follow-up 1 — reconcile the news no-lift (loss vs architecture/data)
+
+Leave-one-out news effect (FULL vs minus_news, QLIKE metric, 3-seed DM) on the SAME current
+architecture + data, MSE-trained vs QLIKE-trained:
+
+| h | MSE-sweep | QLIKE-sweep |
+|---|---|---|
+| 1 | +2.96, p=0.003* (news no help) | +9.41, p<0.001* (news no help) |
+| 5 | +0.47, p=0.64 (ns) | +6.58, p<0.001* (news no help) |
+| 10 | +0.06, p=0.96 (ns) | +0.65, p=0.51 (ns) |
+| 22 | +1.76, p=0.08 (ns) | +0.22, p=0.83 (ns) |
+
+**Conclusion:** the news branch does not lift QLIKE under EITHER loss (removing it improves QLIKE;
+significant at h1 for both). So the divergence from the earlier "news helps QLIKE" result
+([[project_selective_news_gate_finding]], `project_null_result_pattern_and_sota_pivot`) is **NOT
+caused by the QLIKE loss** — it traces to the current 3-parallel-branch FULL architecture + mini-batch
+optimization + the 2026-08-14 data refresh (the earlier result was a different architecture/data
+regime). Gate and graph, by contrast, ARE loss-sensitive: under MSE, minus_gate and minus_graph are
+significantly WORSE than FULL at h5/h10 (gate/graph help there), but that benefit disappears under
+QLIKE. So QLIKE-training changes which components matter; news is inert regardless of loss here.
+
+## Leakage audit — why lstm_only beats HAR (result is legitimate)
+
+The surprising "simplest model wins" result (lstm_only beats HAR at h1, p<0.001) was audited for
+data leakage across five vectors (code review + empirical check); all clean:
+
+| Vector | Finding |
+|---|---|
+| Target + feature scaler | Fit train-only (`_fit_graph_preprocessors`: `date ≤ train_end`; `build_extended_store`: `frames[ticker]["train"]`). |
+| `market_pk` | Contemporaneous cross-sectional median of `sqrt(parkinson)` at date t — uses only values ≤ t (causal). |
+| `volume_zscore_20` | Trailing `rolling(20)` z-score per ticker (past 20 days) — causal. |
+| Window / target | `x_price = feature_values[start : start+22]` (≤ t); `target_index = start + 22 + h − 1` = t+h; windows built PER SPLIT → no train/val features leak into test, no test target into train. |
+| HAR fairness | `run_e0` uses the FIRST 3 columns = the correct HAR features; empirically HAR and lstm_only share IDENTICAL test observations (14608 @h1, 13915 @h22) + IDENTICAL targets + the same positivity floor. |
+
+**Conclusion:** no leakage. lstm_only legitimately beats HAR because it has two extra causal features
+HAR lacks (`market_pk` = market volatility factor, `volume_zscore` = volume shock) plus LSTM
+nonlinearity over a 22-day sequence, vs HAR's linear regression on 3 point-features. The ~1.7% QLIKE
+edge at h1 is modest and plausible. **Independent corroboration:** the EDA-GNN baseline already found
+the same with DM (E2 = HAR+MarketPK+volume_zscore, no graph, beats HAR on QLIKE, p=0.012 —
+`project_eda_gnn_result`); lstm_only ≈ E2, so this run reproduces a previously DM-verified result
+from a separate baseline, not a pipeline artifact.
+
+## Follow-ups (remaining)
+- FU2: report calm/turbulent + P1/P2 in the paper (with the DM tables above). [done — see paper]
+- FU3a: MAD-by-depth over-smoothing number. [done — see below/paper]
+- FU3b: rolling-origin (P4) robustness.
