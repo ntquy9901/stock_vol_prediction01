@@ -1,6 +1,6 @@
 # TrackA volatility models -- robustness report (held-out test dumps)
 
-Source dumps: `results/trackA_ablation_h{h}_seed{s}_2026-08-15_085544_loo/<rung>/predictions_test.json` (no training; existing dumps only).
+Source dumps: `results/volatility_ablation_h{h}_seed{s}_2026-08-15_085544_loo/<rung>/predictions_test.json` (no training; existing dumps only).
 Seed ensemble: [42, 123, 2026, 7, 2024] (per-observation mean over seeds on shared keys). Horizons: [1, 5, 10, 22].
 Rung -> dump dir: HAR->P0, FULL->FULL, LSTM_only->lstm_only, minus_graph->minus_graph.
 Bootstrap: moving-block by date, 2000 resamples, fixed numpy seed 12345; block length max(20, 2*horizon) trading days (capped at #dates).

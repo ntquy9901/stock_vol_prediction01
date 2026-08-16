@@ -36,7 +36,7 @@ high<low xfail rows are now clean, so they pass normally).
 ## Notes
 
 - VN100 (`data/raw/prices/vn100/`) is a raw subfolder NOT read by active training (non-recursive
-  `*_processed.csv` glob), so this does not affect current trackA results; it prepares VN100 for the
+  `*_processed.csv` glob), so this does not affect current volatility results; it prepares VN100 for the
   cross-stock generalization experiment.
 - The gross Yahoo glitch cases (e.g. ACB/TPB 2025-06-04..05 where adjusted high collapsed near zero)
   are corrected by the positive-aware max/min (the collapsed high is superseded by the max of the

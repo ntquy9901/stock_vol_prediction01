@@ -2,7 +2,7 @@
 
 Tài liệu giải thích ý nghĩa và **cách tính** của cụm từ *"a real multi-head Graph Attention Network
 (GAT) over a directed volume-to-volatility (vol→PK) lead-lag edge"*. Công thức lấy theo code:
-`baselines/2026-08-15_trackA_gat_edge/code/gat.py` (GAT) và
+`baselines/2026-08-15_volatility/code/gat.py` (GAT) và
 `baselines/2026-08-11_eda_gnn_baseline/code/edges.py` (cạnh vol→PK).
 
 Cụm từ gồm 3 phần: (A) **cạnh có hướng vol→PK lead-lag** (đồ thị nối mã nào với mã nào), (B) **GAT

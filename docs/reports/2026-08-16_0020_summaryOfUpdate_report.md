@@ -3,7 +3,7 @@
 ## What changed
 
 1. **Archived** `data/processed/vn30_only` (30-ticker subset) → `archive/data_processed_vn30_only/`.
-   Active trackA training reads the top-level `data/processed` (33 tickers) via
+   Active volatility training reads the top-level `data/processed` (33 tickers) via
    `combo_ladder.py` (`_PROCESSED = ROOT/"data"/"processed"`, non-recursive `*_processed.csv` glob),
    so the subset was unused by the current pipeline. 9 non-archive legacy VN30 scripts still
    reference `vn30_only` (see Blast radius) — not part of the active path.
@@ -27,7 +27,7 @@
   three raw storage conventions (thousands-VND, full-VND tz-aware for VPB/VRE, SSI for LPB) do not
   affect the target; `process_single_stock` normalizes dates to plain `YYYY-MM-DD`
   (`str.split(' ').str[0]`), so the mixed VPB/VRE datetime format is handled.
-- Sync: the 33 processed files copied to `.worktrees/trackA-gat/data/processed/` because the active
+- Sync: the 33 processed files copied to `.worktrees/volatility-gat/data/processed/` because the active
   code resolves `ROOT` to the worktree and reads the worktree's own `data/processed`.
 
 ## Verification
@@ -56,7 +56,7 @@
 ## Blast radius (vn30_only archive)
 
 9 non-archive scripts reference `vn30_only` and will not find it after the move (all legacy,
-pre-trackA): `train_lstm_har_vn30.py`, `train_har_vn30.py`, `train_simple_lstm_vn30.py`,
+pre-volatility): `train_lstm_har_vn30.py`, `train_har_vn30.py`, `train_simple_lstm_vn30.py`,
 `train_all_models_vn30.py`, `test_har_leakage_fix.py`, `src/experiment/train_with_config.py`,
 `src/lstm_har_enhanced/train_with_overfitting_prevention.py`, `src/train_with_config.py`. Left
 as-is (not deleted, not path-updated) pending a user decision on whether to archive/update them.

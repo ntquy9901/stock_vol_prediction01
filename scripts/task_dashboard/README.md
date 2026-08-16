@@ -68,7 +68,7 @@ Each entry in the JSON array:
 | Field | Type | Meaning |
 |-------|------|---------|
 | `id` | string | Short unique task id. |
-| `phase` | string | Roadmap phase (see `docs/reports/2026-08-08_1700_track_ab_unified_roadmap.md`). Groups cards on the dashboard. |
+| `phase` | string | Roadmap phase (see `docs/reports/2026-08-08_1700_tracks_unified_roadmap.md`). Groups cards on the dashboard. |
 | `title` | string | Human-readable task title (card heading). |
 | `status` | `done` \| `running` \| `blocked` \| `planned` | Drives the status badge and the overview counts/bar. Any other value folds into `planned`. |
 | `timestamp` | string | ISO-ish timestamp of the entry. |

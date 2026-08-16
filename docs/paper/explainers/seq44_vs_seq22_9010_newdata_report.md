@@ -30,7 +30,7 @@
 | 22 | FULL | 0.320 | 0.566 | 0.310 | 0.030 | 0.6636 |
 | 22 | lstm_only | 0.320 | 0.566 | 0.319 | 0.030 | 0.6691 |
 
-(minus_graph/gate/news rows in `results/trackA_retrain_h{h}_seed42_2026-08-16_011558_seq44final/`.)
+(minus_graph/gate/news rows in `results/volatility_retrain_h{h}_seed42_2026-08-16_011558_seq44final/`.)
 
 ## Test metrics — seq=22
 
@@ -91,6 +91,6 @@
 
 ## Files
 
-- Runs: `results/trackA_retrain_h{1,5,10,22}_seed42_2026-08-16_011558_seq44final/` and
+- Runs: `results/volatility_retrain_h{1,5,10,22}_seed42_2026-08-16_011558_seq44final/` and
   `..._2026-08-16_031259_seq22final/` (per-rung `retrain_metrics.json` + test dumps).
-- DM: `baselines/2026-08-15_trackA_gat_edge/code/dm_retrain.py`.
+- DM: `baselines/2026-08-15_volatility/code/dm_retrain.py`.

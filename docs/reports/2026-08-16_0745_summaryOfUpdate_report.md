@@ -34,7 +34,7 @@ tests.
 
 ## Notes
 
-- `data/processed/vn100/` is a subfolder; the active trackA training globs `*_processed.csv`
+- `data/processed/vn100/` is a subfolder; the active volatility training globs `*_processed.csv`
   non-recursively at the top level, so VN100 is NOT pulled into current training — it is staged for
   the cross-stock generalization experiment.
 - Full VN100 ingestion pipeline is now: crawl → clean → process → quality-test, each a reusable

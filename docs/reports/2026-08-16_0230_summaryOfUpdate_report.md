@@ -11,7 +11,7 @@
    liquid listing) instead of 2011-11-10; 3474 → 2058 rows. Zero-variance fraction dropped 40.5% →
    0.2% (remaining zeros are legitimate limit-up/down days).
 3. **Reprocessed** all 33 `data/processed/*_processed.csv` and synced to the worktree copy the
-   training reads (`.worktrees/trackA-gat/data/processed`).
+   training reads (`.worktrees/volatility-gat/data/processed`).
 4. **Two data-quality test scripts** (written by audit agents) finalized and now GREEN:
    `tests/test_raw_prices_quality.py` (167 passed) and `tests/test_processed_data_quality.py`
    (134 passed).
