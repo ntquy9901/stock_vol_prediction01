@@ -27,6 +27,18 @@ def test_glitch_volume_interpolated():
     assert (out["volume"] > 0).all()
 
 
+def test_float_noise_flat_not_repaired():
+    # high == low to floating-point noise (~1e-15) is a FLAT no-trade day, NOT a price move ->
+    # volume 0 must stay 0 (regression: exact `high != low` wrongly repaired these).
+    df = _df([
+        ["2020-01-06", 50.0, 50.0, 50.0, 50.0, 100],
+        ["2020-01-07", 50.0, 50.0 + 7e-15, 50.0, 50.0, 0],   # noise range, no real move
+    ])
+    out, n = repair_frame(df)
+    assert n == 0
+    assert out["volume"].iloc[1] == 0
+
+
 def test_legit_flat_zero_volume_untouched():
     # volume 0 AND high == low -> real no-trade day, must stay 0
     df = _df([

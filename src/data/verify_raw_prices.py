@@ -66,9 +66,10 @@ def verify_frame(df: pd.DataFrame) -> dict:
     res["volume_negative"] = int((vol < 0).sum())
     res["volume_nan"] = int((~np.isfinite(vol.to_numpy())).sum())
 
-    # volume == 0 diagnostics
+    # volume == 0 diagnostics. "flat" uses a relative tolerance so float-precision equal highs/lows
+    # (~1e-15, genuine no-trade days) count as flat, not as a spurious "price moved" glitch.
     zero = vol == 0
-    flat = h == low
+    flat = (h - low).abs() <= _RTOL * np.maximum(h.abs(), 1e-9)
     res["zero_vol"] = int(zero.sum())
     res["zero_vol_frac"] = round(float(zero.mean()), 4)
     res["zero_vol_price_moved"] = int((zero & ~flat).sum())   # suspicious: price moved, no volume

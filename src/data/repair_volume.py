@@ -19,7 +19,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+
+_REL_TOL = 1e-6   # a real intraday move must exceed this fraction of price (else float-noise flat)
 
 
 def repair_frame(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
@@ -29,7 +32,10 @@ def repair_frame(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     vol = out["volume"].astype(float)
     high = out["high"].astype(float)
     low = out["low"].astype(float)
-    glitch = (vol == 0) & (high != low)      # price moved but zero volume -> spurious
+    # A REAL intraday move is high strictly above low beyond float noise. Use a relative tolerance so
+    # float-precision "flat" days (high==low to ~1e-15, genuine no-trade) are NOT treated as glitches.
+    moved = (high - low) > _REL_TOL * np.maximum(high.abs(), 1e-9)
+    glitch = (vol == 0) & moved              # price moved but zero volume -> spurious
     if not glitch.any():
         return out, 0
 

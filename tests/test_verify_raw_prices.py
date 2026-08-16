@@ -37,6 +37,17 @@ def test_zero_volume_flat_is_benign_diagnostic():
     assert r["leading_zero_vol_run"] == 0      # zero-vol is the 2nd row, not leading
 
 
+def test_float_noise_flat_is_not_price_moved():
+    # high==low to float noise (~1e-15) with zero volume -> flat no-trade, NOT zero_vol_price_moved
+    df = _df([
+        ["2020-01-06", 50.0, 50.0, 50.0, 50.0, 100],
+        ["2020-01-07", 50.0, 50.0 + 7e-15, 50.0, 50.0, 0],
+    ])
+    r = verify_frame(df)
+    assert r["zero_vol_price_moved"] == 0
+    assert r["zero_vol_flat"] == 1
+
+
 def test_hard_defects_flagged():
     df = _df([
         ["2020-01-06", 6.0, 8.0, 5.0, 7.0, 100],
