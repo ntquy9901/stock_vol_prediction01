@@ -154,7 +154,11 @@ $$\sigma^2_{\text{Park}} = \frac{(\ln(H/L))^2}{4\ln 2}.$$
 
 The processed `parkinson_volatility` column is numerically the Parkinson **variance** estimator
 ($\sigma^2$, non-negative), and every model in this paper forecasts this same daily realized-variance
-quantity.
+quantity. Parkinson variance was selected as the primary prediction target because financial volatility
+models fundamentally characterize the conditional second moment of returns; the variance scale is
+consistent with the Parkinson estimator, multi-period aggregation, HAR-type specifications, and QLIKE
+optimization. Square-root volatility ($\sigma$) is reported only as a secondary representation for
+interpretability.
 
 **Node features.** Each ticker-day carries five node features in a fixed order, all with unified
 22-trading-day windows to match the monthly HAR scale:
