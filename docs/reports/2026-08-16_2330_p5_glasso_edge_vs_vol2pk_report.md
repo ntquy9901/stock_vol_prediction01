@@ -43,8 +43,26 @@ tests whether that market-factor-robust edge beats the directed volume→volatil
 - The glasso edge here uses a fixed regularisation path (alpha auto-raised until convergence) and
   Top-5 selection to match vol→PK density; alpha/Top-K were not tuned by cross-validation.
 
-## Conclusion
-The graphical-LASSO partial-correlation edge is a legitimate, market-factor-robust alternative and is
-the best edge at h5 (where it beats HAR and no-graph), but it does not uniformly beat the vol→PK edge
-(vol→PK wins h1/h10). The practical takeaway: any single fixed edge is horizon-specific; the only
-significant graph-adds-value result is graphical-LASSO at the one-week horizon.
+## Robustness — 5-seed re-run at h5 (the h5 win does NOT survive)
+
+The h5 result was the only significant graph-adds-value cell, at a marginal p=0.048, so it was
+re-estimated with two additional seeds (5 seeds total: 42, 123, 2026, 2027, 7; same config). The h5
+advantage disappears:
+
+| h5, glasso-FULL vs | 3-seed | 5-seed |
+|---|---|---|
+| vol→PK | −2.33, p=0.020 (glasso) | −0.28, p=0.776 (tie) |
+| HAR | −1.98, p=0.048 (glasso) | −1.07, p=0.286 (not significant) |
+| no-graph | −2.01, p=0.044 (glasso) | +0.56, p=0.576 (tie) |
+
+5-seed mean QLIKE at h5: HAR 0.5503, vol→PK 0.5471, glasso 0.5467 — the learned edges are ~0.003–0.004
+below HAR but not significantly. The 3-seed h5 win was a marginal false positive that does not hold up.
+
+## Conclusion (revised)
+The graphical-LASSO partial-correlation edge is a legitimate, market-factor-robust alternative, and at
+3 seeds it looked like the best edge at h5 — but that single significant cell does not survive a 5-seed
+re-estimation (glasso vs HAR at h5 goes p=0.048 → p=0.286). With the marginal cell removed, **no graph
+edge (vol→PK or graphical-LASSO) significantly beats HAR or the graph-removed model at any horizon**,
+which re-confirms the project's parsimony / "graph adds no reliable OOS value" conclusion. vol→PK
+remains the better of the two edges where they differ significantly (h1, h10), but neither closes the
+gap to HAR.
