@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Beat-HAR architecture — forecast combination</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:20px;color:#1a1a1a;background:#fafafa}
+  h1{font-size:20px} .cap{max-width:1000px;color:#444;font-size:13px;line-height:1.5}
+  .legend span{display:inline-block;padding:2px 9px;margin:2px 6px 2px 0;border-radius:3px;font-size:12px}
+  svg{background:#fff;border:1px solid #ddd;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>Beat-HAR architecture — HAR &oplus; deep forecast combination (VN30 Parkinson variance, horizon t+h)</h1>
+<p class="cap">The single deep model does not reliably beat HAR out-of-sample. The forecast that beats
+HAR is a fixed, untuned <b>equal-weight combination</b> of the classical HAR forecast and the deep
+forecast on the variance scale, floored for positivity. Combining works because HAR and the non-linear
+model make partially uncorrelated errors (Bates&ndash;Granger). Diebold&ndash;Mariano vs HAR (QLIKE,
+seed-ensembled): <b>h1 p&lt;0.001</b>, <b>h5 p&lt;0.001 (5-seed robust)</b>, h10 tie, h22 HAR best.</p>
+<p class="legend">
+  <span style="background:#e3f2fd">input / data</span>
+  <span style="background:#fff3e0">HAR baseline (linear)</span>
+  <span style="background:#e8f5e9">deep branches (non-linear)</span>
+  <span style="background:#ede7f6">combination</span>
+  <span style="background:#fce4ec">evaluation</span>
+</p>
+
+<svg viewBox="0 0 1020 760" width="1020" height="760" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,Arial" font-size="13">
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#555"/>
+    </marker>
+    <style>
+      .box{rx:8; stroke:#90a4ae; stroke-width:1.5}
+      .t{fill:#1a1a1a} .tb{fill:#1a1a1a; font-weight:600}
+      .lbl{fill:#37474f; font-size:12px}
+      .edge{stroke:#555; stroke-width:1.6; fill:none; marker-end:url(#arw)}
+      .small{font-size:11px; fill:#546e7a}
+    </style>
+  </defs>
+
+  <!-- INPUT -->
+  <rect class="box" x="360" y="18" width="300" height="46" fill="#e3f2fd"/>
+  <text class="tb" x="510" y="40" text-anchor="middle">VN30 daily OHLCV &mdash; 33 tickers</text>
+  <text class="small" x="510" y="56" text-anchor="middle">Parkinson variance &sigma;&sup2;; per-ticker chronological split; train-only scalers/edge</text>
+
+  <!-- split arrows -->
+  <path class="edge" d="M430,64 C400,90 250,90 210,112"/>
+  <path class="edge" d="M590,64 C640,90 760,90 800,112"/>
+
+  <!-- HAR BRANCH -->
+  <rect class="box" x="60" y="112" width="300" height="150" fill="#fff3e0"/>
+  <text class="tb" x="210" y="134" text-anchor="middle">HAR baseline (linear)</text>
+  <text class="lbl" x="80" y="160">3 HAR features (own history):</text>
+  <text class="small" x="80" y="178">&nbsp;&bull; PK daily &nbsp;&bull; PK weekly (5d) &nbsp;&bull; PK monthly (22d)</text>
+  <text class="lbl" x="80" y="204">pooled OLS regression</text>
+  <text class="small" x="80" y="222">no tuning; the field-standard, hard-to-beat baseline</text>
+  <rect x="80" y="232" width="260" height="22" rx="5" fill="#ffe0b2"/>
+  <text class="t" x="210" y="248" text-anchor="middle">&#375;<tspan baseline-shift="sub" font-size="9">HAR</tspan>(t+h)  &mdash; positive variance</text>
+
+  <!-- DEEP BRANCH container -->
+  <rect class="box" x="650" y="112" width="330" height="300" fill="#e8f5e9"/>
+  <text class="tb" x="815" y="134" text-anchor="middle">Deep model &mdash; 3 parallel branches</text>
+
+  <rect x="668" y="146" width="294" height="52" rx="6" fill="#c8e6c9" stroke="#81c784"/>
+  <text class="tb" x="682" y="166">Price LSTM</text>
+  <text class="small" x="682" y="184">5 node features (3 HAR + market factor + volume z-score), 22-day window</text>
+
+  <rect x="668" y="206" width="294" height="52" rx="6" fill="#c8e6c9" stroke="#81c784"/>
+  <text class="tb" x="682" y="226">GAT &times;2 (spatial)</text>
+  <text class="small" x="682" y="244">directed vol&rarr;PK Top-5 edge (train-frozen); cross-stock spillover</text>
+
+  <rect x="668" y="266" width="294" height="52" rx="6" fill="#c8e6c9" stroke="#81c784"/>
+  <text class="tb" x="682" y="286">Gated PhoBERT news LSTM</text>
+  <text class="small" x="682" y="304">Vietnamese news; per-ticker gate</text>
+
+  <path class="edge" d="M815,318 L815,338"/>
+  <rect x="700" y="338" width="230" height="24" rx="5" fill="#a5d6a7"/>
+  <text class="t" x="815" y="354" text-anchor="middle">concat &rarr; MLP head &rarr; softplus floor</text>
+  <rect x="700" y="378" width="230" height="22" rx="5" fill="#a5d6a7"/>
+  <text class="t" x="815" y="394" text-anchor="middle">&#375;<tspan baseline-shift="sub" font-size="9">deep</tspan>(t+h) &mdash; positive variance</text>
+
+  <text class="small" x="815" y="426" text-anchor="middle">QLIKE estimation; alone beats HAR only at h1 (vs fair HAR-X)</text>
+
+  <!-- COMBINATION -->
+  <path class="edge" d="M210,254 C210,470 380,470 470,486"/>
+  <path class="edge" d="M815,400 C815,470 660,470 570,486"/>
+  <rect class="box" x="360" y="470" width="320" height="86" fill="#ede7f6" stroke="#9575cd"/>
+  <text class="tb" x="520" y="496" text-anchor="middle">Forecast combination (leak-safe, untuned)</text>
+  <text class="t" x="520" y="522" text-anchor="middle" font-size="15">&#375; = 0.5 &middot; &#375;<tspan baseline-shift="sub" font-size="10">HAR</tspan> + 0.5 &middot; &#375;<tspan baseline-shift="sub" font-size="10">deep</tspan></text>
+  <text class="small" x="520" y="544" text-anchor="middle">&rarr; positivity floor(&epsilon;); weight fixed (no tuning &rarr; no test overfit)</text>
+
+  <!-- FINAL OUTPUT -->
+  <path class="edge" d="M520,556 L520,588"/>
+  <rect class="box" x="360" y="588" width="320" height="40" fill="#ede7f6" stroke="#9575cd"/>
+  <text class="tb" x="520" y="613" text-anchor="middle">Final forecast &sigma;&sup2;(t+h)</text>
+
+  <!-- EVAL -->
+  <path class="edge" d="M520,628 L520,660"/>
+  <rect class="box" x="300" y="660" width="440" height="82" fill="#fce4ec" stroke="#f06292"/>
+  <text class="tb" x="520" y="682" text-anchor="middle">Diebold&ndash;Mariano vs HAR (QLIKE, HLN, HAC lag h&minus;1)</text>
+  <text class="t" x="520" y="704" text-anchor="middle">h1: combo &lt; HAR (p&lt;0.001) &nbsp; h5: combo &lt; HAR (p&lt;0.001, 5-seed)</text>
+  <text class="t" x="520" y="722" text-anchor="middle">h10: tie (p=0.21) &nbsp; h22: HAR best (p&lt;0.001)</text>
+  <text class="small" x="520" y="738" text-anchor="middle">&check; the combination beats HAR at the short horizons</text>
+</svg>
+
+<p class="cap" style="margin-top:12px">Source: <code>docs/reports/2026-08-17_beat_har_research.md</code>,
+paper addendum &sect;H. The deep branches, edge, QLIKE estimation, HAR-X fair baseline and
+graphical-LASSO edge are the ablations in <code>docs/reports/2026-08-16_1600_gnnhar_p1p2p3_results_report.md</code>.</p>
+</body>
+</html>
