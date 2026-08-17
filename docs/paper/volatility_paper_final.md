@@ -45,7 +45,10 @@ of calm days at the short-to-mid horizons and reverses on the turbulent decile, 
 shows it is concentrated in the middle of the test window; two GAT hops are not worse than one on this
 market. These results sharpen, rather than overturn, the headline: a nonlinear price model earns a
 narrow, one-day, calm-regime edge, while the linear HAR family remains the standard to beat at the longer
-horizons.
+horizons. The learned model does deliver a significant out-of-sample gain over HAR when the two are
+combined: an untuned equal-weight forecast combination (0.5·HAR + 0.5·learned) lowers QLIKE relative to
+HAR at the one-day and one-week horizons (both p<0.001), so the learned model is best used as a
+complement to HAR at short horizons rather than as a replacement.
 
 **Keywords:** volatility forecasting; graph attention networks; directed spillover; financial news;
 PhoBERT; emerging markets.
@@ -133,6 +136,16 @@ volatility, motivated by the volume–volatility lead-lag relation, and freeze i
 embeddings [7,8], usually fusing a single market-wide signal by concatenation on English- or
 Chinese-language markets. We work in Vietnamese with PhoBERT [3] on VN30 and add a per-ticker gate that
 admits a different amount of news per stock.
+
+**Forecast combination.** Combining forecasts from different models to reduce error is one of the
+oldest and most robust results in forecasting, from Bates and Granger [20] to Timmermann's survey [21];
+a persistent empirical finding — the "forecast combination puzzle" [22] — is that a simple equal-weight
+average is hard to beat with estimated optimal weights. The idea is intrinsic to HAR itself: Clements
+and Vasnev [23] read the HAR model as a combination of daily, weekly, and monthly predictors. We do not
+claim the combination mechanism as novel; we use it as the standard tool it is, and report (Section
+6.10) that an untuned equal-weight combination of HAR and the learned model is where the learned model
+delivers a significant out-of-sample gain over HAR at short horizons — the two making partially
+uncorrelated errors — rather than as a stand-alone replacement for HAR.
 
 ---
 
@@ -515,6 +528,28 @@ middle sub-periods (significant in the second block at every horizon) while the 
 HAR at h5, h10, and h22. The pooled result is therefore time-varying rather than uniform. Full
 rolling-origin recalibration is left to future work.
 
+### 6.10 Forecast combination (where the learned model beats HAR)
+
+A single learned model does not consistently beat HAR, but a forecast combination does. Averaging the
+HAR forecast and a learned forecast on the variance scale with a fixed, untuned equal weight
+(0.5·HAR + 0.5·learned), floored for positivity, lowers held-out QLIKE relative to HAR at the short
+horizons:
+
+| Horizon | HAR | 0.5·HAR + 0.5·(price LSTM) | DM vs HAR |
+|---|---|---|---|
+| h1 | 0.4633 | 0.4564 | p<0.001 (favours combination) |
+| h5 | 0.5503 | 0.5450 | p<0.001 (favours combination; 5 seeds) |
+| h10 | 0.5933 | 0.5918 | p=0.208 (no difference) |
+| h22 | 0.6474 | 0.6526 | p<0.001 (favours HAR) |
+
+The combination lowers QLIKE for every learned variant (price-only LSTM, full model, no-news) at h1 and
+h5 (all p<0.001), and the h5 result is stable across five seeds. The weight is fixed and untuned, so the
+gain is not attributable to test-set tuning; a QLIKE weight sweep shows the optimum is horizon-adaptive
+(more weight on the learned model at short horizons, all-HAR at h22), consistent with the combination
+puzzle [22]. Because HAR and the non-linear model make partially uncorrelated errors, combining them is
+the classical variance-reduction result [20,21]. The practical message is that the learned model is
+complementary to HAR at the short horizons rather than a replacement.
+
 ---
 
 ## 7. Discussion
@@ -595,7 +630,10 @@ it is attributable to the LSTM nonlinearity; a market-regime split places that e
 short-to-mid horizons, and a sub-period analysis shows it is not uniform across the test window. Two GAT
 hops are not worse than one on this market, unlike the Dow-Jones finding of Zhang et al. The practical
 conclusion is that a nonlinear price model earns a narrow one-day edge on calm days while the linear HAR
-family remains the standard to beat at the longer horizons and in turbulent periods. For a Vietnamese
+family remains the standard to beat at the longer horizons and in turbulent periods. The one route by
+which the learned model beats HAR out-of-sample is a fixed equal-weight forecast combination of the two
+(Section 6.10), which lowers QLIKE significantly at h1 and h5; the learned model is therefore a
+short-horizon complement to HAR, not a replacement. For a Vietnamese
 emerging market, the study shows how to build and
 honestly evaluate a directed-spillover graph-attention news forecaster against the field-standard HAR.
 
@@ -644,3 +682,15 @@ volatility spillovers. *International Journal of Forecasting* 28(1), 57–66 (20
 
 [19] Chen, Q., Robert, C.-Y. Multivariate realized volatility forecasting with graph neural network. In
 *ACM ICAIF* (2022). arXiv:2112.09015.
+
+[20] Bates, J.M., Granger, C.W.J. The combination of forecasts. *Operational Research Quarterly* 20(4),
+451–468 (1969).
+
+[21] Timmermann, A. Forecast combinations. In *Handbook of Economic Forecasting*, Vol. 1, Ch. 4,
+135–196. Elsevier (2006).
+
+[22] Stock, J.H., Watson, M.W. Combination forecasts of output growth in a seven-country data set.
+*Journal of Forecasting* 23(6), 405–430 (2004).
+
+[23] Clements, A., Vasnev, A.L. Forecast combination puzzle in the HAR model. *Journal of Forecasting*
+43(1), 118–137 (2024).
