@@ -1,0 +1,11 @@
+{
+  "commit": "005bca3",
+  "branch": "feature/pooled-news-gnn-pilot",
+  "timestamp": "2026-08-09T10:27:43",
+  "tests_passed": true,
+  "diff_cover_pct": 88.0,
+  "ruff": "pass",
+  "pandera": "pass",
+  "evidently": "info",
+  "overall": "pass"
+}

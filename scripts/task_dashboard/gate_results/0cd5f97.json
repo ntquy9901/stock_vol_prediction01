@@ -1,0 +1,11 @@
+{
+  "commit": "0cd5f97",
+  "branch": "feature/masked-gnn",
+  "timestamp": "2026-08-09T17:35:22",
+  "tests_passed": true,
+  "diff_cover_pct": 89.0,
+  "ruff": "pass",
+  "pandera": "pass",
+  "evidently": "info",
+  "overall": "pass"
+}
