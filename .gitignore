@@ -122,3 +122,6 @@ archive/data_raw_prices_backup_pre_update_2026-08-16/
 scripts/seq_lookback/logs15/
 scripts/seq_lookback/_run*.log
 scripts/seq_lookback/_last_*_ts.txt
+
+scripts/seq_lookback/_run_ablate.log
+scripts/seq_lookback/_last_ablate_ts.txt

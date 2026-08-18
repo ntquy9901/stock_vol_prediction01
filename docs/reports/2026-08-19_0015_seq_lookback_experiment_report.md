@@ -123,6 +123,28 @@ shorter is universally better.
 - 15-epoch 3-seed results: `results/volatility_retrain_h{1,5,10,22}_seed{42,123,2026}_2026-08-18_2306_15ep_seq{5,10}/`.
 - Architecture correction recorded in CLAUDE.md §Ablation and memory `project_gat_uses_raw_features`.
 
+## 7a. Control — is beating HAR an artifact of the 90/10 split? (No)
+
+Concern: the deep model might beat HAR only because of the 90/10 retrain protocol, not the lookback.
+Two facts already argue against a data-advantage artifact: (i) HAR is refit on the SAME 90% train+val,
+so both models see identical training data; (ii) under the same 90/10, seq22 beats HAR at zero
+horizons while seq5/seq10 beat at h1 — so lookback is separable. To isolate the SPLIT itself, seq5 was
+re-run under the STANDARD 70/15/15 split with early stopping (patience=3, min_epochs=6, ≤10 epochs,
+seed 42) via `scripts/seq_lookback/run_seq_ablation.py` (wraps the delivered `run_ablation`).
+
+seq5 @70/15/15 + early-stop, deep vs HAR (DM QLIKE; negative = beats HAR; * p<0.05):
+
+| h | FULL vs HAR | lstm_only vs HAR | n |
+|---|---|---|---|
+| 1 | −0.77 (0.442) tie | −4.62* beat | 15169 |
+| 5 | −2.23* beat | −2.02* beat | 15037 |
+| 10 | +3.88* lose | +0.30 tie | 14872 |
+| 22 | +3.57* lose | +3.85* lose | 14476 |
+
+The beat-HAR-at-short-horizon reproduces under 70/15/15 (lstm_only beats at h1 AND h5), so it is NOT a
+90/10 artifact — it is a genuine effect of the deep (short-lookback) model. `lstm_only` is the most
+consistent HAR-beating rung across both protocols. HAR remains best at h10/h22 under both splits.
+
 ## 7. Code review / DoD status
 
 - **Tests:** `scripts/seq_lookback/test/test_seq_lookback.py`, 12 tests, all pass under the GPU venv.

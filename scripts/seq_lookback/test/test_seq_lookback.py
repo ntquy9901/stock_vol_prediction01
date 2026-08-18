@@ -153,6 +153,27 @@ def test_build_smoke_rejects_single_zeroed_column(monkeypatch):
         run_seq._build_with_smoke(Path("stamp"))
 
 
+def test_ablation_wrapper_sets_seq_and_injects_smoke_without_ratio_patch(monkeypatch):
+    """run_seq_ablation.main must set combo_ladder.SEQ, inject the smoke at run_volatility.build_basis,
+    and leave the split ratio (load_and_split_price_data) at the harness 70/15/15 default."""
+    run_seq_ablation = pytest.importorskip("run_seq_ablation", reason="needs torch (GPU venv)")
+    import combo_ladder
+    import run_volatility
+    called = {}
+    # register globals main() mutates in place so monkeypatch restores them on teardown
+    monkeypatch.setattr(combo_ladder, "SEQ", combo_ladder.SEQ)
+    monkeypatch.setattr(run_volatility, "build_basis", run_volatility.build_basis)
+    monkeypatch.setattr(run_seq_ablation.run_ablation, "main",
+                        lambda *a, **k: called.update(args=a, kwargs=k))
+    orig_split = combo_ladder.load_and_split_price_data
+    monkeypatch.setattr(sys, "argv", ["run_seq_ablation.py", "5", "TSX", "cpu", "42", "10", "1", "5"])
+    run_seq_ablation.main()
+    assert combo_ladder.SEQ == 5
+    assert run_volatility.build_basis is run_seq_ablation._build_with_smoke   # smoke injected
+    assert combo_ladder.load_and_split_price_data is orig_split               # ratio NOT patched
+    assert called["args"][0] == "TSX" and called["args"][4] == (1, 5)         # ts + horizons forwarded
+
+
 @pytest.mark.smoke
 def test_smoke_dm_seq_end_to_end(tmp_path, monkeypatch):
     """Boot the DM path on synthetic dumps across all loss families (happy path).
