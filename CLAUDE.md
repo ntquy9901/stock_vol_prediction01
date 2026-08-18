@@ -259,9 +259,21 @@ Khi **thử nghiệm** model (không phải final run):
 - **Cách đo đóng góp:** `effect(X) = metric(Full) − metric(Full−X)` trên cùng test set, cùng basis,
   cùng positivity floor; báo cáo dấu rõ ràng (giảm loss = thành phần giúp). So sánh thống kê
   (Diebold-Mariano/paired) giữa Full và Full−X.
-- **Thành phần chung nhiều nhánh:** node features (vd 5 feature dùng CHUNG cho LSTM và GAT — GAT
-  nhận node representation từ LSTM, KHÔNG có node feature riêng); edge (graph) là quan hệ giữa node,
-  KHÔNG phải node feature. Khi mô tả ablation phải phân biệt rõ NODE feature vs EDGE.
+- **Thành phần chung nhiều nhánh (đã đính chính 2026-08-18 — model giao nộp `baselines/2026-08-15_volatility/code/model.py`):**
+  5 node feature `[parkinson_volatility, har_weekly, har_monthly, market_pk, volume_zscore_20]` dùng
+  CHUNG cho cả nhánh LSTM và nhánh GAT, nhưng kiến trúc là **PARALLEL (Track-A), KHÔNG nối tiếp**:
+  - **Nhánh LSTM** đọc chuỗi SEQ ngày của 5 feature (`price_lstm`, `model.py:75`) → `h_lstm` [B,N,64].
+  - **Nhánh GAT** đọc **feature THÔ tại ngày cuối t** (`node_raw = price[:,:,-1,:]`, `model.py:89`;
+    `GATLayer(price_dim=5,...)`, `model.py:37`) — **KHÔNG dùng output của LSTM** (comment gốc
+    `model.py:29-32`). Vì vậy **SEQ (lookback) KHÔNG ảnh hưởng nhánh GAT** — graph luôn thấy 1 vector
+    ngày t bất kể SEQ.
+  - Head ghép song song `cat([h_lstm(64), h_gnn(256), gated_news(64)])` (`model.py:92`).
+  - (Note cũ ghi "GAT nhận node representation từ LSTM" là SAI với model này — mô tả biến thể khác/cũ.)
+  - **HAR features tính per-day, độc lập SEQ:** `har_weekly`=rolling mean 5 ngày, `har_monthly`=22 ngày,
+    là cột tính sẵn; SEQ chỉ cắt cửa sổ `feature_values[start:start+SEQ]` (`data.py:437`), nên har_monthly
+    vẫn hiện diện mỗi timestep kể cả khi SEQ=5.
+  - edge (graph) là quan hệ giữa node (vol→PK Top-5), KHÔNG phải node feature. Khi mô tả ablation phải
+    phân biệt rõ NODE feature vs EDGE.
 
 ## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
 - **Language/toolchain:** Python 3.11 (pip)
