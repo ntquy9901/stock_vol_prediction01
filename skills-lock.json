@@ -397,6 +397,12 @@
       "skillPath": "skills/medchem/SKILL.md",
       "computedHash": "aa53a99b94b1f438a62b7636f031020814cffe58e0304166d07cef329956fcc2"
     },
+    "ml-rigor": {
+      "source": "Yeachan-Heo/My-Jogyo",
+      "sourceType": "github",
+      "skillPath": "skills/ml-rigor/SKILL.md",
+      "computedHash": "b1dd6c10f0fc4405a5d1fb58f9b5aa28a9e7a917326bdb52e7be919ee9e47b70"
+    },
     "modal": {
       "source": "K-Dense-AI/scientific-agent-skills",
       "sourceType": "github",

@@ -1,6 +1,6 @@
 # Processed Data Quality Audit - VN30 Parkinson Volatility
 
-Generated: 2026-08-16
+Generated: 2026-08-17
 Source: `data/processed/*_processed.csv` (33 tickers)
 Values are Parkinson variance (sigma^2); clip ceiling = 0.1. Zero rows come from H==L days (limit-up/down or synthetic backfill).
 

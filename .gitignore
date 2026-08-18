@@ -60,6 +60,13 @@ venv/
 env/
 ENV/
 .venv_gpu_encode/
+.venv_vnstock/
+
+# Skill install artifacts + scratch/temp dirs (not source)
+.superpowers/
+_tmp_compare/
+temp/
+tmp/
 
 # News embedding cache (regenerable from crawl_data + PhoBERT, tens of GB, not source)
 data/external_news_embeddings/
