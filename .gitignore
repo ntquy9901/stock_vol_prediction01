@@ -125,3 +125,6 @@ scripts/seq_lookback/_last_*_ts.txt
 
 scripts/seq_lookback/_run_ablate.log
 scripts/seq_lookback/_last_ablate_ts.txt
+
+# model checkpoints in results are large + regenerable; keep metrics/dumps (json), not weights
+results/**/*.pt

@@ -1,0 +1,85 @@
+{
+  "horizon": 1,
+  "seed": 42,
+  "epochs": 5,
+  "trained_on": "train+val",
+  "rungs": {
+    "FULL": {
+      "test_metrics": {
+        "mse": 2.397570025945996e-07,
+        "rmse": 0.0004896498775600782,
+        "mae": 0.0002713386906389273,
+        "r2": 0.2689506626351742,
+        "qlike": 0.46970217814057763,
+        "directional_accuracy": 36.44658578275978
+      },
+      "floor_hit_fraction": 0.00021570319240724764,
+      "trained_on": "train+val",
+      "epochs": 5
+    },
+    "minus_graph": {
+      "test_metrics": {
+        "mse": 2.3949295311019904e-07,
+        "rmse": 0.0004893801723713365,
+        "mae": 0.0002727576947459498,
+        "r2": 0.26975578281316104,
+        "qlike": 0.4574257673717813,
+        "directional_accuracy": 34.26120670025489
+      },
+      "floor_hit_fraction": 0.0,
+      "trained_on": "train+val",
+      "epochs": 5
+    },
+    "minus_gate": {
+      "test_metrics": {
+        "mse": 2.3788218970607378e-07,
+        "rmse": 0.0004877316779809097,
+        "mae": 0.0002733261373163587,
+        "r2": 0.2746672035704033,
+        "qlike": 0.4564656656568395,
+        "directional_accuracy": 36.048606024314374
+      },
+      "floor_hit_fraction": 0.0,
+      "trained_on": "train+val",
+      "epochs": 5
+    },
+    "minus_news": {
+      "test_metrics": {
+        "mse": 2.375765579390677e-07,
+        "rmse": 0.000487418257699758,
+        "mae": 0.0002739321559714815,
+        "r2": 0.27559911337211707,
+        "qlike": 0.4561481015150295,
+        "directional_accuracy": 36.19771733903469
+      },
+      "floor_hit_fraction": 0.0,
+      "trained_on": "train+val",
+      "epochs": 5
+    },
+    "lstm_only": {
+      "test_metrics": {
+        "mse": 2.3941554195193764e-07,
+        "rmse": 0.0004893010749548152,
+        "mae": 0.00027388709130815657,
+        "r2": 0.2699918191972467,
+        "qlike": 0.4581769483414584,
+        "directional_accuracy": 34.177488018628914
+      },
+      "floor_hit_fraction": 0.0,
+      "trained_on": "train+val",
+      "epochs": 5
+    },
+    "HAR": {
+      "test_metrics": {
+        "mse": 2.3772724823401048e-07,
+        "rmse": 0.00048757281326383494,
+        "mae": 0.0002754685508812117,
+        "r2": 0.2751396396588446,
+        "qlike": 0.4637479975468199,
+        "directional_accuracy": 32.85450316363871
+      },
+      "trained_on": "train+val",
+      "epochs": 5
+    }
+  }
+}
