@@ -2,8 +2,10 @@
 
 The Track-A ablation runner (baselines/2026-08-15_trackA_gat_edge/code/run_ablation.py) defaults to
 the VN30 processed dir via combo_ladder._PROCESSED. This wrapper overrides that module global to the
-VN100 dir (data/processed/vn100), leaving SEQ=22 and the DEFAULT 70/15/15 split ratios untouched,
-then calls run_ablation.main. Exploratory single-seed run only; does not modify data.
+clean vnstock VN100 dir (data/processed/vn100_vnstock), AND sets the coupled _PRICE_DIR to the
+matching vnstock raw dir (else volume_zscore_20 is silently zeroed for VN100 tickers absent from the
+VN30 raw dir — the coupled-global rule in CLAUDE.md). SEQ=22 and the DEFAULT 70/15/15 split ratios
+stay untouched, then calls run_ablation.main. Exploratory single-seed run only; does not modify data.
 
 Run (GPU venv, from repo root):
   PYTHONIOENCODING=utf-8 .venv_gpu_encode/Scripts/python.exe scripts/run_vn100_ablation.py <TS> \
@@ -24,9 +26,11 @@ for _p in (str(TRACKA_CODE), str(ROOT)):
 import run_ablation  # noqa: E402  (imported first: sets up sys.path + imports combo_ladder)
 import combo_ladder  # noqa: E402
 
-# Override the processed-data dir BEFORE any basis is built. SEQ stays 22; ratios stay default.
-combo_ladder._PROCESSED = ROOT / "data" / "processed" / "vn100"
+# Override the coupled data dirs BEFORE any basis is built. SEQ stays 22; ratios stay default.
+combo_ladder._PROCESSED = ROOT / "data" / "processed" / "vn100_vnstock"
+combo_ladder._PRICE_DIR = ROOT / "data" / "raw" / "prices" / "vn100_vnstock"
 print(f"[vn100] _PROCESSED = {combo_ladder._PROCESSED}", flush=True)
+print(f"[vn100] _PRICE_DIR = {combo_ladder._PRICE_DIR}", flush=True)
 print(f"[vn100] SEQ = {combo_ladder.SEQ} (unchanged)", flush=True)
 
 

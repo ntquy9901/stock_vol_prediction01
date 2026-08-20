@@ -154,6 +154,6 @@ def main(ticker_dir: str, out_dir: str) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     args = sys.argv[1:]
-    src_dir = args[0] if args else "data/raw/prices/vn100"
+    src_dir = args[0] if args else "data/raw/prices/vn100_vnstock"
     dst_dir = args[1] if len(args) > 1 else "data/raw/prices/vn100_vnstock"
     raise SystemExit(main(src_dir, dst_dir))

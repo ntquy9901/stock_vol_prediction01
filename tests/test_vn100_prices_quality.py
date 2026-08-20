@@ -1,7 +1,8 @@
 """Data-quality checks for the crawled VN100 daily price files.
 
-Target: ``data/raw/prices/vn100/<TICKER>_ohlcv.csv`` (VN100 constituent set,
-columns ``date,open,high,low,close,volume``). Read-only on the data; this module
+Target: ``data/raw/prices/vn100_vnstock/<TICKER>_ohlcv.csv`` (VN100 constituent set from the vnstock
+crawl; the older Yahoo ``vn100/`` dir was removed 2026-08-20 in favour of vnstock's real volume +
+correct calendar). Columns ``date,open,high,low,close,volume``. Read-only on the data; this module
 never writes to the CSV files.
 
 These files were crawled from Yahoo Finance (``.VN`` suffix, daily,
@@ -41,9 +42,9 @@ import pandas as pd
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-PRICES_DIR = PROJECT_ROOT / "data" / "raw" / "prices" / "vn100"
+PRICES_DIR = PROJECT_ROOT / "data" / "raw" / "prices" / "vn100_vnstock"
 TOPLEVEL_DIR = PROJECT_ROOT / "data" / "raw" / "prices"
-REPORT_PATH = PROJECT_ROOT / "docs" / "reports" / "2026-08-16_vn100_crawl_report.md"
+REPORT_PATH = PROJECT_ROOT / "docs" / "reports" / "2026-08-20_vn100_vnstock_quality_report.md"
 
 EXPECTED_COLUMNS = ["date", "open", "high", "low", "close", "volume"]
 PRICE_COLS = ["open", "high", "low", "close"]
