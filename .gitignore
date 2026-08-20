@@ -134,3 +134,5 @@ data/raw/prices/sp500/
 
 # S&P500 processed = derived from Yahoo (redistribution restricted); local only
 data/processed/sp500/
+
+scripts/sp500_crossmarket/_run.log
