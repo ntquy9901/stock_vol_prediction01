@@ -136,3 +136,6 @@ data/raw/prices/sp500/
 data/processed/sp500/
 
 scripts/sp500_crossmarket/_run.log
+
+# SOICT experiment run outputs (regenerable)
+results/soict/
