@@ -128,3 +128,9 @@ scripts/seq_lookback/_last_ablate_ts.txt
 
 # model checkpoints in results are large + regenerable; keep metrics/dumps (json), not weights
 results/**/*.pt
+
+# S&P500 raw = Yahoo Finance (redistribution restricted by ToS); local only, not committed
+data/raw/prices/sp500/
+
+# S&P500 processed = derived from Yahoo (redistribution restricted); local only
+data/processed/sp500/
