@@ -94,8 +94,12 @@ def main() -> None:
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--data-root", default=str(HERE / "data"))
     ap.add_argument("--out", default=None)
+    ap.add_argument("--batch", type=int, default=None, help="override batch_size (e.g. small for large-N graphs)")
     a = ap.parse_args()
     cfg = SMOKE if a.smoke else Config()
+    if a.batch:
+        from dataclasses import replace
+        cfg = replace(cfg, batch_size=a.batch)
     files = resolve_files(a.dataset, a.data_root)
     stamp = f"{a.dataset}_lb{a.lookback}_h{a.horizon}"
     out = Path(a.out) if a.out else (HERE.parents[1] / "results" / "soict" / stamp)

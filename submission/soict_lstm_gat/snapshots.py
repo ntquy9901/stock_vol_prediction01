@@ -39,21 +39,32 @@ class SnapshotData:
         return len(self.tickers)
 
 
-def _load_panel(files: list[str]) -> pd.DataFrame:
-    """Wide pk panel: index=date, columns=ticker, values=parkinson_volatility (inner-join dates)."""
+def _load_panel(files: list[str], min_common: int = 300, min_nodes: int = 8) -> pd.DataFrame:
+    """Wide pk panel of common dates. To keep a usable common window for large/varied universes,
+    drop the latest-listed tickers one at a time (they shrink the intersection most) until the common
+    date count reaches ``min_common`` — i.e. use the largest node set with adequate shared history.
+    """
     series = {}
     for f in files:
         df = pd.read_csv(f, parse_dates=["date"]).sort_values("date")
         tk = f.replace("\\", "/").split("/")[-1].replace("_processed.csv", "")
         series[tk] = df.set_index("date")["parkinson_volatility"]
-    panel = pd.DataFrame(series).dropna(how="any")   # common dates where ALL fixed nodes present
-    return panel
+    wide = pd.DataFrame(series)                                    # outer join (NaNs before listing)
+    # order tickers by first-valid date; latest IPOs first (they limit the intersection most)
+    first_valid = {tk: wide[tk].first_valid_index() for tk in wide.columns}
+    order = sorted(wide.columns, key=lambda t: first_valid[t], reverse=True)
+    current = list(wide.columns)
+    while True:
+        common = wide[current].dropna(how="any")
+        if len(common) >= min_common or len(current) <= min_nodes:
+            return common
+        current.remove(order[0]); order.pop(0)                    # drop the latest-listed ticker
 
 
 def build_snapshots(files: list[str], lookback: int, horizon: int,
                     train_frac: float = 0.80, val_frac: float = 0.10,
                     min_common: int = 300) -> SnapshotData:
-    panel = _load_panel(files)
+    panel = _load_panel(files, min_common=min_common)
     if len(panel) < min_common:
         raise ValueError(f"only {len(panel)} common dates (< {min_common}); node set too sparse")
     tickers = list(panel.columns)

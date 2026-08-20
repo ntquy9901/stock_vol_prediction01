@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="300" font-family="Helvetica,Arial,sans-serif" font-size="13">
+  <defs>
+    <marker id="arw" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#334155"/>
+    </marker>
+    <style>.box{fill:#f1f5f9;stroke:#334155;stroke-width:1.4;rx:6}
+      .t{fill:#0f172a}.s{fill:#475569;font-size:11px}.h{font-weight:bold}
+      .l{stroke:#334155;stroke-width:1.4;fill:none;marker-end:url(#arw)}</style>
+  </defs>
+
+  <!-- input -->
+  <rect class="box" x="10" y="110" width="120" height="80" rx="6"/>
+  <text class="t h" x="70" y="135" text-anchor="middle">HAR features</text>
+  <text class="s" x="70" y="153" text-anchor="middle">daily / weekly</text>
+  <text class="s" x="70" y="167" text-anchor="middle">/ monthly (t-9..t)</text>
+  <text class="s" x="70" y="184" text-anchor="middle">per node (ticker)</text>
+
+  <!-- LSTM branch -->
+  <rect class="box" x="200" y="45" width="150" height="70" rx="6"/>
+  <text class="t h" x="275" y="75" text-anchor="middle">LSTM (temporal)</text>
+  <text class="s" x="275" y="94" text-anchor="middle">2-layer, per node</text>
+
+  <!-- GAT branch -->
+  <rect class="box" x="200" y="185" width="150" height="70" rx="6"/>
+  <text class="t h" x="275" y="212" text-anchor="middle">GAT (spatial)</text>
+  <text class="s" x="275" y="230" text-anchor="middle">node feats at t over</text>
+  <text class="s" x="275" y="245" text-anchor="middle">graphical-lasso graph</text>
+
+  <!-- glasso graph note -->
+  <rect class="box" x="200" y="270" width="150" height="24" rx="6" fill="#e2e8f0"/>
+  <text class="s" x="275" y="286" text-anchor="middle">edges: partial-corr (train-only)</text>
+
+  <!-- concat -->
+  <rect class="box" x="430" y="110" width="110" height="80" rx="6"/>
+  <text class="t h" x="485" y="145" text-anchor="middle">concat</text>
+  <text class="s" x="485" y="163" text-anchor="middle">temporal +</text>
+  <text class="s" x="485" y="177" text-anchor="middle">spatial</text>
+
+  <!-- head -->
+  <rect class="box" x="600" y="110" width="150" height="80" rx="6"/>
+  <text class="t h" x="675" y="140" text-anchor="middle">MLP head</text>
+  <text class="s" x="675" y="158" text-anchor="middle">Parkinson variance</text>
+  <text class="s" x="675" y="173" text-anchor="middle">at t+h  (h=1,5)</text>
+
+  <!-- arrows -->
+  <path class="l" d="M130,140 L196,80"/>
+  <path class="l" d="M130,160 L196,210"/>
+  <path class="l" d="M350,80 L426,135"/>
+  <path class="l" d="M350,210 L426,165"/>
+  <path class="l" d="M540,150 L596,150"/>
+
+  <text class="s" x="380" y="20">HAR-LSTM-GAT: LSTM temporal branch + GAT spatial branch (graphical-lasso graph) -&gt; head; ablation removes the GAT branch.</text>
+</svg>

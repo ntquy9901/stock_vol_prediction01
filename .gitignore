@@ -139,3 +139,6 @@ scripts/sp500_crossmarket/_run.log
 
 # SOICT experiment run outputs (regenerable)
 results/soict/
+
+submission/soict_lstm_gat/data/sp500/
+submission/soict_lstm_gat/logs/
