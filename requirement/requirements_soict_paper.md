@@ -6,7 +6,7 @@
 - model: lstm+gat
 - features: only 3 features of har for lstm and node features of gat (not use 5 features)
 - gat edges: use  graphical lasso 
-- loss đánh giá bằng MSE, không đánh giá bằng QLIKE
+- khi training loss đánh giá bằng MSE, không đánh giá bằng QLIKE
 1.2 ablation studies: 4 ablation studies below: 
 + loopback windows = 10, lstm (remove gat) 
 + loopback windows = 22 with lstm + gat, 
@@ -32,3 +32,4 @@
 - Evaluate with all metrics (MSE, RMSE, MAE, QLIKE, R2) 
 - Calculate DM to confirm with additional information if any
 - Write paper in .md, openleaf format (follow all requirements in https://soict.org/submission/paper-submission/ ).
+- Trong paper phải vẽ architecture nhỏ gọn bằng format .svg

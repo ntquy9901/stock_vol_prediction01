@@ -110,7 +110,14 @@ Markdown draft (objective style: no DirAcc, all horizons reported, VN-market sco
 internal jargon), then LaTeX per the SOICT template fetched from soict.org/submission. Sections:
 Abstract, Introduction, Related Work, Method (HAR features, LSTM-GAT, graphical-lasso edge), Data,
 Experiments (main + ablation + variations), Results (tables + DM + learning curves), Discussion,
-Conclusion.
+Conclusion. The paper MUST include a **compact architecture diagram in .svg format** (HAR-LSTM-GAT:
+per-node LSTM over the HAR features → GAT over the graphical-lasso graph → head), generated to
+`docs/paper/diagrams/` (reuse the existing SVG generator pattern).
+
+Metric roles (reconciled with `requirement/…` line 9): MSE is the TRAINING loss + early-stop/selection
+criterion only; QLIKE remains an evaluation metric (one of the five reported) and the success/DM
+decision basis (per the §1.3 "to be beaten" goal). No contradiction — MSE governs training, QLIKE
+governs the headline comparison.
 
 ## 9. Reproducibility (ENFORCE, §1.6)
 
