@@ -455,6 +455,9 @@ beat on small panels and at long horizons.
 
 ---
 
+![Figure 1: HAR-LSTM-GAT architecture](diagrams/soict_harlstmgat.png)
+
 *Figure 1.* Architecture of LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch over a
 graphical-lasso partial-correlation graph are concatenated and passed to an MLP head; the leave-one-out
-ablation removes the GAT branch to give the main LSTM. Source: `docs/paper/diagrams/soict_harlstmgat.svg`.
+ablation removes the GAT branch to give the main LSTM. Source vector:
+`docs/paper/diagrams/soict_harlstmgat.svg` (PDF/PNG rendered by `diagrams/generate_arch.py`).
