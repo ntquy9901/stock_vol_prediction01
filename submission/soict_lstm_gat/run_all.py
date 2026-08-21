@@ -51,7 +51,7 @@ def run_experiment(dataset: str, files: list[str], lookback: int, horizon: int, 
     adj = edges.glasso_adjacency(snap.adj_pk_train, top_k=cfg.top_k)
     print(f"[basis] {dataset} lb{lookback} h{horizon} nodes={snap.num_nodes} "
           f"train_snaps={len(snap.train)} test_snaps={len(snap.test)} "
-          f"edges={(adj > 0).sum() - snap.num_nodes}", flush=True)
+          f"edges={(adj != 0).sum() - snap.num_nodes}", flush=True)
 
     deep_preds = {}
     for use_graph, name in ((True, "HAR-LSTM-GAT"), (False, "LSTM (w/o GAT)")):

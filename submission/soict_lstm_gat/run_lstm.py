@@ -56,7 +56,7 @@ def build_perobs(files, lookback, horizon, cfg):
     for f in sorted(files):
         df = du.pd.read_csv(f, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
         pk = df["parkinson_volatility"].to_numpy(float)
-        if len(pk) < 200:
+        if len(pk) < 200 or not np.isfinite(pk).all():   # skip tickers with too little / non-finite data
             continue
         feats = du.har_features(pk)
         a = du.make_windows(pk, lookback, horizon)
@@ -68,7 +68,9 @@ def build_perobs(files, lookback, horizon, cfg):
         tid = len(tickers); tickers.append(Path(f).name.replace("_processed.csv", ""))
         s = du.TickerScaler(); s.fit_features(feats[a_tr]); s.fit_target(pk[np.asarray(a_tr) + horizon])
         scalers[tid] = (s.t_mean, s.t_std)
-        garch_train[tid] = pk[np.asarray(a_tr) + horizon]
+        # GARCH: fit on all pre-test targets (train + val) so the forecast starts at the test boundary
+        # (the earlier train-only fit left a val-length gap that mis-aligned the forecast to test dates).
+        garch_train[tid] = pk[np.concatenate([np.asarray(a_tr), np.asarray(a_va)]) + horizon]
 
         def win(anchors):
             idx = np.asarray(anchors)[:, None] - (lookback - 1) + np.arange(lookback)[None, :]

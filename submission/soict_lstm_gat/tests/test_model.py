@@ -25,6 +25,18 @@ def test_no_graph_ignores_adjacency():
     assert torch.allclose(a, b)   # adjacency has no effect when use_graph=False
 
 
+def test_negative_partial_corr_edges_are_used():
+    """A negative-weight edge is still an edge: use_graph must NOT drop it (MAJOR-1 fix: mask on !=0)."""
+    full = md.HARLSTMGAT(use_graph=True).eval()
+    x = torch.randn(1, 4, 10, 3)
+    eye = torch.eye(4)
+    neg = eye.clone(); neg[0, 1] = -0.7; neg[1, 0] = -0.7   # a negative partial-correlation edge
+    with torch.no_grad():
+        out_selfonly = full(x, eye)       # node 0 sees only itself
+        out_with_neg = full(x, neg)       # node 0 now also attends to node 1 via the negative edge
+    assert not torch.allclose(out_selfonly, out_with_neg)   # the negative edge changed node 0's output
+
+
 def test_batched_adjacency_accepted():
     full = md.HARLSTMGAT(use_graph=True).eval()
     x = torch.randn(3, 4, 10, 3)

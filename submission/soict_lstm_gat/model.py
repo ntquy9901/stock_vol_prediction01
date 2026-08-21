@@ -34,7 +34,10 @@ class GATLayer(nn.Module):
         e_src = (wh * self.a_src).sum(-1)
         e_dst = (wh * self.a_dst).sum(-1)
         e = self.leaky(e_dst.unsqueeze(2) + e_src.unsqueeze(1))
-        mask = (adjacency > 0).unsqueeze(-1)
+        # edge EXISTS wherever the (signed) partial-correlation adjacency is nonzero — a negative
+        # partial correlation is still a conditional-dependence edge; masking on ">0" (the prior bug)
+        # silently dropped every negative edge. Connectivity is sign-agnostic; attention learns weights.
+        mask = (adjacency != 0).unsqueeze(-1)
         e = e.masked_fill(~mask, float("-inf"))
         alpha = torch.softmax(e, dim=2)
         alpha = torch.nan_to_num(alpha, nan=0.0)

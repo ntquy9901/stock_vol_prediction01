@@ -44,9 +44,10 @@ def har_baseline(snap, floor: float) -> dict:
 def garch_baseline(snap, floor: float) -> dict:
     """Per-ticker GARCH(1,1) forecast on the test obs -> {(ticker_id, date): (y_raw, pred_raw)}."""
     import baselines as B
-    # per-ticker train variance series (from snapshot targets, train split) in date order
+    # per-ticker pre-test variance series (train + val, in date order) so the GARCH forecast starts at
+    # the test boundary — fitting on train only left a val-length gap that mis-aligned it to test dates.
     tr_series = {j: [] for j in range(snap.num_nodes)}
-    for s in snap.train:
+    for s in list(snap.train) + list(snap.val):
         for j in range(snap.num_nodes):
             tr_series[j].append(s["y_raw"][j])
     test_by_ticker = {j: [] for j in range(snap.num_nodes)}
