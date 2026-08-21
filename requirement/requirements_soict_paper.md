@@ -3,15 +3,20 @@
 - loopback windows = 10
 - horizon = 1, 5 (target dự đoán 1 ngày sau, dự đoán 1 tuần sau)
 - dataset: vn30
-- model: lstm+gat
+- model chính (main model): LSTM (không graph). Tên gọi trong paper: "LSTM".
+- data structure của LSTM: per-OBSERVATION pooling (mỗi ticker×window gộp lại; KHÔNG dùng
+  common-date snapshot). Split per-stock 80/10/10 (xem §1.4).
+- so sánh phụ (secondary): LSTM+GAT (thêm nhánh GAT, edge = graphical lasso) để kiểm tra graph có
+  giúp không. GAT cần snapshot theo ngày nên LSTM+GAT chạy trên snapshot (setup riêng), báo cáo tách.
 - features: only 3 features of har for lstm and node features of gat (not use 5 features)
 - gat edges: use  graphical lasso 
-- khi training loss đánh giá bằng MSE, không đánh giá bằng QLIKE
-1.2 ablation studies: 4 ablation studies below: 
-+ loopback windows = 10, lstm (remove gat) 
-+ loopback windows = 22 with lstm + gat, 
-+ loopback windows = 10, vn100
-+ loopback windows = 10 , s&p500
+- khi training loss đánh giá bằng MSE, không đánh giá bằng QLIKE; early-stop cũng theo val MSE
+  (KHÔNG dùng QLIKE để chọn model).
+1.2 ablation / variation studies:
++ graph-check: LSTM (main) vs LSTM+GAT — xem thêm graph có giúp không (kỳ vọng: không/hại)
++ loopback windows = 22 (vs 10) cho LSTM
++ dataset vn100 (loopback 10)
++ dataset s&p500 (loopback 10)
 1.3 baselines: garch, har (to be beaten)
 1.4 dataset splits:
 + train/validate/test = 80%/10%/10% for each stock
