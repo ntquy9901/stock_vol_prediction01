@@ -15,9 +15,12 @@ evaluation by MSE/RMSE/MAE/QLIKE/R² + Diebold–Mariano.
 ## Run
 ```
 pip install -r requirements.txt
-python run_all.py vn30 10 1 --data-root data      # dataset lookback horizon
+python run_lstm.py vn30 10 1 --data-root data     # MAIN model: per-observation LSTM vs HAR + GARCH
+python run_all.py  vn30 10 1 --data-root data     # graph-check ablation: HAR-LSTM-GAT vs LSTM(w/o GAT)
 ```
-Outputs `result.json` + learning-curve PNGs. See `REPRODUCE.md` for the full suite and `TASKBOARD.md`
+The headline result is the per-observation **LSTM** (`run_lstm.py`); `run_all.py` is the leave-one-out
+GAT graph-check ablation. Both write `result.json` + learning-curve PNGs (`run_lstm.py` →
+`results/soict_perobs/`, `run_all.py` → `results/soict/`). See `REPRODUCE.md` for the full suite and `TASKBOARD.md`
 for build/quality-gate status. Provenance: VN100 = vnstock; S&P500 = derived from Yahoo Finance
 (non-commercial research use); raw OHLCV is not redistributed.
 
