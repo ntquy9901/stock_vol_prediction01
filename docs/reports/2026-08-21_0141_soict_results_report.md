@@ -5,13 +5,20 @@ Date: 2026-08-21. Suite: `submission/soict_lstm_gat/run_all.py`, 20 epochs max +
 (train-only), QLIKE floor 1e-8 identical across models. Snapshots = common-date fixed-N, GLOBAL-date
 80/10/10 (deviation from the spec's per-stock split — see §Caveats). Decision metric = QLIKE + DM.
 
-## Headline result (honest, negative)
+## Headline result (honest, nuanced)
 
-Across every completed configuration, **HAR is the best model**; the proposed **HAR-LSTM-GAT does NOT
-beat HAR (or GARCH-beating aside) and the GAT graph consistently HURTS** — removing it (LSTM w/o GAT)
-always lowers QLIKE. All deep models beat GARCH. This is a consistent negative result for the graph
-model, in line with the project's prior evidence that the graph adds no out-of-sample value for VN
-volatility.
+Two robust findings across all 8 configurations (VN30, VN100, S&P500):
+1. **The GAT graph consistently HURTS** — the leave-one-out ablation LSTM (w/o GAT) has lower QLIKE
+   than the full HAR-LSTM-GAT in every configuration (DM-significant on VN30/SP500). Clean negative
+   ablation for the graph.
+2. **LSTM competitiveness scales with data size.** On the small VN markets (VN30, VN100) HAR clearly
+   wins (the deep model overfits). On the large **S&P500 (500 nodes)** the price-only **LSTM (w/o GAT)
+   beats HAR at h5** (QLIKE 0.358 < 0.368) and beats HAR on MSE/R² at both horizons; h1 QLIKE is ~tied.
+3. All learned models beat GARCH.
+
+So the proposed full model (HAR-LSTM-GAT) does not meet the "beat HAR" target — because the graph drags
+it down — but a price-only HAR-LSTM is competitive with HAR and beats it when data is abundant. Update
+vs the initial run: S&P500 did NOT need to be excluded — it completes at batch 16.
 
 ## Test QLIKE (lower is better; seed-averaged over 5 seeds; row order = paper order)
 
@@ -23,7 +30,13 @@ volatility.
 | VN30 (lb22) | 5 | **0.4547** | 0.5980 | 0.4692 | 0.5166 | HAR |
 | VN100 (lb10) | 1 | **0.4843** | 0.6210 | 0.5204 | 0.5296 | HAR |
 | VN100 (lb10) | 5 | **0.5442** | 0.6157 | 0.5552 | 0.5588 | HAR |
-| S&P500 (lb10) | 1,5 | — | — | — | — | excluded (OOM) |
+| S&P500 (lb10) | 1 | **0.3390** | 0.3842 | 0.3401 | 0.3473 | HAR≈w/o-GAT |
+| S&P500 (lb10) | 5 | 0.3680 | 0.3890 | **0.3582** | 0.3701 | **LSTM w/o GAT** |
+
+S&P500 (500 nodes, batch 16): LSTM (w/o GAT) beats HAR at h5 (QLIKE 0.3582 vs 0.3680) and on MSE/R² at
+both horizons (R² 0.182/0.169 vs HAR 0.161/0.161); h1 QLIKE ~tied (0.3401 vs 0.3390). Deep learning
+becomes competitive with more data. DM Ours-vs-HAR (QLIKE): h1 +2.53 (p=0.011, HAR); h5 +0.59 (p=0.55,
+tie). DM Ours-vs-w/o-GAT: h1 +3.23*, h5 +6.87* (graph hurts).
 
 R2 (VN30 h1): HAR 0.311, LSTM w/o GAT 0.265, Ours 0.205, GARCH 0.028 — all positive; HAR explains the
 most variance. RMSE/MAE track the same ordering (values ~5e-4 as volatility is a small variance).
@@ -45,11 +58,14 @@ significantly beats GARCH everywhere. (3) The ablation **Ours vs LSTM (w/o GAT) 
 
 ## Findings
 
-1. **HAR is the strongest volatility forecaster here.** Neither deep variant beats it at h1/h5.
-2. **The graph (GAT over a graphical-lasso graph) hurts.** Leave-one-out removing the GAT lowers QLIKE
-   in all six configs — the cross-sectional graph adds noise, not signal, for this target.
+1. **HAR is strongest on the small VN markets** (VN30, VN100) — the deep model overfits. On the large
+   **S&P500 the price-only LSTM (w/o GAT) matches/beats HAR** (h5 QLIKE, both-horizon MSE/R²).
+2. **The graph (GAT over a graphical-lasso graph) hurts everywhere.** Leave-one-out removing the GAT
+   lowers QLIKE in all 8 configs — the cross-sectional graph adds noise, not signal.
 3. **All learned models beat GARCH** (the classical conditional-variance baseline is the weakest).
 4. **Lookback 22 vs 10:** no benefit for the deep model (slightly worse at lb22); HAR ~unchanged.
+5. **Data scaling:** deep-vs-HAR flips with data size — HAR wins on 33–104 VN tickers, LSTM competes on
+   500 S&P500 tickers. Consistent with the parallel per-observation cross-market study.
 
 ## Caveats (important — flagged for review)
 
@@ -63,10 +79,11 @@ significantly beats GARCH everywhere. (3) The ablation **Ours vs LSTM (w/o GAT) 
   price-only LSTM *did* beat HAR at h1/h5. The difference is the data/split design, not the LSTM
   itself. A per-ticker per-observation design (spec's stated split) would give the deep model a fairer
   test; the snapshot design was adopted to support the graph.
-- **S&P500 excluded:** the GAT attention is O(N²) in nodes; at N=500 it exhausts 8 GB VRAM even at
-  batch 16. The graph model does not scale to 500 nodes on this GPU.
-- **Honesty:** these are the true DM verdicts; no result was fabricated. The proposed model did not
-  meet the "beat HAR at h1/h5" success target.
+- **S&P500 needs a small batch:** the GAT attention is O(N²); at N=500 the default batch 512 OOMs on
+  8 GB VRAM, but batch 16 completes (the reported S&P500 numbers). The graph model scales poorly to
+  500 nodes (memory), a practical limitation worth noting.
+- **Honesty:** these are the true DM verdicts; no result was fabricated. The proposed full HAR-LSTM-GAT
+  did not meet the "beat HAR" target (the graph hurts); a price-only HAR-LSTM does beat HAR on S&P500.
 
 ## Recommendation for the morning
 
