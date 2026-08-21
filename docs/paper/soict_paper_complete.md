@@ -113,7 +113,7 @@ all tickers are simultaneously present.
 ### 3.3 Graph-attention variant: LSTM+GAT (ablation)
 
 To test whether a cross-sectional graph helps, we add a Graph Attention Network branch (Veličković et al.,
-2018), producing the full **LSTM+GAT** model (Figure 1, `docs/paper/diagrams/soict_harlstmgat.svg`). A
+2018), producing the full **LSTM+GAT** model (Figure 1). A
 per-node LSTM encodes the temporal window (temporal branch); a GAT reads the node features at day `t` and
 attends over a fixed graph whose edges are the Top-5 graphical-lasso partial-correlation links estimated on
 training rows only and frozen (spatial branch); the two branch outputs are concatenated and passed to an
@@ -126,6 +126,12 @@ chronological 80/10/10 split. We therefore report the graph ablation as a **sepa
 snapshot design, and keep the main deep-versus-HAR comparison on the richer per-observation design. This
 separation is deliberate: it prevents the graph's data-design requirement from confounding the deep-versus-HAR
 verdict.
+
+![Figure 1: HAR-LSTM-GAT architecture](diagrams/soict_harlstmgat.png)
+
+*Figure 1. Architecture of LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch over a
+graphical-lasso partial-correlation graph are concatenated and passed to an MLP head; the leave-one-out
+ablation removes the GAT branch to give the main LSTM.*
 
 ### 3.4 Baselines to beat
 
@@ -455,9 +461,5 @@ beat on small panels and at long horizons.
 
 ---
 
-![Figure 1: HAR-LSTM-GAT architecture](diagrams/soict_harlstmgat.png)
-
-*Figure 1.* Architecture of LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch over a
-graphical-lasso partial-correlation graph are concatenated and passed to an MLP head; the leave-one-out
-ablation removes the GAT branch to give the main LSTM. Source vector:
-`docs/paper/diagrams/soict_harlstmgat.svg` (PDF/PNG rendered by `diagrams/generate_arch.py`).
+*Figure 1 appears in Section 3.3. Vector source: `docs/paper/diagrams/soict_harlstmgat.svg`; PDF/PNG
+rendered by `diagrams/generate_arch.py`.*

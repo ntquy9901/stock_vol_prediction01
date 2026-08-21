@@ -17,6 +17,8 @@
 + loopback windows = 22 (vs 10) cho LSTM
 + dataset vn100 (loopback 10)
 + dataset s&p500 (loopback 10)
++ horizon study (long-horizon): thêm h10, h22 cho LSTM (per-observation) so với HAR/GARCH — kiểm tra
+  HAR có giữ ưu thế ở horizon dài không (bằng chứng cũ: HAR thắng long-h). Cùng metric + DM.
 1.3 baselines: garch, har (to be beaten)
 1.4 dataset splits:
 + train/validate/test = 80%/10%/10% for each stock
@@ -31,7 +33,7 @@
 - Try to train parallelly with many workers, many process to speed up training process.
 - Train with 20 maximum epoches with early stop observation.
 - Train with 5 seeds.
-- Train for h1, h5. 
+- Train for h1, h5 (chính); thêm h10, h22 cho long-horizon study (§1.2). 
 - Draw Learning curve after each 5 epches
 - Print training process with metrics, debug log, print hyperparameters.
 - Evaluate with all metrics (MSE, RMSE, MAE, QLIKE, R2) 
