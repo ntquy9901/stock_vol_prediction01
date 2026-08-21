@@ -19,6 +19,8 @@
 + dataset s&p500 (loopback 10)
 + horizon study (long-horizon): thêm h10, h22 cho LSTM (per-observation) so với HAR/GARCH — kiểm tra
   HAR có giữ ưu thế ở horizon dài không (bằng chứng cũ: HAR thắng long-h). Cùng metric + DM.
++ horizon study cho LSTM+GAT (graph-check, snapshot): thêm h10, h22 — xem graph có giúp ở long-horizon
+  không (leave-one-out LSTM+GAT vs LSTM w/o GAT). Cùng metric + DM. (sp500 dùng batch nhỏ vì GAT O(N^2))
 1.3 baselines: garch, har (to be beaten)
 1.4 dataset splits:
 + train/validate/test = 80%/10%/10% for each stock
