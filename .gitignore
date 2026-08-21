@@ -142,3 +142,5 @@ results/soict/
 
 submission/soict_lstm_gat/data/sp500/
 submission/soict_lstm_gat/logs/
+
+results/soict_perobs/
