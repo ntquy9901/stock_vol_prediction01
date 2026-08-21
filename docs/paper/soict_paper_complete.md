@@ -355,6 +355,225 @@ deep advantage is not specific to Vietnam — replicates from the Vietnamese to 
 
 ---
 
+### 6.5 Long-horizon study --- h10 and h22 (design: per-observation)
+
+*Source: `results/soict_perobs/{panel}_lb10_h{10,22}/result.json`. S\&P~500 long-horizon runs were
+still completing at submission time and will be added; the Vietnamese primary-market results below are
+representative and consistent with the horizon pattern.*
+
+To locate where the deep model's short-horizon advantage ends, we extend the main per-observation study
+to h10 (two trading weeks) and h22 (roughly one trading month).
+
+| Panel | h | HAR QLIKE | GARCH QLIKE | LSTM QLIKE | HAR R² | LSTM R² | DM LSTM-vs-HAR (QLIKE) |
+|---|---|---|---|---|---|---|---|
+| VN30  | 10 | 0.5925 | 0.7361 | 0.5908 | 0.144 | 0.141 | −0.29 (p=0.77) tie |
+| VN30  | 22 | 0.6366 | 0.7307 | 0.6433 | 0.096 | 0.078 | +0.83 (p=0.40) tie |
+| VN100 | 10 | 0.5773 | 0.6959 | 0.5737 | 0.103 | 0.105 | −1.25 (p=0.21) tie |
+| VN100 | 22 | 0.6112 | 0.6917 | 0.6129 | 0.063 | 0.055 | +0.41 (p=0.68) tie |
+
+**Reading.** At the long horizons the LSTM and HAR are statistically **tied** on QLIKE in every cell
+(no Diebold--Mariano significance in either direction; the sign even alternates, LSTM marginally lower
+at h10, HAR marginally lower at h22). Both still beat GARCH. Combined with the main study
+(Section 6.1), the horizon picture is clean: the deep model's edge is a **short-horizon** effect ---
+it significantly beats HAR at h1 (and h5 on VN100) and merely matches HAR at h10 and h22, as the
+target's own-history predictability weakens and both models converge. No horizon shows HAR
+significantly beating the LSTM under the per-observation design.
+
+### 6.6 HAR-anchored residual and forecast-combination study (E0–E10)
+
+*Source: `reports/experiment_results.md`, built from `results/har_anchored/{panel}_h{1,5,10,22}/result.json`;
+leakage controls in `reports/leakage_audit.md`.*
+
+The main study and the graph ablation ask whether a full-target deep model beats HAR. A complementary
+question is whether HAR-*anchored* learning — combining or correcting HAR with a deep expert rather than
+replacing it — can improve on HAR, and whether the cross-sectional graph contributes anything once HAR
+carries the level. This study evaluates an eleven-rung ladder under panel-correct inference.
+
+**Design.** The ladder is: **E0** HAR (locked benchmark); **E1** full-target LSTM and **E2** full-target
+LSTM+GAT (the same neural experts as above, targeting the raw variance); **E3** a frozen-expert convex
+combination of HAR and the deep expert with a single mixing weight fit on the validation predictions only
+(reported as `E3_blend`); **E5/E6/E7** additive HAR residual models in which a deep branch (LSTM-only for
+E5, the graph/GAT branch for E6, the combined LSTM+GAT branch for E7) predicts the HAR residual with a
+zero-initialized head, so the model equals HAR at initialization; **E8** a multiplicative HAR-anchored
+residual, `(HAR+ε)·exp(correction)`, which is positive and bounded by construction; and **E9/E10** static
+and dynamic (regime-aware) gates that scale the residual correction by a learned weight. The design is the
+common-date snapshot design of Section 6.2 (so the graph is well defined and E5/E6/E7 are same-fold
+comparable), extended to horizons {1, 5, 10, 22}, with a target-overlap **purge of `h` snapshots** at each
+split boundary. The HAR anchor is a per-horizon pooled OLS fit on training rows only; residual training
+targets are built from expanding-window **cross-fitted** HAR predictions inside the training span, so they
+reflect out-of-sample residuals rather than optimistic in-sample ones. Each configuration uses five seeds
+{42, 123, 2026, 7, 2024}; the primary metric is QLIKE on the Parkinson variance. All fits (HAR
+coefficients, per-ticker scalers, graphical-lasso edges, the convex weight and the gate parameters) use
+training or validation rows only, with the test set read once (audit: `reports/leakage_audit.md`).
+
+**Inference.** Significance is assessed with the **date-clustered** Diebold–Mariano test, which collapses
+the loss differential to one value per calendar date before computing the statistic. All tickers share
+each date, so a naive per-observation test treats the sample as `N` (cross-section size) times larger than
+its number of independent dates and overstates significance (Section "Methodological note" below). The
+`DM p-value` column reported here is the date-clustered value.
+
+**VN30 (33 nodes; snapshot test counts: 4,356 at h1, 4,323 at h5/h10, 4,290 at h22 — on the order of 130
+distinct test dates).** QLIKE (lower is better), out-of-sample R² relative to HAR, and the date-clustered
+DM p-value versus HAR (five-seed means):
+
+| h | Model | QLIKE | R²_OOS vs HAR | DM p (date-clustered) |
+|---|---|---:|---:|---:|
+| 1  | E0 HAR | 0.3946 | 0.0000 | — |
+| 1  | E1 LSTM (full target) | 0.4383 | −0.1313 | <0.001 |
+| 1  | E2 LSTM+GAT (full target) | 0.4915 | −0.2438 | <0.001 |
+| 1  | E3 convex combination (val-fit weight) | 0.3984 | −0.0017 | 0.237 |
+| 1  | E5 additive residual (LSTM branch) | 0.3946 | −0.0001 | 0.875 |
+| 1  | E6 additive residual (graph/GAT branch) | 0.3946 | −0.0001 | 0.882 |
+| 1  | E7 additive residual (LSTM+GAT branch) | 0.3946 | 0.0000 | 0.795 |
+| 1  | E8 multiplicative HAR-anchored residual | 0.3947 | −0.0002 | 0.894 |
+| 1  | E9 static gated residual | 0.3946 | 0.0000 | n/a |
+| 1  | E10 dynamic gated residual | 0.3946 | 0.0000 | 0.754 |
+| 5  | E0 HAR | 0.4531 | 0.0000 | — |
+| 5  | E1 LSTM (full target) | 0.4810 | −0.0803 | 0.004 |
+| 5  | E2 LSTM+GAT (full target) | 0.5185 | −0.1603 | <0.001 |
+| 5  | E3 convex combination (val-fit weight) | 0.4639 | −0.0171 | 0.135 |
+| 5  | E5 additive residual (LSTM branch) | 0.4531 | −0.0001 | 0.994 |
+| 5  | E6 additive residual (graph/GAT branch) | 0.4531 | −0.0001 | 0.926 |
+| 5  | E7 additive residual (LSTM+GAT branch) | 0.4532 | −0.0002 | 0.906 |
+| 5  | E8 multiplicative HAR-anchored residual | 0.4531 | −0.0000 | 0.954 |
+| 5  | E9 static gated residual | 0.4531 | 0.0000 | n/a |
+| 5  | E10 dynamic gated residual | 0.4531 | −0.0000 | 0.932 |
+| 10 | E0 HAR | 0.4849 | 0.0000 | — |
+| 10 | E1 LSTM (full target) | 0.5291 | −0.1147 | 0.110 |
+| 10 | E2 LSTM+GAT (full target) | 0.5394 | −0.1221 | 0.002 |
+| 10 | E3 convex combination (val-fit weight) | 0.4958 | −0.0244 | 0.322 |
+| 10 | E5 additive residual (LSTM branch) | 0.4853 | −0.0002 | 0.782 |
+| 10 | E6 additive residual (graph/GAT branch) | 0.4854 | −0.0003 | 0.560 |
+| 10 | E7 additive residual (LSTM+GAT branch) | 0.4854 | −0.0003 | 0.588 |
+| 10 | E8 multiplicative HAR-anchored residual | 0.4850 | −0.0001 | 0.851 |
+| 10 | E9 static gated residual | 0.4849 | 0.0000 | n/a |
+| 10 | E10 dynamic gated residual | 0.4850 | −0.0001 | 0.600 |
+| 22 | E0 HAR | 0.5025 | 0.0000 | — |
+| 22 | E1 LSTM (full target) | 0.5185 | −0.0609 | 0.527 |
+| 22 | E2 LSTM+GAT (full target) | 0.5603 | −0.1141 | 0.073 |
+| 22 | E3 convex combination (val-fit weight) | 0.5137 | −0.0416 | 0.511 |
+| 22 | E5 additive residual (LSTM branch) | 0.5026 | −0.0005 | 0.913 |
+| 22 | E6 additive residual (graph/GAT branch) | 0.5026 | −0.0005 | 0.895 |
+| 22 | E7 additive residual (LSTM+GAT branch) | 0.5027 | −0.0006 | 0.877 |
+| 22 | E8 multiplicative HAR-anchored residual | 0.5027 | −0.0010 | 0.816 |
+| 22 | E9 static gated residual | 0.5025 | 0.0000 | n/a |
+| 22 | E10 dynamic gated residual | 0.5025 | −0.0001 | 0.896 |
+
+**VN100 (104 nodes; snapshot test counts: 5,096 at h1, 4,992 at h5/h10, 4,888 at h22 — on the order of 50
+distinct test dates).**
+
+| h | Model | QLIKE | R²_OOS vs HAR | DM p (date-clustered) |
+|---|---|---:|---:|---:|
+| 1  | E0 HAR | 0.4844 | 0.0000 | — |
+| 1  | E1 LSTM (full target) | 0.5371 | −0.1056 | 0.023 |
+| 1  | E2 LSTM+GAT (full target) | 0.5207 | −0.0599 | 0.035 |
+| 1  | E3 convex combination (val-fit weight) | 0.4821 | 0.0027 | 0.242 |
+| 1  | E5 additive residual (LSTM branch) | 0.4842 | 0.0001 | 0.782 |
+| 1  | E6 additive residual (graph/GAT branch) | 0.4842 | 0.0002 | 0.603 |
+| 1  | E7 additive residual (LSTM+GAT branch) | 0.4842 | 0.0002 | 0.611 |
+| 1  | E8 multiplicative HAR-anchored residual | 0.4879 | −0.0058 | 0.582 |
+| 1  | E9 static gated residual | 0.4844 | 0.0000 | n/a |
+| 1  | E10 dynamic gated residual | 0.4843 | 0.0000 | 0.601 |
+| 5  | E0 HAR | 0.5441 | 0.0000 | — |
+| 5  | E1 LSTM (full target) | 0.5614 | −0.0153 | 0.244 |
+| 5  | E2 LSTM+GAT (full target) | 0.5582 | 0.0027 | 0.415 |
+| 5  | E3 convex combination (val-fit weight) | 0.5339 | 0.0208 | 0.294 |
+| 5  | E5 additive residual (LSTM branch) | 0.5439 | 0.0002 | 0.746 |
+| 5  | E6 additive residual (graph/GAT branch) | 0.5438 | 0.0003 | 0.634 |
+| 5  | E7 additive residual (LSTM+GAT branch) | 0.5438 | 0.0003 | 0.631 |
+| 5  | E8 multiplicative HAR-anchored residual | 0.5480 | 0.0072 | 0.823 |
+| 5  | E9 static gated residual | 0.5441 | 0.0000 | n/a |
+| 5  | E10 dynamic gated residual | 0.5441 | 0.0001 | 0.624 |
+| 10 | E0 HAR | 0.5985 | 0.0000 | — |
+| 10 | E1 LSTM (full target) | 0.5750 | 0.0433 | 0.283 |
+| 10 | E2 LSTM+GAT (full target) | 0.5803 | 0.0428 | 0.455 |
+| 10 | E3 convex combination (val-fit weight) | 0.5701 | 0.0441 | 0.202 |
+| 10 | E5 additive residual (LSTM branch) | 0.5979 | 0.0003 | 0.673 |
+| 10 | E6 additive residual (graph/GAT branch) | 0.5883 | 0.0119 | 0.458 |
+| 10 | E7 additive residual (LSTM+GAT branch) | 0.5929 | 0.0062 | 0.459 |
+| 10 | E8 multiplicative HAR-anchored residual | 0.6008 | 0.0160 | 0.921 |
+| 10 | E9 static gated residual | 0.5884 | 0.0118 | 0.488 |
+| 10 | E10 dynamic gated residual | 0.5966 | 0.0020 | 0.440 |
+| 22 | E0 HAR | 0.6177 | 0.0000 | — |
+| 22 | E1 LSTM (full target) | 0.5888 | 0.0556 | 0.164 |
+| 22 | E2 LSTM+GAT (full target) | 0.6031 | 0.0523 | 0.540 |
+| 22 | E3 convex combination (val-fit weight) | 0.5816 | 0.0512 | 0.078 |
+| 22 | E5 additive residual (LSTM branch) | 0.6171 | 0.0005 | 0.765 |
+| 22 | E6 additive residual (graph/GAT branch) | 0.5925 | 0.0374 | 0.481 |
+| 22 | E7 additive residual (LSTM+GAT branch) | 0.5922 | 0.0404 | 0.555 |
+| 22 | E8 multiplicative HAR-anchored residual | 0.6187 | 0.0065 | 0.973 |
+| 22 | E9 static gated residual | 0.5912 | 0.0430 | 0.569 |
+| 22 | E10 dynamic gated residual | 0.6043 | 0.0180 | 0.480 |
+
+**Graph attribution (paired date-clustered DM, graph residual versus no-graph residual).** A graph
+contribution requires the graph/GAT residual (E6) or the combined residual (E7) to beat the same-capacity
+no-graph residual (E5), not merely HAR. The paired date-clustered p-values are:
+
+| Panel | h | E6 vs E5 | E7 vs E5 |
+|---|---|---:|---:|
+| VN30  | 1  | 0.878 (favors no-graph) | 0.983 (favors combined) |
+| VN30  | 5  | 0.886 (favors no-graph) | 0.783 (favors no-graph) |
+| VN30  | 10 | 0.761 (favors no-graph) | 0.782 (favors no-graph) |
+| VN30  | 22 | 0.995 (favors graph)    | 0.929 (favors no-graph) |
+| VN100 | 1  | 0.705 (favors graph)    | 0.787 (favors combined) |
+| VN100 | 5  | 0.795 (favors graph)    | 0.873 (favors combined) |
+| VN100 | 10 | 0.438 (favors graph)    | 0.419 (favors combined) |
+| VN100 | 22 | 0.467 (favors graph)    | 0.546 (favors combined) |
+
+None of the paired contrasts approaches significance (all p ≥ 0.41). The sign is mixed: on VN30 the paired
+test favors the no-graph residual in most cells, and on VN100 it nominally favors the graph residual, but
+in no case is the difference distinguishable from noise. The graph therefore adds no incremental value
+beyond the same-capacity no-graph residual, consistent with the leave-one-out graph ablation of
+Section 6.2.
+
+**Findings.**
+
+- **No model significantly beats HAR on VN30 or VN100 at any horizon under date-clustered inference.** The
+  frozen-expert convex combination is the closest competitor: its date-clustered p-value versus HAR ranges
+  over 0.14–0.51 on VN30 and 0.08–0.29 on VN100, never below 0.05. The residual and gated variants have
+  larger p-values still (the graph residual versus HAR ranges over 0.56–0.93 on VN30 and 0.46–0.63 on
+  VN100). Point-estimate QLIKE gaps favor the hybrids at the longer horizons — for example the convex
+  combination reaches −5.85% QLIKE at VN100 h22 (QLIKE 0.5816 versus HAR 0.6177) and the graph residual
+  −4.08% (0.5925) — but these gaps are within noise given the short common-date test windows (on the order
+  of 130 dates on VN30 and 50 on VN100).
+- **Full-target deep models underperform HAR at short horizons.** The full-target LSTM and LSTM+GAT lose
+  to HAR at h1 on both panels (VN30 p<0.001; VN100 p=0.023 and p=0.035), consistent with the snapshot-design
+  result of Section 6.2.
+- **HAR-anchoring makes deep models competitive at the point-estimate level and never far worse.** The
+  convex combination, the additive residuals, the multiplicative residual and the gates all track HAR
+  closely (QLIKE within a small fraction of a percent at short horizons and improving toward HAR-or-better
+  point estimates at long horizons), in contrast to the full-target models that trail HAR at short
+  horizons. Anchoring the deep expert to HAR removes the short-horizon penalty.
+- **The additive residual is numerically fragile on a large cross-section, while the multiplicative
+  anchoring stays bounded.** On the much larger S&P 500 panel (~500 nodes, only about 35 test dates) the
+  additive residuals drive predictions toward the QLIKE positivity floor and the QLIKE inflates
+  (`E5`=165.6, `E7`=16.4 versus HAR 0.339), whereas the multiplicative HAR-anchored residual (E8) remains
+  positive and bounded (0.4055). We report the S&P 500 additive result only as a fragility illustration; it
+  is not evidence about relative accuracy, and the S&P 500 is not used here as a beat-HAR claim.
+
+**Methodological note (panel-correct inference).** For a cross-sectionally dependent volatility panel, the
+statistical significance of a forecast-accuracy difference must be assessed with date-clustered (or
+otherwise panel-robust) inference — one loss differential per calendar date — rather than a naive
+per-observation Diebold–Mariano test over every (ticker, date) row. All tickers share each trading date, so
+the per-observation test treats the effective sample as the number of tickers times the number of dates and
+understates the loss-differential variance; the Diebold–Mariano statistic is inflated by a factor on the
+order of the square root of the cross-section size (roughly a factor of six on VN30 and ten on VN100). A
+QLIKE gap that is a coin-flip once collapsed to one value per date can be reported as highly significant at
+the row level. Aggregating to the date level before inference removes this artifact and is the significance
+convention used throughout this study.
+
+**Caveat on the earlier per-observation beat-HAR results.** The short-horizon "LSTM beats HAR" outcomes in
+Section 6.1 — and the corresponding statements in the abstract and conclusion — were assessed with the
+Diebold–Mariano test on **per-observation** loss differentials, which treats each (ticker, date) pair as an
+independent observation and therefore, on this cross-sectionally dependent panel, overstates significance
+as described in the methodological note above. Under the date-clustered inference used in the present
+study, improvements of the magnitude reported in Section 6.1 are not statistically significant on the
+available test windows. The point estimates in Section 6.1 are unchanged and reported as measured; only the
+associated statistical significance should be interpreted with this caveat. This qualification applies
+symmetrically: it also tempers the per-observation cells in which HAR beats the deep model.
+
+---
+
 ## 7. Discussion
 
 **The data design, not the LSTM, drives the deep-versus-HAR verdict.** The same LSTM architecture, on the
@@ -410,6 +629,11 @@ is a small-sample phenomenon rather than a fundamental ceiling on deep models.
   robustness check; no claim of universal generality is made. Long horizons (beyond one week) were not the
   focus here; prior work on this project found HAR retains its advantage at horizons of ten and twenty-two
   days.
+- **Significance depends on the inference convention.** The main-study beat-HAR results (Section 6.1) use
+  per-observation Diebold–Mariano tests; the complementary HAR-anchored study (Section 6.6) shows that under
+  date-clustered inference, which accounts for the panel's cross-sectional dependence, no model — including
+  the forecast combination — significantly beats HAR on VN30 or VN100 at any horizon. See the caveat in
+  Section 6.6; point estimates are unchanged, only their significance is qualified.
 - All reported numbers are read directly from stored `result.json` files; no result was fabricated, and the
   proposed graph model did not meet a "beat HAR" target.
 

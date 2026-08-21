@@ -30,7 +30,12 @@ per-horizon pooled OLS anchor; residual targets from expanding-window cross-fitt
 - Performance: batched snapshots [B,N,seq,3] on GPU, non-blocking H2D, batched val; sp500 uses --batch 8
   to bound 500-node GAT memory. No batch=1 hot loop.
 
-## Findings (VN30 + VN100 complete; SP500 partial) — inference-corrected after code review C-1
+## Findings (full grid 12/12 complete: VN30/VN100/SP500 x {1,5,10,22}) — inference-corrected after code review C-1
+
+Decision summary (date-clustered): VN30 {H2,H3,H6 accept; H1,H4,H5 reject}; VN100 {H2,H3 accept; H1,H4,H5,H6
+reject}; SP500 {H1,H2,H3 accept; H4,H5,H6 reject} — SP500 H1 rests on a degenerate additive branch (E7
+QLIKE 16-208) and only ~35 test dates, so it is not a credible beat-HAR result. On the two reliable panels
+(VN30, VN100) the beat-HAR (H1) and graph-value (H4) hypotheses are REJECTED.
 
 Statistics use the **date-clustered** Diebold–Mariano (one loss value per date), the panel-correct test:
 all ~33/104 tickers share each target date, so naive per-observation DM treats n = N x T_dates and
