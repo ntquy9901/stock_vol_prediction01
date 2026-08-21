@@ -181,8 +181,12 @@ def main():
     ap.add_argument("--lookback", type=int, default=10)
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--data-root", default=str(_SUB / "data"))
+    ap.add_argument("--batch", type=int, default=None, help="override batch_size (small for large-N graphs)")
     a = ap.parse_args()
     cfg = SMOKE if a.smoke else Config()
+    if a.batch:
+        from dataclasses import replace
+        cfg = replace(cfg, batch_size=a.batch)
     root = Path(a.data_root)
     mp = {"vn30": [root / "vn30" / "*_processed.csv", root / "*_processed.csv"],
           "vn100": [root / "vn100" / "*_processed.csv", root / "vn100_vnstock" / "*_processed.csv"],
