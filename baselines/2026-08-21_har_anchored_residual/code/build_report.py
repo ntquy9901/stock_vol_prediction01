@@ -6,7 +6,17 @@ accept/reject decision, per dataset x horizon. Objective wording only (no person
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2] / "submission" / "soict_lstm_gat"))
+sys.path.insert(0, str(HERE))
+import metrics as M  # noqa: E402
+import stats as ST  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[3]
 RES = REPO / "results" / "har_anchored"
@@ -21,8 +31,33 @@ def _load(ds, h):
 
 
 def _dmp(r, name):
-    d = r["dm_vs_har"].get(name, {}).get("dm_qlike", {})
+    """Date-clustered DM p-value vs HAR (the panel-correct test; row-level over-states ~sqrt(N)) — C-1 fix."""
+    d = r["dm_vs_har"].get(name, {}).get("date_clustered", {})
     return d.get("p_value") if isinstance(d, dict) and "p_value" in d else None
+
+
+def paired_dm_from_rows(ds, h, col_a, col_b, floor=1e-8):
+    """Date-clustered paired DM of two model predictions from row_predictions.csv (M-1 fix).
+
+    Returns {"p_value","mean_diff","favors"} for QLIKE(col_a) vs QLIKE(col_b); mean_diff<0 => col_a better.
+    None if the CSV or a column is missing."""
+    p = RES / f"{ds}_h{h}" / "row_predictions.csv"
+    if not p.exists():
+        return None
+    df = pd.read_csv(p)
+    ca, cb = f"pred_{col_a}", f"pred_{col_b}"
+    if ca not in df or cb not in df:
+        return None
+    y = df["y_true"].to_numpy(float)
+    la = M.per_obs_qlike(y, df[ca].to_numpy(float), floor)
+    lb = M.per_obs_qlike(y, df[cb].to_numpy(float), floor)
+    dates = df["target_date"].to_numpy()
+    try:
+        r = ST.date_clustered_dm(la, lb, dates, h)
+    except Exception as e:  # noqa: BLE001
+        return {"error": str(e)}
+    return {"p_value": r["p_value"], "mean_diff": r["mean_diff"],
+            "favors": col_a if r["mean_diff"] < 0 else col_b}
 
 
 def _delta_qlike(r, name):
@@ -66,11 +101,20 @@ def _decisions(results):
     h1 = any(sig_better(r, "E3_blend") for r in results)
     alphas = [r.get("alpha_E3") for r in results if r.get("alpha_E3") is not None]
     h2 = (max(alphas) - min(alphas) > 0.1) if len(alphas) > 1 else False
-    h3 = any((r["diagnostics"]["residual_r2_oos"].get(e, -1) or -1) > 0
-             for r in results for e in ("E5", "E6", "E7"))
+    def _rr(r, e):
+        v = r["diagnostics"]["residual_r2_oos"].get(e)
+        return v if v is not None else -1.0
+    h3 = any(_rr(r, e) > 0 for r in results for e in ("E5", "E6", "E7"))
     def graph_wins(r):
-        q = r["metrics"]; return q.get("E7", {}).get("qlike", 9) < q.get("E5", {}).get("qlike", 9) and \
-            sig_better(r, "E7")
+        # plan decision rule: a graph residual must beat the no-graph E5 (paired, date-clustered) AND HAR
+        for e in ("E6", "E7"):
+            pe5 = paired_dm_from_rows(r["dataset"], r["horizon"], e, "E5")
+            ph = _dmp(r, e)
+            if (pe5 and isinstance(pe5, dict) and pe5.get("p_value") is not None
+                    and pe5["p_value"] < 0.05 and pe5["favors"] == e
+                    and ph is not None and ph < 0.05 and _delta_qlike(r, e) > 0):
+                return True
+        return False
     h4 = any(graph_wins(r) for r in results)
     h5 = any(r["metrics"].get("E10_gate_dyn", {}).get("qlike", 9) <
              r["metrics"].get("E9_gate_static", {}).get("qlike", 9) - 1e-6 and sig_better(r, "E10_gate_dyn")
@@ -117,6 +161,17 @@ def build() -> str:
         out.append("|---|---:|---:|---:|---:|---:|---:|")
         for r in results:
             out.append(_contrib_row(r))
+        out.append("\n**Graph attribution — date-clustered paired DM** (p; model favored). "
+                   "Graph value requires E6/E7 to beat the no-graph E5, not only HAR.")
+        out.append("| Horizon | E6 vs E5 | E7 vs E5 | E6 vs HAR (dc) | E3 vs HAR (dc) |")
+        out.append("|---|---|---|---:|---:|")
+        for r in results:
+            h = r["horizon"]
+            def _pd(a, b):
+                d = paired_dm_from_rows(ds, h, a, b)
+                return "n/a" if not d or "p_value" not in d else f"{d['p_value']:.4f} ({d['favors']})"
+            out.append(f"| {h} | {_pd('E6','E5')} | {_pd('E7','E5')} | {_fmt(_dmp(r,'E6'),4)} | "
+                       f"{_fmt(_dmp(r,'E3_blend'),4)} |")
         out.append(f"\n**Hypothesis decisions ({ds})**")
         out.append(_decisions(results))
         out.append("")

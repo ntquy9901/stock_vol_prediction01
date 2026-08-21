@@ -30,19 +30,35 @@ per-horizon pooled OLS anchor; residual targets from expanding-window cross-fitt
 - Performance: batched snapshots [B,N,seq,3] on GPU, non-blocking H2D, batched val; sp500 uses --batch 8
   to bound 500-node GAT memory. No batch=1 hot loop.
 
-## Findings (VN30 + VN100 complete; SP500 running)
+## Findings (VN30 + VN100 complete; SP500 partial) — inference-corrected after code review C-1
+
+Statistics use the **date-clustered** Diebold–Mariano (one loss value per date), the panel-correct test:
+all ~33/104 tickers share each target date, so naive per-observation DM treats n = N x T_dates and
+over-states significance by ~sqrt(N) (~6-8x). The initial read used the row-level DM and reported spurious
+significance; the code review (C-1) caught it and the report/decisions now read the date-clustered p-value.
+
+- **No model significantly beats HAR** on VN30 or VN100 at any horizon under date-clustered DM:
+  E3 combination vs HAR p in [0.14, 0.51] (VN100), graph residual E6 vs HAR p in [0.56, 0.93]. Point-estimate
+  QLIKE gaps favor the hybrids at longer horizons (e.g. VN100 h22 E6 -4.1%) but are **within noise** given
+  the short common-date test window (~49-130 dates).
+- **Graph adds no incremental value under proper inference:** paired date-clustered E6-vs-E5 (graph vs
+  no-graph residual) p in [0.76, 0.995] on VN100, direction often favoring the no-graph E5. H4 REJECT.
+- HAR-anchored residual is SAFE as a point estimate (E5-E8 ~ HAR, never far worse) but full-neural E1
+  occasionally edges the residual at long horizons on VN100 (H6 not universally held).
 - Full neural E1/E2 lose to HAR at short horizons (confirms prior snapshot-design result).
-- HAR-anchored residual is SAFE: E5-E8 tie or beat HAR, never significantly worse on VN30/VN100 (H6 ACCEPT).
-- **VN100: the GAT residual (E6) beats HAR at h10/h22** (h22 +4.08%, DM p<0.0001) and beats the no-graph
-  E5 residual (+0.09%) — graph contributes incremental spillover on the larger cross-section (H4 ACCEPT at
-  long horizon; residual R2_OOS rises 0.0002 -> 0.040).
-- **Forecast combination E3 beats HAR on VN100** at h5-h22 (+1.9% / +4.8% / +5.9%, all DM p<0.01);
-  alpha_HAR falls 0.935 -> 0.28 with horizon (H2 horizon-specialization ACCEPT).
-- VN30 (small panel): residual ~ HAR, no significant graph value -> graph value is cross-section-size and
-  horizon dependent.
-- SP500: additive residual (E5-E7) is numerically fragile at 500-node/short-test scale (drives predictions
-  to the floor -> QLIKE blow-up), while the multiplicative E8 stays positive/bounded and E3 blend beats HAR
-  (h1: E3 0.3322 < HAR 0.3391) — motivates the multiplicative/gated anchoring the plan recommends.
+- alpha_HAR falls 0.935 -> 0.28 and lambda rises 0 -> 2 with horizon (point-estimate horizon specialization,
+  H2), consistent with more neural weight being optimal at longer horizons — but the resulting blend still
+  does not significantly beat HAR.
+- SP500: additive residual (E5-E7) is numerically fragile at 500-node/35-test-date scale (drives
+  predictions to the floor -> QLIKE blow-up, E7=16.4); multiplicative E8 stays positive/bounded. SP500 h1
+  shows date-clustered significance (E3 vs HAR p=0.0002) but rests on only 35 test dates and a degenerate
+  additive branch — treated as unreliable, not a beat-HAR claim.
+
+**Honest verdict:** consistent with the volatility literature (Branco et al., "Does anything beat linear
+models?"), HAR is not beaten out-of-sample on these panels under rigorous panel inference. The main
+methodological contribution is that apparent neural/graph wins are artifacts of ignoring cross-sectional
+dependence in the significance test. HAR-anchoring makes deep models safe (tie HAR) where the full-target
+deep models lose.
 
 ## Risks / follow-ups
 - SP500 h5/h10/h22 still running (GPU shared with a learnable-alpha SP500 fill); report auto-refreshes on completion.
