@@ -281,13 +281,6 @@ with equal weight. The date-clustered DM test matters for these conclusions: a n
 this cross-sectionally dependent panel inflates the statistic by roughly the square root of the number of stocks, so a difference
 that is not significant per date can appear significant per observation.
 
-\section{Limitations}
-QLIKE at the short horizons depends on the per-node prediction floor; we fix a common floor ($10^{-2}$ times
-the per-node training mean) across all models and report MSE, RMSE, MAE and $R^2$ alongside QLIKE. The study
-covers the Vietnamese market (VN30, VN100). The graph uses a directed volume$\to$Parkinson weighted design;
-other graph designs (e.g.\ volume-shock-threshold or sector graphs) were not tested and remain follow-up work.
-All numbers are read from stored results.
-
 \section{Conclusion}
 For daily Parkinson-variance forecasting on the Vietnamese market, evaluated with the same features, the same
 masked panel and the same date-clustered Diebold--Mariano inference, HAR has the lowest QLIKE at

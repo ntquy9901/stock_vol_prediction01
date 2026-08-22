@@ -286,19 +286,7 @@ cross-section size, so a difference that is not significant per date can appear 
 
 ---
 
-## 8. Limitations
-
-- **Positivity floor.** QLIKE at the short horizons depends on the per-node prediction floor; we fix a common
-  floor (1e-2 times the per-node training mean) across all models and report MSE, RMSE, MAE and R² alongside
-  QLIKE.
-- **Single market.** The study covers the Vietnamese market (VN30, VN100).
-- **Graph scope.** The study uses a directed volume→Parkinson weighted graph; other graph designs (for
-  example volume-shock-threshold or sector graphs) were not tested and remain follow-up work.
-- All reported numbers are read directly from stored `result.json` files.
-
----
-
-## 9. Conclusion
+## 8. Conclusion
 
 For daily Parkinson-variance forecasting on the Vietnamese market, evaluated with the same features, the same
 masked panel and the same date-clustered Diebold–Mariano inference, HAR has the lowest QLIKE at
