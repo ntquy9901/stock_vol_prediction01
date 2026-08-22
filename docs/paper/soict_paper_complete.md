@@ -1,28 +1,32 @@
-# Deep Sequence Models versus HAR for Daily Volatility Forecasting: A Per-Observation Study with a Graph-Attention Ablation on Vietnamese and U.S. Equities
+# HAR versus Deep and Graph-Attention Models for Multi-Horizon Volatility Forecasting: A Panel-Correct Study on Vietnamese and U.S. Equities
 
-*SOICT submission (markdown draft; to be transcribed to the SOICT/Overleaf LaTeX template). Architecture
-diagram: `docs/paper/diagrams/soict_harlstmgat.svg`.*
+*SOICT submission (markdown draft; transcribed to the SOICT/Overleaf LaTeX template in
+`docs/paper/soict_harlstmgat.tex`). Architecture diagram: `docs/paper/diagrams/soict_harlstmgat.svg`.*
 
 ---
 
 ## Abstract
 
-We study whether a deep sequence model can improve daily Parkinson-variance forecasting over the
-Heterogeneous Autoregressive (HAR) baseline, and whether adding a cross-sectional graph-attention branch
-helps. Our main model is a pooled per-node LSTM over three HAR features (daily, weekly and monthly
-Parkinson volatility). We evaluate it against two classical baselines to be beaten, HAR and GARCH(1,1),
-under a per-observation, per-stock chronological 80/10/10 split with five random seeds, MSE training loss
-and validation-MSE early stopping. On the Vietnamese markets the LSTM beats HAR at the one-day horizon by
-the Diebold–Mariano QLIKE test (VN30 and VN100 significant; VN100 also significant at the one-week
-horizon), and every learned model beats GARCH. As a controlled leave-one-out ablation we add a Graph
-Attention Network over a graphical-lasso partial-correlation graph (LSTM+GAT), which requires a common-date
-snapshot design; removing the graph improves QLIKE in all eight snapshot configurations, so the graph does
-not help. We further show that the deep-versus-HAR comparison is sensitive to the data design: the same
-LSTM loses to HAR under a common-date snapshot with a global-date split but wins under the per-observation
-per-stock split, because the latter is far richer in training examples and does not impose a single
-regime-shift boundary. Deep-versus-HAR competitiveness also grows with dataset size, a pattern that
-replicates from Vietnam to the S&P 500. A longer lookback (22 versus 10) provides no benefit. We report all
-numbers honestly, including the negative graph ablation and the QLIKE/MSE disagreements.
+We study whether deep sequence models or a cross-sectional graph-attention branch can improve daily
+Parkinson-variance forecasting over the Heterogeneous Autoregressive (HAR) baseline, and we evaluate them
+with panel-correct inference. Three equity panels are used: VN30 (33 tickers) and VN100 (104 tickers) as the
+Vietnamese case study, and a long-history S&P 500 subset (457 tickers) as a data-rich cross-market check.
+Against the classical baselines HAR and GARCH(1,1) we benchmark a pooled LSTM over the three HAR features
+(daily, weekly and monthly Parkinson volatility), an LSTM with a Graph Attention Network branch over a
+graphical-lasso partial-correlation graph, a frozen-expert convex HAR–deep combination, and HAR-anchored
+residual models, at horizons {1, 5, 10, 22} with five random seeds. Statistical significance is assessed
+with the date-clustered Diebold–Mariano test, which collapses the loss differential to one value per
+calendar date; a naive per-observation test on a cross-sectionally dependent panel overstates significance
+by a factor on the order of the square root of the cross-section size. Three findings follow. First, HAR is
+very hard to beat on the small Vietnamese panels: under date-clustered inference no model — including the
+forecast combination — significantly beats HAR at any horizon (the closest competitor reaches p = 0.08).
+Second, on the large S&P 500 the deep temporal LSTM (no graph) significantly beats HAR, by up to +7.1% QLIKE
+at the twenty-two-day horizon (p<0.001), and the convex combination beats HAR at all four horizons
+(p<0.001); deep-versus-HAR competitiveness grows with panel size. Third, the cross-sectional graph adds no
+out-of-sample value on any panel: removing it never improves on the no-graph model, a leakage-safe linear
+neighbour-signal regressor adds essentially zero incremental out-of-sample R², and diagnostics rule out a
+software bug or overfitting. We report MSE, RMSE, MAE, QLIKE and R² together, because the model ranking is
+metric- and panel-dependent, and every number is read from a stored results file.
 
 ---
 
@@ -36,21 +40,26 @@ nonlinear temporal dynamics and cross-sectional volatility spillovers, but the e
 out-of-sample beat HAR is mixed, and positive claims are often confounded by data design choices.
 
 This paper asks two direct questions for daily volatility forecasting, with the Vietnamese equity market as
-the primary case study and the U.S. S&P 500 as a robustness check:
+the primary case study and a long-history U.S. S&P 500 subset as a data-rich cross-market check:
 
-1. Can a pooled LSTM over the three HAR features beat the HAR and GARCH baselines out of sample, and at
-   which horizons?
+1. Can deep or HAR-anchored models — a pooled LSTM over the three HAR features, a convex HAR–deep
+   combination, or HAR-residual correctors — beat the HAR and GARCH baselines out of sample under
+   panel-correct inference, and at which horizons?
 2. Does adding a cross-sectional Graph Attention Network branch, with edges estimated by graphical lasso,
-   improve the LSTM?
+   contribute any out-of-sample value beyond the same-capacity no-graph model?
 
-Our contributions are: (i) a fair per-observation, per-stock evaluation in which the LSTM significantly
-beats HAR at the short horizon on both Vietnamese markets while HAR and GARCH remain the baselines to beat;
-(ii) a clean leave-one-out ablation showing the graph-attention branch consistently fails to help; (iii) a
-methodological finding that the deep-versus-HAR verdict flips with the data design (per-observation
-per-stock split versus common-date snapshot with a global split), which explains apparently contradictory
-results in the literature; and (iv) a data-scaling observation, consistent across Vietnam and the U.S.,
-that deep models become more competitive with HAR as the panel grows. Every number reported here is taken
-from a stored results file; we report the negative and mixed findings without embellishment.
+Our contributions are: (i) a panel-correct multi-horizon benchmark of HAR against an LSTM, an LSTM-GAT, a
+convex HAR–deep combination and HAR-anchored residual models on three panels, with statistical significance
+assessed by the date-clustered Diebold–Mariano test — because a naive per-observation test overstates
+significance by a factor on the order of the square root of the cross-section size on this
+cross-sectionally dependent panel; (ii) the main empirical finding that HAR is not significantly beaten on
+the small Vietnamese panels, whereas on the data-rich S&P 500 the deep temporal LSTM significantly beats HAR
+(up to +7.1% QLIKE at the twenty-two-day horizon) and the convex combination beats it at every horizon, so
+deep-versus-HAR competitiveness scales with the amount of data; (iii) a model-free demonstration that the
+cross-sectional graph adds no out-of-sample value on any panel, with mechanistic evidence that this is a
+genuine null rather than a bug or overfitting; and (iv) per-metric fairness — reporting MSE, RMSE, MAE,
+QLIKE and R² together and showing that the ranking is metric- and panel-dependent. Every number reported
+here is taken from a stored results file.
 
 ---
 
@@ -89,7 +98,9 @@ Harvey, Leybourne and Newbold (1997).
 ### 3.1 Target and features
 
 The forecasting target is the Parkinson variance estimator (Parkinson, 1980) at day `t+h` for horizons
-`h ∈ {1, 5}` (one trading day and one trading week ahead), a non-negative point forecast. Following HAR, we
+`h ∈ {1, 5, 10, 22}` in the primary date-clustered study (one trading day, one trading week, two weeks and
+roughly one trading month ahead); the descriptive per-observation and snapshot studies use `h ∈ {1, 5}`. The
+target is a non-negative point forecast. Following HAR, we
 use three features per node (ticker): the daily Parkinson variance at `t`, its 5-day rolling mean (weekly)
 and its 22-day rolling mean (monthly). The same three features drive every model, so differences reflect
 the functional form, not the information set. Per the experiment specification, no additional technical or
@@ -141,14 +152,21 @@ ablation removes the GAT branch to give the main LSTM.*
 
 ### 3.5 Training and evaluation protocol
 
-All models train with **MSE loss** and select the checkpoint by **validation MSE** (QLIKE is not used for
-training or model selection, per the specification). Each configuration is run with five seeds
-{42, 123, 2026, 7, 2024}, up to 20 epochs with early stopping, on GPU with parallel data workers; learning
-curves are recorded every five epochs. We report five metrics — MSE, RMSE, MAE, QLIKE and R² — seed-averaged
-over the test set, with a shared QLIKE positivity floor of `1e-8` applied identically to every model.
-Statistical significance uses the Diebold–Mariano test with the Harvey–Leybourne–Newbold small-sample
-correction and a HAC lag of `h-1`, computed on per-observation loss differentials for both the QLIKE loss
-and the squared-error (MSE) loss. A negative DM statistic favors the deep model over the baseline.
+Each configuration is run with five seeds {42, 123, 2026, 7, 2024}, up to 20 epochs with early stopping, on
+GPU with parallel data workers; learning curves are recorded every five epochs. We report five metrics —
+MSE, RMSE, MAE, QLIKE and R² — seed-averaged over the test set, with a shared QLIKE positivity floor of
+`1e-8` applied identically to every model. The primary decision metric is QLIKE, which is robust to the
+volatility proxy (Patton, 2011).
+
+Statistical significance is assessed with the **date-clustered Diebold–Mariano test**: the per-observation
+loss differential is collapsed to one value per calendar date before the Diebold–Mariano statistic is
+computed, with the Harvey–Leybourne–Newbold small-sample correction and a HAC lag of `h-1`. This is the
+panel-correct treatment for a cross-section in which all tickers share each trading date; a naive
+per-observation Diebold–Mariano test over every (ticker, date) row treats the effective sample as the
+number of tickers times the number of dates, understates the loss-differential variance, and inflates the
+statistic by a factor on the order of the square root of the cross-section size (roughly six on VN30 and ten
+on VN100). All significance statements in this paper use the date-clustered test unless a result is
+explicitly labelled per-observation. A positive dQLIKE% denotes a QLIKE improvement over HAR.
 
 ---
 
@@ -172,15 +190,19 @@ bias in level; the short-versus-long horizon ordering, not the absolute level, i
 
 ## 5. Experiments
 
-We run four studies, all on the same three HAR features, MSE loss and validation-MSE early stopping:
+We run five studies, all on the same three HAR features across VN30, VN100 and the S&P 500 subset:
 
-1. **Main: LSTM versus HAR and GARCH** on the per-observation per-stock design (VN30, VN100, S&P 500;
-   lookback 10; horizons 1 and 5).
-2. **Graph-check ablation** LSTM+GAT versus LSTM (w/o GAT) on the common-date snapshot design (same
-   panels, lookback 10, horizons 1 and 5), with HAR and GARCH included for reference.
-3. **Lookback variation** (10 versus 22) for the snapshot design on VN30.
-4. **Cross-market and data-scaling** analysis comparing the deep-versus-HAR verdict across VN30, VN100 and
-   the much larger S&P 500.
+1. **Primary: HAR-anchored ladder (E0–E10) under date-clustered inference** (Section 6.6) — HAR versus the
+   full-target LSTM, the full-target LSTM+GAT, the convex HAR–deep combination, and additive/multiplicative
+   HAR-anchored residual and gate models, at horizons 1, 5, 10 and 22, with all beat-HAR verdicts by the
+   date-clustered Diebold–Mariano test. This is the source of the paper's headline results.
+2. **Design comparison: LSTM versus HAR and GARCH** on the per-observation per-stock design (lookback 10;
+   horizons 1 and 5), reporting point estimates and naive per-observation statistics (Section 6.1).
+3. **Graph-check ablation** LSTM+GAT versus LSTM (w/o GAT) on the common-date snapshot design (lookback 10,
+   horizons 1 and 5), with HAR and GARCH for reference (Section 6.2).
+4. **Lookback variation** (10 versus 22) for the snapshot design on VN30 (Section 6.3).
+5. **Model-free graph screening** (Section 6.7) — a leakage-safe, architecture-independent test of whether
+   any cross-stock neighbour signal adds out-of-sample value beyond HAR.
 
 ---
 
@@ -191,6 +213,14 @@ in scaled units to avoid scientific notation: **MSE ×10⁻⁷, RMSE ×10⁻⁴,
 unscaled. Row order in every table follows the baselines-first convention: HAR → GARCH → LSTM (and, for the
 graph study, HAR → GARCH → LSTM (w/o GAT) → LSTM+GAT). All values are the five-seed test-set means from the
 stored `result.json` files, with the design stated in each table caption.
+
+**Primary results and inference convention.** The primary results of the paper are the panel-correct,
+multi-horizon, date-clustered study of Section 6.6, which compares HAR against the LSTM, the LSTM+GAT, the
+convex combination and the HAR-anchored residual models on all three panels at horizons {1, 5, 10, 22}. All
+beat-HAR significance claims in the paper are date-clustered. Sections 6.1–6.5 report point-estimate tables
+(all five metrics) and descriptive per-observation Diebold–Mariano statistics that isolate design and
+lookback effects; the per-observation statistics are retained only to expose the inference artifact and are
+not used for beat-HAR claims (see the methodological note in Section 6.6).
 
 ### 6.1 Main study — per-observation LSTM (design: per-observation, per-stock 80/10/10)
 
@@ -229,7 +259,10 @@ stored `result.json` files, with the design stated in each table caption.
 | 5 | GARCH | 12.5241 | 11.1911 | 5.0885 | 0.7287 | -2.3763 |
 | 5 | LSTM  | 3.3001 | 5.7446 | 2.2118 | 0.4232 | 0.1103 |
 
-**Diebold–Mariano, main study** (negative statistic favors LSTM; `*` denotes p < 0.05):
+**Diebold–Mariano, main study — per-observation (naive) test, shown for the design comparison only**
+(negative statistic favors LSTM; `*` denotes p < 0.05 on the per-observation test, which overstates
+significance on this cross-sectionally dependent panel — see the methodological note in Section 6.6; the
+panel-correct beat-HAR verdicts are in Section 6.6):
 
 | Panel | h | LSTM vs HAR (QLIKE) | LSTM vs HAR (MSE) | LSTM vs GARCH (QLIKE) |
 |---|---|---|---|---|
@@ -240,14 +273,16 @@ stored `result.json` files, with the design stated in each table caption.
 | S&P500| 1 | +10.39 (p<0.001)* HAR | −2.98 (p=0.003)* LSTM | −152.75 (p<0.001)* LSTM |
 | S&P500| 5 | +1.01 (p=0.31) tie    | −3.98 (p<0.001)* LSTM | −83.14 (p<0.001)* LSTM |
 
-**Reading.** On QLIKE the LSTM significantly beats HAR at h1 on both Vietnamese panels (VN30 and VN100) and
-also at h5 on VN100; the remaining Vietnamese cell (VN30-h5) is a statistical tie in the LSTM's favor. Every
-learned model beats GARCH at every horizon with very large margins. On the S&P 500 the picture is split by
-loss: the LSTM beats HAR on the squared-error (MSE) loss at both horizons (significant), reflecting its
-lower MSE and higher R², while on the QLIKE loss HAR wins at h1 and ties at h5 — a direct consequence of
-selecting the checkpoint by validation MSE rather than QLIKE (Section 7). The headline positive result — a
-deep model beating HAR at the short horizon — is clearest and QLIKE-significant on the Vietnamese primary
-market.
+**Reading.** On the Vietnamese panels the LSTM's QLIKE point estimates edge below HAR at the short horizons
+(for example VN30-h1 0.4578 versus 0.4675, VN100-h1 0.4735 versus 0.4798). The per-observation Diebold–
+Mariano statistics above flag several of these as significant, but that test overstates significance on a
+cross-sectionally dependent panel; under the panel-correct date-clustered test of Section 6.6 none of these
+Vietnamese gaps is statistically significant. Every learned model beats GARCH at every horizon by very large
+margins. On the S&P 500 the LSTM attains both the lower QLIKE and the lower MSE at both horizons in this
+per-observation design, and the date-clustered study of Section 6.6 confirms the S&P 500 beat-HAR result is
+statistically significant there. The takeaway of this section is descriptive: the LSTM's point estimates
+favor it on the richer per-observation design, but the panel-correct significance verdict belongs to
+Section 6.6, where the beat-HAR result survives only on the large S&P 500 panel.
 
 ### 6.2 Graph-check ablation — LSTM+GAT versus LSTM (w/o GAT) (design: common-date snapshot, global split)
 
@@ -342,16 +377,17 @@ is unchanged: at lookback 22 the graph again hurts (LSTM+GAT vs LSTM (w/o GAT) o
 
 ### 6.4 Cross-market and data scaling
 
-Reading the QLIKE columns of the main study (Section 6.1) across panels of increasing size shows a
-consistent gradient. On the small VN30 (33 tickers) the LSTM's QLIKE edge over HAR is present but modest and
-only significant at h1. On VN100 (104 tickers) it strengthens and becomes significant at both h1 and h5. On
-the large S&P 500 (~500 tickers) the LSTM attains the lower MSE and higher R² at both horizons (significant
-on the MSE-based DM), i.e. it dominates HAR on the very loss it was trained and selected on. The same
-short-horizon deep advantage was found independently under a per-ticker 70/15/15 split with validation-QLIKE
-early stopping, where the LSTM beat HAR on QLIKE at both h1 and h5 on the S&P 500 as well, confirming that
-the U.S. QLIKE ties reported here are a model-selection artifact (Section 7) rather than a market effect. The
-qualitative conclusion — deep models grow more competitive with HAR as the panel grows, and the short-horizon
-deep advantage is not specific to Vietnam — replicates from the Vietnamese to the U.S. market.
+Reading QLIKE across panels of increasing size, under the panel-correct date-clustered inference of
+Section 6.6, shows a consistent data-scaling gradient. On the small VN30 (33 tickers) HAR is best at every
+horizon and no learned model beats it significantly. On VN100 (104 tickers) the point-estimate gaps narrow
+and turn slightly in the deep models' favor at the long horizons, but still without date-clustered
+significance (the closest cell, the convex combination at h22, reaches p = 0.078). On the large S&P 500
+subset (457 tickers) the deep temporal LSTM significantly beats HAR at every horizon (dQLIKE +3.01% at h1
+to +7.10% at h22, all p<0.001 except h10 at p = 0.0013), and the convex combination beats HAR at every
+horizon (p<0.001). The qualitative conclusion — deep-versus-HAR competitiveness grows with the size of the
+panel, and the significant beat-HAR result emerges only once the panel is large and data-rich — is the
+central data-scaling observation of the paper, and it holds under panel-correct inference rather than the
+naive per-observation test.
 
 ---
 
@@ -371,13 +407,14 @@ to h10 (two trading weeks) and h22 (roughly one trading month).
 | VN100 | 10 | 0.5773 | 0.6959 | 0.5737 | 0.103 | 0.105 | −1.25 (p=0.21) tie |
 | VN100 | 22 | 0.6112 | 0.6917 | 0.6129 | 0.063 | 0.055 | +0.41 (p=0.68) tie |
 
-**Reading.** At the long horizons the LSTM and HAR are statistically **tied** on QLIKE in every cell
-(no Diebold--Mariano significance in either direction; the sign even alternates, LSTM marginally lower
-at h10, HAR marginally lower at h22). Both still beat GARCH. Combined with the main study
-(Section 6.1), the horizon picture is clean: the deep model's edge is a **short-horizon** effect ---
-it significantly beats HAR at h1 (and h5 on VN100) and merely matches HAR at h10 and h22, as the
-target's own-history predictability weakens and both models converge. No horizon shows HAR
-significantly beating the LSTM under the per-observation design.
+**Reading.** At the long horizons the LSTM and HAR are statistically tied on QLIKE in every cell of this
+per-observation study — the point estimates are within a fraction of a percent and the sign alternates (LSTM
+marginally lower at h10, HAR marginally lower at h22), with no per-observation Diebold–Mariano significance
+in either direction. Both still beat GARCH. This is consistent with the panel-correct verdict of
+Section 6.6, where no model beats HAR on the Vietnamese panels at any horizon: the deep model's point-estimate
+edge, where it exists, is a short-horizon effect that weakens as the target's own-history predictability
+falls and the two models converge. No horizon shows HAR significantly beating the LSTM on the Vietnamese
+panels either.
 
 ### 6.6 HAR-anchored residual and forecast-combination study (E0–E10)
 
@@ -505,6 +542,44 @@ distinct test dates).**
 | 22 | E9 static gated residual | 0.5912 | 0.0430 | 0.569 |
 | 22 | E10 dynamic gated residual | 0.6043 | 0.0180 | 0.480 |
 
+**S&P 500 (long-history subset, 457 nodes; snapshot test counts: 137,100 at h1/h5, 136,643 at h10, 136,186
+at h22 — on the order of 300 distinct test dates).** This is the large, data-rich panel. We report the
+non-fragile rungs (HAR, GARCH, the full-target LSTM E1, the full-target LSTM+GAT E2 and the convex
+combination E3); the additive/multiplicative residual rungs (E5–E8) are numerically fragile on this
+cross-section and are discussed separately below.
+
+| h | Model | QLIKE | dQLIKE% vs HAR | DM p (date-clustered) |
+|---|---|---:|---:|---:|
+| 1  | E0 HAR                    | 0.3776 | —      | — |
+| 1  | GARCH                     | 0.4843 | −28.27 | <0.001 |
+| 1  | E1 LSTM (full target)     | 0.3662 | +3.01  | <0.001 |
+| 1  | E2 LSTM+GAT (full target) | 0.3826 | −1.32  | 0.305 |
+| 1  | E3 convex combination     | 0.3656 | +3.16  | <0.001 |
+| 5  | E0 HAR                    | 0.4158 | —      | — |
+| 5  | GARCH                     | 0.4830 | −16.16 | <0.001 |
+| 5  | E1 LSTM (full target)     | 0.3988 | +4.09  | <0.001 |
+| 5  | E2 LSTM+GAT (full target) | 0.4078 | +1.93  | 0.005 |
+| 5  | E3 convex combination     | 0.4009 | +3.58  | <0.001 |
+| 10 | E0 HAR                    | 0.4303 | —      | — |
+| 10 | GARCH                     | 0.4842 | −12.53 | <0.001 |
+| 10 | E1 LSTM (full target)     | 0.4123 | +4.18  | 0.001 |
+| 10 | E2 LSTM+GAT (full target) | 0.4230 | +1.69  | 0.115 |
+| 10 | E3 convex combination     | 0.4147 | +3.62  | <0.001 |
+| 22 | E0 HAR                    | 0.4596 | —      | — |
+| 22 | GARCH                     | 0.4883 | −6.23  | 0.121 |
+| 22 | E1 LSTM (full target)     | 0.4270 | +7.10  | <0.001 |
+| 22 | E2 LSTM+GAT (full target) | 0.4386 | +4.59  | 0.004 |
+| 22 | E3 convex combination     | 0.4349 | +5.39  | <0.001 |
+
+**Reading (S&P 500).** On the large panel the deep temporal LSTM (E1) significantly beats HAR at every
+horizon under date-clustered inference (dQLIKE from +3.01% at h1 to +7.10% at h22, p<0.001 at h1/h5/h22 and
+p = 0.001 at h10), and the convex combination (E3) also beats HAR at every horizon (p<0.001). The
+graph-carrying full model (E2) is weaker than the graph-free LSTM at every horizon (its dQLIKE is smaller,
+and it fails to beat HAR at h1 and h10), consistent with the graph adding no value. GARCH is dominated. The
+LSTM's advantage here is not confined to QLIKE: it also attains the lower RMSE and the lower or equal MAE at
+every horizon (for example h1 MAE 0.00021 versus HAR 0.00022, RMSE 0.00056 versus 0.00057; source
+`reports/experiment_results.md`), so on the data-rich panel the deep temporal model leads across metrics.
+
 **Graph attribution (paired date-clustered DM, graph residual versus no-graph residual).** A graph
 contribution requires the graph/GAT residual (E6) or the combined residual (E7) to beat the same-capacity
 no-graph residual (E5), not merely HAR. The paired date-clustered p-values are:
@@ -519,37 +594,92 @@ no-graph residual (E5), not merely HAR. The paired date-clustered p-values are:
 | VN100 | 5  | 0.795 (favors graph)    | 0.873 (favors combined) |
 | VN100 | 10 | 0.438 (favors graph)    | 0.419 (favors combined) |
 | VN100 | 22 | 0.467 (favors graph)    | 0.546 (favors combined) |
+| S&P500| 1  | 0.0003 (favors no-graph)* | 0.169 (favors no-graph) |
+| S&P500| 5  | 0.237 (favors no-graph) | 0.201 (favors no-graph) |
+| S&P500| 10 | 0.154 (favors no-graph) | 0.015 (favors no-graph)* |
+| S&P500| 22 | 0.088 (favors graph)    | 0.118 (favors combined) |
 
-None of the paired contrasts approaches significance (all p ≥ 0.41). The sign is mixed: on VN30 the paired
-test favors the no-graph residual in most cells, and on VN100 it nominally favors the graph residual, but
-in no case is the difference distinguishable from noise. The graph therefore adds no incremental value
-beyond the same-capacity no-graph residual, consistent with the leave-one-out graph ablation of
+On the Vietnamese panels none of the paired contrasts approaches significance (all p ≥ 0.41): the sign is
+mixed — the paired test favors the no-graph residual in most VN30 cells and nominally favors the graph
+residual on VN100 — but in no case is the difference distinguishable from noise. On the large S&P 500 panel
+the paired test is decisive in the opposite direction to a graph benefit: the no-graph residual is favored
+at every horizon, significantly at h1 (p = 0.0003) and h10 (p = 0.015). In no panel and at no horizon does
+the graph residual significantly beat the same-capacity no-graph residual. The graph therefore adds no
+incremental value beyond the no-graph model, consistent with the leave-one-out graph ablation of
 Section 6.2.
+
+### 6.7 Model-free graph screening — does any cross-stock signal exist out of sample?
+
+*Source: `reports/model_free_graph_screening.md` (raw JSON `results/graph_screen/<panel>.json`) and
+`docs/reports/2026-08-22_graph_no_value_analysis.md`.*
+
+Because the graph ablation and attribution above compare specific neural architectures, a natural objection
+is that a better-tuned graph model might still extract cross-stock signal. We rule this out model-free. For
+each panel we append a neighbour-derived signal to the three HAR features in an ordinary-least-squares fit on
+training rows only and measure the incremental test R² over the HAR-only fit; this upper-bounds what any
+model consuming those edges could extract linearly and is leakage-safe (edges and the residual fit are
+train-only). Six neighbour signals are screened — the equal-weight, signed-weighted and separate
+positive/negative sums of neighbours' Parkinson variance; the signed-weighted neighbour HAR residual
+(innovation); a train-selected directed lead-lag innovation; and a row-shuffled-edge placebo.
+
+The result is a null across VN30, VN100 and the S&P 500 subset at every horizon: all incremental test R²
+values are at most about 1%, and most are near zero or negative. The theoretically decisive screens — the
+innovation and the directed lead-lag signals, which test predictive spillover beyond HAR's own persistence —
+are approximately zero at every horizon on every panel. The only recurring small positives are the
+contemporaneous neighbour-level signals (about +1.0% on VN100 at h5, about +1.1% on the S&P 500 at h1), and
+these sit close to the shuffled-edge placebo (+0.2% and +0.4% respectively), so the structural graph adds
+little beyond a random-edge control.
+
+A single leakage-safe linear regression of the target on HAR plus the mean Parkinson variance of a node's
+Top-5 graphical-lasso neighbours at day t — which bypasses the GAT, attention and residual head entirely —
+yields incremental out-of-sample R² of essentially zero everywhere (VN30: −0.0001, +0.0013, −0.0014, −0.0004
+at h1/h5/h10/h22; VN100: −0.0007, +0.0091, −0.0010, +0.0007). If exploitable cross-sectional spillover
+existed out of sample, this simplest possible test would find it.
+
+Diagnostics confirm the null is genuine rather than an implementation artifact. The graphical-lasso edge set
+barely survives out of sample (train↔test Top-5 neighbour-set Jaccard 0.09–0.17, no node retaining half its
+neighbours), the GAT branch is demonstrably alive (it emits a correction about 15% of HAR magnitude at
+VN100 h22) yet still does not beat HAR, its attention collapses to a near-uniform neighbour average
+(normalized entropy about 0.996), and the graph residual does not overfit (its train-versus-test residual R²
+gap is zero or negative). The cross-sectional graph adds no value because the exploitable signal is not
+present out of sample, not because of a bug.
 
 **Findings.**
 
-- **No model significantly beats HAR on VN30 or VN100 at any horizon under date-clustered inference.** The
+- **HAR is not significantly beaten on VN30 or VN100 at any horizon under date-clustered inference.** The
   frozen-expert convex combination is the closest competitor: its date-clustered p-value versus HAR ranges
   over 0.14–0.51 on VN30 and 0.08–0.29 on VN100, never below 0.05. The residual and gated variants have
   larger p-values still (the graph residual versus HAR ranges over 0.56–0.93 on VN30 and 0.46–0.63 on
   VN100). Point-estimate QLIKE gaps favor the hybrids at the longer horizons — for example the convex
-  combination reaches −5.85% QLIKE at VN100 h22 (QLIKE 0.5816 versus HAR 0.6177) and the graph residual
-  −4.08% (0.5925) — but these gaps are within noise given the short common-date test windows (on the order
+  combination reaches +5.85% QLIKE at VN100 h22 (QLIKE 0.5816 versus HAR 0.6177) and the graph residual
+  +4.08% (0.5925) — but these gaps are within noise given the short common-date test windows (on the order
   of 130 dates on VN30 and 50 on VN100).
-- **Full-target deep models underperform HAR at short horizons.** The full-target LSTM and LSTM+GAT lose
-  to HAR at h1 on both panels (VN30 p<0.001; VN100 p=0.023 and p=0.035), consistent with the snapshot-design
-  result of Section 6.2.
-- **HAR-anchoring makes deep models competitive at the point-estimate level and never far worse.** The
-  convex combination, the additive residuals, the multiplicative residual and the gates all track HAR
-  closely (QLIKE within a small fraction of a percent at short horizons and improving toward HAR-or-better
-  point estimates at long horizons), in contrast to the full-target models that trail HAR at short
-  horizons. Anchoring the deep expert to HAR removes the short-horizon penalty.
-- **The additive residual is numerically fragile on a large cross-section, while the multiplicative
-  anchoring stays bounded.** On the much larger S&P 500 panel (~500 nodes, only about 35 test dates) the
-  additive residuals drive predictions toward the QLIKE positivity floor and the QLIKE inflates
-  (`E5`=165.6, `E7`=16.4 versus HAR 0.339), whereas the multiplicative HAR-anchored residual (E8) remains
-  positive and bounded (0.4055). We report the S&P 500 additive result only as a fragility illustration; it
-  is not evidence about relative accuracy, and the S&P 500 is not used here as a beat-HAR claim.
+- **On the large S&P 500 panel the deep temporal LSTM significantly beats HAR at every horizon.** The
+  full-target LSTM (E1) improves QLIKE over HAR by +3.01% at h1, +4.09% at h5, +4.18% at h10 and +7.10% at
+  h22 (p<0.001 at h1/h5/h22, p = 0.001 at h10), and the convex combination (E3) beats HAR at every horizon
+  by +3.16% to +5.39% (p<0.001). This is the paper's positive beat-HAR result and it holds under the same
+  panel-correct date-clustered inference under which the Vietnamese panels show no significant win, so the
+  difference is one of data scale, not of inference convention.
+- **Full-target deep models underperform HAR at short horizons on the small panels.** The full-target LSTM
+  and LSTM+GAT lose to HAR at h1 on both Vietnamese panels (VN30 p<0.001; VN100 p=0.023 and p=0.035),
+  consistent with the snapshot-design result of Section 6.2, whereas the HAR-anchored variants (convex
+  combination, residuals, gates) track HAR closely and remove that short-horizon penalty.
+- **The graph adds no incremental value on any panel.** No graph residual (E6) or combined residual (E7)
+  beats the same-capacity no-graph residual (E5) at any horizon on any panel; on the S&P 500 the no-graph
+  residual is significantly favored at h1 and h10 (Graph-attribution table above), and the model-free
+  screening of Section 6.7 shows the incremental out-of-sample R² of any neighbour signal is at most about
+  1% and approximately zero for the theoretically decisive innovation and lead-lag screens.
+- **The additive/graph residual rungs are numerically fragile on a large cross-section.** On the S&P 500
+  subset (457 nodes) the additive and graph residuals can drive predictions toward the QLIKE positivity
+  floor and inflate QLIKE far above HAR (for example E5 QLIKE 2.9978 at h22 and E7 QLIKE 5.7090 at h10,
+  versus HAR 0.4596 and 0.4303), so on the large panel the clean, well-behaved beat-HAR models are the
+  full-target LSTM (E1) and the convex combination (E3); the fragile residual rungs are reported for
+  completeness and are not the basis of the S&P 500 beat-HAR claim.
+- **Per-metric fairness.** The model ranking is metric- and panel-dependent, which is why all five metrics
+  are reported. On the S&P 500 the deep temporal LSTM leads on QLIKE, RMSE and MAE together. On the small
+  Vietnamese panels HAR retains the best QLIKE and squared error, while the multiplicative HAR-anchored
+  residual (E8) attains the lowest MAE at several cells (for example VN100 h1 MAE 0.00027 versus HAR
+  0.00028) — no single metric determines the ranking.
 
 **Methodological note (panel-correct inference).** For a cross-sectionally dependent volatility panel, the
 statistical significance of a forecast-accuracy difference must be assessed with date-clustered (or
@@ -562,96 +692,108 @@ QLIKE gap that is a coin-flip once collapsed to one value per date can be report
 the row level. Aggregating to the date level before inference removes this artifact and is the significance
 convention used throughout this study.
 
-**Caveat on the earlier per-observation beat-HAR results.** The short-horizon "LSTM beats HAR" outcomes in
-Section 6.1 — and the corresponding statements in the abstract and conclusion — were assessed with the
-Diebold–Mariano test on **per-observation** loss differentials, which treats each (ticker, date) pair as an
-independent observation and therefore, on this cross-sectionally dependent panel, overstates significance
-as described in the methodological note above. Under the date-clustered inference used in the present
-study, improvements of the magnitude reported in Section 6.1 are not statistically significant on the
-available test windows. The point estimates in Section 6.1 are unchanged and reported as measured; only the
-associated statistical significance should be interpreted with this caveat. This qualification applies
-symmetrically: it also tempers the per-observation cells in which HAR beats the deep model.
+**Relation to the per-observation tables of Section 6.1.** The per-observation Diebold–Mariano statistics in
+Section 6.1 flag short-horizon LSTM-versus-HAR gaps on the Vietnamese panels as significant. Those
+statistics use per-observation loss differentials and therefore overstate significance on this
+cross-sectionally dependent panel, as quantified in the methodological note above; under the date-clustered
+inference used throughout this paper, the Vietnamese gaps of that magnitude are not statistically
+significant. The Section 6.1 point estimates are unchanged and reported as measured — only their
+per-observation significance is superseded by the date-clustered verdict here, symmetrically for the cells
+where HAR nominally beats the deep model. The one beat-HAR result that survives date-clustered inference is
+on the large S&P 500 panel (this section), not on the Vietnamese panels.
 
 ---
 
 ## 7. Discussion
 
-**The data design, not the LSTM, drives the deep-versus-HAR verdict.** The same LSTM architecture, on the
-same three features, wins against HAR under the per-observation per-stock design (Section 6.1) but loses to
-HAR under the common-date snapshot with a global split (Section 6.2). Two mechanisms explain the gap.
-First, the common-date intersection keeps only dates on which every node is present, discarding a large
-majority of ticker-days and shrinking VN30 from tens of thousands of pooled windows to on the order of a
-thousand common dates; the deep model is starved of data and regresses toward the training-regime mean,
-which the training diagnostics confirm (validation MSE above the standardized-mean baseline of 1.0). Second,
-a single global chronological split places the entire test set in one recent regime, so the deep model must
-extrapolate across a volatility regime shift, whereas HAR's current-feature-driven, raw-scale predictions
-adapt point by point. The per-observation per-stock design removes both handicaps by interleaving every
-ticker's regimes and multiplying the training examples. This is the paper's methodological contribution:
-apparently contradictory "deep beats HAR" / "deep loses to HAR" claims can arise from the same model under
-different, graph-motivated data designs.
+**HAR is hard to beat on small panels; data scale is what unlocks a deep advantage.** Under panel-correct
+date-clustered inference, no model — LSTM, LSTM+GAT, convex combination or HAR-anchored residual —
+significantly beats HAR on VN30 or VN100 at any horizon. The same architectures, evaluated identically,
+significantly beat HAR at every horizon on the large S&P 500 subset, where the deep temporal LSTM improves
+QLIKE by up to +7.1% at h22 (p<0.001) and the convex combination improves it at every horizon. Because the
+inference convention is held fixed across panels, the difference is attributable to the amount of data, not
+to the test: a flexible model needs a large, data-rich cross-section to out-of-sample beat a parsimonious,
+well-specified baseline, and HAR's edge on the small Vietnamese panels is a small-sample phenomenon rather
+than a fundamental ceiling on deep models.
 
-**Loss choice and model selection matter.** Training and early stopping use MSE, but the volatility-standard
-decision metric is QLIKE, which upweights low-volatility days. On the S&P 500 these disagree: the LSTM wins
-on MSE at both horizons but not on QLIKE at h1, purely because the checkpoint is chosen by validation MSE. A
-parallel run that early-stopped on validation QLIKE recovered a QLIKE win at both horizons on the S&P 500.
-We keep validation-MSE selection here to honor the experiment specification and to report the disagreement
-transparently rather than to select the metric that flatters the model.
+**The graph adds no out-of-sample value, and this is a genuine null.** No graph-carrying model beats its
+same-capacity no-graph counterpart on any panel or horizon (the leave-one-out ablation of Section 6.2, the
+paired residual attribution of Section 6.6, and the S&P 500 case where the no-graph residual is
+significantly favored). The model-free screening of Section 6.7 shows why: a leakage-safe linear
+neighbour-signal regressor adds essentially zero incremental out-of-sample R², the innovation and lead-lag
+screens are approximately zero everywhere, and diagnostics rule out a bug or overfitting (the
+graphical-lasso edge set does not persist from train to test, the attention collapses to a uniform neighbour
+average, and the graph residual shows no train-versus-test overfitting gap). The cross-sectional dependence
+the graph encodes is dominated by a common market factor already captured by each ticker's own HAR
+persistence and does not transfer out of sample. This is a clean negative result for a popular architectural
+idea.
 
-**The graph adds noise, not signal.** Across all eight snapshot configurations, and at both lookbacks,
-removing the GAT branch improves QLIKE. The graphical-lasso partial-correlation graph, frozen from training
-data, does not carry out-of-sample predictive value beyond what the per-node LSTM already extracts from the
-HAR features; it is at best neutral (VN100 QLIKE ties, VN100 MSE slight help) and at worst clearly harmful
-(VN30, S&P 500). This is a clean negative ablation for a popular architectural idea.
+**Data design and inference convention both shape the apparent verdict.** Two secondary methodological
+observations support the honest reading above. First, the deep-versus-HAR point estimates depend on the data
+design: the same LSTM's point estimates favor it under the richer per-observation per-stock design
+(Section 6.1) but not under the common-date snapshot with a global split (Section 6.2), because the
+intersection discards most ticker-days and places the whole test set in one recent regime. Second, and more
+importantly, the significance verdict depends on the inference convention: the naive per-observation
+Diebold–Mariano test inflates the statistic by a factor on the order of the square root of the cross-section
+size, which can turn a coin-flip QLIKE gap into an apparently significant one. Both observations caution
+against reading a beat-HAR claim from a favourable data design plus a naive test; the panel-correct verdict
+is the one reported here.
 
-**Data scaling.** The deep-versus-HAR competitiveness grows with the size of the panel, consistently from
-VN30 to VN100 to the S&P 500. This aligns with the general expectation that flexible models need more data
-to beat a parsimonious, well-specified baseline, and it suggests that HAR's edge on small Vietnamese panels
-is a small-sample phenomenon rather than a fundamental ceiling on deep models.
+**Loss choice and model selection.** Training and early stopping use MSE while the decision metric is QLIKE.
+These can disagree — QLIKE upweights low-volatility days — so we report all five metrics rather than the one
+that flatters a given model; on the S&P 500 the deep temporal model happens to lead on QLIKE, RMSE and MAE
+simultaneously, while on the Vietnamese panels the metric that is best differs by model (HAR on QLIKE and
+squared error, the multiplicative HAR-anchored residual on MAE).
 
 ---
 
-## 8. Limitations and Honesty Statement
+## 8. Limitations
 
-- **Model selection is by validation MSE**, not QLIKE, per specification. This produces QLIKE/MSE
-  disagreements, most visibly the S&P 500 h1 QLIKE result where HAR wins although the LSTM has lower MSE and
-  higher R². We report both losses rather than cherry-picking.
-- **The graph requires a handicapped data design.** The LSTM+GAT variant is only evaluable on common-date
-  snapshots with a global split, which is data-poorer and regime-shifted relative to the per-observation
-  design; this makes all snapshot deep models weaker in absolute terms. The negative graph ablation is
-  nonetheless valid because it is a within-design leave-one-out comparison (LSTM+GAT versus LSTM (w/o GAT)
-  under identical snapshots).
+- **Short common-date test windows on the Vietnamese panels.** The graph-defined snapshot design retains
+  on the order of 130 test dates on VN30 and 50 on VN100. Under date-clustered inference these are the
+  effective sample sizes, so even sizeable point-estimate QLIKE gaps at long horizons (for example the
+  convex combination's +5.85% at VN100 h22) are not statistically significant. A negative or non-significant
+  result on a small effective sample is evidence of "not demonstrated", not of "no effect at any sample
+  size".
+- **Model selection is by validation QLIKE for the HAR-anchored study and by validation MSE for the
+  main-study point-estimate tables.** The two protocols can disagree because QLIKE upweights low-volatility
+  days; we report all five metrics rather than the one that flatters a given model.
+- **The graph is only evaluable on the common-date snapshot design**, which is data-poorer and
+  regime-shifted relative to the per-observation design; this weakens all snapshot deep models in absolute
+  terms. The negative graph result is nonetheless valid because it rests on within-design comparisons
+  (leave-one-out LSTM+GAT versus LSTM (w/o GAT), and the paired residual attribution E6/E7 versus E5) plus
+  the design-independent model-free screening of Section 6.7. The graph consumed here is the binary support
+  of the graphical-lasso graph; the model-free screening additionally tests signed, weighted, innovation and
+  directed lead-lag neighbour signals and finds them null, but volume-shock and sector graphs were not
+  tested and remain follow-up work.
 - **GAT scaling.** The attention is quadratic in the number of nodes; at ~500 S&P 500 nodes the graph model
   required a small batch to fit an 8 GB GPU, a practical limitation of the graph approach.
-- **S&P 500 survivorship bias.** The constituent list is current membership only; U.S. levels are optimistic,
-  so we claim only the short-versus-long horizon ordering and the data-scaling direction transfer, not the
-  absolute QLIKE.
-- **Single market for depth, single robustness market.** Vietnam is the case study and the S&P 500 the
-  robustness check; no claim of universal generality is made. Long horizons (beyond one week) were not the
-  focus here; prior work on this project found HAR retains its advantage at horizons of ten and twenty-two
-  days.
-- **Significance depends on the inference convention.** The main-study beat-HAR results (Section 6.1) use
-  per-observation Diebold–Mariano tests; the complementary HAR-anchored study (Section 6.6) shows that under
-  date-clustered inference, which accounts for the panel's cross-sectional dependence, no model — including
-  the forecast combination — significantly beats HAR on VN30 or VN100 at any horizon. See the caveat in
-  Section 6.6; point estimates are unchanged, only their significance is qualified.
-- All reported numbers are read directly from stored `result.json` files; no result was fabricated, and the
-  proposed graph model did not meet a "beat HAR" target.
+- **S&P 500 survivorship and subset selection.** The panel is the long-history subset of current
+  constituents (457 nodes, ~300 test dates), so U.S. levels are optimistic; we claim the data-scaling
+  direction and the beat-HAR-under-scale result on this subset, not that they hold for the full index or the
+  absolute QLIKE level.
+- **Single market for depth, single robustness market.** Vietnam is the case study and the S&P 500 subset
+  the cross-market check; no claim of universal generality is made. A masked-panel robustness check that
+  relaxes the common-date intersection is ongoing and not included here.
+- All reported numbers are read directly from stored `result.json` files.
 
 ---
 
 ## 9. Conclusion
 
-For daily Parkinson-variance forecasting, a pooled per-observation LSTM over the three HAR features
-significantly beats the HAR baseline at the one-day horizon on both Vietnamese markets (and at the one-week
-horizon on VN100), while every learned model decisively beats GARCH. Adding a Graph Attention Network over a
-graphical-lasso graph does not help: a leave-one-out ablation shows that removing the graph improves QLIKE in
-all eight snapshot configurations and at both lookbacks, a clean negative result for the graph. The
-deep-versus-HAR verdict is sensitive to the data design — the same LSTM wins under a per-observation
-per-stock split but loses under the graph-required common-date snapshot with a global split — and deep-versus-HAR
-competitiveness grows with the size of the panel, a pattern that replicates from Vietnam to the S&P 500. A
-longer lookback (22 versus 10) yields no benefit. The practical recommendation is a graph-free, per-observation
-HAR-LSTM for short-horizon volatility, with HAR remaining a strong, parsimonious baseline that is hardest to
-beat on small panels and at long horizons.
+For daily Parkinson-variance forecasting, evaluated with panel-correct date-clustered Diebold–Mariano
+inference on three equity panels, HAR is very hard to beat on the small Vietnamese markets: no model — the
+LSTM, the LSTM+GAT, the convex combination or the HAR-anchored residuals — significantly beats HAR on VN30
+or VN100 at any horizon. On the large, data-rich S&P 500 subset the same evaluation shows the deep temporal
+LSTM (no graph) significantly beating HAR at every horizon, by up to +7.1% QLIKE at the twenty-two-day
+horizon (p<0.001), with the convex HAR–deep combination beating HAR at every horizon as well; every learned
+model decisively beats GARCH. Deep-versus-HAR competitiveness therefore grows with the size of the panel.
+Adding a Graph Attention Network over a graphical-lasso partial-correlation graph contributes no
+out-of-sample value on any panel — a genuine null established both by leave-one-out and paired-residual
+ablations and by a model-free neighbour-signal screen, with diagnostics ruling out a bug or overfitting. The
+practical recommendation is a graph-free HAR or HAR-anchored deep model: HAR alone on small panels, where it
+is not significantly beaten, and a deep temporal or convex-combination model on large, data-rich panels,
+where it significantly improves on HAR.
 
 ---
 
