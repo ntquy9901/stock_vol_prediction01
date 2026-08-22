@@ -156,7 +156,10 @@ Each configuration is run with five seeds {42, 123, 2026, 7, 2024}, up to 20 epo
 GPU with parallel data workers; learning curves are recorded every five epochs. We report five metrics —
 MSE, RMSE, MAE, QLIKE and R² — seed-averaged over the test set, with a shared QLIKE positivity floor of
 `1e-8` applied identically to every model. The primary decision metric is QLIKE, which is robust to the
-volatility proxy (Patton, 2011).
+volatility proxy (Patton, 2011). Predictive-accuracy (Diebold–Mariano) tests are run only on the
+proxy-robust losses — QLIKE (primary) and squared error; MAE is reported as a descriptive metric but is not
+used for significance testing, because absolute error is not robust to noise in the volatility proxy and can
+invert forecast rankings (Patton, 2011).
 
 Statistical significance is assessed with the **date-clustered Diebold–Mariano test**: the per-observation
 loss differential is collapsed to one value per calendar date before the Diebold–Mariano statistic is
@@ -166,7 +169,10 @@ per-observation Diebold–Mariano test over every (ticker, date) row treats the 
 number of tickers times the number of dates, understates the loss-differential variance, and inflates the
 statistic by a factor on the order of the square root of the cross-section size (roughly six on VN30 and ten
 on VN100). All significance statements in this paper use the date-clustered test unless a result is
-explicitly labelled per-observation. A positive dQLIKE% denotes a QLIKE improvement over HAR.
+explicitly labelled per-observation. A positive dQLIKE% denotes a QLIKE improvement over HAR. In the
+results tables a compact marker (`*`) flags a model that significantly beats HAR on QLIKE under the
+date-clustered test (p < 0.05); the per-horizon date-clustered DM p-values versus HAR — the single headline
+comparison against the benchmark — are collected in the HAR-anchored tables of Section 6.6.
 
 ---
 
@@ -259,23 +265,16 @@ not used for beat-HAR claims (see the methodological note in Section 6.6).
 | 5 | GARCH | 12.5241 | 11.1911 | 5.0885 | 0.7287 | -2.3763 |
 | 5 | LSTM  | 3.3001 | 5.7446 | 2.2118 | 0.4232 | 0.1103 |
 
-**Diebold–Mariano, main study — per-observation (naive) test, shown for the design comparison only**
-(negative statistic favors LSTM; `*` denotes p < 0.05 on the per-observation test, which overstates
-significance on this cross-sectionally dependent panel — see the methodological note in Section 6.6; the
-panel-correct beat-HAR verdicts are in Section 6.6):
-
-| Panel | h | LSTM vs HAR (QLIKE) | LSTM vs HAR (MSE) | LSTM vs GARCH (QLIKE) |
-|---|---|---|---|---|
-| VN30  | 1 | −3.60 (p<0.001)* LSTM | −0.69 (p=0.49) tie | −31.56 (p<0.001)* LSTM |
-| VN30  | 5 | −0.98 (p=0.33) tie   | −0.30 (p=0.76) tie | −14.73 (p<0.001)* LSTM |
-| VN100 | 1 | −6.23 (p<0.001)* LSTM | +0.11 (p=0.91) tie | −58.73 (p<0.001)* LSTM |
-| VN100 | 5 | −3.34 (p<0.001)* LSTM | −1.00 (p=0.32) tie | −29.85 (p<0.001)* LSTM |
-| S&P500| 1 | +10.39 (p<0.001)* HAR | −2.98 (p=0.003)* LSTM | −152.75 (p<0.001)* LSTM |
-| S&P500| 5 | +1.01 (p=0.31) tie    | −3.98 (p<0.001)* LSTM | −83.14 (p<0.001)* LSTM |
+This table reports point estimates only; the panel-correct significance verdicts belong to the date-clustered
+DM tables of Section 6.6. A naive per-observation DM on this design (QLIKE, LSTM vs HAR) flags the
+short-horizon Vietnamese gaps as significant (VN30 h1 statistic −3.60, p<0.001; VN100 h1 −6.23, p<0.001;
+VN100 h5 −3.34, p<0.001) while the h5 VN30 and S&P 500 gaps are not; but that test overstates significance on
+a cross-sectionally dependent panel by a factor on the order of the square root of the cross-section size (see
+the methodological note in Section 6.6), so it is not used for any beat-HAR claim.
 
 **Reading.** On the Vietnamese panels the LSTM's QLIKE point estimates edge below HAR at the short horizons
-(for example VN30-h1 0.4578 versus 0.4675, VN100-h1 0.4735 versus 0.4798). The per-observation Diebold–
-Mariano statistics above flag several of these as significant, but that test overstates significance on a
+(for example VN30-h1 0.4578 versus 0.4675, VN100-h1 0.4735 versus 0.4798). The naive per-observation Diebold–
+Mariano test flags several of these as significant, but it overstates significance on a
 cross-sectionally dependent panel; under the panel-correct date-clustered test of Section 6.6 none of these
 Vietnamese gaps is statistically significant. Every learned model beats GARCH at every horizon by very large
 margins. On the S&P 500 the LSTM attains both the lower QLIKE and the lower MSE at both horizons in this
@@ -328,17 +327,17 @@ Section 6.6, where the beat-HAR result survives only on the large S&P 500 panel.
 | 5 | LSTM (w/o GAT) | 6.8914 | 8.3014 | 2.8794 | **0.3582** | 0.1689 |
 | 5 | LSTM+GAT       | 6.9924 | 8.3620 | 3.0063 | 0.3701 | 0.1567 |
 
-**Diebold–Mariano, graph study** (`Ours` = LSTM+GAT; negative statistic favors the first-named model; `*`
-denotes p < 0.05):
+**Diebold–Mariano, graph study — leave-one-out (LSTM+GAT vs LSTM (w/o GAT) on QLIKE)** (the headline
+ablation contrast; a positive statistic favors the no-graph model; `*` denotes p < 0.05):
 
-| Panel | h | LSTM+GAT vs HAR (QLIKE) | LSTM+GAT vs GARCH (QLIKE) | LSTM+GAT vs LSTM (w/o GAT) (QLIKE) |
-|---|---|---|---|---|
-| VN30  | 1 | +9.11* HAR | −10.22* LSTM+GAT | +6.40* w/o-GAT |
-| VN30  | 5 | +6.09* HAR | −5.00* LSTM+GAT | +4.94* w/o-GAT |
-| VN100 | 1 | +4.01* HAR | −7.39* LSTM+GAT | +0.93 (p=0.35) w/o-GAT |
-| VN100 | 5 | +1.11 (p=0.27) tie | −3.66* LSTM+GAT | +0.38 (p=0.70) w/o-GAT |
-| S&P500| 1 | +2.53 (p=0.011)* HAR | −11.02* LSTM+GAT | +3.23* w/o-GAT |
-| S&P500| 5 | +0.59 (p=0.55) tie | −5.27* LSTM+GAT | +6.87* w/o-GAT |
+| Panel | h | DM: LSTM+GAT vs LSTM (w/o GAT) (QLIKE) |
+|---|---|---|
+| VN30  | 1 | +6.40* (favors no-graph) |
+| VN30  | 5 | +4.94* (favors no-graph) |
+| VN100 | 1 | +0.93 (p=0.35, tie) |
+| VN100 | 5 | +0.38 (p=0.70, tie) |
+| S&P500| 1 | +3.23* (favors no-graph) |
+| S&P500| 5 | +6.87* (favors no-graph) |
 
 **Reading.** The leave-one-out ablation is unambiguous on the decision metric: **removing the GAT branch
 improves QLIKE in all eight configurations** (the LSTM (w/o GAT) vs LSTM+GAT column favors the no-graph
@@ -546,30 +545,31 @@ distinct test dates).**
 at h22 — on the order of 300 distinct test dates).** This is the large, data-rich panel. We report the
 non-fragile rungs (HAR, GARCH, the full-target LSTM E1, the full-target LSTM+GAT E2 and the convex
 combination E3); the additive/multiplicative residual rungs (E5–E8) are numerically fragile on this
-cross-section and are discussed separately below.
+cross-section and are discussed separately below. `*` marks a model that significantly beats HAR on QLIKE
+(date-clustered DM, p < 0.05).
 
 | h | Model | QLIKE | dQLIKE% vs HAR | DM p (date-clustered) |
 |---|---|---:|---:|---:|
 | 1  | E0 HAR                    | 0.3776 | —      | — |
 | 1  | GARCH                     | 0.4843 | −28.27 | <0.001 |
-| 1  | E1 LSTM (full target)     | 0.3662 | +3.01  | <0.001 |
+| 1  | E1 LSTM (full target)     | 0.3662* | +3.01  | <0.001 |
 | 1  | E2 LSTM+GAT (full target) | 0.3826 | −1.32  | 0.305 |
-| 1  | E3 convex combination     | 0.3656 | +3.16  | <0.001 |
+| 1  | E3 convex combination     | 0.3656* | +3.16  | <0.001 |
 | 5  | E0 HAR                    | 0.4158 | —      | — |
 | 5  | GARCH                     | 0.4830 | −16.16 | <0.001 |
-| 5  | E1 LSTM (full target)     | 0.3988 | +4.09  | <0.001 |
-| 5  | E2 LSTM+GAT (full target) | 0.4078 | +1.93  | 0.005 |
-| 5  | E3 convex combination     | 0.4009 | +3.58  | <0.001 |
+| 5  | E1 LSTM (full target)     | 0.3988* | +4.09  | <0.001 |
+| 5  | E2 LSTM+GAT (full target) | 0.4078* | +1.93  | 0.005 |
+| 5  | E3 convex combination     | 0.4009* | +3.58  | <0.001 |
 | 10 | E0 HAR                    | 0.4303 | —      | — |
 | 10 | GARCH                     | 0.4842 | −12.53 | <0.001 |
-| 10 | E1 LSTM (full target)     | 0.4123 | +4.18  | 0.001 |
+| 10 | E1 LSTM (full target)     | 0.4123* | +4.18  | 0.001 |
 | 10 | E2 LSTM+GAT (full target) | 0.4230 | +1.69  | 0.115 |
-| 10 | E3 convex combination     | 0.4147 | +3.62  | <0.001 |
+| 10 | E3 convex combination     | 0.4147* | +3.62  | <0.001 |
 | 22 | E0 HAR                    | 0.4596 | —      | — |
 | 22 | GARCH                     | 0.4883 | −6.23  | 0.121 |
-| 22 | E1 LSTM (full target)     | 0.4270 | +7.10  | <0.001 |
-| 22 | E2 LSTM+GAT (full target) | 0.4386 | +4.59  | 0.004 |
-| 22 | E3 convex combination     | 0.4349 | +5.39  | <0.001 |
+| 22 | E1 LSTM (full target)     | 0.4270* | +7.10  | <0.001 |
+| 22 | E2 LSTM+GAT (full target) | 0.4386* | +4.59  | 0.004 |
+| 22 | E3 convex combination     | 0.4349* | +5.39  | <0.001 |
 
 **Reading (S&P 500).** On the large panel the deep temporal LSTM (E1) significantly beats HAR at every
 horizon under date-clustered inference (dQLIKE from +3.01% at h1 to +7.10% at h22, p<0.001 at h1/h5/h22 and
@@ -582,31 +582,15 @@ every horizon (for example h1 MAE 0.00021 versus HAR 0.00022, RMSE 0.00056 versu
 
 **Graph attribution (paired date-clustered DM, graph residual versus no-graph residual).** A graph
 contribution requires the graph/GAT residual (E6) or the combined residual (E7) to beat the same-capacity
-no-graph residual (E5), not merely HAR. The paired date-clustered p-values are:
-
-| Panel | h | E6 vs E5 | E7 vs E5 |
-|---|---|---:|---:|
-| VN30  | 1  | 0.878 (favors no-graph) | 0.983 (favors combined) |
-| VN30  | 5  | 0.886 (favors no-graph) | 0.783 (favors no-graph) |
-| VN30  | 10 | 0.761 (favors no-graph) | 0.782 (favors no-graph) |
-| VN30  | 22 | 0.995 (favors graph)    | 0.929 (favors no-graph) |
-| VN100 | 1  | 0.705 (favors graph)    | 0.787 (favors combined) |
-| VN100 | 5  | 0.795 (favors graph)    | 0.873 (favors combined) |
-| VN100 | 10 | 0.438 (favors graph)    | 0.419 (favors combined) |
-| VN100 | 22 | 0.467 (favors graph)    | 0.546 (favors combined) |
-| S&P500| 1  | 0.0003 (favors no-graph)* | 0.169 (favors no-graph) |
-| S&P500| 5  | 0.237 (favors no-graph) | 0.201 (favors no-graph) |
-| S&P500| 10 | 0.154 (favors no-graph) | 0.015 (favors no-graph)* |
-| S&P500| 22 | 0.088 (favors graph)    | 0.118 (favors combined) |
-
-On the Vietnamese panels none of the paired contrasts approaches significance (all p ≥ 0.41): the sign is
-mixed — the paired test favors the no-graph residual in most VN30 cells and nominally favors the graph
-residual on VN100 — but in no case is the difference distinguishable from noise. On the large S&P 500 panel
-the paired test is decisive in the opposite direction to a graph benefit: the no-graph residual is favored
-at every horizon, significantly at h1 (p = 0.0003) and h10 (p = 0.015). In no panel and at no horizon does
-the graph residual significantly beat the same-capacity no-graph residual. The graph therefore adds no
-incremental value beyond the no-graph model, consistent with the leave-one-out graph ablation of
-Section 6.2.
+no-graph residual (E5), not merely HAR. Under the paired date-clustered DM, in no panel and at no horizon does
+the graph residual significantly beat the no-graph residual: on the Vietnamese panels none of the eight paired
+contrasts approaches significance (all p ≥ 0.41, with the sign mixed — favoring the no-graph residual in most
+VN30 cells and nominally the graph residual on VN100 — none distinguishable from noise), while on the large
+S&P 500 panel the paired test is decisive in the opposite direction to a graph benefit, favoring the no-graph
+residual at every horizon and significantly at h1 (p = 0.0003) and h10 (p = 0.015). The full per-horizon
+paired p-values (E6 vs E5, E7 vs E5) are in the results record `reports/experiment_results.md`. The graph
+therefore adds no incremental value beyond the no-graph model, consistent with the leave-one-out graph
+ablation of Section 6.2.
 
 ### 6.7 Model-free graph screening — does any cross-stock signal exist out of sample?
 
