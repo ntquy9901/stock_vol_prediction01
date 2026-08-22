@@ -1,4 +1,4 @@
-# Multi-Horizon Stock Volatility Forecasting: HAR, LSTM and Graph-Attention Models on Vietnamese Equities
+# Multi-Horizon Stock Volatility Forecasting
 
 *SOICT submission (markdown draft; transcribed to the SOICT/Overleaf LaTeX template in
 `docs/paper/soict_harlstmgat.tex`). Architecture diagram: `docs/paper/diagrams/soict_harlstmgat.svg`.*
@@ -46,12 +46,12 @@ questions:
 2. Does a cross-sectional Graph Attention Network branch — here a directed volume→Parkinson weighted graph —
    change the out-of-sample forecast relative to the same-feature no-graph LSTM?
 
-To answer these we use a **masked union-of-dates panel**: rather than intersecting to the dates on which every
+To answer these we use a **masked panel**: rather than intersecting to the dates on which every
 ticker is present, we keep the union of trading dates, with node and target masks for tickers not yet listed
 on a given date, so late-listed tickers are included without dropping whole dates and every model — including
 the graph model — is trained and evaluated on the same panel with the same five features.
 
-Our contributions are: (i) a multi-horizon benchmark on the masked union-of-dates VN30/VN100 panel that holds
+Our contributions are: (i) a multi-horizon benchmark on the masked VN30/VN100 panel that holds
 the feature set and the data design fixed across HAR, an LSTM and an LSTM+GAT, so any difference is
 attributable to a single component; (ii) per-horizon results on all five metrics with the date-clustered DM
 test — HAR has the lowest QLIKE at every horizon with no learned model significantly lower, the deep models
@@ -69,7 +69,7 @@ realized volatility with a cascade of daily, weekly and monthly components, moti
 market hypothesis. Recent machine-learning work reports that rolling-window and specification choices, rather
 than model class, often account for measured differences from HAR (Audrino and Chassot, 2025). Extensions
 such as HARQ (Bollerslev, Patton and Quaedvlieg, 2016) exploit measurement error, and GARCH-family models
-remain standard conditional-variance benchmarks. We use HAR as the linear baseline.
+remain standard conditional-variance benchmarks. We use HAR as the linear baseline and GARCH(1,1) as a classical benchmark.
 
 **Deep and graph models for volatility.** LSTMs (Hochreiter and Schmidhuber, 1997) are widely applied to
 financial time series, and graph neural networks have been proposed to model cross-asset spillovers, for
@@ -96,7 +96,7 @@ Harvey, Leybourne and Newbold (1997).
 The forecasting target is the Parkinson variance estimator (Parkinson, 1980) at day `t+h`, a non-negative
 point forecast. The primary target is short-term: horizons `h ∈ {1, 5}` (one trading day and one trading week
 ahead); horizons `h ∈ {10, 22}` (two weeks and roughly one trading month ahead) are reported as an extended
-study. All three models use the same five node features per ticker at day `t`: the daily Parkinson variance,
+study. All three feature-based models (HAR, LSTM, LSTM+GAT) use the same five node features per ticker at day `t`: the daily Parkinson variance,
 its 5-day rolling mean (weekly), its 22-day rolling mean (monthly), a market Parkinson factor (the
 cross-sectional average Parkinson variance) and a 20-day volume z-score.
 
@@ -113,6 +113,7 @@ cross-sectional average Parkinson variance) and a 20-day volume z-score.
   directed volume→Parkinson Top-5, edge-weighted, two-hop graph estimated on training rows only. The two
   branch outputs are concatenated and passed to an MLP head. The leave-one-out comparison against the
   same-feature **LSTM** isolates the graph's marginal contribution.
+- **GARCH(1,1)**: a conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), a classical benchmark that forecasts the variance series directly and does not use the node features.
 
 ![Figure 1: HAR-LSTM-GAT architecture](diagrams/soict_harlstmgat.png)
 
@@ -120,11 +121,11 @@ cross-sectional average Parkinson variance) and a 20-day volume z-score.
 volume→Parkinson Top-5 weighted two-hop attention) are concatenated and passed to an MLP head; the
 leave-one-out comparison removes the GAT branch to give the same-feature LSTM.*
 
-### 3.3 Masked union-of-dates panel
+### 3.3 Masked panel
 
 A GAT operates over a common-date cross-section, which naively forces a common-date intersection design (keep
 only dates on which every ticker is present) that discards most ticker-days and places the whole test set in
-one recent period. We instead use a **masked union-of-dates panel**: the GAT operates over a common-date
+one recent period. We instead use a **masked panel**: the GAT operates over a common-date
 cross-section with node and target masks for tickers not yet listed on a given date, so late-listed tickers
 are included without dropping whole dates, and a **mask-aware loss** ignores absent tickers. Every model —
 HAR, LSTM and LSTM+GAT — is trained and evaluated on the same panel with the same five features and the same
@@ -175,7 +176,7 @@ five metrics and the two targeted date-clustered DM contrasts (LSTM versus HAR, 
 
 Point-error metrics are reported in scaled units to avoid scientific notation: **MSE ×10⁻⁷, RMSE ×10⁻⁴, MAE
 ×10⁻⁴**. QLIKE and R² are unscaled. All values are the five-seed test-set means from the stored `result.json`
-files (`results/masked_rich_floor1e2/`). Row order is HAR → LSTM → LSTM+GAT.
+files (`results/masked_rich_floor1e2/`). Row order is HAR → GARCH → LSTM → LSTM+GAT.
 
 *Source: `docs/reports/2026-08-22_masked_rich_floor1e2_clean.md`.*
 
@@ -189,15 +190,19 @@ MSE/RMSE/MAE/QLIKE, higher for R².
 | h | Model | MSE (×10⁻⁷) | RMSE (×10⁻⁴) | MAE (×10⁻⁴) | QLIKE | R² |
 |---|---|---:|---:|---:|---:|---:|
 | 1 | HAR       | 2.367 | 4.865 | 2.898 | 0.5115 | 0.2236 |
+| 1 | GARCH     | 5.917 | 7.692 | 5.195 | 0.7964 | -0.9407 |
 | 1 | LSTM      | 2.370 | 4.869 | 2.821 | 0.5525 | 0.2224 |
 | 1 | LSTM+GAT  | **2.362** | **4.860** | **2.819** | **0.5107** | **0.2251** |
 | 5 | HAR       | **2.606** | **5.104** | 3.160 | **0.5633** | **0.1466** |
+| 5 | GARCH     | 5.843 | 7.644 | 5.197 | 0.7865 | -0.9136 |
 | 5 | LSTM      | 2.638 | 5.136 | **3.090** | 0.5841 | 0.1361 |
 | 5 | LSTM+GAT  | 2.635 | 5.133 | 3.103 | 0.5690 | 0.1371 |
 | 10 | HAR      | **2.754** | **5.248** | 3.306 | **0.6023** | **0.0978** |
+| 10 | GARCH     | 6.399 | 7.999 | 5.306 | 0.8018 | -1.0957 |
 | 10 | LSTM     | 2.798 | 5.289 | 3.282 | 0.6070 | 0.0837 |
 | 10 | LSTM+GAT | 2.802 | 5.294 | **3.276** | 0.6072 | 0.0822 |
 | 22 | HAR      | **2.891** | **5.377** | 3.486 | **0.6405** | **0.0544** |
+| 22 | GARCH     | 7.089 | 8.420 | 5.360 | 0.7928 | -1.3184 |
 | 22 | LSTM     | 2.979 | 5.458 | **3.468** | 0.6518 | 0.0257 |
 | 22 | LSTM+GAT | 3.003 | 5.480 | 3.563 | 0.6544 | 0.0178 |
 
@@ -206,15 +211,19 @@ MSE/RMSE/MAE/QLIKE, higher for R².
 | h | Model | MSE (×10⁻⁷) | RMSE (×10⁻⁴) | MAE (×10⁻⁴) | QLIKE | R² |
 |---|---|---:|---:|---:|---:|---:|
 | 1 | HAR       | 1.927 | 4.389 | 2.389 | **0.5159** | 0.2308 |
+| 1 | GARCH     | 2.770 | 5.263 | 3.453 | 0.7911 | -0.1060 |
 | 1 | LSTM      | 1.929 | 4.393 | 2.407 | 0.6073 | 0.2297 |
 | 1 | LSTM+GAT  | **1.912** | **4.372** | **2.366** | 0.5800 | **0.2368** |
 | 5 | HAR       | **2.139** | **4.625** | **2.583** | **0.5965** | **0.1497** |
+| 5 | GARCH     | 2.785 | 5.277 | 3.492 | 0.7864 | -0.1071 |
 | 5 | LSTM      | 2.164 | 4.652 | 2.632 | 0.6402 | 0.1397 |
 | 5 | LSTM+GAT  | 2.147 | 4.633 | 2.651 | 0.6059 | 0.1467 |
 | 10 | HAR      | **2.301** | **4.797** | 2.733 | **0.6428** | **0.1028** |
+| 10 | GARCH     | 2.835 | 5.324 | 3.503 | 0.7791 | -0.1052 |
 | 10 | LSTM     | 2.310 | 4.806 | **2.721** | 0.6584 | 0.0995 |
 | 10 | LSTM+GAT | 2.326 | 4.823 | 2.725 | 0.6564 | 0.0931 |
 | 22 | HAR      | **2.272** | **4.766** | **2.785** | **0.6422** | **0.0723** |
+| 22 | GARCH     | 2.709 | 5.205 | 3.413 | 0.7445 | -0.1064 |
 | 22 | LSTM     | 2.383 | 4.881 | 2.904 | 0.6550 | 0.0271 |
 | 22 | LSTM+GAT | 2.385 | 4.883 | 2.884 | 0.6548 | 0.0261 |
 
@@ -254,7 +263,7 @@ versus 0.5115).
 both horizons; the LSTM has the lowest MAE at VN100 h22 (3.468) and VN30 h10 (2.721), and the LSTM+GAT the
 lowest MAE at VN100 h10 (3.276). By date-clustered DM, the LSTM+GAT-versus-LSTM QLIKE difference is not
 significant at h10 or h22 on either panel (p ≥ 0.55); the LSTM has a higher squared error than HAR at VN100
-h10 (p=0.022) and h22 (p=0.002) and a higher MAE than HAR at VN30 h22 (p=0.001).
+h10 (p=0.022) and h22 (p=0.002) and a higher MAE than HAR at VN30 h22 (p=0.001). **GARCH benchmark.** GARCH(1,1) has a higher MSE, RMSE, MAE and QLIKE and a lower (negative) R² than HAR at every horizon on both panels; its QLIKE is higher than HAR's under the date-clustered DM test in all eight cells (p<0.001, except VN30 h22 where p=0.001).
 
 ---
 
@@ -292,7 +301,7 @@ cross-section size, so a difference that is not significant per date can appear 
 ## 9. Conclusion
 
 For daily Parkinson-variance forecasting on the Vietnamese market, evaluated with the same features, the same
-masked union-of-dates panel and the same date-clustered Diebold–Mariano inference, HAR has the lowest QLIKE at
+masked panel and the same date-clustered Diebold–Mariano inference, HAR has the lowest QLIKE at
 every horizon on both panels and no learned model has a significantly lower QLIKE than HAR. At the short
 horizons (h1, h5) the LSTM and LSTM+GAT have the lowest MAE on VN100, and the directed volume→Parkinson
 weighted graph gives the LSTM+GAT a significantly lower QLIKE than the same-feature no-graph LSTM in both
