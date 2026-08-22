@@ -76,7 +76,7 @@ def _dm(a, b, horizon, floor):
 
 
 def _garch_pred(D, horizon, cfg):
-    """Per-node GARCH(1,1): fit on train-valid variance series, forecast test anchors in date order."""
+    """Per-node GARCH(1,1): fit on TRAIN-ONLY variance series, forecast test anchors in date order."""
     N = D.N
     pred = np.zeros_like(D.y_te)
     floor_node = 1e-2 * D.t_mean + 1e-12
@@ -120,7 +120,7 @@ def main():
             mg = _metrics(g, cfg.qlike_floor)
             dmg = _dm(g, harx, h, cfg.qlike_floor)
             res["metrics"]["GARCH"] = mg
-            res["dm_date_clustered"]["GARCH_vs_HAR"] = dmg
+            res["dm_date_clustered"]["GARCH_vs_HARX"] = dmg   # compared vs HAR-X (the paper's 5-feature "HAR")
             rp.write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
             row = (ds, h, mg["mse"], mg["rmse"], mg["mae"], mg["qlike"], mg["r2"])
             summary.append(row)

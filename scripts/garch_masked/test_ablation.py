@@ -42,6 +42,16 @@ def test_metrics_vec_exact_and_consistent():
     assert abs(m2["r2"] - (1.0 - sse / sst)) < 1e-12
 
 
+def test_dm_pairs_guards_missing_configs():
+    """_dm_pairs must not KeyError when a config subset omits C or D (Blind-Hunter #4 regression guard)."""
+    def fake_dm(a, b):
+        return {"p_value": 0.5, "mean_diff": 0.0, "favors": "B"}
+    har = "HAR"
+    assert set(A._dm_pairs({"D_ratio_softplus": "D"}, har, fake_dm)) == {"D_vs_HAR"}       # C_vs_D needs C too
+    assert A._dm_pairs({"A_zscore_linear_floor": "A"}, har, fake_dm) == {}                  # neither -> no crash
+    assert set(A._dm_pairs({"C_ratio_exp": "C", "D_ratio_softplus": "D"}, har, fake_dm)) == {"D_vs_HAR", "C_vs_D"}
+
+
 def test_flat_aligns_dates_with_targets():
     # 2 anchor rows x 3 nodes; target mask picks specific cells; dates must line up with y flatten order
     tmask = np.array([[1, 0, 1], [0, 1, 1]], dtype=float)

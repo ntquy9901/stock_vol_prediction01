@@ -145,6 +145,17 @@ def _metrics_vec(y, p):
     return dict(mse=M.mse(y, p), rmse=M.rmse(y, p), mae=M.mae(y, p), qlike=M.qlike(y, p, QF), r2=M.r2(y, p))
 
 
+def _dm_pairs(ens, har_v, dm_fn):
+    """Build only the DM contrasts POSSIBLE given which configs are present in ``ens`` (running a config
+    subset via argv must not KeyError). D-vs-HAR needs D; C-vs-D needs both C and D."""
+    out = {}
+    if "D_ratio_softplus" in ens:
+        out["D_vs_HAR"] = dm_fn(ens["D_ratio_softplus"], har_v)
+    if "C_ratio_exp" in ens and "D_ratio_softplus" in ens:
+        out["C_vs_D"] = dm_fn(ens["C_ratio_exp"], ens["D_ratio_softplus"])
+    return out
+
+
 def main():
     ds = sys.argv[1]
     h = int(sys.argv[2]) if len(sys.argv) > 2 else 5
@@ -198,13 +209,14 @@ def main():
         r = ST.date_clustered_dm(la, lb, dates, h)
         return {"p_value": r["p_value"], "mean_diff": r["mean_diff"],
                 "favors": "A" if r["mean_diff"] < 0 else "B"}
-    out["dm"] = {"D_vs_HAR": dm(ens["D_ratio_softplus"], har_v),
-                 "C_vs_D": dm(ens["C_ratio_exp"], ens["D_ratio_softplus"])}
+    out["dm"] = _dm_pairs(ens, har_v, dm)   # only contrasts whose configs were selected (no KeyError on subsets)
     print("DM (date-clustered, QLIKE, ensembles):")
-    print(f"  D vs HAR : p={out['dm']['D_vs_HAR']['p_value']:.4f} favors={out['dm']['D_vs_HAR']['favors']} "
-          f"(A=D better, B=HAR better)")
-    print(f"  C vs D   : p={out['dm']['C_vs_D']['p_value']:.4f} favors={out['dm']['C_vs_D']['favors']} "
-          f"(A=C better, B=D better)")
+    if "D_vs_HAR" in out["dm"]:
+        r = out["dm"]["D_vs_HAR"]
+        print(f"  D vs HAR : p={r['p_value']:.4f} favors={r['favors']} (A=D better, B=HAR better)")
+    if "C_vs_D" in out["dm"]:
+        r = out["dm"]["C_vs_D"]
+        print(f"  C vs D   : p={r['p_value']:.4f} favors={r['favors']} (A=C better, B=D better)")
 
     outp = REPO / "results" / "ablation_vn_5seed"
     outp.mkdir(parents=True, exist_ok=True)
