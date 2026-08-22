@@ -120,6 +120,23 @@ def _flat(D):
     return m, D.y_te[m], dates, cols
 
 
+def screen_files(files, min_rows=250, max_zero_frac=0.5):
+    """Liquidity + history screen for a HOSE/HNX universe (data-quality audit 2026-08-23): keep a ticker
+    only if it has >= min_rows processed rows AND its fraction of zero Parkinson-variance days (H==L,
+    illiquid) is <= max_zero_frac. Illiquid tickers make QLIKE/point metrics uninformative. Returns the
+    kept file list; deterministic (sorted)."""
+    import pandas as pd
+    kept = []
+    for f in sorted(files):
+        try:
+            v = pd.read_csv(f)["parkinson_volatility"].to_numpy(float)
+        except Exception:
+            continue
+        if len(v) >= min_rows and float(np.mean(v == 0.0)) <= max_zero_frac:
+            kept.append(f)
+    return kept
+
+
 def main():
     ds, h = sys.argv[1], int(sys.argv[2])
     cfg = replace(Config(), batch_size=32)

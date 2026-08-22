@@ -20,6 +20,21 @@ def test_score_common_floor_uniform_and_clip_rate():
     assert np.isfinite(m["qlike"]) and np.isfinite(m["r2"])
 
 
+def test_screen_files_liquidity_and_history(tmp_path):
+    import pandas as pd
+    def _mk(name, n, zero_frac):
+        v = np.abs(np.random.default_rng(0).normal(2e-4, 5e-5, n))
+        v[: int(n * zero_frac)] = 0.0
+        f = tmp_path / f"{name}_processed.csv"
+        pd.DataFrame({"date": range(n), "parkinson_volatility": v}).to_csv(f, index=False)
+        return str(f)
+    keep = _mk("KEEP", 300, 0.10)      # long + liquid -> kept
+    short = _mk("SHORT", 100, 0.10)    # < 250 rows -> dropped
+    illiq = _mk("ILLIQ", 300, 0.60)    # > 50% zero-var -> dropped
+    out = F.screen_files([illiq, short, keep])   # unsorted input
+    assert out == [keep]
+
+
 def test_score_common_floor_no_clip_when_all_above():
     y = np.array([1.0, 2.0, 3.0])
     raw = np.array([1.5, 2.5, 3.5])
