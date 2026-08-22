@@ -76,7 +76,15 @@ def _dm(a, b, horizon, floor):
 
 
 def _garch_pred(D, horizon, cfg):
-    """Per-node GARCH(1,1): fit on TRAIN-ONLY variance series, forecast test anchors in date order."""
+    """Per-node GARCH(1,1): fit on TRAIN-ONLY variance series, forecast the TEST window.
+
+    The masked panel has a validation block between train and test (masked_rich splits train/val/test).
+    A frozen-parameter GARCH forecast path runs from the end of train, so the test targets sit ``n_va``
+    steps further out. We forecast ``n_va + n_te`` steps and keep the LAST ``n_te`` (the test window),
+    skipping the validation interval, so each test target gets a forecast aligned to its distance from
+    train-end (Codex review 2026-08-22, finding 2). GARCH mean-reverts, so this uses the mean-reverted
+    (test-window) part of the path rather than the transient early steps.
+    """
     N = D.N
     pred = np.zeros_like(D.y_te)
     floor_node = 1e-2 * D.t_mean + 1e-12
@@ -86,8 +94,10 @@ def _garch_pred(D, horizon, cfg):
         n_te = int(te_mask.sum())
         if n_te == 0:
             continue
+        n_va = int(D.tmask_va[:, j].sum())          # validation anchors between train and test for this node
         series = D.y_tr[tr_mask, j]
-        fc = B.garch_forecast(series, n_test=n_te, horizon=horizon, floor=cfg.qlike_floor)
+        fc_full = B.garch_forecast(series, n_test=n_va + n_te, horizon=horizon, floor=cfg.qlike_floor)
+        fc = fc_full[n_va:]                          # skip the validation interval -> the test window
         pred[te_mask, j] = np.maximum(fc, floor_node[j])
     return _pred_dict(pred, D.y_te, D.tmask_te, D.d_te, N)
 

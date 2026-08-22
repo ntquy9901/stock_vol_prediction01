@@ -31,9 +31,27 @@ def _fake_D(N=2, ntr=300, nte=5, seed=0):
     har5_te = np.abs(rng.normal(2e-4, 5e-5, (nte, N, 5)))
     return SimpleNamespace(
         N=N, y_tr=y_tr, y_te=y_te,
-        tmask_tr=np.ones((ntr, N), bool), tmask_te=np.ones((nte, N), bool),
+        tmask_tr=np.ones((ntr, N), bool), tmask_va=np.ones((30, N), bool),
+        tmask_te=np.ones((nte, N), bool),
         har5_tr=har5_tr, har5_te=har5_te,
         t_mean=y_tr.mean(0), d_te=[f"d{i}" for i in range(nte)])
+
+
+def test_garch_pred_skips_validation_interval(monkeypatch):
+    """_garch_pred forecasts n_va+n_te steps and keeps the LAST n_te (skips the validation block) so each
+    test target aligns to its distance from train-end (Codex finding 2)."""
+    ntr, nva, nte = 40, 3, 4
+    D = SimpleNamespace(
+        N=1, y_tr=np.ones((ntr, 1)), y_te=np.ones((nte, 1)),
+        tmask_tr=np.ones((ntr, 1), bool), tmask_va=np.ones((nva, 1), bool),
+        tmask_te=np.ones((nte, 1), bool), t_mean=np.array([1.0]),
+        d_te=[f"d{i}" for i in range(nte)])
+    # identifiable ramp: fc_full = [1, 2, ..., n_test]; expect the test window = fc_full[n_va:] = [4,5,6,7]
+    monkeypatch.setattr(G.B, "garch_forecast",
+                        lambda series, n_test, horizon, floor: np.arange(1, n_test + 1, dtype=float))
+    gd = G._garch_pred(D, horizon=1, cfg=SimpleNamespace(qlike_floor=1e-8))
+    preds = [gd[(0, f"d{i}")][1] for i in range(nte)]
+    assert preds == [4.0, 5.0, 6.0, 7.0]   # skipped the first n_va=3 (validation) steps
 
 
 def test_garch_pred_floor_finite_and_count():

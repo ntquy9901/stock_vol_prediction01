@@ -98,7 +98,7 @@ point forecast. The primary target is short-term: horizons `h ∈ {1, 5}` (one t
 ahead); horizons `h ∈ {10, 22}` (two weeks and roughly one trading month ahead) are reported as an extended
 study. All three feature-based models (HAR, LSTM, LSTM+GAT) use the same five node features per ticker at day `t`: the daily Parkinson variance,
 its 5-day rolling mean (weekly), its 22-day rolling mean (monthly), a market Parkinson factor (the
-cross-sectional average Parkinson variance) and a 20-day volume z-score.
+cross-sectional median of the square-root Parkinson variance) and a 20-day volume z-score.
 
 ### 3.2 Models
 
