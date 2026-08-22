@@ -267,7 +267,7 @@ h10 (p=0.022) and h22 (p=0.002) and a higher MAE than HAR at VN30 h22 (p=0.001).
 
 ---
 
-### 6.x Cross-market check (S&P 500, exploratory)
+### Cross-market check (S&P 500, exploratory)
 
 As a preliminary out-of-sample check on a larger market, the same masked panel and five features were applied to S&P 500 constituents (442 nodes, 1,624 test dates) with a single seed. HAR here is the same five-feature model as in Tables 1-2; GARCH was not run on this panel.
 
