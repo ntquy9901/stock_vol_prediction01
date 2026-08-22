@@ -153,7 +153,7 @@ significant there. The panel-correct verdicts are in Sec.~\ref{sec:haranchor}.
 \caption{Main study (per-observation, per-stock 80/10/10). QLIKE (lower is better; 5-seed mean) and
 \emph{naive per-observation} Diebold--Mariano LSTM-vs-HAR on QLIKE and MSE, shown for the design comparison
 only ($*$: $p<0.05$ on the per-observation test, which overstates significance on this cross-sectionally
-dependent panel --- panel-correct verdicts in Table~\ref{tab:haranchor-vn30}, \ref{tab:haranchor-vn100} and
+dependent panel --- panel-correct verdicts in Table~\ref{tab:haranchor-vnsummary} and
 Sec.~\ref{sec:haranchor}; negative favors LSTM).}
 \label{tab:main}
 \begin{tabular}{llccc c cc}
@@ -224,9 +224,10 @@ expanding-window \emph{cross-fitted} HAR predictions (out-of-sample residuals, n
 primary metric QLIKE. Significance uses the \textbf{date-clustered} Diebold--Mariano test (one loss
 differential per calendar date), the panel-correct treatment for a cross-section that shares each date.
 
-Tables~\ref{tab:haranchor-vn30} and~\ref{tab:haranchor-vn100} report QLIKE, the out-of-sample $R^2$ relative
-to HAR, and the date-clustered DM $p$-value versus HAR. \textbf{No model significantly beats HAR on VN30 or
-VN100 at any horizon}: the convex combination (E3), the closest competitor, has date-clustered $p\in$
+Table~\ref{tab:haranchor-vnsummary} summarises QLIKE for HAR and the three leading learned rungs on the
+Vietnamese panels; the full E0--E10 ladder, with out-of-sample $R^2$ relative to HAR and the date-clustered DM
+$p$-value versus HAR, is in Table~\ref{tab:haranchor-vndetail} (Appendix).
+\textbf{No model significantly beats HAR on VN30 or VN100 at any horizon}: the convex combination (E3), the closest competitor, has date-clustered $p\in$
 0.14--0.51 (VN30) and 0.08--0.29 (VN100), never below 0.05; the residual and gated variants have larger
 $p$-values still. Point-estimate QLIKE gaps favour the hybrids at longer horizons (e.g.\ E3 reaches
 $+5.85\%$ QLIKE at VN100 $h22$, 0.5816 vs HAR 0.6177), but they are within noise given the short common-date
@@ -248,115 +249,28 @@ models on the large panel are E1 and E3.
 
 \begin{table}[t]
 \centering
-\caption{HAR-anchored ladder on VN30 (common-date snapshot; 5-seed means). QLIKE (lower better),
-out-of-sample $R^2$ vs HAR, date-clustered DM $p$ vs HAR. n/a: the static gate has no per-observation
-differential from HAR.}
-\label{tab:haranchor-vn30}
-\small
-\begin{tabular}{llccc}
+\caption{HAR-anchored ladder on the Vietnamese panels (common-date snapshot; 5-seed means): QLIKE for
+HAR (E0), the full-target deep models (E1 LSTM, E2 LSTM+GAT) and the convex combination (E3, the closest
+competitor to HAR), with the date-clustered DM $p$ of E3 vs HAR (lower QLIKE is better). No rung beats HAR at
+any horizon; the full detail (E0--E10 with $R^2_{OOS}$ and per-rung DM $p$) is in
+Table~\ref{tab:haranchor-vndetail} (Appendix).}
+\label{tab:haranchor-vnsummary}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{0.95}
+\begin{tabular}{llcccc c}
 \toprule
-$h$ & Model & QLIKE & $R^2_{OOS}$ vs HAR & DM $p$ (date-clust.) \\
+Panel & $h$ & HAR & E1 LSTM & E2 LSTM+GAT & E3 convex & DM $p$ (E3 vs HAR) \\
 \midrule
-1  & E0 HAR                 & 0.3946 & 0.0000  & --- \\
-1  & E1 LSTM (full)         & 0.4383 & $-0.1313$ & $<0.001$ \\
-1  & E2 LSTM+GAT (full)     & 0.4915 & $-0.2438$ & $<0.001$ \\
-1  & E3 convex combination  & 0.3984 & $-0.0017$ & 0.237 \\
-1  & E5 add.\ resid.\ (LSTM)   & 0.3946 & $-0.0001$ & 0.875 \\
-1  & E6 add.\ resid.\ (graph)  & 0.3946 & $-0.0001$ & 0.882 \\
-1  & E7 add.\ resid.\ (both)   & 0.3946 & 0.0000  & 0.795 \\
-1  & E8 mult.\ HAR-anchored    & 0.3947 & $-0.0002$ & 0.894 \\
-1  & E9 static gate         & 0.3946 & 0.0000  & n/a \\
-1  & E10 dynamic gate       & 0.3946 & 0.0000  & 0.754 \\
+VN30  & 1  & \textbf{0.3946} & 0.4383 & 0.4915 & 0.3984 & 0.237 \\
+VN30  & 5  & \textbf{0.4531} & 0.4810 & 0.5185 & 0.4639 & 0.135 \\
+VN30  & 10 & \textbf{0.4849} & 0.5291 & 0.5394 & 0.4958 & 0.322 \\
+VN30  & 22 & \textbf{0.5025} & 0.5185 & 0.5603 & 0.5137 & 0.511 \\
 \midrule
-5  & E0 HAR                 & 0.4531 & 0.0000  & --- \\
-5  & E1 LSTM (full)         & 0.4810 & $-0.0803$ & 0.004 \\
-5  & E2 LSTM+GAT (full)     & 0.5185 & $-0.1603$ & $<0.001$ \\
-5  & E3 convex combination  & 0.4639 & $-0.0171$ & 0.135 \\
-5  & E5 add.\ resid.\ (LSTM)   & 0.4531 & $-0.0001$ & 0.994 \\
-5  & E6 add.\ resid.\ (graph)  & 0.4531 & $-0.0001$ & 0.926 \\
-5  & E7 add.\ resid.\ (both)   & 0.4532 & $-0.0002$ & 0.906 \\
-5  & E8 mult.\ HAR-anchored    & 0.4531 & $-0.0000$ & 0.954 \\
-5  & E9 static gate         & 0.4531 & 0.0000  & n/a \\
-5  & E10 dynamic gate       & 0.4531 & $-0.0000$ & 0.932 \\
-\midrule
-10 & E0 HAR                 & 0.4849 & 0.0000  & --- \\
-10 & E1 LSTM (full)         & 0.5291 & $-0.1147$ & 0.110 \\
-10 & E2 LSTM+GAT (full)     & 0.5394 & $-0.1221$ & 0.002 \\
-10 & E3 convex combination  & 0.4958 & $-0.0244$ & 0.322 \\
-10 & E5 add.\ resid.\ (LSTM)   & 0.4853 & $-0.0002$ & 0.782 \\
-10 & E6 add.\ resid.\ (graph)  & 0.4854 & $-0.0003$ & 0.560 \\
-10 & E7 add.\ resid.\ (both)   & 0.4854 & $-0.0003$ & 0.588 \\
-10 & E8 mult.\ HAR-anchored    & 0.4850 & $-0.0001$ & 0.851 \\
-10 & E9 static gate         & 0.4849 & 0.0000  & n/a \\
-10 & E10 dynamic gate       & 0.4850 & $-0.0001$ & 0.600 \\
-\midrule
-22 & E0 HAR                 & 0.5025 & 0.0000  & --- \\
-22 & E1 LSTM (full)         & 0.5185 & $-0.0609$ & 0.527 \\
-22 & E2 LSTM+GAT (full)     & 0.5603 & $-0.1141$ & 0.073 \\
-22 & E3 convex combination  & 0.5137 & $-0.0416$ & 0.511 \\
-22 & E5 add.\ resid.\ (LSTM)   & 0.5026 & $-0.0005$ & 0.913 \\
-22 & E6 add.\ resid.\ (graph)  & 0.5026 & $-0.0005$ & 0.895 \\
-22 & E7 add.\ resid.\ (both)   & 0.5027 & $-0.0006$ & 0.877 \\
-22 & E8 mult.\ HAR-anchored    & 0.5027 & $-0.0010$ & 0.816 \\
-22 & E9 static gate         & 0.5025 & 0.0000  & n/a \\
-22 & E10 dynamic gate       & 0.5025 & $-0.0001$ & 0.896 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[t]
-\centering
-\caption{HAR-anchored ladder on VN100 (common-date snapshot; 5-seed means). Columns as in
-Table~\ref{tab:haranchor-vn30}.}
-\label{tab:haranchor-vn100}
-\small
-\begin{tabular}{llccc}
-\toprule
-$h$ & Model & QLIKE & $R^2_{OOS}$ vs HAR & DM $p$ (date-clust.) \\
-\midrule
-1  & E0 HAR                 & 0.4844 & 0.0000  & --- \\
-1  & E1 LSTM (full)         & 0.5371 & $-0.1056$ & 0.023 \\
-1  & E2 LSTM+GAT (full)     & 0.5207 & $-0.0599$ & 0.035 \\
-1  & E3 convex combination  & 0.4821 & 0.0027  & 0.242 \\
-1  & E5 add.\ resid.\ (LSTM)   & 0.4842 & 0.0001  & 0.782 \\
-1  & E6 add.\ resid.\ (graph)  & 0.4842 & 0.0002  & 0.603 \\
-1  & E7 add.\ resid.\ (both)   & 0.4842 & 0.0002  & 0.611 \\
-1  & E8 mult.\ HAR-anchored    & 0.4879 & $-0.0058$ & 0.582 \\
-1  & E9 static gate         & 0.4844 & 0.0000  & n/a \\
-1  & E10 dynamic gate       & 0.4843 & 0.0000  & 0.601 \\
-\midrule
-5  & E0 HAR                 & 0.5441 & 0.0000  & --- \\
-5  & E1 LSTM (full)         & 0.5614 & $-0.0153$ & 0.244 \\
-5  & E2 LSTM+GAT (full)     & 0.5582 & 0.0027  & 0.415 \\
-5  & E3 convex combination  & 0.5339 & 0.0208  & 0.294 \\
-5  & E5 add.\ resid.\ (LSTM)   & 0.5439 & 0.0002  & 0.746 \\
-5  & E6 add.\ resid.\ (graph)  & 0.5438 & 0.0003  & 0.634 \\
-5  & E7 add.\ resid.\ (both)   & 0.5438 & 0.0003  & 0.631 \\
-5  & E8 mult.\ HAR-anchored    & 0.5480 & 0.0072  & 0.823 \\
-5  & E9 static gate         & 0.5441 & 0.0000  & n/a \\
-5  & E10 dynamic gate       & 0.5441 & 0.0001  & 0.624 \\
-\midrule
-10 & E0 HAR                 & 0.5985 & 0.0000  & --- \\
-10 & E1 LSTM (full)         & 0.5750 & 0.0433  & 0.283 \\
-10 & E2 LSTM+GAT (full)     & 0.5803 & 0.0428  & 0.455 \\
-10 & E3 convex combination  & 0.5701 & 0.0441  & 0.202 \\
-10 & E5 add.\ resid.\ (LSTM)   & 0.5979 & 0.0003  & 0.673 \\
-10 & E6 add.\ resid.\ (graph)  & 0.5883 & 0.0119  & 0.458 \\
-10 & E7 add.\ resid.\ (both)   & 0.5929 & 0.0062  & 0.459 \\
-10 & E8 mult.\ HAR-anchored    & 0.6008 & 0.0160  & 0.921 \\
-10 & E9 static gate         & 0.5884 & 0.0118  & 0.488 \\
-10 & E10 dynamic gate       & 0.5966 & 0.0020  & 0.440 \\
-\midrule
-22 & E0 HAR                 & 0.6177 & 0.0000  & --- \\
-22 & E1 LSTM (full)         & 0.5888 & 0.0556  & 0.164 \\
-22 & E2 LSTM+GAT (full)     & 0.6031 & 0.0523  & 0.540 \\
-22 & E3 convex combination  & 0.5816 & 0.0512  & 0.078 \\
-22 & E5 add.\ resid.\ (LSTM)   & 0.6171 & 0.0005  & 0.765 \\
-22 & E6 add.\ resid.\ (graph)  & 0.5925 & 0.0374  & 0.481 \\
-22 & E7 add.\ resid.\ (both)   & 0.5922 & 0.0404  & 0.555 \\
-22 & E8 mult.\ HAR-anchored    & 0.6187 & 0.0065  & 0.973 \\
-22 & E9 static gate         & 0.5912 & 0.0430  & 0.569 \\
-22 & E10 dynamic gate       & 0.6043 & 0.0180  & 0.480 \\
+VN100 & 1  & \textbf{0.4844} & 0.5371 & 0.5207 & 0.4821 & 0.242 \\
+VN100 & 5  & \textbf{0.5441} & 0.5614 & 0.5582 & 0.5339 & 0.294 \\
+VN100 & 10 & 0.5985 & 0.5750 & 0.5803 & \textbf{0.5701} & 0.202 \\
+VN100 & 22 & 0.6177 & 0.5888 & 0.6031 & \textbf{0.5816} & 0.078 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -367,7 +281,9 @@ $h$ & Model & QLIKE & $R^2_{OOS}$ vs HAR & DM $p$ (date-clust.) \\
 Non-fragile rungs shown; the additive/graph residual rungs E5--E8 are numerically fragile on this
 cross-section and are discussed in the text.}
 \label{tab:haranchor-sp500}
-\small
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{0.92}
 \begin{tabular}{llccc}
 \toprule
 $h$ & Model & QLIKE & dQLIKE\% vs HAR & DM $p$ (date-clust.) \\
@@ -422,28 +338,13 @@ set barely persists train$\to$test (Top-5 Jaccard 0.09--0.17), the GAT branch is
 correction at VN100 $h22$) yet does not beat HAR, its attention collapses to a near-uniform neighbour average
 (entropy $\approx0.996$), and the graph residual shows no train-vs-test overfitting gap.
 
-\textbf{Numerical fragility of the residual rungs.} On the large S\&P~500 subset the additive and graph
-residual rungs (E5--E8) can drive predictions toward the QLIKE floor and inflate QLIKE far above HAR
-(e.g.\ E5 QLIKE 2.9978 at $h22$, E7 QLIKE 5.7090 at $h10$, vs HAR 0.4596/0.4303). These fragile rungs are
-reported for completeness and are not the basis of the S\&P~500 beat-HAR claim, which rests on the
-well-behaved full-target LSTM (E1) and convex combination (E3) of Table~\ref{tab:haranchor-sp500}.
-
-\textbf{Methodological note (panel-correct inference).} For a cross-sectionally dependent volatility panel,
-forecast-comparison significance must use date-clustered (or panel-robust) inference --- one loss
-differential per calendar date --- not a naive per-observation Diebold--Mariano over every (ticker, date)
-row. All tickers share each date, so the per-observation test treats the effective sample as the number of
-tickers times the number of dates, understates the loss-differential variance, and inflates the statistic by
-a factor of order $\sqrt{N}$ (roughly six on VN30, ten on VN100); a QLIKE gap that is a coin-flip once
-collapsed to one value per date can then read as highly significant. This panel-correct convention is used
-throughout the present study.
-
 \textbf{Relation to the per-observation tables.} The per-observation Diebold--Mariano statistics in the main
-study (Table~\ref{tab:main}) flag short-horizon LSTM-vs-HAR gaps on the Vietnamese panels as significant;
-that test overstates significance on this cross-sectionally dependent panel, and under the date-clustered
-inference used throughout, the Vietnamese gaps of that magnitude are not significant. The point estimates are
-unchanged; only their per-observation significance is superseded by the date-clustered verdict, symmetrically
-for the cells where HAR nominally beats the deep model. The one beat-HAR result that survives date-clustered
-inference is on the large S\&P~500 subset (Table~\ref{tab:haranchor-sp500}), not on the Vietnamese panels.
+study (Table~\ref{tab:main}) flag short-horizon LSTM-vs-HAR gaps on the Vietnamese panels as significant, but
+that test overstates significance on this cross-sectionally dependent panel (Sec.~\ref{sec:haranchor});
+under the date-clustered inference used throughout, those Vietnamese gaps are not significant. The point
+estimates are unchanged, symmetrically for the cells where HAR nominally beats the deep model; the one
+beat-HAR result that survives date-clustered inference is on the large S\&P~500 subset
+(Table~\ref{tab:haranchor-sp500}), not on the Vietnamese panels.
 
 \section{Discussion}\label{sec:disc}
 \textbf{HAR is hard to beat on small panels; data scale unlocks a deep advantage.} Under panel-correct
@@ -499,6 +400,73 @@ genuine null established by leave-one-out and paired-residual ablations and by a
 screen, with diagnostics ruling out a bug or overfitting. We recommend a graph-free HAR or HAR-anchored deep
 model: HAR alone on small panels, where it is not significantly beaten, and a deep temporal or
 convex-combination model on large, data-rich panels, where it significantly improves on HAR.
+
+\appendix
+\section{Full HAR-anchored ladder tables (VN30, VN100)}\label{app:ladder}
+Table~\ref{tab:haranchor-vndetail} gives the complete eleven-rung ladder
+(E0--E10) on the Vietnamese panels, summarised in Table~\ref{tab:haranchor-vnsummary} of the main text.
+
+\begin{table}[t]
+\centering
+\caption{Full HAR-anchored ladder (E0--E10) on VN30 and VN100 (common-date snapshot; 5-seed means):
+QLIKE (lower better), out-of-sample $R^2$ vs HAR, and date-clustered DM $p$ vs HAR. n/a: the static gate has
+no per-observation differential from HAR. Summarised in Table~\ref{tab:haranchor-vnsummary}.}
+\label{tab:haranchor-vndetail}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{0.9}
+\begin{tabular}{ll ccc ccc}
+\toprule
+& & \multicolumn{3}{c}{VN30} & \multicolumn{3}{c}{VN100} \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-8}
+$h$ & Model & QLIKE & $R^2_{OOS}$ & DM $p$ & QLIKE & $R^2_{OOS}$ & DM $p$ \\
+\midrule
+1  & E0 HAR                 & 0.3946 & 0.0000  & --- & 0.4844 & 0.0000  & --- \\
+1  & E1 LSTM (full)         & 0.4383 & $-0.1313$ & $<0.001$ & 0.5371 & $-0.1056$ & 0.023 \\
+1  & E2 LSTM+GAT (full)     & 0.4915 & $-0.2438$ & $<0.001$ & 0.5207 & $-0.0599$ & 0.035 \\
+1  & E3 convex combination  & 0.3984 & $-0.0017$ & 0.237 & 0.4821 & 0.0027  & 0.242 \\
+1  & E5 add.\ resid.\ (LSTM)   & 0.3946 & $-0.0001$ & 0.875 & 0.4842 & 0.0001  & 0.782 \\
+1  & E6 add.\ resid.\ (graph)  & 0.3946 & $-0.0001$ & 0.882 & 0.4842 & 0.0002  & 0.603 \\
+1  & E7 add.\ resid.\ (both)   & 0.3946 & 0.0000  & 0.795 & 0.4842 & 0.0002  & 0.611 \\
+1  & E8 mult.\ HAR-anchored    & 0.3947 & $-0.0002$ & 0.894 & 0.4879 & $-0.0058$ & 0.582 \\
+1  & E9 static gate         & 0.3946 & 0.0000  & n/a & 0.4844 & 0.0000  & n/a \\
+1  & E10 dynamic gate       & 0.3946 & 0.0000  & 0.754 & 0.4843 & 0.0000  & 0.601 \\
+\midrule
+5  & E0 HAR                 & 0.4531 & 0.0000  & --- & 0.5441 & 0.0000  & --- \\
+5  & E1 LSTM (full)         & 0.4810 & $-0.0803$ & 0.004 & 0.5614 & $-0.0153$ & 0.244 \\
+5  & E2 LSTM+GAT (full)     & 0.5185 & $-0.1603$ & $<0.001$ & 0.5582 & 0.0027  & 0.415 \\
+5  & E3 convex combination  & 0.4639 & $-0.0171$ & 0.135 & 0.5339 & 0.0208  & 0.294 \\
+5  & E5 add.\ resid.\ (LSTM)   & 0.4531 & $-0.0001$ & 0.994 & 0.5439 & 0.0002  & 0.746 \\
+5  & E6 add.\ resid.\ (graph)  & 0.4531 & $-0.0001$ & 0.926 & 0.5438 & 0.0003  & 0.634 \\
+5  & E7 add.\ resid.\ (both)   & 0.4532 & $-0.0002$ & 0.906 & 0.5438 & 0.0003  & 0.631 \\
+5  & E8 mult.\ HAR-anchored    & 0.4531 & $-0.0000$ & 0.954 & 0.5480 & 0.0072  & 0.823 \\
+5  & E9 static gate         & 0.4531 & 0.0000  & n/a & 0.5441 & 0.0000  & n/a \\
+5  & E10 dynamic gate       & 0.4531 & $-0.0000$ & 0.932 & 0.5441 & 0.0001  & 0.624 \\
+\midrule
+10 & E0 HAR                 & 0.4849 & 0.0000  & --- & 0.5985 & 0.0000  & --- \\
+10 & E1 LSTM (full)         & 0.5291 & $-0.1147$ & 0.110 & 0.5750 & 0.0433  & 0.283 \\
+10 & E2 LSTM+GAT (full)     & 0.5394 & $-0.1221$ & 0.002 & 0.5803 & 0.0428  & 0.455 \\
+10 & E3 convex combination  & 0.4958 & $-0.0244$ & 0.322 & 0.5701 & 0.0441  & 0.202 \\
+10 & E5 add.\ resid.\ (LSTM)   & 0.4853 & $-0.0002$ & 0.782 & 0.5979 & 0.0003  & 0.673 \\
+10 & E6 add.\ resid.\ (graph)  & 0.4854 & $-0.0003$ & 0.560 & 0.5883 & 0.0119  & 0.458 \\
+10 & E7 add.\ resid.\ (both)   & 0.4854 & $-0.0003$ & 0.588 & 0.5929 & 0.0062  & 0.459 \\
+10 & E8 mult.\ HAR-anchored    & 0.4850 & $-0.0001$ & 0.851 & 0.6008 & 0.0160  & 0.921 \\
+10 & E9 static gate         & 0.4849 & 0.0000  & n/a & 0.5884 & 0.0118  & 0.488 \\
+10 & E10 dynamic gate       & 0.4850 & $-0.0001$ & 0.600 & 0.5966 & 0.0020  & 0.440 \\
+\midrule
+22 & E0 HAR                 & 0.5025 & 0.0000  & --- & 0.6177 & 0.0000  & --- \\
+22 & E1 LSTM (full)         & 0.5185 & $-0.0609$ & 0.527 & 0.5888 & 0.0556  & 0.164 \\
+22 & E2 LSTM+GAT (full)     & 0.5603 & $-0.1141$ & 0.073 & 0.6031 & 0.0523  & 0.540 \\
+22 & E3 convex combination  & 0.5137 & $-0.0416$ & 0.511 & 0.5816 & 0.0512  & 0.078 \\
+22 & E5 add.\ resid.\ (LSTM)   & 0.5026 & $-0.0005$ & 0.913 & 0.6171 & 0.0005  & 0.765 \\
+22 & E6 add.\ resid.\ (graph)  & 0.5026 & $-0.0005$ & 0.895 & 0.5925 & 0.0374  & 0.481 \\
+22 & E7 add.\ resid.\ (both)   & 0.5027 & $-0.0006$ & 0.877 & 0.5922 & 0.0404  & 0.555 \\
+22 & E8 mult.\ HAR-anchored    & 0.5027 & $-0.0010$ & 0.816 & 0.6187 & 0.0065  & 0.973 \\
+22 & E9 static gate         & 0.5025 & 0.0000  & n/a & 0.5912 & 0.0430  & 0.569 \\
+22 & E10 dynamic gate       & 0.5025 & $-0.0001$ & 0.896 & 0.6043 & 0.0180  & 0.480 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[t]
 \centering
