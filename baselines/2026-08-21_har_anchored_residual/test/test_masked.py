@@ -44,8 +44,9 @@ def test_build_masked_union_and_masks(tmp_path):
 
 
 @pytest.mark.smoke
-def test_run_masked_all_metrics_and_dm(tmp_path):
+def test_run_masked_all_metrics_and_dm(tmp_path, monkeypatch):
     files = _make_files(tmp_path)
+    monkeypatch.setattr(RM, "REPO", tmp_path)   # write results under tmp, never clobber real results/
     res = RM.run("vn30", files, horizon=5, cfg=SMOKE, lookback=10)
     for m in ("HAR", "LSTM", "LSTM_GAT"):
         for metric in ("mse", "rmse", "mae", "qlike", "r2"):

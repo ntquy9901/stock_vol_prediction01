@@ -103,7 +103,7 @@ def build_masked(files, lookback, horizon, train_frac=0.8, val_frac=0.1,
 
     # train-only pairwise-complete correlation Top-K signed edge (rows up to last train target date)
     last_tr_row = int(tr_anchor[-1]) + horizon if len(tr_anchor) else int(anchors[i_tr - 1])
-    corr = wide.iloc[:last_tr_row + 1].corr(min_periods=edge_min_overlap).to_numpy()  # [N,N] nan if sparse
+    corr = wide.iloc[:last_tr_row + 1].corr(min_periods=edge_min_overlap).to_numpy().copy()  # writable (pandas 3.x CoW)
     np.fill_diagonal(corr, 0.0)
     corr = np.nan_to_num(corr)
     adj = np.zeros((N, N))
@@ -115,7 +115,10 @@ def build_masked(files, lookback, horizon, train_frac=0.8, val_frac=0.1,
     def pack(sl):
         aa = anchors[sl]
         X = np.zeros((len(aa), N, lookback, 3), np.float32)
-        nm = win_ok[sl].astype(np.float32); tm = tgt_ok[sl].astype(np.float32)
+        # node_mask = valid INPUT window; target_mask = valid window AND valid target (a cell is scored /
+        # trained only when BOTH hold — a valid target with a zero-filled invalid window must not enter
+        # the loss, HAR fit, or metrics).
+        nm = win_ok[sl].astype(np.float32); tm = (win_ok[sl] & tgt_ok[sl]).astype(np.float32)
         y = np.stack([pk[t + horizon] for t in aa])
         har = np.stack([feats[t] for t in aa])
         for a_i, t in enumerate(aa):

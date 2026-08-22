@@ -18,6 +18,8 @@ import numpy as np
 import torch
 from torch import nn
 
+torch.backends.cudnn.benchmark = True   # fixed-length LSTM -> faster cuDNN kernels (safe, no numeric change)
+
 _SUB = Path(__file__).resolve().parents[3] / "submission" / "soict_lstm_gat"
 sys.path.insert(0, str(_SUB)); sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -72,7 +74,10 @@ def train_masked(D, cfg, seed, use_graph):
     Xtr = torch.from_numpy(D.X_tr).to(dev); nmtr = torch.from_numpy(D.nmask_tr).to(dev)
     tmtr = torch.from_numpy(D.tmask_tr).to(dev)
     ytr_n = ((torch.from_numpy(D.y_tr.astype(np.float32)).to(dev) - tmean) / tstd)
-    bs = cfg.batch_size
+    # large panels (sp500): the driver passes a conservative --batch; bump it so there are fewer,
+    # larger steps (the kernel-launch/Python overhead — not compute — is the bottleneck per the repo
+    # perf audit). Small panels (VN) keep the given batch.
+    bs = max(cfg.batch_size, 32) if D.N > 200 else cfg.batch_size
 
     def adj_batch(nm):                              # [b,N,N] = base * valid-neighbour mask
         return base.unsqueeze(0) * nm.unsqueeze(1)
