@@ -103,6 +103,18 @@ def test_train_masked_rich_smoke():
     assert np.isfinite(p_gat).all() and (p_gat > 0).all()
 
 
+@pytest.mark.skipif(len(_VN30) < 5, reason="VN30 processed data not available")
+def test_train_masked_rich_ratio_exp_positive():
+    """output_param='ratio_exp' (node-scaled ratio target + exp output, no economic floor) yields strictly
+    positive, finite predictions by construction; the default 'zscore_floor' path stays a distinct mapping."""
+    D = MR.build_masked_rich(_VN30, _PRICE, lookback=10, horizon=5)
+    p_default = train_masked_rich(D, SMOKE, seed=42, use_graph=False, adj=D.adj_vol2pk)
+    p_ratio = train_masked_rich(D, SMOKE, seed=42, use_graph=False, adj=D.adj_vol2pk, output_param="ratio_exp")
+    assert p_ratio.shape == D.y_te.shape
+    assert np.isfinite(p_ratio).all() and (p_ratio > 0).all()   # positive by construction, no floor needed
+    assert not np.allclose(p_default, p_ratio)                   # genuinely different parameterizations
+
+
 def test_masked_rich_net_forward():
     net = MaskedRichNet(hidden=8, heads=2, use_graph=True).eval()
     assert net.gat_layers == 2 and hasattr(net, "gat2")   # 2-hop default (matches deliverable)

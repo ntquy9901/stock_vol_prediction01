@@ -123,10 +123,17 @@ def _batches(nrow, bs, shuffle, seed=0):
         yield idx[i:i + bs]
 
 
-def train_masked_rich(D, cfg, seed, use_graph, adj):
+def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor"):
+    """output_param: 'zscore_floor' (delivered default: standardized target, linear denorm, 1e-2*mean
+    floor) or 'ratio_exp' (node-scaled ratio target y/mean + exp output, no economic floor; the
+    review-validated parameterization that removes QLIKE seed-instability -- see
+    docs/reports/2026-08-22_output_parameterization_robustness.md). Only the deep model changes."""
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(seed); np.random.seed(seed)
     net = MaskedRichNet(cfg.hidden, cfg.heads, cfg.dropout, use_graph).to(dev)
+    if output_param == "ratio_exp":                 # bias-match: exp(0)=1 starts at the mean ratio
+        with torch.no_grad():
+            net.head[-1].bias.fill_(0.0)
     base = torch.from_numpy(adj).to(dev)
     tmean = torch.from_numpy(D.t_mean.astype(np.float32)).to(dev)
     tstd = torch.from_numpy(D.t_std.astype(np.float32)).to(dev)
@@ -134,11 +141,18 @@ def train_masked_rich(D, cfg, seed, use_graph, adj):
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.5, patience=2)
     Xtr = torch.from_numpy(D.X_tr).to(dev); nmtr = torch.from_numpy(D.nmask_tr).to(dev)
     tmtr = torch.from_numpy(D.tmask_tr).to(dev)
-    ytr_n = ((torch.from_numpy(D.y_tr.astype(np.float32)).to(dev) - tmean) / tstd)
+    if output_param == "ratio_exp":
+        ytr_n = torch.from_numpy(D.y_tr.astype(np.float32)).to(dev) / (tmean + 1e-12)
+    else:
+        ytr_n = ((torch.from_numpy(D.y_tr.astype(np.float32)).to(dev) - tmean) / tstd)
     bs = cfg.batch_size
+    tiny = float(np.finfo(np.float32).tiny)
 
     def adj_batch(nm):                              # [b,N,N] = base * valid-neighbour (source) mask
         return base.unsqueeze(0) * nm.unsqueeze(1)
+
+    def _apply(pn):                                 # network output -> prediction in the training space
+        return torch.exp(pn.clamp(max=15.0)) if output_param == "ratio_exp" else pn
 
     def infer(X_np, nm_np):
         net.eval(); outs = []
@@ -148,15 +162,17 @@ def train_masked_rich(D, cfg, seed, use_graph, adj):
                 nmb = torch.from_numpy(nm_np[i:i + bs]).to(dev)
                 outs.append(net(xb, adj_batch(nmb)).cpu().numpy())
         pn = np.concatenate(outs)
-        return np.maximum(pn * D.t_std + D.t_mean, 1e-3 * D.t_mean + 1e-12)
+        if output_param == "ratio_exp":             # exp(pn)*mean: positive by construction, machine-eps only
+            return np.maximum(np.exp(np.minimum(pn, 15.0)) * D.t_mean, tiny)
+        return np.maximum(pn * D.t_std + D.t_mean, 1e-2 * D.t_mean + 1e-12)
 
     best = np.inf; best_state = None; wait = 0
     for ep in range(cfg.epochs):
         net.train()
         for idx in _batches(len(Xtr), bs, True, seed + ep):
             xb = Xtr[idx]; nmb = nmtr[idx]; tmb = tmtr[idx]; yb = ytr_n[idx]
-            opt.zero_grad(); pn = net(xb, adj_batch(nmb))
-            loss = (((pn - yb) ** 2) * tmb).sum() / tmb.sum().clamp(min=1)
+            opt.zero_grad(); pred = _apply(net(xb, adj_batch(nmb)))
+            loss = (((pred - yb) ** 2) * tmb).sum() / tmb.sum().clamp(min=1)
             loss.backward(); nn.utils.clip_grad_norm_(net.parameters(), cfg.grad_clip); opt.step()
         pva = infer(D.X_va, D.nmask_va)
         m = D.tmask_va.astype(bool)
@@ -214,26 +230,26 @@ def _dm_all(a, b, horizon, floor):                 # date-clustered DM on QLIKE 
     return out
 
 
-def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True):
+def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, output_param="zscore_floor"):
     t0 = time.time()
     D = MR.build_masked_rich(files, price_dir, lookback, horizon)
     N = D.N
     mtr = D.tmask_tr.astype(bool)
     coef = B.har_fit(D.har_tr[mtr], D.y_tr[mtr])
     hp = B.har_predict(D.har_te.reshape(-1, 3), coef, floor=cfg.qlike_floor).reshape(D.y_te.shape)
-    hp = np.maximum(hp, 1e-3 * D.t_mean + 1e-12)   # M1: same per-node positivity floor as the deep models
+    hp = np.maximum(hp, 1e-2 * D.t_mean + 1e-12)   # M1: same per-node positivity floor as the deep models (gentler 1e-2)
     HAR = _pred_dict(hp, D.y_te, D.tmask_te, D.d_te, N)
     # HAR-X: 5-feature LINEAR OLS — the fair baseline isolating the extra-feature contribution (so a deep
     # or graph win over HAR is not just the 2 extra node features market_pk/volume_zscore).
     _xtr = np.column_stack([np.ones(int(mtr.sum())), D.har5_tr[mtr]])
     _cx = np.linalg.lstsq(_xtr, D.y_tr[mtr], rcond=None)[0]
     _hx = (np.column_stack([np.ones(len(D.har5_te.reshape(-1, 5))), D.har5_te.reshape(-1, 5)]) @ _cx).reshape(D.y_te.shape)
-    HARX = _pred_dict(np.maximum(_hx, 1e-3 * D.t_mean + 1e-12), D.y_te, D.tmask_te, D.d_te, N)
-    lstm = _ens([_pred_dict(train_masked_rich(D, cfg, s, False, D.adj_vol2pk), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
-    gat_v = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_vol2pk), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
+    HARX = _pred_dict(np.maximum(_hx, 1e-2 * D.t_mean + 1e-12), D.y_te, D.tmask_te, D.d_te, N)
+    lstm = _ens([_pred_dict(train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
+    gat_v = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
     preds = {"HAR": HAR, "HAR-X": HARX, "LSTM": lstm, "LSTM_wGAT_vol2pk": gat_v}
     if with_corr:
-        gat_c = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_corr), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
+        gat_c = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_corr, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
         preds["LSTM_wGAT_corr"] = gat_c
     metrics = {k: _metrics(v, cfg.qlike_floor) for k, v in preds.items()}
     dm = {"HARX_vs_HAR": _dm_all(HARX, HAR, horizon, cfg.qlike_floor),
@@ -247,10 +263,12 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True):
         dm["wGAT_corr_vs_LSTM"] = _dm_all(preds["LSTM_wGAT_corr"], lstm, horizon, cfg.qlike_floor)
     n_dates = len(set(k[1] for k in HAR))
     res = {"dataset": dataset, "horizon": horizon, "design": "masked-union-panel-rich-5feat-weighted-gat",
+           "output_param": output_param,
            "num_nodes": N, "n_test_obs": metrics["HAR"]["n"], "n_test_dates": n_dates,
            "seeds": list(cfg.seeds), "lookback": lookback, "metrics": metrics, "dm_date_clustered": dm,
            "seconds": round(time.time() - t0, 1)}
-    outp = REPO / "results" / "masked_rich" / f"{dataset}_h{horizon}"
+    _subdir = "masked_rich_floor1e2" if output_param == "zscore_floor" else f"masked_rich_{output_param}"
+    outp = REPO / "results" / _subdir / f"{dataset}_h{horizon}"
     outp.mkdir(parents=True, exist_ok=True)
     (outp / "result.json").write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
     print(f"[rich] {dataset} h{horizon} N={N} dates={n_dates} obs={metrics['HAR']['n']} | "
@@ -272,6 +290,8 @@ def main():
     ap.add_argument("--no-corr", action="store_true")
     ap.add_argument("--single", action="store_true", help="1 seed (42) quick gate, full epochs")
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--output-param", choices=["zscore_floor", "ratio_exp"], default="zscore_floor",
+                    help="deep-model output: zscore_floor (delivered default) or ratio_exp (review-validated, no floor)")
     a = ap.parse_args()
     cfg = SMOKE if a.smoke else Config()
     from dataclasses import replace
@@ -287,7 +307,7 @@ def main():
               "vn100": REPO / "data" / "raw" / "prices" / "vn100_vnstock",
               "sp500": REPO / "data" / "raw" / "prices" / "sp500"}
     price_dir = a.price_dir or str(pd_map[a.dataset])
-    run(a.dataset, files, price_dir, a.horizon, cfg, with_corr=not a.no_corr)
+    run(a.dataset, files, price_dir, a.horizon, cfg, with_corr=not a.no_corr, output_param=a.output_param)
 
 
 if __name__ == "__main__":
