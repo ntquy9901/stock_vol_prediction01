@@ -57,9 +57,9 @@ def _crossfit_har_pooled(har_tr, y_tr, n_folds, floor):
     return oos                                          # NaN on first block
 
 
-def build_data(files, lookback, horizon, cfg, n_cvfolds=5, eps=1e-8):
+def build_data(files, lookback, horizon, cfg, n_cvfolds=5, eps=1e-8, min_common=300):
     snap = _purge_snapshots(build_snapshots(files, lookback, horizon,
-                                            cfg.train_frac, cfg.val_frac), horizon)
+                                            cfg.train_frac, cfg.val_frac, min_common=min_common), horizon)
     N = snap.num_nodes
     adj = EG.glasso_adjacency(snap.adj_pk_train, top_k=cfg.top_k)
     adj_t = torch.from_numpy(np.asarray(adj, dtype=np.float32))
@@ -85,9 +85,15 @@ def build_data(files, lookback, horizon, cfg, n_cvfolds=5, eps=1e-8):
 
     # full-target per-node standardization (from train targets)
     t_mean = y_tr.mean(0); t_std = y_tr.std(0) + 1e-8
+    # train-derived POSITIVE output floor (plan section 10): the additive residual can drive a prediction
+    # below zero; clipping to 0 then makes QLIKE (y/pred) blow up through the metric floor. Flooring the
+    # reconstruction at a small fraction of each node's mean train variance is a positive output mapping
+    # bounded from training data only; it is far below any normal HAR-scale prediction (so it changes
+    # nothing on panels where predictions stay sane) and only bounds pathological near-zero corrections.
+    pred_floor = np.maximum(1e-3 * t_mean, cfg.qlike_floor)
 
     return {
-        "N": N, "adj": adj_t, "horizon": horizon, "eps": eps,
+        "N": N, "adj": adj_t, "horizon": horizon, "eps": eps, "pred_floor": pred_floor,
         "X_tr": X_tr.astype(np.float32), "X_va": X_va.astype(np.float32), "X_te": X_te.astype(np.float32),
         "y_tr": y_tr, "y_va": y_va, "y_te": y_te,
         "harp_tr": harp_tr, "harp_va": harp_va, "harp_te": harp_te,
@@ -107,12 +113,14 @@ def har_pred_dict(D, split):
 
 
 def _reconstruct(framing, D, c, harp):
-    """c [n,N] normalized net output -> raw prediction [n,N]."""
+    """c [n,N] normalized net output -> raw prediction [n,N], floored at the train-derived pred_floor."""
     if framing == "full":
-        return c * D["t_std"] + D["t_mean"]
-    if framing == "additive":
-        return md.additive_pred(harp, c, res_scale=D["add_scale"], lam=1.0)
-    return md.multiplicative_pred(harp, c, eps=D["eps"], lam=1.0, res_scale=D["mul_scale"])
+        pred = c * D["t_std"] + D["t_mean"]
+    elif framing == "additive":
+        pred = md.additive_pred(harp, c, res_scale=D["add_scale"], lam=1.0)
+    else:
+        pred = md.multiplicative_pred(harp, c, eps=D["eps"], lam=1.0, res_scale=D["mul_scale"])
+    return np.maximum(pred, D["pred_floor"])
 
 
 def train_neural(D, cfg, seed, use_lstm, use_graph, framing):

@@ -19,19 +19,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "submission" / "soi
 import metrics as M  # noqa: E402
 
 
-def reconstruct(framing, harp, c, scale, eps, lam):
-    """Raw prediction from a gated correction. ``lam`` scalar or per-row array. numpy."""
+def reconstruct(framing, harp, c, scale, eps, lam, pred_floor=0.0):
+    """Raw prediction from a gated correction, floored at pred_floor (train-derived positive mapping)."""
     if framing == "additive":
-        return np.maximum(harp + lam * scale * c, 0.0)
-    return np.maximum((harp + eps) * np.exp(lam * scale * c), 0.0)
+        return np.maximum(harp + lam * scale * c, pred_floor)
+    return np.maximum((harp + eps) * np.exp(lam * scale * c), pred_floor)
 
 
 def fit_lambda_static(y_va, harp_va, c_va, scale, framing, eps, floor,
-                      lam_max: float = 2.0, grid: int = 201) -> float:
+                      lam_max: float = 2.0, grid: int = 201, pred_floor=0.0) -> float:
     """E9: grid-search the static correction strength that minimizes validation QLIKE."""
     best_l, best_q = 0.0, np.inf
     for L in np.linspace(0.0, lam_max, grid):
-        p = reconstruct(framing, harp_va, c_va, scale, eps, L)
+        p = reconstruct(framing, harp_va, c_va, scale, eps, L, pred_floor)
         q = M.qlike(y_va.reshape(-1), p.reshape(-1), floor=floor)
         if q < best_q:
             best_l, best_q = float(L), q
@@ -83,13 +83,16 @@ def fit_gate_dynamic(D, corr, cfg, seed, eps, lam_max: float = 2.0):
     y_tr_t = torch.from_numpy(D["y_tr"].astype(np.float32)).to(device).reshape(-1)
     scale_t = torch.from_numpy(np.broadcast_to(scale, D["harp_tr"].shape).astype(np.float32)).to(device).reshape(-1)
     floor = cfg.qlike_floor
+    pf = D.get("pred_floor", floor)
+    pf_arr = np.broadcast_to(pf, D["harp_tr"].shape).astype(np.float32)
+    pf_t = torch.from_numpy(pf_arr).to(device).reshape(-1)
 
     def recon_torch(lam, harp, c, sc):
         if framing == "additive":
             p = harp + lam * sc * c
         else:
             p = (harp + eps) * torch.exp(lam * sc * c)
-        return torch.clamp(p, min=floor)
+        return torch.maximum(p, pf_t)
 
     best = np.inf; best_state = None; wait = 0
     for ep in range(max(cfg.epochs, 15)):
@@ -103,7 +106,7 @@ def fit_gate_dynamic(D, corr, cfg, seed, eps, lam_max: float = 2.0):
         with torch.no_grad():
             zv = torch.from_numpy(_state_features(corr["c_va"], D["harp_va"], scale)).to(device)
             lamv = gate(zv).cpu().numpy().reshape(D["harp_va"].shape)
-        pv = reconstruct(framing, D["harp_va"], corr["c_va"], scale, eps, lamv)
+        pv = reconstruct(framing, D["harp_va"], corr["c_va"], scale, eps, lamv, pf)
         vq = M.qlike(D["y_va"].reshape(-1), pv.reshape(-1), floor=floor)
         if vq < best - 1e-9:
             best = vq; best_state = {k: v.detach().cpu().clone() for k, v in gate.state_dict().items()}; wait = 0
@@ -119,8 +122,8 @@ def fit_gate_dynamic(D, corr, cfg, seed, eps, lam_max: float = 2.0):
         lamt = gate(zt).cpu().numpy().reshape(D["harp_te"].shape)
         zv = torch.from_numpy(_state_features(corr["c_va"], D["harp_va"], scale)).to(device)
         lamv = gate(zv).cpu().numpy().reshape(D["harp_va"].shape)
-    pte = reconstruct(framing, D["harp_te"], corr["c_te"], scale, eps, lamt)
-    pva = reconstruct(framing, D["harp_va"], corr["c_va"], scale, eps, lamv)
+    pte = reconstruct(framing, D["harp_te"], corr["c_te"], scale, eps, lamt, pf)
+    pva = reconstruct(framing, D["harp_va"], corr["c_va"], scale, eps, lamv, pf)
     te = {(j, D["d_te"][i]): (float(D["y_te"][i, j]), float(pte[i, j]))
           for i in range(len(D["d_te"])) for j in range(D["N"])}
     va = {(j, D["d_va"][i]): (float(D["y_va"][i, j]), float(pva[i, j]))

@@ -27,6 +27,19 @@ def _make_files(tmp, n_tickers=10, n_days=420, seed=0):
     return files
 
 
+def test_pred_floor_bounds_additive_blowup():
+    """A pathological additive correction must be floored at a train-derived positive value, not clipped
+    to ~0 (which makes QLIKE = y/pred blow up through the metric floor) — the sp500 blow-up fix."""
+    D = {"pred_floor": np.array([0.01, 0.02]), "add_scale": np.array([1.0, 1.0]),
+         "t_mean": np.array([0.5, 0.5]), "t_std": np.array([0.1, 0.1]),
+         "eps": 1e-8, "mul_scale": np.array([1.0, 1.0])}
+    harp = np.array([[0.02, 0.03]])
+    c = np.array([[-1000.0, -1000.0]])                 # would drive the additive prediction far negative
+    pred = experts._reconstruct("additive", D, c, harp)
+    assert np.all(pred >= D["pred_floor"])             # floored, never near-zero
+    assert np.all(np.isfinite(pred))
+
+
 @pytest.mark.smoke
 def test_build_and_train_smoke(tmp_path):
     files = _make_files(tmp_path)

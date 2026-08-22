@@ -70,3 +70,10 @@ def test_reconstruct_positivity_multiplicative():
     harp = np.array([[0.02, 0.0]]); c = np.array([[-100.0, 5.0]]); scale = np.array([1.0, 1.0])
     p = gate.reconstruct("mult", harp, c, scale, eps=1e-8, lam=1.0)
     assert np.all(p >= 0)
+
+
+def test_gate_reconstruct_additive_floor():
+    # a large negative additive correction is floored at pred_floor, not clipped to ~0
+    p = gate.reconstruct("additive", np.array([[0.02]]), np.array([[-1000.0]]),
+                         np.array([1.0]), eps=1e-8, lam=1.0, pred_floor=np.array([0.01]))
+    assert np.all(p >= 0.01)

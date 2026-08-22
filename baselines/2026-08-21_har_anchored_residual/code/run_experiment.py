@@ -71,10 +71,10 @@ def _metrics(y, p, har_p, floor):
             "bias": float(np.mean(p - y)), "n": len(y)}
 
 
-def run(dataset, files, lookback, horizon, cfg, out_dir):
+def run(dataset, files, lookback, horizon, cfg, out_dir, min_common=300):
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
-    D = experts.build_data(files, lookback, horizon, cfg)
+    D = experts.build_data(files, lookback, horizon, cfg, min_common=min_common)
     print(f"[build] {dataset} h{horizon} N={D['N']} test_dates={len(D['d_te'])}", flush=True)
 
     preds_te = {"E0_HAR": experts.har_pred_dict(D, "test")}
@@ -91,10 +91,10 @@ def run(dataset, files, lookback, horizon, cfg, out_dir):
     _, preds_va["E3_blend"] = BL.blend(preds_va["E0_HAR"], preds_va["E2"],
                                        preds_va["E0_HAR"], preds_va["E2"], "qlike", cfg.qlike_floor)
     # E9 static gate + E10 dynamic gate on the combined residual expert (E7)
-    scale = D["add_scale"]
+    scale = D["add_scale"]; pfloor = D["pred_floor"]
     lam9 = GT.fit_lambda_static(D["y_va"], D["harp_va"], corr["E7"]["c_va"], scale, "additive",
-                                D["eps"], cfg.qlike_floor)
-    p9 = GT.reconstruct("additive", D["harp_te"], corr["E7"]["c_te"], scale, D["eps"], lam9)
+                                D["eps"], cfg.qlike_floor, pred_floor=pfloor)
+    p9 = GT.reconstruct("additive", D["harp_te"], corr["E7"]["c_te"], scale, D["eps"], lam9, pfloor)
     preds_te["E9_gate_static"] = {(j, D["d_te"][i]): (float(D["y_te"][i, j]), float(p9[i, j]))
                                   for i in range(len(D["d_te"])) for j in range(D["N"])}
     preds_te["E10_gate_dyn"], preds_va["E10_gate_dyn"], lam10 = GT.fit_gate_dynamic(
@@ -182,6 +182,8 @@ def main():
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--data-root", default=str(_SUB / "data"))
     ap.add_argument("--batch", type=int, default=None, help="override batch_size (small for large-N graphs)")
+    ap.add_argument("--min-common", type=int, default=300,
+                    help="min common dates for the snapshot node set (raise for large universes to keep a longer test window)")
     a = ap.parse_args()
     cfg = SMOKE if a.smoke else Config()
     if a.batch:
@@ -195,7 +197,7 @@ def main():
     if not files:
         raise FileNotFoundError(f"no files for {a.dataset} under {a.data_root}")
     out = REPO / "results" / "har_anchored" / f"{a.dataset}_h{a.horizon}"
-    run(a.dataset, files, a.lookback, a.horizon, cfg, out)
+    run(a.dataset, files, a.lookback, a.horizon, cfg, out, min_common=a.min_common)
 
 
 if __name__ == "__main__":
