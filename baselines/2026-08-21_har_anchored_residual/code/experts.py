@@ -140,11 +140,20 @@ def train_neural(D, cfg, seed, use_lstm, use_graph, framing):
         tgt = D["oos_mul"] / D["mul_scale"]; rows = D["cf_mask"]
     Xtr = torch.from_numpy(D["X_tr"][rows]).to(device)
     Ttr = torch.from_numpy(tgt[rows].astype(np.float32)).to(device)
-    Xva = torch.from_numpy(D["X_va"]).to(device)
 
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.5, patience=2)
     lossf = nn.MSELoss(); n = len(Xtr); bs = cfg.batch_size
+
+    def infer(X_np):
+        """Batched eval forward -> [n, N] corrections. Batching is required for large N: a whole-set
+        forward builds a [n_all, N, N, heads] attention tensor that OOMs on 400+ node panels."""
+        outs = []
+        with torch.no_grad():
+            for i in range(0, len(X_np), bs):
+                xb = torch.from_numpy(X_np[i:i + bs]).to(device)
+                outs.append(net(xb, adj).cpu().numpy())
+        return np.concatenate(outs) if outs else np.zeros((0, D["N"]), np.float32)
     best = np.inf; best_state = None; wait = 0
     for ep in range(cfg.epochs):
         net.train(); perm = torch.randperm(n)
@@ -154,8 +163,7 @@ def train_neural(D, cfg, seed, use_lstm, use_graph, framing):
             loss.backward(); nn.utils.clip_grad_norm_(net.parameters(), cfg.grad_clip); opt.step()
         # val QLIKE of reconstructed prediction (predeclared primary metric)
         net.eval()
-        with torch.no_grad():
-            cva = net(Xva, adj).cpu().numpy()
+        cva = infer(D["X_va"])
         pva = np.maximum(_reconstruct(framing, D, cva, D["harp_va"]), 0.0)
         vq = M.qlike(D["y_va"].reshape(-1), pva.reshape(-1), floor=cfg.qlike_floor)
         sched.step(vq)
@@ -168,10 +176,7 @@ def train_neural(D, cfg, seed, use_lstm, use_graph, framing):
     if best_state:
         net.load_state_dict(best_state)
     net.eval()
-    with torch.no_grad():
-        cte = net(torch.from_numpy(D["X_te"]).to(device), adj).cpu().numpy()
-        cva = net(Xva, adj).cpu().numpy()
-        ctr = net(torch.from_numpy(D["X_tr"]).to(device), adj).cpu().numpy()
+    cte = infer(D["X_te"]); cva = infer(D["X_va"]); ctr = infer(D["X_tr"])
     pte = np.maximum(_reconstruct(framing, D, cte, D["harp_te"]), 0.0)
     pva = np.maximum(_reconstruct(framing, D, cva, D["harp_va"]), 0.0)
     te = {(j, D["d_te"][i]): (float(D["y_te"][i, j]), float(pte[i, j]))
