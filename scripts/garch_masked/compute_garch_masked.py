@@ -53,7 +53,8 @@ def _pred_dict(pred, y, tmask, dates, N):
 
 def _metrics(pred, floor):
     ks = sorted(pred)
-    y = np.array([pred[k][0] for k in ks]); p = np.array([pred[k][1] for k in ks])
+    y = np.array([pred[k][0] for k in ks])
+    p = np.array([pred[k][1] for k in ks])
     return {"mse": M.mse(y, p), "rmse": M.rmse(y, p), "mae": M.mae(y, p),
             "qlike": M.qlike(y, p, floor), "r2": M.r2(y, p), "n": len(ks)}
 
@@ -61,7 +62,8 @@ def _metrics(pred, floor):
 def _dm(a, b, horizon, floor):
     ks = sorted(set(a) & set(b))
     y = np.array([a[k][0] for k in ks])
-    pa = np.array([a[k][1] for k in ks]); pb = np.array([b[k][1] for k in ks])
+    pa = np.array([a[k][1] for k in ks])
+    pb = np.array([b[k][1] for k in ks])
     dates = np.array([k[1] for k in ks])
     out = {}
     fams = {"qlike": (M.per_obs_qlike(y, pa, floor), M.per_obs_qlike(y, pb, floor)),
@@ -94,7 +96,8 @@ def _harx_pred(D, cfg):
     mtr = D.tmask_tr.astype(bool)
     xtr = np.column_stack([np.ones(int(mtr.sum())), D.har5_tr[mtr]])
     cx = np.linalg.lstsq(xtr, D.y_tr[mtr], rcond=None)[0]
-    hx = (np.column_stack([np.ones(len(D.har5_te.reshape(-1, 5))), D.har5_te.reshape(-1, 5)]) @ cx).reshape(D.y_te.shape)
+    xte = D.har5_te.reshape(-1, 5)
+    hx = (np.column_stack([np.ones(len(xte)), xte]) @ cx).reshape(D.y_te.shape)
     hx = np.maximum(hx, 1e-2 * D.t_mean + 1e-12)
     return _pred_dict(hx, D.y_te, D.tmask_te, D.d_te, D.N)
 
