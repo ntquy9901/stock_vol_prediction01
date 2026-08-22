@@ -26,3 +26,6 @@ def test_figure_labels_match_paper_model():
     # stale/wrong graph description absent
     assert "graphical-lasso" not in svg
     assert "partial-corr" not in svg
+    # all five stage boxes present
+    for title in ("5 node features", "LSTM (temporal)", "GAT (spatial)", "concat", "MLP head"):
+        assert title in svg, f"missing box: {title}"

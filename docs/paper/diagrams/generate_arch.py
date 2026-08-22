@@ -32,27 +32,27 @@ def arrow(ax, x1, y1, x2, y2):
 
 
 def main():
-    fig, ax = plt.subplots(figsize=(9.2, 3.7))
-    ax.set_xlim(0, 10)
+    fig, ax = plt.subplots(figsize=(11.4, 3.7))
+    ax.set_xlim(0, 12.4)
     ax.set_ylim(0, 4.3)
     ax.axis("off")
 
-    box(ax, 0.15, 1.05, 2.5, 1.75, "5 node features",
+    box(ax, 0.2, 1.05, 3.0, 1.75, "5 node features",
         "PK, HAR-w, HAR-m,\nmarket PK, volume z\n(per ticker, at t)")
-    box(ax, 3.35, 2.45, 2.35, 1.1, "LSTM (temporal)", "2-layer LSTM over\nlookback = 10")
-    box(ax, 3.35, 0.85, 2.35, 1.1, "GAT (spatial)", "5 feats at t;\nweighted 2-hop attention")
-    box(ax, 6.35, 1.35, 1.35, 1.35, "concat", "temporal +\nspatial")
-    box(ax, 8.05, 1.35, 1.85, 1.35, "MLP head", "Parkinson variance\nat t+h (h=1,5,10,22)")
+    box(ax, 3.9, 2.45, 2.85, 1.1, "LSTM (temporal)", "2-layer LSTM over\nlookback = 10")
+    box(ax, 3.9, 0.85, 2.85, 1.1, "GAT (spatial)", "5 feats at t;\nweighted 2-hop attention")
+    box(ax, 7.45, 1.35, 1.85, 1.35, "concat", "temporal +\nspatial")
+    box(ax, 9.85, 1.35, 2.35, 1.35, "MLP head", "Parkinson variance\nat t+h (h=1,5,10,22)")
 
-    arrow(ax, 2.65, 2.2, 3.3, 2.9)
-    arrow(ax, 2.65, 1.6, 3.3, 1.35)
-    arrow(ax, 5.7, 2.9, 6.3, 2.35)
-    arrow(ax, 5.7, 1.35, 6.3, 1.9)
-    arrow(ax, 7.7, 2.0, 8.01, 2.0)
+    arrow(ax, 3.2, 2.2, 3.85, 2.9)
+    arrow(ax, 3.2, 1.6, 3.85, 1.35)
+    arrow(ax, 6.75, 2.9, 7.4, 2.35)
+    arrow(ax, 6.75, 1.35, 7.4, 1.9)
+    arrow(ax, 9.3, 2.0, 9.81, 2.0)
 
-    ax.text(4.525, 0.45, "edges: directed vol->Parkinson Top-5 (train-only)",
+    ax.text(5.325, 0.45, "edges: directed vol->Parkinson Top-5 (train-only)",
             ha="center", va="center", fontsize=7.6, style="italic", color="#64748b")
-    ax.text(5.0, 4.05, "LSTM+GAT: parallel temporal (LSTM) and spatial (GAT: directed vol->Parkinson, "
+    ax.text(6.2, 4.05, "LSTM+GAT: parallel temporal (LSTM) and spatial (GAT: directed vol->Parkinson, "
             "weighted 2-hop) branches -> MLP head;  ablation removes the GAT branch (same-feature LSTM).",
             ha="center", va="center", fontsize=7.8, color="#334155")
     plt.tight_layout()
