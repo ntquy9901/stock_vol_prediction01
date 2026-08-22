@@ -292,17 +292,28 @@ In contrast to the Vietnamese panels, the deep models attain the lowest point er
 
 ### Output parameterization and QLIKE stability (robustness)
 
-The deep model's QLIKE was sensitive to the random seed under the additive standardized-target design with a
-post-hoc floor. Replacing that target with a node-scaled ratio (the model predicts y_t / mean_i and
-reconstructs the forecast as the ratio times the training-period node mean) reduces the five-seed QLIKE
-standard deviation from 0.043 to 0.005 (VN30) and from 0.039 to 0.004 (VN100), with the same linear output
-and floor — identifying node scaling, rather than the positive output link, as the primary source of
-stability. Positive links (exponential or softplus) provide smaller additional improvements and remove the
-post-hoc floor; no statistically significant QLIKE difference was detected between them at the 5% level after
-bias-matched initialization. HAR-X retains a lower mean QLIKE, but its advantage over the ratio-parameterized
-deep model is not statistically significant under the date-clustered DM test (VN30 p=0.29, VN100 p=0.60); a
-failure to reject does not establish equivalence. This indicates the earlier instability was largely
-attributable to the target parameterization rather than the forecasting architecture.
+The output parameterization used in the main tables — a standardized target with a linear output and a
+relative floor of 1e-2 times the per-node training mean — was fixed before this investigation. As a
+robustness check we varied only the deep model's output mapping. Replacing the standardized target with a
+node-scaled ratio (the model predicts y_t / mean_i and reconstructs the forecast as the ratio times the
+training-period node mean) reduces the five-seed QLIKE standard deviation from 0.043 to 0.005 (VN30) and from
+0.039 to 0.004 (VN100) with the same linear output and floor; a positive-by-construction link (exponential or
+softplus) provides smaller additional improvements and removes the floor. No statistically significant QLIKE
+difference was detected between the exponential and softplus links at the 5% level after bias-matched
+initialization.
+
+**Common-floor sensitivity.** Because the main tables pre-floor HAR-X at the relative floor before the
+metric, we re-score every model from raw forecasts under a single common floor applied identically to all
+models, using either the relative floor or a fixed 1e-8 floor. Under both policies fewer than 0.01% of
+forecasts are clipped, and at h5, h10 and h22 the QLIKE values and the deep-vs-HAR-X DM outcome are
+identical. Only h1 is floor-sensitive, and the sensitivity is on the HAR-X side: extreme h1 QLIKE values
+arose from a very small number of non-positive or near-zero forecasts produced by the unconstrained linear
+output and subsequently mapped to a tight numerical floor; the positive-by-construction ratio-exp
+parameterization removed this sensitivity. At h1, the ratio-exp deep model obtained a lower mean QLIKE than
+HAR-X under the relative-floor policy, but no statistically significant difference was detected (VN100
+p=0.24, VN30 p=0.57). These configurations were identified after observing QLIKE on the same test set, so
+they are reported as a robustness result and as a pre-specified candidate for a future out-of-sample or
+walk-forward evaluation, not as a replacement for the main-table specification.
 
 **Table. Output-parameterization robustness (LSTM, h5, 5 seeds): QLIKE mean ± std.** A: z-score + linear +
 floor (original); B: ratio + linear + floor; C: ratio + exp (no floor); D: ratio + softplus (no floor). HAR-X
