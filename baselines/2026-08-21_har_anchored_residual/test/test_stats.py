@@ -32,6 +32,16 @@ def test_date_clustered_dm_dedups_cross_section():
     assert set(res) == {"dm_hln", "p_value", "mean_diff", "n_dates"}
 
 
+def test_date_clustered_dm_rejects_mismatched_loss_shapes():
+    """Guard (Codex review): loss_a and loss_b must be aligned per-observation (same shape) before
+    date aggregation, so the two date-level series compare like-for-like."""
+    dates = np.repeat(np.arange(10), 2)
+    loss_a = np.ones(dates.size)
+    loss_b = np.ones(dates.size - 1)                    # wrong length
+    with pytest.raises(ValueError):
+        stats.date_clustered_dm(loss_a, loss_b, dates, h=1)
+
+
 def test_date_clustered_dm_matches_manual_aggregation():
     """date_clustered_dm on the panel equals a plain DM on hand-aggregated dates."""
     sys.path.insert(0, str(HERE.parents[2] / "submission" / "soict_lstm_gat"))

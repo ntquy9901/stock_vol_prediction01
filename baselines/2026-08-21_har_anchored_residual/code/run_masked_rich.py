@@ -125,7 +125,7 @@ def _batches(nrow, bs, shuffle, seed=0):
 
 def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor"):
     """output_param: 'zscore_floor' (delivered default: standardized target, linear denorm, 1e-2*mean
-    floor) or 'ratio_exp' (node-scaled ratio target y/mean + exp output, no economic floor; the
+    floor) or 'ratio_exp' (node-scaled ratio target y/mean + exp output, no relative floor; the
     review-validated parameterization that removes QLIKE seed-instability -- see
     docs/reports/2026-08-22_output_parameterization_robustness.md). Only the deep model changes."""
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -237,7 +237,7 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     mtr = D.tmask_tr.astype(bool)
     coef = B.har_fit(D.har_tr[mtr], D.y_tr[mtr])
     hp = B.har_predict(D.har_te.reshape(-1, 3), coef, floor=cfg.qlike_floor).reshape(D.y_te.shape)
-    hp = np.maximum(hp, 1e-2 * D.t_mean + 1e-12)   # M1: shared per-node positivity floor (1e-2*mean; the value that removes the QLIKE tail-collapse -- HIGHER than the earlier 1e-3, i.e. clamps more). Under output_param='ratio_exp' the DEEP model is positive-by-construction (machine-eps only) while HAR/HAR-X keep this economic floor; QLIKE compares all models at the shared cfg.qlike_floor.
+    hp = np.maximum(hp, 1e-2 * D.t_mean + 1e-12)   # M1: shared per-node positivity floor (1e-2*mean; the value that removes the QLIKE tail-collapse -- HIGHER than the earlier 1e-3, i.e. clamps more). Under output_param='ratio_exp' the DEEP model is positive-by-construction (machine-eps only) while HAR/HAR-X keep this relative floor; QLIKE compares all models at the shared cfg.qlike_floor.
     HAR = _pred_dict(hp, D.y_te, D.tmask_te, D.d_te, N)
     # HAR-X: 5-feature LINEAR OLS — the fair baseline isolating the extra-feature contribution (so a deep
     # or graph win over HAR is not just the 2 extra node features market_pk/volume_zscore).

@@ -14,19 +14,18 @@ Repo is public. Data under `data/` is gitignored (large); code, paper, results J
 Multi-horizon daily volatility forecasting on Vietnamese equities (VN30, VN100). Target = Parkinson
 **variance** at day t+h (the column `parkinson_volatility` is a variance, not a standard deviation). Three
 feature-based models share five node features [daily Parkinson variance, 5-day mean, 22-day mean, market
-Parkinson factor, 20-day volume z-score]: a linear **HAR** (5-feature OLS — this is what the paper labels
-"HAR"), an **LSTM**, and an **LSTM+GAT** (directed volume→Parkinson Top-5, edge-weighted, two-hop graph).
+Parkinson factor, 20-day volume z-score]: a linear **HAR-X** (5-feature OLS = the 3-lag HAR cascade + market factor + volume z-score; the paper's baseline), an **LSTM**, and an **LSTM+GAT** (directed volume→Parkinson Top-5, edge-weighted, two-hop graph).
 A **GARCH(1,1)** classical benchmark is also reported. Evaluation: five metrics (MSE, RMSE, MAE, QLIKE, R²)
 with equal weight; significance via the **date-clustered Diebold–Mariano** test. Horizons h∈{1,5} primary,
 {10,22} extended.
 
 Headline honest findings (verify these against the code/results):
-- HAR has the lowest QLIKE at every horizon on both panels; **no learned model has a significantly lower
-  QLIKE than HAR** under date-clustered DM.
+- HAR-X has the lowest QLIKE at every horizon on both panels; **no learned model has a significantly lower
+  QLIKE than HAR-X** under date-clustered DM.
 - At h1/h5 the deep models have the lowest MAE on VN100; the LSTM+GAT has a significantly lower QLIKE than
-  the no-graph LSTM at h1/h5 (graph helps the deep model but does not beat HAR).
-- At h10/h22 HAR leads and the graph effect is not significant.
-- GARCH is worse than HAR on all five metrics at every horizon.
+  the no-graph LSTM at h1/h5 (graph helps the deep model but does not beat HAR-X).
+- At h10/h22 HAR-X leads and the graph effect is not significant.
+- GARCH is worse than HAR-X on all five metrics at every horizon.
 
 ---
 
@@ -39,14 +38,14 @@ components from the **submission package**. Review these first.
 | File | LOC | Purpose | What to check |
 |---|---|---|---|
 | `masked_rich.py` | 230 | Builds the masked union-of-dates panel: 5 node features, node/target masks, per-node train-only scalers, min-train-rows node drop, directed volume→Parkinson edge + symmetric-corr edge, purge=h | **Leakage:** every scaler/edge estimated on TRAIN rows only (`last_tr_row`, `tok_tr`); `market_pk` = causal cross-sectional median; `volume_zscore` = trailing window (causal). Mask semantics: `node_mask`=valid input window, `target_mask`=valid window AND valid target. |
-| `run_masked_rich.py` | 294 | Trains HAR / HAR-X / LSTM / LSTM+wGAT, evaluates 5 metrics + date-clustered DM, writes `results/masked_rich_floor1e2/<ds>_h<h>/result.json` | **Output flooring** (lines ~151, 224, 231): predictions floored at `1e-2*t_mean` — this is the subject of the robustness study in §4; confirm the floor is applied identically to every model. **Loss:** masked MSE on standardized target. **DM:** `_dm_all` uses per-obs QLIKE/SE/AE aggregated to date level. |
+| `run_masked_rich.py` | ~320 | **Defines the paper's architecture** `MaskedRichNet` + `WeightedGATLayer` (5 node features, 2-hop weight-aware GAT) — THIS is the model the paper's Tables use (NOT `submission/model.py`). Fits **HAR** = classic 3-feature OLS (`D.har_tr`) and **HAR-X** = 5-feature OLS (the 3 HAR features + market factor + volume z-score). **The paper's baseline is HAR-X** (labelled "HAR-X"); the 3-feature HAR is computed but not reported in the paper. Trains LSTM / LSTM+wGAT, evaluates 5 metrics + date-clustered DM, writes `results/masked_rich_floor1e2/<ds>_h<h>/result.json`. | **Output param:** `--output-param {zscore_floor(default)|ratio_exp}`; default floors predictions at `1e-2*t_mean` (relative floor). ratio_exp is a robustness variant (positive-by-construction), see §4. **Loss:** masked MSE on standardized (or ratio) target. **DM:** `_dm_all` aggregates per-obs QLIKE/SE/AE to date level. |
 | `masked_snapshots.py` | 138 | Earlier 3-feature masked panel (superseded by masked_rich for the paper) | Lower priority; kept for lineage. |
 | `stats.py` | — | `date_clustered_dm(loss_a, loss_b, dates, h)` — aggregates per-obs loss to one value per date, then HLN Diebold–Mariano | **Panel-correct DM:** verify date aggregation (cross-sectional mean per date) and HLN correction; a naive per-obs DM overstates significance ~√N. |
 
 ### 1b. Shared components — `submission/soict_lstm_gat/`
 | File | LOC | Purpose | What to check |
 |---|---|---|---|
-| `model.py` | 77 | The delivered **PARALLEL** architecture: LSTM branch (SEQ window) + GAT branch that reads RAW node features at day t (NOT LSTM output), concatenated into an MLP head | Confirm GAT reads `x[:, :, -1, :]` (raw feats at t), so SEQ does not affect the GAT branch; 2-hop weighted GAT. |
+| `model.py` | 77 | The **ORIGINAL SOICT model** `HARLSTMGAT` (3 input features, per-stock-pooled experiment). **NOT the paper's model** — the paper (masked panel) uses `MaskedRichNet` defined in `run_masked_rich.py` (5 features, weighted 2-hop GAT). Kept for lineage; do not review as the paper's architecture. | If auditing the original SOICT experiment only. The paper's architecture is in §1a `run_masked_rich.py`. |
 | `baselines.py` | 135 | `har_fit`/`har_predict` (OLS + floor); `garch_forecast` (GARCH(1,1) via `arch`, pseudo-returns from variance, fallback to train-variance mean) | **HAR floor**, **GARCH** pseudo-return construction + rescale by 1/1e4, fallback path. |
 | `metrics.py` | 134 | MSE/RMSE/MAE/R²/QLIKE + Diebold–Mariano (HLN + HAC lag h−1) | **QLIKE:** shared positivity floor, `r=y/p`, `r−log r−1`. **R²:** `1−SSres/SStot` on the same pooled y,p (SStot uses test mean). **DM:** HLN small-sample correction. |
 | `data_utils.py` | 187 | `har_features` (daily/weekly/monthly rolling), pooled data building | Rolling windows produce NaN at warmup/gaps (correctly masked). |
@@ -55,7 +54,7 @@ components from the **submission package**. Review these first.
 ### 1c. GARCH add-on — `scripts/garch_masked/`
 | File | Purpose | What to check |
 |---|---|---|
-| `compute_garch_masked.py` | Computes GARCH(1,1) on the SAME deterministic masked panel and writes `metrics['GARCH']` into each result.json; asserts recomputed HAR-X QLIKE matches the stored value (basis guard) | Per-node GARCH fit on train-valid series; same per-node floor + qlike_floor; the basis-guard assert. |
+| `compute_garch_masked.py` | Computes GARCH(1,1) on the SAME deterministic masked panel and writes `metrics['GARCH']` into each result.json; asserts recomputed HAR-X QLIKE matches the stored value (basis guard) | Per-node GARCH fit on TRAIN-ONLY series, forecasting the test window (skips the validation block); same per-node floor + qlike_floor; the basis-guard assert. |
 | `test_garch_masked.py` | Tests for the above | — |
 
 ---
@@ -105,7 +104,7 @@ Throwaway experiment wrappers: `scripts/garch_masked/{run_sp500_seed123, combine
   output-parameterization robustness subsection. NOT submitted; for discussion.
 - Figure: `docs/paper/diagrams/soict_harlstmgat.{png,svg,pdf}` (+ generator `generate_arch.py` + test).
 
-What to check in the paper: (1) every number traceable to a `result.json`; (2) HAR = 5-feature model
+What to check in the paper: (1) every number traceable to a `result.json`; (2) the baseline is HAR-X = 5-feature model
 consistently; (3) objective wording; (4) statistical claims (DM significance, no equivalence overclaim);
 (5) the √N methodology note; (6) GARCH described correctly; (7) horizons h1/h5 primary vs h10/h22 extended.
 
@@ -134,7 +133,7 @@ consistently; (3) objective wording; (4) statistical claims (DM significance, no
 5. **GARCH:** pseudo-return construction, rescale, fallback, and the basis guard.
 6. **Statistical wording:** no "equivalence" from failure-to-reject; point estimates vs significance
    separated; percentage points vs relative % distinguished.
-7. **Architecture description:** GAT reads raw features at t (parallel, SEQ-invariant), matches `model.py`.
+7. **Architecture description:** GAT reads raw features at t (parallel, SEQ-invariant), matches `MaskedRichNet` in `run_masked_rich.py` (the paper's model, not submission/model.py).
 
 ---
 

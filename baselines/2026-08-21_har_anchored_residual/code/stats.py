@@ -56,6 +56,10 @@ def date_clustered_dm(
 
     Returns ``{"dm_hln", "p_value", "mean_diff", "n_dates"}``.
     """
+    loss_a = np.asarray(loss_a, dtype=float)
+    loss_b = np.asarray(loss_b, dtype=float)
+    if loss_a.shape != loss_b.shape:                 # both aggregate over the SAME `dates` array; require
+        raise ValueError("loss_a and loss_b must have the same shape (aligned per-observation)")
     _, a_by_date = _aggregate_by_date(loss_a, dates)
     _, b_by_date = _aggregate_by_date(loss_b, dates)
     res = _metrics.diebold_mariano(a_by_date, b_by_date, h=h)

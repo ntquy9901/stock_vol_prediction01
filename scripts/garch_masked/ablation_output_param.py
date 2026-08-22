@@ -98,7 +98,7 @@ def _train(D, cfg, seed, adj, spec):
         var = (a * scale.astype(np.float64) + loc.astype(np.float64)) if spec["norm"] == "zscore" \
             else (a * loc.astype(np.float64))
         if spec["floor"]:
-            var = np.maximum(var, econ_floor)          # economic floor (configs A,B)
+            var = np.maximum(var, econ_floor)          # relative floor (configs A,B)
         return np.maximum(var, TINY)                   # machine-eps safeguard (all configs)
 
     best, best_state, wait = np.inf, None, 0

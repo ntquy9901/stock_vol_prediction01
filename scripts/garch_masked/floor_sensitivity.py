@@ -7,8 +7,8 @@ QLIKE clamp does not restore fairness (HAR was already modified). This script re
 
 For config C (ratio_exp deep model), on a (dataset, horizon):
   - raw HAR-X  = 5-feature OLS, NO floor (can be <=0);
-  - raw deep-C = 5-seed ensemble of exp(pn)*mean, NO economic floor (positive by construction; TINY only
-    guards fp underflow, it is not an economic floor).
+  - raw deep-C = 5-seed ensemble of exp(pn)*mean, NO relative floor (positive by construction; TINY only
+    guards fp underflow, it is not a relative floor).
 Then re-score both models under two COMMON floor policies applied IDENTICALLY to both:
   P_eps  : eps_i = 1e-8            (fixed small; protects the log, does not move economic forecasts)
   P_econ : eps_i = 1e-2 * mean_i   (per-node)
@@ -46,7 +46,7 @@ SEEDS = (42, 123, 2026, 7, 2024)
 
 
 def _train_raw_ratio_exp(D, cfg, seed, adj):
-    """Config C deep model; returns RAW test forecasts exp(pn)*mean (no economic floor, TINY guard only)."""
+    """Config C deep model; returns RAW test forecasts exp(pn)*mean (no relative floor, TINY guard only)."""
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -138,7 +138,7 @@ def main():
     har_raw = (np.column_stack([np.ones(len(D.har5_te.reshape(-1, 5))), D.har5_te.reshape(-1, 5)]) @ cx
                ).reshape(D.y_te.shape)[m]
 
-    # raw deep-C (ratio_exp), 5-seed ensemble, NO economic floor
+    # raw deep-C (ratio_exp), 5-seed ensemble, NO relative floor
     deep_raw = np.mean([_train_raw_ratio_exp(D, cfg, s, D.adj_vol2pk)[m] for s in SEEDS], axis=0)
 
     floors = {"P_eps_1e-8": np.full(len(y), 1e-8),
