@@ -290,6 +290,31 @@ In contrast to the Vietnamese panels, the deep models attain the lowest point er
 
 ---
 
+### Output parameterization and QLIKE stability (robustness)
+
+The deep model's QLIKE was sensitive to the random seed under the additive standardized-target design with a
+post-hoc floor. Replacing that target with a node-scaled ratio (the model predicts y_t / mean_i and
+reconstructs the forecast as the ratio times the training-period node mean) reduces the five-seed QLIKE
+standard deviation from 0.043 to 0.005 (VN30) and from 0.039 to 0.004 (VN100), with the same linear output
+and floor — identifying node scaling, rather than the positive output link, as the primary source of
+stability. Positive links (exponential or softplus) provide smaller additional improvements and remove the
+post-hoc floor; no statistically significant QLIKE difference was detected between them at the 5% level after
+bias-matched initialization. HAR retains a lower mean QLIKE, but its advantage over the ratio-parameterized
+deep model is not statistically significant under the date-clustered DM test (VN30 p=0.29, VN100 p=0.60); a
+failure to reject does not establish equivalence. This indicates the earlier instability was largely
+attributable to the target parameterization rather than the forecasting architecture.
+
+**Table. Output-parameterization robustness (LSTM, h5, 5 seeds): QLIKE mean ± std.** A: z-score + linear +
+floor (original); B: ratio + linear + floor; C: ratio + exp (no floor); D: ratio + softplus (no floor). HAR
+QLIKE is 0.5962 (VN30) and 0.5694 (VN100).
+
+| Panel | A | B | C | D |
+|---|---|---|---|---|
+| VN30 | 0.660 ± 0.043 | 0.613 ± 0.005 | 0.610 ± 0.002 | 0.610 ± 0.003 |
+| VN100 | 0.602 ± 0.039 | 0.572 ± 0.004 | 0.573 ± 0.003 | 0.576 ± 0.007 |
+
+---
+
 ## 7. Discussion
 
 On both panels HAR has the lowest QLIKE at every horizon, and no learned model has a significantly lower QLIKE
