@@ -106,21 +106,43 @@ Six independent checks (`docs/reports/2026-08-22_graph_no_value_analysis.md`):
    (c) a **genuine no-signal** result: there is no out-of-sample-transferable cross-sectional spillover in
    these HAR-feature panels for the graph to exploit.
 
-## 7. S&P 500 status
-The initial S&P 500 snapshot run intersected 500 tickers and yielded only 34 common-date test dates,
-plus additive-residual numerical blow-ups (QLIKE 16–335 from predictions clipped toward zero). Both are
-now addressed: (i) a train-derived positive output floor on the reconstruction (plan §10), (ii) a
-long-history node subset (`min_common=3000` ⇒ 457 nodes, ~3029 common dates, ~300 test dates), and (iii)
-batched eval forwards (the whole-set forward OOM'd at 457 nodes). A corrected S&P 500 run is in progress;
-its numbers will be appended to `reports/experiment_results.md`.
+## 7. S&P 500 — corrected run (the one significant beat-HAR result)
+The initial S&P 500 run had only 34 common-date test dates and additive-residual blow-ups. Corrected via
+(i) a train-derived positive output floor (plan §10), (ii) a long-history subset (`min_common=3000` ⇒ 457
+nodes, ~300 test dates, 137k test obs), (iii) batched eval forwards (whole-set forward OOM'd at 457 nodes).
+
+Result (date-clustered DM, ~300 test dates — adequate power):
+| h | HAR | E1 LSTM (no graph) | E2 LSTM+GAT | E3 combination |
+|---|---|---|---|---|
+| 1 | 0.3776 | — | — | 0.3656 (+3.2%, p<0.001) |
+| 22 | 0.4596 | **0.4270 (+7.1%, p<0.001)** | 0.4386 (+4.6%, p=0.004) | 0.4349 (+5.4%, p<0.001) |
+
+On this large, data-rich panel the deep temporal model **significantly beats HAR** (E1 up to +7.1% at
+h22, date-clustered p<0.001), and the convex combination E3 beats HAR at all four horizons (+3.2…+5.4%).
+Crucially, **the graph only detracts**: E2 (LSTM+GAT) is worse than E1 (LSTM alone) at h22 (+4.6% vs
++7.1%), and the graph-residual E6/E7 fail or blow up numerically (E5/E7 additive still unstable at 457
+nodes even with the floor; E8 multiplicative is stable but worse than HAR). This is the first significant
+beat-HAR result under panel-correct inference, and it is attributable to temporal nonlinearity, not the
+graph — consistent with the model-free screening (§6.2) and the VN point estimates that lacked the test
+power to reach significance.
 
 ## 8. Honest verdict and open questions for a second opinion
-Verdict: on the reliable VN panels, under date-clustered inference, **no model (deep, graph, combination,
-or gate) significantly beats HAR** at any horizon. HAR-anchoring makes deep models safe (they tie HAR
-where the full-target versions lose). The graph adds no value because the required cross-sectional
-spillover is not out-of-sample-transferable on these panels — established model-independently (§6.2), so
-it is not a GAT/attention/tuning artefact. This is consistent with the volatility literature (e.g. Branco,
-Rubesam & Zevallos, "Does anything beat linear models?").
+Verdict (updated with the corrected S&P 500 run):
+- On the small VN panels (VN30, VN100), under date-clustered inference, **no model significantly beats
+  HAR** at any horizon — point estimates favour the hybrid at long horizons but the test windows are too
+  short (~49–130 dates) for significance.
+- On the large **S&P 500** panel (~300 test dates), the **deep temporal model significantly beats HAR**
+  (E1 LSTM up to +7.1% at h22, combination +3.2…+5.4%, date-clustered p<0.001) — HAR IS beatable given a
+  data-rich panel and adequate test power.
+- **The graph never helps and often hurts:** E2 (LSTM+GAT) < E1 (LSTM) on S&P 500; the graph-residual
+  E6/E7 fail; and model-independently (§6.2) the weighted/signed/innovation/lead-lag neighbour signals add
+  ≈0 incremental OOS R² across all three panels. The required cross-stock spillover is not
+  out-of-sample-transferable on these HAR-feature panels — not a GAT/attention/tuning artefact, and not
+  fixable by consuming edge sign/weight (V2), since the model-free upper bound is itself null.
+
+Overall: the beatable margin over HAR comes from **temporal nonlinearity on large panels, not from the
+cross-sectional graph**. Consistent with the literature (e.g. Branco, Rubesam & Zevallos, "Does anything
+beat linear models?", and Christensen et al. on ML gains at longer horizons with more data).
 
 Open questions worth a second opinion (each could be tested, though §6.2 suggests limited upside):
 - Alternative edge definitions the study has not run: return lead–lag, volume-shock correlation, or a

@@ -71,3 +71,21 @@ deep models lose.
 - Additive-residual floor-explosion on large panels is honest but ugly in tables; the multiplicative/gated/blend
   forms are the safe variants and are what the paper should feature.
 - Paper update (soict_paper_complete.md + .tex) to incorporate these final numbers after SP500 completes.
+
+## Update 2026-08-22 (SP500 fix + graph diagnosis per HAR_GAT_Result_Diagnosis doc)
+- SP500 re-run corrected: long-history subset (min_common=3000 → 457 nodes, ~300 test dates, 137k obs) +
+  train-derived positive output floor (plan §10) + batched eval forwards (whole-set forward OOM'd at 457
+  nodes). Result: **deep temporal model significantly beats HAR** — E1 (LSTM, no graph) +7.1% at h22
+  (date-clustered DM p<0.001); E3 combination +3.2/+3.6/+3.6/+5.4% at h1/5/10/22 (all p<0.001). Graph only
+  detracts (E2 LSTM+GAT < E1 LSTM; E6/E7 graph-residuals fail/blow up). First significant beat-HAR under
+  panel-correct inference, from temporal nonlinearity on a data-rich panel, not the graph.
+- Verification audit V1–V10 (`reports/next_iteration_leakage_audit.md`): V1 target=variance PASS; **V2
+  CONFIRMED** GAT consumes adjacency only as a binary mask (sign/weight discarded, model.py:34-44) + 3
+  characterization tests; V4 purge PASS; V5 exploratory-not-locked; V8/V9 survivorship + panel-dependent
+  graph effect.
+- Model-free graph screening S0–S4 + placebo (`reports/model_free_graph_screening.md`): weighted/signed/
+  innovation/lead-lag neighbour signals add ~0 incremental OOS R² on all 3 panels × 4 horizons; corrected
+  GAT NOT promoted (fixing V2 would not recover value absent from the data).
+- New tests: signed-graph characterization (3) + screen_graph smoke (1) + sp500 floor bounds (2) + batched
+  infer via smoke. Reports: next_iteration_leakage_audit, signed_graph_implementation_audit,
+  model_free_graph_screening, graph_no_value_analysis, graph_findings_handoff.
