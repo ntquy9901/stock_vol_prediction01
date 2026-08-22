@@ -15,7 +15,8 @@ five-feature LSTM, and a five-feature LSTM+GAT (directed volume→Parkinson Top-
 We report five metrics (MSE, RMSE, MAE, QLIKE, R²) with equal weight and assess significance with the
 date-clustered Diebold–Mariano (DM) test; predictions are floored at 1e-2 times the per-node training mean.
 The primary target is short-term (horizons h ∈ {1, 5}); h ∈ {10, 22} are an extended study. HAR-X has the
-lowest QLIKE on both panels at every horizon, and no learned model has a significantly lower QLIKE than HAR-X
+lowest QLIKE at every horizon except VN100 h1 (where the LSTM+GAT point estimate is marginally lower, not
+significantly), and no learned model has a significantly lower QLIKE than HAR-X at any horizon
 (date-clustered DM, p ≥ 0.05). At h1 and h5 the deep models have the lowest MAE on VN100 (LSTM versus HAR-X,
 p<0.001), and the LSTM+GAT has a significantly lower QLIKE than the no-graph LSTM in both panels (VN100 h1
 p<0.001, h5 p=0.022; VN30 h1 p<0.001, h5 p=0.031), reaching HAR-X's QLIKE level at VN100 h5 (0.5690 versus
@@ -54,7 +55,7 @@ the graph model — is trained and evaluated on the same panel with the same fiv
 Our contributions are: (i) a multi-horizon benchmark on the masked VN30/VN100 panel that holds
 the feature set and the data design fixed across HAR-X, an LSTM and an LSTM+GAT, so any difference is
 attributable to a single component; (ii) per-horizon results on all five metrics with the date-clustered DM
-test — HAR-X has the lowest QLIKE at every horizon with no learned model significantly lower, the deep models
+test — HAR-X has the lowest QLIKE at every horizon except VN100 h1 (not significantly), with no learned model significantly lower at any horizon, the deep models
 have the lowest short-horizon MAE on VN100, and the LSTM+GAT has a significantly lower QLIKE than the no-graph
 LSTM at h1 and h5 in both panels but not at h10 or h22; and (iii) a methodological contribution — the
 date-clustered DM test, since a naive per-observation test overstates significance by a factor on the order
@@ -328,8 +329,9 @@ QLIKE is 0.5962 (VN30) and 0.5694 (VN100).
 
 ## 7. Discussion
 
-On both panels HAR-X has the lowest QLIKE at every horizon, and no learned model has a significantly lower QLIKE
-than HAR-X under the date-clustered DM test. At h1 and h5 the LSTM and LSTM+GAT have the lowest MAE on VN100
+No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test;
+HAR-X has the lowest point estimate in every cell except VN100 h1, where the LSTM+GAT is marginally lower
+(not significant). At h1 and h5 the LSTM and LSTM+GAT have the lowest MAE on VN100
 (LSTM versus HAR-X, p<0.001), and the LSTM+GAT has a significantly lower QLIKE and, on VN30, lower squared error
 than the same-feature no-graph LSTM; at VN100 h1 and VN30 h1 the LSTM+GAT has the lowest value on four or five
 of the metrics. At h10 and h22 HAR-X has the lowest MSE, RMSE, QLIKE and R², and the LSTM+GAT-versus-LSTM QLIKE
@@ -348,8 +350,9 @@ cross-section size, so a difference that is not significant per date can appear 
 ## 8. Conclusion
 
 For daily Parkinson-variance forecasting on the Vietnamese market, evaluated with the same features, the same
-masked panel and the same date-clustered Diebold–Mariano inference, HAR-X has the lowest QLIKE at
-every horizon on both panels and no learned model has a significantly lower QLIKE than HAR-X. At the short
+masked panel and the same date-clustered Diebold–Mariano inference, no learned model has a significantly lower
+QLIKE than HAR-X at any horizon, and HAR-X has the lowest QLIKE point estimate in every cell except VN100 h1,
+where the LSTM+GAT is marginally lower (not significant). At the short
 horizons (h1, h5) the LSTM and LSTM+GAT have the lowest MAE on VN100, and the directed volume→Parkinson
 weighted graph gives the LSTM+GAT a significantly lower QLIKE than the same-feature no-graph LSTM in both
 panels, equal to HAR-X's QLIKE level at VN100 h5; at the extended horizons (h10, h22) HAR-X has the lowest MSE,
