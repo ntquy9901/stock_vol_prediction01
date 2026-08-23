@@ -41,6 +41,7 @@ except Exception as exc:  # pragma: no cover - exercised only when arch is missi
 
 FLOOR = 1e-8
 _RETURN_SCALE = 100.0  # scale pseudo returns to ~percent range for arch's optimiser conditioning
+_MAX_PERSISTENCE = 0.999  # cap alpha+beta so near-unit-root (IGARCH) fits do not diverge multi-step
 
 
 # --------------------------------------------------------------------------------------------------
@@ -82,6 +83,41 @@ def _fallback_forecast(train_series: np.ndarray, n_test: int, floor: float, reas
     return np.full(n_test, mean_var, dtype=float)
 
 
+def _cap_params(omega, alpha, beta, uncond_target, cap=_MAX_PERSISTENCE):
+    """Cap GARCH(1,1) persistence at ``cap`` via variance targeting.
+
+    If ``alpha + beta <= cap`` the fitted parameters are returned unchanged. Otherwise the
+    ARCH/GARCH mass is scaled down to ``cap`` (preserving the ``alpha:beta`` ratio) and ``omega``
+    is re-set so the long-run (unconditional) variance equals ``uncond_target``:
+    ``omega = uncond_target * (1 - cap)``. This gives a finite unconditional variance, so the
+    multi-step forecast converges instead of diverging (a near-unit-root IGARCH fit would grow
+    roughly linearly over a long frozen forecast path). Returns ``(omega, alpha, beta)``.
+    """
+    persist = alpha + beta
+    if persist <= cap:
+        return omega, alpha, beta
+    factor = cap / persist
+    return uncond_target * (1.0 - cap), alpha * factor, beta * factor
+
+
+def _capped_forecast_path(omega, alpha, beta, last_h, last_eps2, uncond_target, total_steps,
+                          cap=_MAX_PERSISTENCE):
+    """Analytic multi-step GARCH(1,1) conditional-variance path with persistence capped at ``cap``.
+
+    ``last_h`` is the last in-sample conditional variance and ``last_eps2`` the last squared
+    residual, both in the scaled (pseudo-return) space. For a stationary fit this equals arch's
+    analytic ``res.forecast`` path exactly; for a capped (IGARCH) fit it converges to the finite
+    capped unconditional variance. Returns an array of length ``total_steps`` (1-, 2-, ...,
+    ``total_steps``-step-ahead variances).
+    """
+    omega_c, alpha_c, beta_c = _cap_params(omega, alpha, beta, uncond_target, cap)
+    persist = alpha_c + beta_c
+    sig2_1 = omega_c + alpha_c * last_eps2 + beta_c * last_h   # one-step-ahead variance
+    uncond = omega_c / (1.0 - persist)                         # finite: persist <= cap < 1
+    k = np.arange(total_steps)
+    return uncond + (persist ** k) * (sig2_1 - uncond)
+
+
 def garch_forecast(
     train_series: np.ndarray,
     n_test: int,
@@ -120,9 +156,19 @@ def garch_forecast(
                         dist="normal", rescale=False)
         res = am.fit(disp="off")
 
+        # Read the fitted GARCH(1,1) parameters and last in-sample state, then build the analytic
+        # multi-step variance path with persistence capped (variance targeting) so a near-unit-root
+        # (IGARCH) fit converges to a finite unconditional variance instead of diverging over the
+        # long frozen forecast path. For a stationary fit this reproduces arch's analytic forecast.
+        omega = float(res.params["omega"])
+        alpha = float(res.params["alpha[1]"])
+        beta = float(res.params["beta[1]"])
+        last_h = float(res.conditional_volatility[-1]) ** 2
+        last_eps2 = float(res.resid[-1]) ** 2
+        uncond_target = float(np.var(pseudo_returns))    # sample long-run variance (scaled space)
         total_steps = n_test + horizon - 1
-        fc = res.forecast(horizon=total_steps, reindex=False)
-        variance_path = np.asarray(fc.variance).ravel()  # scaled-space variances, len total_steps
+        variance_path = _capped_forecast_path(omega, alpha, beta, last_h, last_eps2,
+                                              uncond_target, total_steps)
         if variance_path.size < total_steps:
             return _fallback_forecast(train_series, n_test, floor, "forecast path shorter than requested")
 

@@ -110,8 +110,10 @@ evaluation (dropout, weight decay, gradient clipping, ReduceLROnPlateau, early s
 node features at $t$ and attends over a directed volume$\to$Parkinson Top-5, edge-weighted, two-hop graph
 estimated on training rows only; the branches are concatenated into an MLP head. The leave-one-out comparison
 against the same-feature LSTM isolates the graph's marginal contribution. \emph{GARCH}: a GARCH(1,1)
-conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), a
-classical benchmark that forecasts the variance series directly and does not use the node features.
+conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), with
+persistence capped at $0.999$ by variance targeting so near-integrated fits do not diverge over the frozen
+multi-step forecast path; a classical benchmark that forecasts the variance series directly and does not use
+the node features.
 
 \textbf{Masked panel.} A GAT operates over a common-date cross-section, which naively forces a
 common-date intersection (only dates on which every ticker is present) that discards most ticker-days and
@@ -169,23 +171,23 @@ for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
 1  & HAR-X     & 2.367 & 4.865 & 2.898 & 0.5115 & 0.2236 \\
-1  & GARCH    & 15.571 & 12.478 & 5.915 & 0.8059 & -4.1076 \\
+1  & GARCH    & 3.816 & 6.178 & 4.538 & 0.7577 & -0.2519 \\
 1  & LSTM     & 2.370 & 4.869 & 2.821 & 0.5525 & 0.2224 \\
 1  & LSTM+GAT & \textbf{2.362}$^{\dagger}$ & \textbf{4.860}$^{\dagger}$ & \textbf{2.819}$^{\dagger}$ & \textbf{0.5107}$^{\dagger}$ & \textbf{0.2251}$^{\dagger}$ \\
 \midrule
 5  & HAR-X     & \textbf{2.606} & \textbf{5.104} & 3.160 & \textbf{0.5633} & \textbf{0.1466} \\
-5  & GARCH    & 14.844 & 12.184 & 5.909 & 0.7898 & -3.8618 \\
+5  & GARCH    & 3.814 & 6.176 & 4.546 & 0.7420 & -0.2493 \\
 5  & LSTM     & 2.638 & 5.136 & \textbf{3.090} & 0.5841 & 0.1361 \\
 5  & LSTM+GAT & 2.635$^{\dagger}$ & 5.133$^{\dagger}$ & 3.103 & 0.5690$^{\dagger}$ & 0.1371$^{\dagger}$ \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
 10 & HAR-X     & \textbf{2.754} & \textbf{5.248} & 3.306 & \textbf{0.6023} & \textbf{0.0978} \\
-10 & GARCH    & 16.843 & 12.978 & 6.018 & 0.8077 & -4.5165 \\
+10 & GARCH    & 3.891 & 6.238 & 4.582 & 0.7605 & -0.2745 \\
 10 & LSTM     & 2.798 & 5.289 & 3.282 & 0.6070 & 0.0837 \\
 10 & LSTM+GAT & 2.802 & 5.294 & \textbf{3.276}$^{\dagger}$ & 0.6072 & 0.0822 \\
 \midrule
 22 & HAR-X     & \textbf{2.891} & \textbf{5.377} & 3.486 & \textbf{0.6405} & \textbf{0.0544} \\
-22 & GARCH    & 19.345 & 13.909 & 6.151 & 0.7923 & -5.3264 \\
+22 & GARCH    & 3.854 & 6.208 & 4.568 & 0.7450 & -0.2603 \\
 22 & LSTM     & 2.979 & 5.458 & \textbf{3.468} & 0.6518 & 0.0257 \\
 22 & LSTM+GAT & 3.003 & 5.480 & 3.563 & 0.6544 & 0.0178 \\
 \bottomrule
@@ -274,7 +276,7 @@ at $h10$ or $h22$ on either panel ($p\ge0.55$); the LSTM has a higher squared er
 
 \textbf{GARCH benchmark.} GARCH(1,1) has a higher MSE, RMSE, MAE and QLIKE and a lower $R^2$ than HAR-X at
 every horizon on both panels, with a negative $R^2$ on both; its QLIKE is higher than HAR-X's under the
-date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast that converges to the unconditional variance, so its point error is large on VN100 where the volatility level shifts between train and test.
+date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast: a single conditional-variance path is projected from the end of training (persistence capped at 0.999 by variance targeting), so it cannot adapt to the level shifts that HAR-X re-estimates each day, and its error is correspondingly higher.
 
 \textbf{Per-metric ranking.} No single metric determines the ordering, so all five are reported with equal
 weight: HAR-X has the lowest QLIKE at every horizon except VN100 $h1$ (where the LSTM+GAT is marginally lower, not significantly), with no learned model significantly lower at any horizon; the deep and graph models have the lowest point error at the
@@ -304,23 +306,23 @@ LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
 1  & HAR-X    & 3.299 & 5.744 & 3.309 & \textbf{1.2342} & 0.1854 \\
-1  & GARCH    & 156.055 & 39.504 & 9.340 & 1.5394 & -37.5269 \\
+1  & GARCH    & 18.495 & 13.600 & 5.878 & 1.4865 & -3.5660 \\
 1  & LSTM     & \textbf{3.269} & \textbf{5.717} & \textbf{3.219} & 1.2443 & \textbf{0.1931} \\
 1  & LSTM+GAT & 3.273 & 5.721 & 3.232 & 1.2432$^{\dagger}$ & 0.1921 \\
 \midrule
 5  & HAR-X    & \textbf{3.610} & \textbf{6.009} & 3.647 & \textbf{1.2963} & \textbf{0.1091} \\
-5  & GARCH    & 128.780 & 35.886 & 8.699 & 1.5378 & -30.7792 \\
+5  & GARCH    & 6.151 & 7.843 & 5.223 & 1.4767 & -0.5179 \\
 5  & LSTM     & 3.627 & 6.022 & \textbf{3.574} & 1.3137 & 0.1051 \\
 5  & LSTM+GAT & 3.646 & 6.038 & 3.680 & 1.3025$^{\dagger}$ & 0.1002 \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
 10 & HAR-X    & \textbf{3.744} & \textbf{6.118} & \textbf{3.807} & 1.3387 & \textbf{0.0774} \\
-10 & GARCH    & 28.678 & 16.935 & 6.926 & 1.5265 & -6.0680 \\
+10 & GARCH    & 5.503 & 7.418 & 5.125 & 1.4871 & -0.3563 \\
 10 & LSTM     & 3.820 & 6.180 & 3.895 & 1.3367 & 0.0586 \\
 10 & LSTM+GAT & 3.801$^{\dagger}$ & 6.165$^{\dagger}$ & 3.871$^{\dagger}$ & \textbf{1.3348}$^{\dagger}$ & 0.0633$^{\dagger}$ \\
 \midrule
 22 & HAR-X    & \textbf{3.878} & \textbf{6.227} & \textbf{3.995} & 1.3820 & \textbf{0.0449} \\
-22 & GARCH    & 29.681 & 17.228 & 7.060 & 1.5368 & -6.3101 \\
+22 & GARCH    & 5.592 & 7.478 & 5.141 & 1.4880 & -0.3773 \\
 22 & LSTM     & 3.981 & 6.309 & 4.068 & \textbf{1.3774} & 0.0195 \\
 22 & LSTM+GAT & 3.998 & 6.323 & 4.119 & 1.3803 & 0.0152 \\
 \bottomrule
@@ -339,23 +341,23 @@ Table~\ref{tab:hose}. Same scaling as Table~\ref{tab:hose}.}
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
 1  & HAR-X    & 13.986 & 11.826 & 6.549 & 1.8717 & 0.2154 \\
-1  & GARCH    & 142.223 & 37.713 & 15.780 & 2.1938 & -6.9782 \\
+1  & GARCH    & 21.336 & 14.607 & 9.503 & 2.1065 & -0.1969 \\
 1  & LSTM     & 13.717 & 11.712 & 6.438 & \textbf{1.8128} & 0.2305 \\
 1  & LSTM+GAT & \textbf{13.706}$^{\dagger}$ & \textbf{11.707}$^{\dagger}$ & \textbf{6.415}$^{\dagger}$ & 1.8135 & \textbf{0.2312}$^{\dagger}$ \\
 \midrule
 5  & HAR-X    & 15.495 & 12.448 & 7.123 & 1.9402 & 0.1273 \\
-5  & GARCH    & 115.808 & 34.031 & 15.092 & 2.1926 & -5.5221 \\
+5  & GARCH    & 19.960 & 14.128 & 9.268 & 2.1052 & -0.1241 \\
 5  & LSTM     & \textbf{15.423} & \textbf{12.419} & \textbf{7.103} & \textbf{1.9318} & \textbf{0.1314} \\
 5  & LSTM+GAT & 15.465 & 12.436 & 7.193 & 1.9356 & 0.1290 \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
 10 & HAR-X    & 15.977 & 12.640 & \textbf{7.361} & 1.9904 & 0.0970 \\
-10 & GARCH    & 77.514 & 27.841 & 13.520 & 2.2671 & -3.3811 \\
+10 & GARCH    & 19.832 & 14.083 & 9.301 & 2.2020 & -0.1209 \\
 10 & LSTM     & 16.004 & 12.651 & 7.482 & 1.9830 & 0.0955 \\
 10 & LSTM+GAT & \textbf{15.975}$^{\dagger}$ & \textbf{12.639}$^{\dagger}$ & 7.450$^{\dagger}$ & \textbf{1.9815}$^{\dagger}$ & \textbf{0.0971}$^{\dagger}$ \\
 \midrule
 22 & HAR-X    & \textbf{16.554} & \textbf{12.866} & \textbf{7.635} & 2.0391 & \textbf{0.0681} \\
-22 & GARCH    & 142.089 & 37.695 & 15.594 & 2.2165 & -6.9988 \\
+22 & GARCH    & 18.948 & 13.765 & 9.107 & 2.1254 & -0.0667 \\
 22 & LSTM     & 16.665 & 12.909 & 7.869 & 2.0315 & 0.0619 \\
 22 & LSTM+GAT & 16.591$^{\dagger}$ & 12.880$^{\dagger}$ & 7.767$^{\dagger}$ & \textbf{2.0281}$^{\dagger}$ & 0.0661$^{\dagger}$ \\
 \bottomrule
@@ -395,8 +397,9 @@ $h10$ ($p=0.015$) and $h22$ ($p=0.031$). The temporal and graph value that is ab
 blue chips thus appears on the broader, less-liquid HNX universe. On HOSE no learned model differs
 significantly from HAR-X on QLIKE at any horizon ($p\ge0.16$); the deep models still have the lowest MAE at
 $h1$ ($p<0.001$), which reverses at $h10$/$h22$ where HAR-X has the lower MAE ($p<0.001$--$0.020$). GARCH is
-far worse on both exchanges, with a large negative $R^2$ (down to $-37.5$ on HOSE $h1$) and a significantly
-higher QLIKE than HAR-X in every cell ($p<0.001$), consistent with a frozen-train forecast on illiquid series.
+far worse on both exchanges, with a negative $R^2$ (down to $-3.6$ on HOSE $h1$) and a significantly
+higher QLIKE than HAR-X in every cell ($p<0.001$), consistent with a single frozen-train conditional-variance
+path that cannot track the panels' level shifts.
 These are out-of-sample observations from a single configuration on one holdout; they motivate, but do not by
 themselves establish, the deep and graph advantage on less-liquid Vietnamese equities.
 
@@ -421,23 +424,23 @@ LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
 1  & HAR-X    & \textbf{6.189} & \textbf{7.867} & 2.364 & \textbf{0.3590} & \textbf{0.3198} \\
-1  & GARCH    & 351.906 & 59.322 & 17.452 & 1.0066 & -37.6813 \\
+1  & GARCH    & 13.619 & 11.670 & 5.491 & 0.8329 & -0.4970 \\
 1  & LSTM     & 6.298 & 7.936 & 2.375 & 0.3786 & 0.3077 \\
 1  & LSTM+GAT & 6.289$^{\dagger}$ & 7.930$^{\dagger}$ & \textbf{2.319}$^{\dagger}$ & 0.3667$^{\dagger}$ & 0.3087$^{\dagger}$ \\
 \midrule
 5  & HAR-X    & 8.087 & 8.993 & 2.695 & \textbf{0.4171} & 0.1110 \\
-5  & GARCH    & 187.597 & 43.313 & 15.516 & 0.9885 & -19.6207 \\
+5  & GARCH    & 14.043 & 11.850 & 5.578 & 0.8327 & -0.5436 \\
 5  & LSTM     & 7.921 & 8.900 & 2.643 & 0.4540 & 0.1293 \\
 5  & LSTM+GAT & \textbf{7.896}$^{\dagger}$ & \textbf{8.886}$^{\dagger}$ & \textbf{2.559}$^{\dagger}$ & 0.4722 & \textbf{0.1321}$^{\dagger}$ \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
 10 & HAR-X    & 8.977 & 9.475 & 2.847 & \textbf{0.4642} & 0.0152 \\
-10 & GARCH    & 360.640 & 60.053 & 17.430 & 1.0046 & -38.5632 \\
+10 & GARCH    & 13.580 & 11.653 & 5.476 & 0.8415 & -0.4898 \\
 10 & LSTM     & 8.604 & 9.276 & 2.883 & 0.4879 & 0.0561 \\
 10 & LSTM+GAT & \textbf{8.502}$^{\dagger}$ & \textbf{9.220}$^{\dagger}$ & \textbf{2.748}$^{\dagger}$ & 0.4892 & \textbf{0.0674}$^{\dagger}$ \\
 \midrule
 22 & HAR-X    & 9.655 & 9.826 & 2.988 & \textbf{0.5848} & -0.0578 \\
-22 & GARCH    & 336.895 & 58.043 & 17.600 & 0.9968 & -35.9096 \\
+22 & GARCH    & 13.119 & 11.454 & 5.384 & 0.8241 & -0.4373 \\
 22 & LSTM     & 9.307 & 9.647 & 3.054 & 0.6840 & -0.0197 \\
 22 & LSTM+GAT & \textbf{9.283}$^{\dagger}$ & \textbf{9.635}$^{\dagger}$ & \textbf{2.972}$^{\dagger}$ & 0.7018 & \textbf{-0.0170}$^{\dagger}$ \\
 \bottomrule
@@ -472,7 +475,7 @@ $h22$. The deep and graph models instead have the advantage on point error: the 
 RMSE and MAE from $h5$ onward and a lower MAE than HAR-X at $h1$ and $h5$ ($p=0.003$), and a lower MAE than the
 no-graph LSTM at every horizon ($p<0.001$). The graph lowers QLIKE relative to the no-graph LSTM only at $h1$
 ($p<0.001$); at $h5$--$h22$ the LSTM+GAT-vs-LSTM QLIKE difference is not in the graph's favour. GARCH is again
-far worse, with QLIKE near $1.0$ and a large negative $R^2$ at every horizon. The negative $R^2$ at $h22$ for
+far worse, with QLIKE around $0.83$ and a negative $R^2$ (around $-0.5$) at every horizon. The negative $R^2$ at $h22$ for
 all models reflects long-horizon regression toward the mean. The pattern across markets is consistent: the deep
 and graph models reduce squared and absolute error but do not lower QLIKE below HAR-X on the liquid VN30/VN100,
 HOSE and S\&P 500 panels, whereas the learned models' QLIKE advantage appears on the less-liquid HNX universe.

@@ -98,8 +98,10 @@ evaluation (dropout, weight decay, gradient clipping, ReduceLROnPlateau, early s
 node features at $t$ and attends over a directed volume$\to$Parkinson Top-5, edge-weighted, two-hop graph
 estimated on training rows only; the branches are concatenated into an MLP head. The leave-one-out comparison
 against the same-feature LSTM isolates the graph's marginal contribution. \emph{GARCH}: a GARCH(1,1)
-conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), a
-classical benchmark that forecasts the variance series directly and does not use the node features.
+conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), with
+persistence capped at $0.999$ by variance targeting so near-integrated fits do not diverge over the frozen
+multi-step forecast path; a classical benchmark that forecasts the variance series directly and does not use
+the node features.
 
 \textbf{Masked panel.} A GAT operates over a common-date cross-section, which naively forces a
 common-date intersection (only dates on which every ticker is present) that discards most ticker-days and
@@ -157,23 +159,23 @@ for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
 1  & HAR-X     & 2.367 & 4.865 & 2.898 & 0.5115 & 0.2236 \\
-1  & GARCH    & 15.571 & 12.478 & 5.915 & 0.8059 & -4.1076 \\
+1  & GARCH    & 3.816 & 6.178 & 4.538 & 0.7577 & -0.2519 \\
 1  & LSTM     & 2.370 & 4.869 & 2.821 & 0.5525 & 0.2224 \\
 1  & LSTM+GAT & \textbf{2.362}$^{\dagger}$ & \textbf{4.860}$^{\dagger}$ & \textbf{2.819}$^{\dagger}$ & \textbf{0.5107}$^{\dagger}$ & \textbf{0.2251}$^{\dagger}$ \\
 \midrule
 5  & HAR-X     & \textbf{2.606} & \textbf{5.104} & 3.160 & \textbf{0.5633} & \textbf{0.1466} \\
-5  & GARCH    & 14.844 & 12.184 & 5.909 & 0.7898 & -3.8618 \\
+5  & GARCH    & 3.814 & 6.176 & 4.546 & 0.7420 & -0.2493 \\
 5  & LSTM     & 2.638 & 5.136 & \textbf{3.090} & 0.5841 & 0.1361 \\
 5  & LSTM+GAT & 2.635$^{\dagger}$ & 5.133$^{\dagger}$ & 3.103 & 0.5690$^{\dagger}$ & 0.1371$^{\dagger}$ \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
 10 & HAR-X     & \textbf{2.754} & \textbf{5.248} & 3.306 & \textbf{0.6023} & \textbf{0.0978} \\
-10 & GARCH    & 16.843 & 12.978 & 6.018 & 0.8077 & -4.5165 \\
+10 & GARCH    & 3.891 & 6.238 & 4.582 & 0.7605 & -0.2745 \\
 10 & LSTM     & 2.798 & 5.289 & 3.282 & 0.6070 & 0.0837 \\
 10 & LSTM+GAT & 2.802 & 5.294 & \textbf{3.276}$^{\dagger}$ & 0.6072 & 0.0822 \\
 \midrule
 22 & HAR-X     & \textbf{2.891} & \textbf{5.377} & 3.486 & \textbf{0.6405} & \textbf{0.0544} \\
-22 & GARCH    & 19.345 & 13.909 & 6.151 & 0.7923 & -5.3264 \\
+22 & GARCH    & 3.854 & 6.208 & 4.568 & 0.7450 & -0.2603 \\
 22 & LSTM     & 2.979 & 5.458 & \textbf{3.468} & 0.6518 & 0.0257 \\
 22 & LSTM+GAT & 3.003 & 5.480 & 3.563 & 0.6544 & 0.0178 \\
 \bottomrule
@@ -262,7 +264,7 @@ at $h10$ or $h22$ on either panel ($p\ge0.55$); the LSTM has a higher squared er
 
 \textbf{GARCH benchmark.} GARCH(1,1) has a higher MSE, RMSE, MAE and QLIKE and a lower $R^2$ than HAR-X at
 every horizon on both panels, with a negative $R^2$ on both; its QLIKE is higher than HAR-X's under the
-date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast that converges to the unconditional variance, so its point error is large on VN100 where the volatility level shifts between train and test.
+date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast: a single conditional-variance path is projected from the end of training (persistence capped at 0.999 by variance targeting), so it cannot adapt to the level shifts that HAR-X re-estimates each day, and its error is correspondingly higher.
 
 \textbf{Per-metric ranking.} No single metric determines the ordering, so all five are reported with equal
 weight: HAR-X has the lowest QLIKE at every horizon except VN100 $h1$ (where the LSTM+GAT is marginally lower, not significantly), with no learned model significantly lower at any horizon; the deep and graph models have the lowest point error at the

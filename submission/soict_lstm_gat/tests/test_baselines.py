@@ -62,3 +62,54 @@ def test_garch_forecast_fallback_on_degenerate_series():
     assert out.shape == (5,)
     assert np.all(np.isfinite(out))
     assert np.all(out > 0.0)
+
+
+def test_cap_params_reduces_persistence_via_variance_targeting():
+    """When alpha+beta exceeds the cap, persistence is scaled to the cap (ratio preserved) and
+    omega is re-set by variance targeting so the long-run variance equals the sample target."""
+    cap = 0.999
+    omega_c, alpha_c, beta_c = baselines._cap_params(
+        omega=0.01, alpha=0.3, beta=0.9, uncond_target=5.0, cap=cap)
+    assert abs((alpha_c + beta_c) - cap) < 1e-12          # capped exactly to the ceiling
+    assert abs((alpha_c / beta_c) - (0.3 / 0.9)) < 1e-12  # alpha:beta ratio preserved
+    assert abs(omega_c - 5.0 * (1.0 - cap)) < 1e-12       # variance targeting: uncond == target
+
+
+def test_cap_params_noop_when_stationary():
+    """A stationary fit (alpha+beta < cap) is returned unchanged."""
+    omega_c, alpha_c, beta_c = baselines._cap_params(
+        omega=0.02, alpha=0.1, beta=0.7, uncond_target=5.0, cap=0.999)
+    assert (omega_c, alpha_c, beta_c) == (0.02, 0.1, 0.7)
+
+
+def test_capped_forecast_path_matches_recursion_when_stationary():
+    """For a stationary GARCH(1,1) the analytic path equals the direct one-step recursion."""
+    omega, alpha, beta = 0.02, 0.1, 0.7
+    last_h, last_eps2 = 5.0, 4.0
+    path = baselines._capped_forecast_path(
+        omega, alpha, beta, last_h, last_eps2, uncond_target=5.0, total_steps=6, cap=0.999)
+    # direct recursion: sig2_{k} = omega + (alpha+beta) * sig2_{k-1}, sig2_1 from last state
+    sig = omega + alpha * last_eps2 + beta * last_h
+    manual = []
+    for _ in range(6):
+        manual.append(sig)
+        sig = omega + (alpha + beta) * sig
+    assert np.allclose(path, manual)
+
+
+def test_capped_forecast_path_bounded_for_igarch():
+    """An IGARCH fit (alpha+beta >= 1) must NOT diverge: the capped path stays finite, bounded,
+    and converges toward the finite capped unconditional variance instead of growing linearly."""
+    cap = 0.999
+    omega, alpha, beta = 0.5, 0.2, 0.85   # persistence 1.05 -> IGARCH, would diverge uncapped
+    uncond_target = 3.0
+    total_steps = 2000
+    path = baselines._capped_forecast_path(
+        omega, alpha, beta, last_h=2.0, last_eps2=1.5,
+        uncond_target=uncond_target, total_steps=total_steps, cap=cap)
+    assert path.shape == (total_steps,)
+    assert np.all(np.isfinite(path))
+    uncond_capped = uncond_target                     # variance targeting sets long-run == target
+    # converging toward the finite capped unconditional variance, not diverging away from it
+    assert abs(path[-1] - uncond_capped) < abs(path[0] - uncond_capped)
+    assert path.max() <= 5.0 * uncond_capped          # bounded (uncapped would reach ~100x+)
