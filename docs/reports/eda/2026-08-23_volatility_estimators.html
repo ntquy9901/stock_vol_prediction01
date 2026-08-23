@@ -1,0 +1,22 @@
+<html><head><meta charset='utf-8'><title>Volatility estimator comparison</title>
+<style>body{font-family:system-ui,Arial,sans-serif;margin:24px;max-width:1000px}table{border-collapse:collapse;font-size:13px;margin:10px 0}td,th{border:1px solid #ccc;padding:4px 9px;text-align:center}th{background:#f2f2f2}h2{border-bottom:2px solid #ddd}.note{color:#555;font-size:13px}b.k{color:#b00}</style></head><body>
+<h1>Daily volatility-variance estimators — low-range (H&approx;L) diagnostic</h1>
+<p class='note'>All five are variance estimators comparable to the current Parkinson target. <b>zero_frac</b> = fraction of days at/under a relative floor (1e-2&times;median) = days that would be floored and inflate QLIKE. <b>rescued_on_HL</b> = of the H&approx;L (zero intraday range) days, the fraction where the estimator is still non-floored — only estimators with an OVERNIGHT term (close2close, rs_overnight) can rescue a limit/gap day.</p>
+<h2>Fraction of floored (near-zero) days, per estimator</h2>
+<table><tr><th>panel</th><th>tickers</th><th>close2close</th><th>parkinson</th><th>garman_klass</th><th>rogers_satchell</th><th>rs_overnight</th></tr>
+<tr><td><b>vn30</b></td><td>33</td><td>0.130</td><td>0.016</td><td>0.017</td><td>0.097</td><td>0.034</td></tr>
+<tr><td><b>vn100</b></td><td>104</td><td>0.139</td><td>0.032</td><td>0.033</td><td>0.133</td><td>0.050</td></tr>
+<tr><td><b>hose</b></td><td>403</td><td>0.215</td><td>0.144</td><td>0.148</td><td>0.299</td><td>0.131</td></tr>
+<tr><td><b>hnx</b></td><td>299</td><td>0.447</td><td>0.450</td><td>0.453</td><td>0.631</td><td>0.385</td></tr>
+<tr><td><b>sp500</b></td><td>502</td><td>0.089</td><td>0.012</td><td>0.012</td><td>0.047</td><td>0.024</td></tr>
+</table>
+<h2>Rescue rate on H&approx;L days (fraction still non-floored)</h2>
+<table><tr><th>panel</th><th>H&approx;L days</th><th>close2close</th><th>parkinson</th><th>garman_klass</th><th>rogers_satchell</th><th>rs_overnight</th></tr>
+<tr><td><b>vn30</b></td><td>1858</td><td>0.651</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.651</td></tr>
+<tr><td><b>vn100</b></td><td>11968</td><td>0.519</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.518</td></tr>
+<tr><td><b>hose</b></td><td>211370</td><td>0.438</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.438</td></tr>
+<tr><td><b>hnx</b></td><td>486264</td><td>0.263</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.265</td></tr>
+<tr><td><b>sp500</b></td><td>50474</td><td>0.325</td><td>0.000</td><td>0.000</td><td>0.000</td><td>0.324</td></tr>
+</table>
+<p class='note'>Reading: if <b>parkinson</b> has a high floored-day fraction on HOSE/HNX and <b>rs_overnight</b>/<b>close2close</b> rescue most H&approx;L days, then switching to an overnight-augmented estimator would directly reduce the QLIKE inflation identified by the EDA.</p>
+</body></html>
