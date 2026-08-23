@@ -39,27 +39,37 @@ PRICE = {
 }
 
 
-def estimators_from_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
+def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) -> pd.DataFrame:
     """Return a DataFrame with the five variance estimators for each valid OHLCV row (positive prices,
-    high>=max(open,close,low), low<=min(...)). NaN where inputs are invalid or no prior close."""
+    high>=max(open,close,low), low<=min(...)). NaN where inputs are invalid or no prior close.
+
+    The OVERNIGHT return ln(O_t / C_{t-1}) requires a positive PRIOR close and is corrupted by unadjusted
+    splits / zero or missing prior closes (which the intraday Parkinson estimator is immune to). We therefore
+    (a) require ``prev_close > 0`` and (b) winsorize the overnight log-return to +/- ``overnight_cap`` (default
+    0.20 ~ twice the +/-10% VN price limit) so a few unadjusted-split / bad-data days do not dominate the
+    overnight-bearing estimators. Set ``overnight_cap=None`` to disable winsorization (raw behavior)."""
     o = pd.to_numeric(df["open"], errors="coerce").to_numpy(float)
     h = pd.to_numeric(df["high"], errors="coerce").to_numpy(float)
     lo = pd.to_numeric(df["low"], errors="coerce").to_numpy(float)
     c = pd.to_numeric(df["close"], errors="coerce").to_numpy(float)
     ok = np.isfinite([o, h, lo, c]).all(0) & (o > 0) & (h > 0) & (lo > 0) & (c > 0) & (h >= lo)
     prev_c = np.concatenate([[np.nan], c[:-1]])
+    prev_ok = np.isfinite(prev_c) & (prev_c > 0)             # overnight needs a valid positive prior close
     with np.errstate(divide="ignore", invalid="ignore"):
         ln_hl = np.log(h / lo)
         ln_co = np.log(c / o)
         ln_ho, ln_hc = np.log(h / o), np.log(h / c)
         ln_lo, ln_lc = np.log(lo / o), np.log(lo / c)
-        ln_cc = np.log(c / prev_c)
-        ln_oc_prev = np.log(o / prev_c)          # overnight gap
+        r_cc = np.where(prev_ok, np.log(c / prev_c), np.nan)      # close-to-close return
+        r_on = np.where(prev_ok, np.log(o / prev_c), np.nan)      # overnight (gap) return
+        if overnight_cap is not None:                            # winsorize away unadjusted-split/bad-data spikes
+            r_cc = np.clip(r_cc, -overnight_cap, overnight_cap)
+            r_on = np.clip(r_on, -overnight_cap, overnight_cap)
         park = ln_hl ** 2 / (4 * _LN2)
         gk = 0.5 * ln_hl ** 2 - (2 * _LN2 - 1) * ln_co ** 2
         rs = ln_hc * ln_ho + ln_lc * ln_lo       # Rogers-Satchell = ln(H/C)ln(H/O) + ln(L/C)ln(L/O)
-        c2c = ln_cc ** 2
-        rs_ov = rs + ln_oc_prev ** 2
+        c2c = r_cc ** 2
+        rs_ov = rs + r_on ** 2
     out = pd.DataFrame({
         "close2close": c2c, "parkinson": park, "garman_klass": gk,
         "rogers_satchell": rs, "rs_overnight": rs_ov,

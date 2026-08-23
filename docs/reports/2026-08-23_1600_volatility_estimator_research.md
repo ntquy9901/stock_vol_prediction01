@@ -44,39 +44,48 @@ attempt that dropped zero rows fragmented the panel and was discarded as unfair)
 HAR-X, scored the test fold. QLIKE is scale-invariant, so it is comparable across targets. (vn30 Parkinson QLIKE
 0.5159 reproduces the delivered value exactly, validating the setup.)
 
-| panel | estimator | obs | QLIKE | MSE | R² |
-|---|---|---|---|---|---|
-| vn30 | **parkinson** | 10,106 | **0.5159** | 1.93e-7 | 0.231 |
-| vn30 | garman_klass | 10,106 | 0.5151 | 2.06e-7 | 0.195 |
-| vn30 | rs_overnight (YZ-style) | 10,106 | 0.8906 | 8.51e-7 | 0.212 |
-| vn30 | rogers_satchell | 10,106 | 0.9691 | 3.50e-7 | 0.125 |
-| vn30 | close2close | 10,106 | 2.2106 | 1.00e-6 | 0.105 |
-| hnx | **parkinson** | 103,910 | **3.885** | 1.60e-6 | 0.166 |
-| hnx | garman_klass | 103,910 | 3.941 | 1.54e-6 | 0.171 |
-| hnx | rs_overnight | 103,910 | 9.499 | 7.89e-6 | 0.009 |
-| hnx | rogers_satchell | 103,910 | 5.851 | 2.89e-6 | 0.119 |
+**Data-quality bug found and fixed (do not trust the first run).** The first ablation gave rs_overnight a QLIKE
+of **9.499** on HNX — implausibly high. Investigation: the OVERNIGHT return ln(O_t/C_{t-1}) is corrupted by
+**unadjusted splits / zero or missing prior closes** in the raw prices (HNX had 1,100 overnight moves above
+±20%, median 41%, up to 540% — impossible under the ±10% price limit, i.e. corporate-action / bad-data
+artifacts). The intraday Parkinson estimator is immune (H,L are same-day, split-invariant); overnight-based
+estimators are not. Fix (`estimators_from_ohlcv`): require `prev_close>0` and **winsorize the overnight
+log-return at ±0.20** (twice the price limit). Numbers below are AFTER the fix.
 
-**Counterintuitive but clear result:** switching Parkinson→**Garman–Klass** changes nothing (QLIKE
-0.516→0.515 vn30, 3.885→3.941 hnx); switching Parkinson→**Yang–Zhang-style (RS+overnight)** makes forecast
-QLIKE **substantially worse** (0.516→0.891 vn30, 3.885→9.499 hnx), even though it floors slightly fewer days.
-Reason: the overnight/gap component is **high-variance and not persistent**, so a HAR-type model (which
-forecasts persistence) cannot predict it — the added estimation robustness does not translate into
-forecastability; it hurts. Rogers–Satchell and close-to-close are also worse.
+| panel | estimator | obs | QLIKE | MSE | R² | note |
+|---|---|---|---|---|---|---|
+| vn30 | **parkinson** | 10,106 | **0.5159** | 1.93e-7 | 0.231 | intraday, split-immune |
+| vn30 | garman_klass | 10,106 | 0.5151 | 2.06e-7 | 0.195 | ≈ Parkinson |
+| vn30 | rs_overnight (YZ-style) | 10,106 | 0.8906 | 8.51e-7 | 0.212 | worse (clean data: real effect) |
+| vn30 | close2close | 10,106 | 2.2106 | 1.00e-6 | 0.105 | worse |
+| hnx | **parkinson** | 103,910 | **3.885** | 1.60e-6 | 0.166 | |
+| hnx | garman_klass | 103,910 | 3.941 | 1.54e-6 | 0.171 | ≈ Parkinson |
+| hnx | rs_overnight | 103,910 | **4.020** | 6.72e-6 | 0.154 | ≈ Parkinson after cleaning (was 9.499) |
+| hnx | close2close | 103,910 | 5.037 | 3.43e-6 | 0.143 | worse |
+
+**Corrected reading:**
+- **Garman–Klass ≈ Parkinson** on both panels (0.516→0.515 vn30; 3.885→3.941 hnx). Both are intraday and
+  split-immune, so this is the clean, reliable comparison: **switching among intraday estimators changes nothing.**
+- **HNX rs_overnight fell from 9.499 to 4.020** once the overnight data errors were winsorized — the original
+  "much worse" was **mostly a data-quality artifact**, not a property of the estimator. After cleaning it is
+  ≈ Parkinson (3.885).
+- **On CLEAN blue-chip data (vn30, only 0.001% of overnight days winsorized) rs_overnight is 0.891 vs Parkinson
+  0.516 — a genuine effect, not an artifact.** Adding the overnight/gap component makes the per-day target less
+  forecastable, because overnight jumps are not persistent and a HAR model forecasts persistence.
 
 ## Conclusion / recommendation
-- **For forecasting in this pipeline, keep Parkinson.** Garman–Klass is an equivalent alternative (no change);
-  Yang–Zhang / Rogers–Satchell / close-to-close are **worse** as forecast targets here because their overnight
-  or noise components are not forecastable by HAR.
-- The literature's "Yang–Zhang is the best *estimator*" is about **estimation** accuracy (matching latent
-  variance), which is real at the data level (Section B) — but it does **not** carry over to **forecast**
-  accuracy for this HAR/LSTM/GAT setup (Section C), matching the deep-research caveat that estimator-swap gains
-  are "modest and not guaranteed."
-- **The low-range/QLIKE problem is better fixed by loss/floor handling or a liquidity screen, not by changing
-  the estimator** — the estimator swap that reduces zero-range days (YZ) simultaneously degrades forecast
-  QLIKE. Both the literature and the empirics agree on this.
-- Caveat: HAR-X only (deterministic); a deep model might exploit the overnight term differently, but given the
-  large QLIKE gap this is unlikely to reverse. Ablation is on vn30 (liquid) + hnx (illiquid); the pattern is
-  consistent across both.
+- **For forecasting in this pipeline, keep Parkinson** (or Garman–Klass — equivalent, intraday, split-immune,
+  no measurable change).
+- **Overnight-augmented / Yang–Zhang-style targets are neutral-to-worse for per-day forecasting here:** worse on
+  clean vn30 (genuine, overnight not persistent), ≈ equal on hnx after cleaning. The initial dramatic gap (9.5)
+  was largely a data-quality artifact and should not be cited as evidence — corrected here.
+- **Overnight-based estimators cannot be tested fully fairly without split/dividend-ADJUSTED raw prices**, which
+  this project's raw OHLCV is not; the intraday-only comparison (Parkinson vs GK) is clean and shows no change.
+- The literature's "Yang–Zhang is the best *estimator*" concerns **estimation** accuracy (Section B, real at the
+  data level) but does **not** translate into **forecast** gains for this HAR/LSTM/GAT setup, matching the
+  deep-research caveat that estimator-swap gains are "modest and not guaranteed."
+- **The low-range/QLIKE problem is better addressed by loss/floor handling or a liquidity screen than by the
+  estimator.** Caveat: HAR-X only (deterministic); vn30 (liquid) + hnx (illiquid).
 
 ## Files / reuse
 - `scripts/eda/volatility_estimators.py` (+ test, + `docs/reports/eda/2026-08-23_volatility_estimators.html`) — data-level estimator/low-range diagnostic.

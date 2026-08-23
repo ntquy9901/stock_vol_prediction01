@@ -34,6 +34,30 @@ def test_zero_range_day_intraday_zero_overnight_rescues():
     assert abs(r["close2close"] - np.log(12.0 / 10.0) ** 2) < 1e-12
 
 
+def test_zero_prior_close_gives_nan_overnight_not_inf():
+    # day 2 follows a ZERO prior close (bad data) -> overnight ln(O/0) must NOT become +inf; NaN instead
+    df = pd.DataFrame({"date": [1, 2], "open": [10.0, 5.0], "high": [10.0, 5.5],
+                       "low": [10.0, 4.5], "close": [0.0, 5.0], "volume": [1, 1]})
+    est = VE.estimators_from_ohlcv(df)
+    r = est.iloc[1]
+    assert np.isnan(r["close2close"]) and np.isnan(r["rs_overnight"])   # prior close 0 -> overnight undefined
+    assert np.isfinite(r["parkinson"])                                  # intraday estimator unaffected
+
+
+def test_overnight_winsorized_against_unadjusted_split():
+    # a 3x overnight gap (unadjusted split / bad data) must be winsorized so it cannot dominate
+    df = pd.DataFrame({"date": [1, 2], "open": [10.0, 30.0], "high": [10.0, 30.0],
+                       "low": [10.0, 30.0], "close": [10.0, 30.0], "volume": [1, 1]})
+    cap = 0.20
+    est = VE.estimators_from_ohlcv(df, overnight_cap=cap)
+    # overnight contribution is capped at cap^2 (here rs=0 on the flat bar) rather than ln(3)^2 ~ 1.207
+    assert abs(est["rs_overnight"].iloc[1] - cap ** 2) < 1e-9
+    assert abs(est["close2close"].iloc[1] - cap ** 2) < 1e-9
+    # without winsorization the raw spike is ~ln(3)^2, far larger
+    raw = VE.estimators_from_ohlcv(df, overnight_cap=None)
+    assert raw["rs_overnight"].iloc[1] > 1.0
+
+
 def test_invalid_prices_are_nan():
     df = pd.DataFrame({"date": [1], "open": [0.0], "high": [1.0], "low": [1.0], "close": [1.0], "volume": [1]})
     est = VE.estimators_from_ohlcv(df)
