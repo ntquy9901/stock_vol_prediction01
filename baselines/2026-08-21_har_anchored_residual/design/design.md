@@ -1,5 +1,10 @@
 # Design / Plan — HAR-Anchored LSTM–GAT Residual Study
 
+> **SUPERSEDED (2026-08-23).** Describes an earlier residual-experts / blend / gate / cross-fitting design.
+> The delivered critical-path code is the masked-rich HAR / HAR-X / LSTM / weighted-GAT comparison
+> (`code/run_masked_rich.py`, `MaskedRichNet`); see `docs/paper/soict_harlstmgat*.tex`. Kept for lineage only.
+
+
 Plan for `requirements/requirements.md`. Passes Simplicity + Anti-Abstraction + Performance/Batching gates.
 
 ## Architecture / data flow

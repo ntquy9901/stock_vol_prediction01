@@ -156,6 +156,50 @@ def test_two_hop_mask_aware():
     assert torch.allclose(out1[0, 0], out2[0, 0], atol=1e-6), "2-hop leaked a non-neighbour into target"
 
 
+def _synth_panel(tmp_path, n_days=400, tickers=("AAA", "BBB", "CCC")):
+    """Write synthetic processed Parkinson CSVs + matching raw OHLCV; returns (files, price_dir)."""
+    import pandas as pd
+    rng = np.random.default_rng(0)
+    dates = pd.bdate_range("2018-01-01", periods=n_days)
+    proc = tmp_path / "proc"; raw = tmp_path / "raw"; proc.mkdir(); raw.mkdir()
+    for k, tk in enumerate(tickers):
+        v = np.empty(n_days); v[0] = 1e-4 * (k + 1)
+        for t in range(1, n_days):
+            v[t] = 5e-5 * (k + 1) + 0.85 * v[t - 1] + 1e-5 * abs(rng.standard_normal())
+        pd.DataFrame({"date": dates, "parkinson_volatility": v}).to_csv(proc / f"{tk}_processed.csv", index=False)
+        close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
+        span = np.sqrt(v) * close
+        pd.DataFrame({"date": dates, "open": close, "high": close + span, "low": close - span,
+                      "close": close, "volume": rng.integers(1e5, 1e6, n_days)}).to_csv(
+            raw / f"{tk}_ohlcv.csv", index=False)
+    return sorted(str(p) for p in proc.glob("*_processed.csv")), str(raw)
+
+
+def test_train_only_invariance_no_leakage(tmp_path):
+    """Perturbing the TEST-region rows of the inputs must NOT change any train-fitted quantity: the two
+    train graph adjacencies and the per-node train target scaler are estimated on train rows only."""
+    import pandas as pd
+    files, price = _synth_panel(tmp_path)
+    kw = dict(min_valid=2, min_train_rows=120)
+    D0 = MR.build_masked_rich(files, price, lookback=10, horizon=1, **kw)
+    # blow up the last 15% of dates (val+test region) in every processed + raw file
+    for f in files:
+        df = pd.read_csv(f); cut = int(len(df) * 0.85)
+        df.loc[cut:, "parkinson_volatility"] *= 37.0
+        df.to_csv(f, index=False)
+        rf = Path(price) / (Path(f).name.replace("_processed.csv", "_ohlcv.csv"))
+        rdf = pd.read_csv(rf); c2 = int(len(rdf) * 0.85)
+        rdf.loc[c2:, ["high", "low", "volume"]] = rdf.loc[c2:, ["high", "low", "volume"]] * 37.0
+        rdf.to_csv(rf, index=False)
+    D1 = MR.build_masked_rich(files, price, lookback=10, horizon=1, **kw)
+    assert D0.tickers == D1.tickers
+    assert np.allclose(D0.adj_vol2pk, D1.adj_vol2pk), "vol->PK train edge changed after test-region perturbation"
+    assert np.allclose(D0.adj_corr, D1.adj_corr), "corr train edge changed after test-region perturbation"
+    assert np.allclose(D0.t_mean, D1.t_mean), "train target scaler changed after test-region perturbation"
+    # the test targets themselves DID change (sanity: the perturbation reached the test fold)
+    assert not np.allclose(D0.y_te[D0.tmask_te.astype(bool)], D1.y_te[D1.tmask_te.astype(bool)])
+
+
 def test_seed_metric_stats_mean_std_not_ensemble():
     """seed_metric_stats reports the MEAN (and std/min/max) of per-seed metrics -- not the metric of the
     seed-averaged ensemble -- so the paper's '5-seed mean' label is faithful."""

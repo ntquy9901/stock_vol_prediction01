@@ -1,5 +1,13 @@
 # Requirements — HAR-Anchored LSTM–GAT Residual Study (E0–E10)
 
+> **SUPERSEDED (2026-08-23).** This document specifies an earlier HAR-anchored residual/gating ladder
+> (E0–E10, residual experts, blends, gates, cross-fitting). It is **not** the source of truth for the
+> delivered critical-path code. The delivered study is the **masked-rich HAR / HAR-X / LSTM / weighted-GAT
+> comparison** implemented in `code/run_masked_rich.py` (`MaskedRichNet`), evaluated per the SOICT papers
+> `docs/paper/soict_harlstmgat*.tex`. Read this file only for lineage; for the delivered study see those
+> papers, `docs/reports/2026-08-23_1400_perseed_reproducibility_report.md`, and the package
+> `deliverables_20260823/`.
+
 Spec (source of truth) for the experiment ladder in
 `docs/experement_guide/HAR_Anchored_LSTM_GAT_Experiment_Plan.md`. Governs by AGENTS.md/CLAUDE.md;
 conflicts resolve in favor of AGENTS.md.
