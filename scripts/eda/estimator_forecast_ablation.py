@@ -43,13 +43,28 @@ PROC = {
 SCREEN = {"hose", "hnx", "sp500"}
 
 
-def _write_estimator_processed(panel, estimator, out_dir):
+def screened_tickers(panel):
+    """Canonical liquidity-screened ticker universe for a panel, from the DELIVERED processed Parkinson files
+    (the exact set used by the shipped result.json). None means 'keep all' (unscreened panels). Applying the
+    SAME ticker set to every estimator makes the ablation comparable to the delivered numbers AND fair across
+    estimators (the screen is defined on Parkinson H==L days; regenerating a different estimator must not
+    change the universe)."""
+    if panel not in SCREEN:
+        return None
+    kept = FS.screen_files(sorted(glob.glob(str(PROC[panel] / "*_processed.csv"))))
+    return {Path(f).name.replace("_processed.csv", "") for f in kept}
+
+
+def _write_estimator_processed(panel, estimator, out_dir, keep_tickers=None):
     """For every ticker with both a processed CSV and a raw OHLCV file, write a processed CSV whose
-    'parkinson_volatility' column is the chosen estimator computed from raw OHLCV (aligned on date)."""
+    'parkinson_volatility' column is the chosen estimator computed from raw OHLCV (aligned on date).
+    ``keep_tickers`` (if given) restricts to the canonical screened universe."""
     price_dir = VE.PRICE[panel]
     written = []
     for pf in sorted(glob.glob(str(PROC[panel] / "*_processed.csv"))):
         tk = Path(pf).name.replace("_processed.csv", "")
+        if keep_tickers is not None and tk not in keep_tickers:
+            continue
         rf = price_dir / f"{tk}_ohlcv.csv"
         if not rf.exists():
             continue
@@ -95,11 +110,10 @@ def main():
     print(f"{'panel':6} {'estimator':16} {'nodes':>5} {'obs':>7} {'QLIKE':>8} {'MSE':>10} {'R2':>7} {'floored%':>9}")
     for panel in a.panels:
         price_dir = VE.PRICE[panel]
+        keep = screened_tickers(panel)           # fixed canonical universe (matches the delivered result.json)
         for est in a.estimators:
             with tempfile.TemporaryDirectory() as td:
-                files = _write_estimator_processed(panel, est, td)
-                if panel in SCREEN:
-                    files = FS.screen_files(files)
+                files = _write_estimator_processed(panel, est, td, keep_tickers=keep)
                 if len(files) < 2:
                     print(f"{panel:6} {est:16} -- too few tickers"); continue
                 s = _harx_scores(files, price_dir, cfg, a.horizon)

@@ -52,35 +52,48 @@ artifacts). The intraday Parkinson estimator is immune (H,L are same-day, split-
 estimators are not. Fix (`estimators_from_ohlcv`): require `prev_close>0` and **winsorize the overnight
 log-return at ±0.20** (twice the price limit). Numbers below are AFTER the fix.
 
-| panel | estimator | obs | QLIKE | MSE | R² | note |
-|---|---|---|---|---|---|---|
-| vn30 | **parkinson** | 10,106 | **0.5159** | 1.93e-7 | 0.231 | intraday, split-immune |
-| vn30 | garman_klass | 10,106 | 0.5151 | 2.06e-7 | 0.195 | ≈ Parkinson |
-| vn30 | rs_overnight (YZ-style) | 10,106 | 0.8906 | 8.51e-7 | 0.212 | worse (clean data: real effect) |
-| vn30 | close2close | 10,106 | 2.2106 | 1.00e-6 | 0.105 | worse |
-| hnx | **parkinson** | 103,910 | **3.885** | 1.60e-6 | 0.166 | |
-| hnx | garman_klass | 103,910 | 3.941 | 1.54e-6 | 0.171 | ≈ Parkinson |
-| hnx | rs_overnight | 103,910 | **4.020** | 6.72e-6 | 0.154 | ≈ Parkinson after cleaning (was 9.499) |
-| hnx | close2close | 103,910 | 5.037 | 3.43e-6 | 0.143 | worse |
+**Second fix — screened universe must match the delivered pipeline.** A middle run reported HNX Parkinson
+QLIKE 3.885 over 291 tickers, ~2× the delivered 1.872 over 154. Cause: flooring the target at 1e-10 (above)
+made the liquidity screen (which drops tickers whose Parkinson is `== 0.0` on >50% of days, i.e. H==L) keep
+nearly all 291 tickers instead of the delivered 154 — the 137 extra illiquid tickers inflated the pooled
+QLIKE. Fix (`screened_tickers`): fix the ticker universe ONCE by screening the delivered processed Parkinson
+files and apply that same set to every estimator. HNX Parkinson QLIKE is then **1.8721 over 154 tickers /
+62,004 obs — matching the delivered 1.8717**. Numbers below use this canonical universe.
 
-**Corrected reading:**
-- **Garman–Klass ≈ Parkinson** on both panels (0.516→0.515 vn30; 3.885→3.941 hnx). Both are intraday and
-  split-immune, so this is the clean, reliable comparison: **switching among intraday estimators changes nothing.**
-- **HNX rs_overnight fell from 9.499 to 4.020** once the overnight data errors were winsorized — the original
-  "much worse" was **mostly a data-quality artifact**, not a property of the estimator. After cleaning it is
-  ≈ Parkinson (3.885).
-- **On CLEAN blue-chip data (vn30, only 0.001% of overnight days winsorized) rs_overnight is 0.891 vs Parkinson
-  0.516 — a genuine effect, not an artifact.** Adding the overnight/gap component makes the per-day target less
-  forecastable, because overnight jumps are not persistent and a HAR model forecasts persistence.
+| panel | estimator | nodes | obs | QLIKE | MSE | R² | note |
+|---|---|---|---|---|---|---|---|
+| vn30 | **parkinson** | 31 | 10,106 | **0.5159** | 1.93e-7 | 0.231 | matches delivered |
+| vn30 | garman_klass | 31 | 10,106 | 0.5151 | 2.06e-7 | 0.195 | ≈ Parkinson |
+| vn30 | rs_overnight (YZ-style) | 31 | 10,106 | 0.8906 | 8.51e-7 | 0.212 | worse (clean data: real effect) |
+| vn30 | close2close | 31 | 10,106 | 2.2106 | 1.00e-6 | 0.105 | worse |
+| hnx | **parkinson** | 154 | 62,004 | **1.8721** | 1.40e-6 | 0.215 | matches delivered (1.8717) |
+| hnx | garman_klass | 154 | 62,004 | 2.1089 | 1.55e-6 | 0.190 | slightly worse |
+| hnx | rs_overnight | 154 | 61,866 | 2.3095 | 5.23e-6 | 0.187 | worse |
+| hnx | close2close | 154 | 61,866 | 3.9029 | 2.56e-6 | 0.165 | worse |
+
+(High absolute QLIKE on HNX vs vn30 is the illiquidity/low-range effect from the EDA, not a bug — the delivered
+HAR-X QLIKE on HNX is 1.87 by the same panel-correct pipeline.)
+
+**Corrected reading (canonical universe):**
+- **Garman–Klass ≈ Parkinson** on vn30 (0.516 vs 0.515) and slightly worse on hnx (1.872→2.109). Both are
+  intraday and split-immune — the clean, reliable comparison: **switching among intraday estimators does not
+  help, and adds nothing on the liquid panel.**
+- **rs_overnight (YZ-style) is worse than Parkinson on both panels** (vn30 0.516→0.891; hnx 1.872→2.309). On
+  clean vn30 (only 0.001% of overnight days winsorized) this is a **genuine effect** — the overnight/gap
+  component is not persistent, so a HAR model cannot forecast it and the target becomes less forecastable. (Two
+  data bugs had to be fixed first before this was trustworthy: the overnight split artifact, and the screened
+  universe — see above; the earlier 9.5 was not real.)
+- **close2close is worst** (pure return noise, lowest efficiency).
 
 ## Conclusion / recommendation
-- **For forecasting in this pipeline, keep Parkinson** (or Garman–Klass — equivalent, intraday, split-immune,
-  no measurable change).
-- **Overnight-augmented / Yang–Zhang-style targets are neutral-to-worse for per-day forecasting here:** worse on
-  clean vn30 (genuine, overnight not persistent), ≈ equal on hnx after cleaning. The initial dramatic gap (9.5)
-  was largely a data-quality artifact and should not be cited as evidence — corrected here.
-- **Overnight-based estimators cannot be tested fully fairly without split/dividend-ADJUSTED raw prices**, which
-  this project's raw OHLCV is not; the intraday-only comparison (Parkinson vs GK) is clean and shows no change.
+- **For forecasting in this pipeline, keep Parkinson.** Garman–Klass is equivalent on the liquid panel (no
+  measurable change) and marginally worse on the illiquid one; rs_overnight (Yang–Zhang-style) and close2close
+  are worse on both.
+- **Overnight-augmented / Yang–Zhang-style targets do not help per-day forecasting here** because the overnight
+  component is not persistent. Note the two data-quality traps that had to be fixed to see this cleanly (the
+  raw prices are not split-adjusted, so overnight is corrupted; and the liquidity screen must be pinned to the
+  delivered universe) — a fully fair YZ test would still want split/dividend-ADJUSTED prices, which this repo's
+  raw OHLCV is not. The intraday comparison (Parkinson vs GK) needs no such caveat and shows no gain.
 - The literature's "Yang–Zhang is the best *estimator*" concerns **estimation** accuracy (Section B, real at the
   data level) but does **not** translate into **forecast** gains for this HAR/LSTM/GAT setup, matching the
   deep-research caveat that estimator-swap gains are "modest and not guaranteed."
