@@ -25,18 +25,20 @@ daily Parkinson-variance forecasts relative to a linear Heterogeneous Autoregres
 Vietnamese equity market --- VN30 and VN100 --- under panel-correct inference.
 Three models share the same five node features: a linear HAR-X, a
 five-feature LSTM, and a five-feature LSTM+GAT (directed volume$\to$Parkinson Top-5 weighted two-hop
-attention). We report five metrics (MSE, RMSE, MAE, QLIKE, $R^2$) with equal weight and assess significance
-with the date-clustered Diebold--Mariano (DM) test; predictions are floored at $10^{-2}$ times the per-node
-training mean. The primary target is short-term (horizons $h\in\{1,5\}$); $h\in\{10,22\}$ are an extended
-study. HAR-X has the lowest QLIKE at every horizon except VN100 $h1$ (where the LSTM+GAT point estimate is
-marginally lower, not significantly), and no learned model has a significantly
-lower QLIKE than HAR-X at any horizon (date-clustered DM, $p\ge0.05$). At $h1$ and $h5$ the deep models have the lowest MAE on
-VN100 (LSTM vs HAR-X, $p<0.001$), and the LSTM+GAT has a significantly lower QLIKE than the no-graph LSTM in
-both panels (VN100 $h1$ $p<0.001$, $h5$ $p=0.022$; VN30 $h1$ $p<0.001$, $h5$ $p=0.031$), equal to HAR-X's QLIKE
-level at VN100 $h5$ (0.5690 vs 0.5633). At $h10$ and $h22$ HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$, and
-the LSTM+GAT-vs-LSTM QLIKE difference is not significant ($p\ge0.55$). The ranking is metric- and
-horizon-dependent, so all five metrics are reported with equal weight. Methodologically, a naive
-per-observation DM test on this cross-sectionally dependent panel overstates significance by roughly the square root of the number of stocks.
+attention). For the learned models we report the mean (and standard deviation) over five training seeds ---
+the mean of the seed-level metrics, not the metric of a seed-averaged ensemble. We report five metrics (MSE,
+RMSE, MAE, QLIKE, $R^2$) with equal weight and assess significance with the date-clustered Diebold--Mariano
+(DM) test on the five-seed ensemble forecast; predictions are floored at $10^{-2}$ times the per-node training
+mean. The primary target is short-term (horizons $h\in\{1,5\}$); $h\in\{10,22\}$ are an extended study. HAR-X
+has the lowest QLIKE at every horizon on both panels, and no learned model has a significantly lower QLIKE than
+HAR-X at any horizon (date-clustered DM, $p\ge0.05$). At VN100 the deep models have the lowest MAE at $h1$
+(LSTM vs HAR-X, $p<0.001$), and the LSTM+GAT has a significantly lower QLIKE than the no-graph LSTM at VN30
+$h1$, VN100 $h1$ and VN100 $h5$, but not at VN30 $h5$ or the longer horizons. The per-seed QLIKE standard
+deviation of the learned models (about $0.02$--$0.07$) is comparable to these graph-vs-LSTM differences, so the
+graph effect is an ensemble-level effect within seed noise. At $h10$ and $h22$ HAR-X has the lowest MSE, RMSE,
+QLIKE and $R^2$. The ranking is metric- and horizon-dependent, so all five metrics are reported with equal
+weight. Methodologically, a naive per-observation DM test on this cross-sectionally dependent panel overstates
+significance by roughly the square root of the number of stocks.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
@@ -61,10 +63,12 @@ yet listed on a given date, so late-listed tickers are included without dropping
 
 Our contributions are: (i) a multi-horizon benchmark on the masked VN30/VN100 panel that holds
 the feature set and the data design fixed across HAR-X, an LSTM and an LSTM+GAT, so any difference is
-attributable to a single component; (ii) per-horizon results on all five metrics with the date-clustered DM
-test --- HAR-X has the lowest QLIKE at every horizon except VN100 $h1$ (not significantly), with no learned model significantly lower at any horizon, the deep models
-have the lowest short-horizon MAE on VN100, and the LSTM+GAT has a significantly lower QLIKE than the no-graph
-LSTM at $h1$ and $h5$ in both panels but not at $h10$ or $h22$; and (iii) a methodological contribution --- the
+attributable to a single component; (ii) per-horizon results on all five metrics (seed mean and standard
+deviation) with the date-clustered DM test --- HAR-X has the lowest QLIKE at every horizon on both panels, with
+no learned model significantly lower at any horizon, the deep models have the lowest short-horizon MAE on
+VN100, and the LSTM+GAT has a significantly lower QLIKE than the no-graph LSTM at VN30 $h1$, VN100 $h1$ and
+VN100 $h5$ (but not VN30 $h5$ or $h10$/$h22$), a difference of the same order as the learned models' per-seed
+QLIKE dispersion; and (iii) a methodological contribution --- the
 date-clustered DM test, since a naive per-observation test overstates significance by roughly the square root of the number of stocks. Every number is taken from a stored results file.
 
 \section{Related Work}
@@ -101,7 +105,9 @@ against the same-feature LSTM isolates the graph's marginal contribution. \emph{
 conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), with
 persistence capped at $0.999$ by variance targeting so near-integrated fits do not diverge over the frozen
 multi-step forecast path; a classical benchmark that forecasts the variance series directly and does not use
-the node features.
+the node features. The pseudo-returns carry a random sign, but a symmetric GARCH(1,1) conditional variance
+depends only on squared residuals, so the variance forecast is nearly sign-invariant (sign-seed variation
+under $5\%$).
 
 \textbf{Masked panel.} A GAT operates over a common-date cross-section, which naively forces a
 common-date intersection (only dates on which every ticker is present) that discards most ticker-days and
@@ -111,15 +117,19 @@ late-listed tickers are included without dropping whole dates, and a mask-aware 
 Every model is trained and evaluated on the same panel with the same five features and split (VN100: 46{,}308
 masked obs over 454 test dates at $h1$; VN30: 10{,}106 obs over 326 test dates at $h1$).
 
-\textbf{Protocol.} Each configuration runs five seeds, up to 20 epochs with early stopping. We report MSE,
-RMSE, MAE, QLIKE and $R^2$, seed-averaged, with equal weight; predictions are floored at $10^{-2}$ times the
-per-node training mean, applied identically to every model. Significance uses the \emph{date-clustered}
-Diebold--Mariano test: the per-observation loss differential is collapsed to one value per calendar date
-before the statistic (HLN correction, HAC lag $h{-}1$) is computed. This is the panel-correct treatment for a
-cross-section that shares each trading date; a naive per-observation test treats the effective sample as the
-number of tickers times the number of dates and inflates the statistic by roughly the square root of the number of stocks (about
-six on VN30, ten on VN100). We report two targeted contrasts --- LSTM vs HAR-X and LSTM+GAT vs LSTM --- on QLIKE
-and MAE.
+\textbf{Protocol.} Each configuration runs five seeds (batch size $32$, up to $20$ epochs, early-stopping
+patience $3$; the configuration is recorded in every results file so the runs are reproducible), with the
+seed set fixed across models. For the learned models we report, for each metric, the \emph{mean and standard
+deviation of the seed-level metrics} --- not the metric of a seed-averaged (ensemble) prediction, which is
+generally lower and hides seed sensitivity. We report MSE, RMSE, MAE, QLIKE and $R^2$ with equal weight;
+predictions are floored at $10^{-2}$ times the per-node training mean, applied identically to every model.
+Significance uses the \emph{date-clustered} Diebold--Mariano test on the five-seed ensemble (mean) forecast:
+the per-observation loss differential is collapsed to one value per calendar date before the statistic (HLN
+correction, HAC lag $h{-}1$) is computed. This is the panel-correct treatment for a cross-section that shares
+each trading date; a naive per-observation test treats the effective sample as the number of tickers times the
+number of dates and inflates the statistic by roughly the square root of the number of stocks (about six on
+VN30, ten on VN100). We report two targeted contrasts --- LSTM vs HAR-X and LSTM+GAT vs LSTM --- on QLIKE and
+MAE. Per-metric contrasts are reported without a multiple-comparison correction (unadjusted).
 
 \begin{figure}[t]
 \centering
@@ -142,15 +152,17 @@ five metrics and the two targeted date-clustered DM contrasts (LSTM vs HAR-X, LS
 
 \section{Results}
 Point-error metrics are scaled (MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$); QLIKE and
-$R^2$ unscaled. All values are five-seed test means (\texttt{results/masked\_rich\_floor1e2/}). Row order is
-HAR-X $\to$ LSTM $\to$ LSTM+GAT. Tables~\ref{tab:vn100} and~\ref{tab:vn30} report all five metrics;
+$R^2$ unscaled. For the learned models each value is the mean of the seed-level metrics over five seeds; the
+QLIKE column additionally reports the per-seed standard deviation ($\pm$). HAR-X and GARCH are deterministic.
+All values are read from \texttt{results/masked\_rich\_floor1e2/}. Row order is
+HAR-X $\to$ GARCH $\to$ LSTM $\to$ LSTM+GAT. Tables~\ref{tab:vn100} and~\ref{tab:vn30} report all five metrics;
 Table~\ref{tab:dm} reports the two targeted date-clustered DM contrasts on QLIKE and MAE. The primary horizons
 $h1$/$h5$ appear first; the extended horizons $h10$/$h22$ appear in the lower block of each table.
 
 \begin{table}[t]
 \centering
-\caption{VN100 (46{,}308 masked obs over 454 test dates at $h1$; 5-seed means). Lower is better
-for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+GAT improves over the no-graph LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
+\caption{VN100 (46{,}308 masked obs over 454 test dates at $h1$; learned models: seed mean, QLIKE
+$\pm$~per-seed std). Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+GAT improves over the no-graph LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
 \label{tab:vn100}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
@@ -158,33 +170,33 @@ for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+
 \toprule
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
-1  & HAR-X     & 2.367 & 4.865 & 2.898 & 0.5115 & 0.2236 \\
+1  & HAR-X    & \textbf{2.367} & \textbf{4.865} & 2.898 & \textbf{0.5115} & \textbf{0.2236} \\
 1  & GARCH    & 3.816 & 6.178 & 4.538 & 0.7577 & -0.2519 \\
-1  & LSTM     & 2.370 & 4.869 & 2.821 & 0.5525 & 0.2224 \\
-1  & LSTM+GAT & \textbf{2.362}$^{\dagger}$ & \textbf{4.860}$^{\dagger}$ & \textbf{2.819}$^{\dagger}$ & \textbf{0.5107}$^{\dagger}$ & \textbf{0.2251}$^{\dagger}$ \\
+1  & LSTM     & 2.386 & 4.885 & 2.774 & 0.6229\,$\pm$.074 & 0.2172 \\
+1  & LSTM+GAT & 2.371$^{\dagger}$ & 4.869$^{\dagger}$ & \textbf{2.773}$^{\dagger}$ & 0.5504\,$\pm$.020$^{\dagger}$ & 0.2224$^{\dagger}$ \\
 \midrule
-5  & HAR-X     & \textbf{2.606} & \textbf{5.104} & 3.160 & \textbf{0.5633} & \textbf{0.1466} \\
+5  & HAR-X    & \textbf{2.606} & \textbf{5.104} & 3.160 & \textbf{0.5633} & \textbf{0.1466} \\
 5  & GARCH    & 3.814 & 6.176 & 4.546 & 0.7420 & -0.2493 \\
-5  & LSTM     & 2.638 & 5.136 & \textbf{3.090} & 0.5841 & 0.1361 \\
-5  & LSTM+GAT & 2.635$^{\dagger}$ & 5.133$^{\dagger}$ & 3.103 & 0.5690$^{\dagger}$ & 0.1371$^{\dagger}$ \\
+5  & LSTM     & 2.649 & 5.147 & 3.142 & 0.6021\,$\pm$.039 & 0.1324 \\
+5  & LSTM+GAT & 2.634$^{\dagger}$ & 5.132$^{\dagger}$ & \textbf{3.126}$^{\dagger}$ & 0.5759\,$\pm$.012$^{\dagger}$ & 0.1373$^{\dagger}$ \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
-10 & HAR-X     & \textbf{2.754} & \textbf{5.248} & 3.306 & \textbf{0.6023} & \textbf{0.0978} \\
+10 & HAR-X    & \textbf{2.754} & \textbf{5.248} & 3.306 & \textbf{0.6023} & \textbf{0.0978} \\
 10 & GARCH    & 3.891 & 6.238 & 4.582 & 0.7605 & -0.2745 \\
-10 & LSTM     & 2.798 & 5.289 & 3.282 & 0.6070 & 0.0837 \\
-10 & LSTM+GAT & 2.802 & 5.294 & \textbf{3.276}$^{\dagger}$ & 0.6072 & 0.0822 \\
+10 & LSTM     & 2.796 & 5.288 & \textbf{3.297} & 0.6100\,$\pm$.008 & 0.0842 \\
+10 & LSTM+GAT & 2.812 & 5.303 & 3.342 & 0.6103\,$\pm$.003 & 0.0789 \\
 \midrule
-22 & HAR-X     & \textbf{2.891} & \textbf{5.377} & 3.486 & \textbf{0.6405} & \textbf{0.0544} \\
+22 & HAR-X    & \textbf{2.891} & \textbf{5.377} & \textbf{3.486} & \textbf{0.6405} & \textbf{0.0544} \\
 22 & GARCH    & 3.854 & 6.208 & 4.568 & 0.7450 & -0.2603 \\
-22 & LSTM     & 2.979 & 5.458 & \textbf{3.468} & 0.6518 & 0.0257 \\
-22 & LSTM+GAT & 3.003 & 5.480 & 3.563 & 0.6544 & 0.0178 \\
+22 & LSTM     & 2.988 & 5.466 & 3.507 & 0.6525\,$\pm$.001 & 0.0229 \\
+22 & LSTM+GAT & 3.029 & 5.504 & 3.600 & 0.6576\,$\pm$.002 & 0.0093 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{VN30 (10{,}106 masked obs over 326 test dates at $h1$; 5-seed means). $^{\dagger}$~as in Table~1. Same scaling as
+\caption{VN30 (10{,}106 masked obs over 326 test dates at $h1$; learned: seed mean, QLIKE $\pm$~per-seed std). $^{\dagger}$~as in Table~1. Same scaling as
 Table~\ref{tab:vn100}.}
 \label{tab:vn30}
 \footnotesize
@@ -193,33 +205,33 @@ Table~\ref{tab:vn100}.}
 \toprule
 $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 \midrule
-1  & HAR-X     & 1.927 & 4.389 & 2.389 & \textbf{0.5159} & 0.2308 \\
+1  & HAR-X    & \textbf{1.927} & \textbf{4.389} & 2.389 & \textbf{0.5159} & \textbf{0.2308} \\
 1  & GARCH    & 2.788 & 5.280 & 3.480 & 0.7954 & -0.1129 \\
-1  & LSTM     & 1.929 & 4.393 & 2.407 & 0.6073 & 0.2297 \\
-1  & LSTM+GAT & \textbf{1.912}$^{\dagger}$ & \textbf{4.372}$^{\dagger}$ & \textbf{2.366}$^{\dagger}$ & 0.5800$^{\dagger}$ & \textbf{0.2368}$^{\dagger}$ \\
+1  & LSTM     & 1.931 & 4.395 & \textbf{2.352} & 0.7037\,$\pm$.054 & 0.2290 \\
+1  & LSTM+GAT & 1.927$^{\dagger}$ & 4.390$^{\dagger}$ & 2.379 & 0.6602\,$\pm$.064$^{\dagger}$ & 0.2305$^{\dagger}$ \\
 \midrule
-5  & HAR-X     & \textbf{2.139} & \textbf{4.625} & \textbf{2.583} & \textbf{0.5965} & \textbf{0.1497} \\
+5  & HAR-X    & \textbf{2.139} & \textbf{4.625} & \textbf{2.583} & \textbf{0.5965} & \textbf{0.1497} \\
 5  & GARCH    & 2.783 & 5.276 & 3.489 & 0.7859 & -0.1065 \\
-5  & LSTM     & 2.164 & 4.652 & 2.632 & 0.6402 & 0.1397 \\
-5  & LSTM+GAT & 2.147$^{\dagger}$ & 4.633$^{\dagger}$ & 2.651 & 0.6059$^{\dagger}$ & 0.1467$^{\dagger}$ \\
+5  & LSTM     & 2.158 & 4.645 & 2.636 & 0.6595\,$\pm$.043 & 0.1422 \\
+5  & LSTM+GAT & 2.148$^{\dagger}$ & 4.635$^{\dagger}$ & 2.596$^{\dagger}$ & 0.6491\,$\pm$.027$^{\dagger}$ & 0.1461$^{\dagger}$ \\
 \midrule
 \multicolumn{7}{l}{\emph{Extended horizons}}\\
-10 & HAR-X     & \textbf{2.301} & \textbf{4.797} & 2.733 & \textbf{0.6428} & \textbf{0.1028} \\
+10 & HAR-X    & \textbf{2.301} & \textbf{4.797} & \textbf{2.733} & \textbf{0.6428} & \textbf{0.1028} \\
 10 & GARCH    & 2.829 & 5.319 & 3.508 & 0.7774 & -0.1029 \\
-10 & LSTM     & 2.310 & 4.806 & \textbf{2.721} & 0.6584 & 0.0995 \\
-10 & LSTM+GAT & 2.326 & 4.823 & 2.725 & 0.6564$^{\dagger}$ & 0.0931 \\
+10 & LSTM     & 2.313 & 4.809 & 2.742 & 0.6687\,$\pm$.015 & 0.0984 \\
+10 & LSTM+GAT & 2.325 & 4.822 & 2.749 & 0.6672\,$\pm$.029$^{\dagger}$ & 0.0935 \\
 \midrule
-22 & HAR-X     & \textbf{2.272} & \textbf{4.766} & \textbf{2.785} & \textbf{0.6422} & \textbf{0.0723} \\
+22 & HAR-X    & \textbf{2.272} & \textbf{4.766} & \textbf{2.785} & \textbf{0.6422} & \textbf{0.0723} \\
 22 & GARCH    & 2.719 & 5.214 & 3.437 & 0.7452 & -0.1102 \\
-22 & LSTM     & 2.383 & 4.881 & 2.904 & 0.6550 & 0.0271 \\
-22 & LSTM+GAT & 2.385 & 4.883 & 2.884$^{\dagger}$ & 0.6548$^{\dagger}$ & 0.0261 \\
+22 & LSTM     & 2.376 & 4.874 & 2.868 & 0.6636\,$\pm$.013 & 0.0299 \\
+22 & LSTM+GAT & 2.379 & 4.878 & 2.889 & 0.6527\,$\pm$.003$^{\dagger}$ & 0.0285 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{Targeted date-clustered DM contrasts ($p$-value; favoured model in parentheses; bold if $p<0.05$).
+\caption{Targeted date-clustered DM contrasts on the 5-seed ensemble forecast ($p$-value; favoured model in parentheses; bold if $p<0.05$; unadjusted).
 H=HAR-X, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}
 \label{tab:dm}
 \footnotesize
@@ -230,45 +242,44 @@ H=HAR-X, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}
 \cmidrule(lr){3-4}\cmidrule(lr){5-6}
 Panel & $h$ & QLIKE & MAE & QLIKE & MAE \\
 \midrule
-VN100 & 1  & \textbf{.028 (H)} & \textbf{$<$.001 (L)} & \textbf{$<$.001 (G)} & .684 (G) \\
-VN100 & 5  & .148 (H) & \textbf{$<$.001 (L)} & \textbf{.022 (G)} & \textbf{.002 (L)} \\
-VN100 & 10 & .598 (H) & .201 (L) & .872 (L) & .064 (G) \\
-VN100 & 22 & .429 (H) & .611 (L) & .658 (L) & \textbf{$<$.001 (L)} \\
+VN100 & 1  & \textbf{.001 (H)} & \textbf{$<$.001 (L)} & \textbf{$<$.001 (G)} & .542 (L) \\
+VN100 & 5  & .402 (H) & .077 (L) & \textbf{$<$.001 (G)} & \textbf{$<$.001 (G)} \\
+VN100 & 10 & .730 (H) & .523 (L) & .453 (L) & \textbf{$<$.001 (L)} \\
+VN100 & 22 & .407 (H) & .618 (H) & .140 (L) & \textbf{$<$.001 (L)} \\
 \midrule
-VN30 & 1  & \textbf{$<$.001 (H)} & .221 (H) & \textbf{$<$.001 (G)} & \textbf{$<$.001 (G)} \\
-VN30 & 5  & \textbf{.037 (H)} & \textbf{$<$.001 (H)} & \textbf{.031 (G)} & \textbf{.015 (L)} \\
-VN30 & 10 & .260 (H) & .340 (L) & .547 (G) & .624 (L) \\
-VN30 & 22 & .318 (H) & \textbf{.001 (H)} & .936 (G) & \textbf{.021 (G)} \\
+VN30 & 1  & \textbf{$<$.001 (H)} & \textbf{.003 (L)} & \textbf{$<$.001 (G)} & \textbf{$<$.001 (L)} \\
+VN30 & 5  & .122 (H) & \textbf{$<$.001 (H)} & .280 (L) & \textbf{$<$.001 (G)} \\
+VN30 & 10 & .249 (H) & .614 (H) & .162 (G) & .331 (L) \\
+VN30 & 22 & .520 (H) & .061 (H) & .625 (G) & \textbf{$<$.001 (L)} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Short-horizon results ($h1$, $h5$).} At VN100 $h1$ the LSTM+GAT has the lowest value on all five
-metrics (MSE 2.362, RMSE 4.860, MAE 2.819, QLIKE 0.5107, $R^2$ 0.2251); by DM the LSTM has a lower MAE than HAR-X
-($p<0.001$), a higher QLIKE than HAR-X ($p=0.028$), and the LSTM+GAT has a lower QLIKE than the no-graph LSTM
-($p<0.001$). At VN100 $h5$ HAR-X has the lowest MSE, RMSE, QLIKE and highest $R^2$ and the LSTM the lowest MAE
-(3.090); by DM the LSTM has a lower MAE than HAR-X ($p<0.001$) and the LSTM+GAT a lower QLIKE than the LSTM
-($p=0.022$). At VN30 $h1$ the LSTM+GAT has the lowest MSE, RMSE, MAE and highest $R^2$ and HAR-X the lowest QLIKE
-(0.5159); by DM the LSTM has a higher QLIKE than HAR-X ($p<0.001$) and the LSTM+GAT a lower QLIKE ($p<0.001$) and
-squared error ($p=0.003$) than the no-graph LSTM. At VN30 $h5$ HAR-X has the lowest value on all five metrics; by
-DM the LSTM has a higher QLIKE ($p=0.037$) and MAE ($p<0.001$) than HAR-X and the LSTM+GAT a lower QLIKE than the
-LSTM ($p=0.031$). Across the four short-horizon cells no learned model has a significantly lower QLIKE than
-HAR-X, and the LSTM+GAT has a significantly lower QLIKE than the no-graph LSTM in all four, equal to HAR-X's QLIKE
-level at VN100 $h5$ (0.5690 vs 0.5633) and $h1$ (0.5107 vs 0.5115).
+\textbf{Short-horizon results ($h1$, $h5$).} HAR-X has the lowest QLIKE in all four short-horizon cells, well
+below the seed-mean QLIKE of the learned models. At VN100 $h1$ the LSTM+GAT has the lowest MAE, while HAR-X has the lowest MSE, RMSE and $R^2$; the
+LSTM+GAT has a higher QLIKE than HAR-X (seed mean $0.5504$ vs $0.5115$). By DM the deep models have a lower
+MAE than HAR-X ($p<0.001$) and the LSTM+GAT a significantly lower QLIKE than the no-graph LSTM ($p<0.001$). At
+VN100 $h5$ HAR-X has the lowest QLIKE and the LSTM+GAT the lowest MAE; the LSTM+GAT again has a lower QLIKE than
+the LSTM ($p<0.001$). At VN30 $h1$ HAR-X has the lowest QLIKE ($0.5159$, against deep seed means of
+$0.66$--$0.70$) and the LSTM the lowest MAE ($p=0.003$ vs HAR-X); the LSTM+GAT has a lower QLIKE than the
+no-graph LSTM ($p<0.001$). At VN30 $h5$ HAR-X has the lowest value on all five metrics and the graph's QLIKE
+advantage over the LSTM is not significant ($p=0.28$). The per-seed QLIKE standard deviation of the learned
+models ($0.02$--$0.07$) is comparable to the graph-vs-LSTM gap, so this is an ensemble-level effect within seed
+noise.
 
-\textbf{Extended-horizon results ($h10$, $h22$).} HAR-X has the lowest MSE, RMSE, QLIKE and highest $R^2$ on both
-panels at both horizons; the LSTM has the lowest MAE at VN100 $h22$ (3.468) and VN30 $h10$ (2.721), the
-LSTM+GAT the lowest MAE at VN100 $h10$ (3.276). By DM the LSTM+GAT-vs-LSTM QLIKE difference is not significant
-at $h10$ or $h22$ on either panel ($p\ge0.55$); the LSTM has a higher squared error than HAR-X at VN100 $h10$
-($p=0.022$) and $h22$ ($p=0.002$) and a higher MAE than HAR-X at VN30 $h22$ ($p=0.001$).
+\textbf{Extended-horizon results ($h10$, $h22$).} HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$ on both
+panels at both horizons; the LSTM has the lowest MAE at VN100 $h10$, and HAR-X the lowest MAE in the other
+extended-horizon cells. By DM the LSTM+GAT-vs-LSTM QLIKE difference is not significant at $h10$ or $h22$ on
+either panel, and no learned model has a significantly lower QLIKE than HAR-X.
 
 \textbf{GARCH benchmark.} GARCH(1,1) has a higher MSE, RMSE, MAE and QLIKE and a lower $R^2$ than HAR-X at
 every horizon on both panels, with a negative $R^2$ on both; its QLIKE is higher than HAR-X's under the
 date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast: a single conditional-variance path is projected from the end of training (persistence capped at 0.999 by variance targeting), so it cannot adapt to the level shifts that HAR-X re-estimates each day, and its error is correspondingly higher.
 
 \textbf{Per-metric ranking.} No single metric determines the ordering, so all five are reported with equal
-weight: HAR-X has the lowest QLIKE at every horizon except VN100 $h1$ (where the LSTM+GAT is marginally lower, not significantly), with no learned model significantly lower at any horizon; the deep and graph models have the lowest point error at the
-short horizons; HAR-X has the lowest MSE/RMSE from $h5$ onward.
+weight: HAR-X has the lowest QLIKE at every horizon on both panels, with no learned model significantly lower
+at any horizon; the deep and graph models have the lowest point error (MAE) at some short horizons on VN100;
+and HAR-X has the lowest MSE and RMSE at every horizon.
 
 \textbf{Cross-market check (S\&P 500, exploratory).} As a preliminary out-of-sample check on a larger market, the same masked panel and five features were applied to S\&P 500 constituents (442 nodes, 1{,}624 test dates) with a single seed; Table~\ref{tab:sp500} reports all five metrics. In contrast to the Vietnamese panels, the deep models attain the lowest point error (MSE, RMSE, MAE and $R^2$) from $h5$ onward. HAR-X retains the lowest QLIKE at $h5$, $h10$ and $h22$; at $h1$ the LSTM+GAT has a marginally lower QLIKE. Two caveats apply: the run uses a single seed, and the deep models' QLIKE at $h5$--$h22$ is inflated by the per-node positivity floor at the S\&P 500 variance scale, so QLIKE for the deep models on this panel is not yet reliable and a scale-aware floor with multiple seeds is left for future work.
 
@@ -322,30 +333,34 @@ VN100 & $0.602\pm0.039$ & $0.572\pm0.004$ & $0.573\pm0.003$ & $0.576\pm0.007$ \\
 \textbf{Common-floor sensitivity.} Because the main tables pre-floor HAR-X at the relative floor before the metric, we re-score every model from raw forecasts under a single common floor applied identically to all models, using either the relative floor or a fixed $10^{-8}$ floor. Under both policies fewer than $0.01\%$ of forecasts are clipped, and at $h5$, $h10$ and $h22$ the QLIKE values and the deep-vs-HAR-X DM outcome are identical. Only $h1$ is floor-sensitive, and the sensitivity is on the HAR-X side: extreme $h1$ QLIKE values arose from a very small number of non-positive or near-zero forecasts produced by the unconstrained linear output and subsequently mapped to a tight numerical floor; the positive-by-construction ratio-exp parameterization removed this sensitivity. At $h1$, the ratio-exp deep model obtained a lower mean QLIKE than HAR-X under the relative-floor policy, but no statistically significant difference was detected (VN100 $p=0.24$, VN30 $p=0.57$). These configurations were identified after observing QLIKE on the same test set, so they are reported as a robustness result and as a pre-specified candidate for a future out-of-sample or walk-forward evaluation, not as a replacement for the main-table specification.
 
 \section{Discussion}\label{sec:disc}
-No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test;
-HAR-X has the lowest point estimate in every cell except VN100 $h1$, where the LSTM+GAT is marginally lower
-(not significant). At $h1$ and $h5$ the LSTM and LSTM+GAT have the lowest MAE on VN100
-(LSTM vs HAR-X, $p<0.001$), and the LSTM+GAT has a significantly lower QLIKE and, on VN30, lower squared error
-than the same-feature no-graph LSTM; at VN100 $h1$ and VN30 $h1$ the LSTM+GAT has the lowest value on four or
-five of the metrics. At $h10$ and $h22$ HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$, and the
-LSTM+GAT-vs-LSTM QLIKE difference is not significant. The graph's effect on QLIKE relative to the no-graph LSTM
-is present at the short horizons and absent at the longer horizons; the deep models' MAE reduction is present
-at the short horizons on VN100 and reverses at the longer horizons, where their squared error and MAE are
-higher than HAR-X's. The ranking is metric- and horizon-dependent, which is why all five metrics are reported
-with equal weight. The date-clustered DM test matters for these conclusions: a naive per-observation test on
-this cross-sectionally dependent panel inflates the statistic by roughly the square root of the number of stocks, so a difference
-that is not significant per date can appear significant per observation.
+No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test,
+and HAR-X has the lowest QLIKE seed-mean in every cell on both panels. At $h1$ the deep models have the lowest
+MAE on VN100 (LSTM vs HAR-X, $p<0.001$), and the LSTM+GAT has a significantly lower QLIKE than the same-feature
+no-graph LSTM at VN30 $h1$, VN100 $h1$ and VN100 $h5$; this graph effect is absent at VN30 $h5$ and at the
+longer horizons. Because the per-seed QLIKE standard deviation of the learned models ($0.02$--$0.07$) is of the
+same order as these graph-vs-LSTM differences, and the DM test is computed on the five-seed ensemble forecast,
+the graph effect is best read as an ensemble-level regularity rather than a robust per-seed improvement. At
+$h10$ and $h22$ HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$. The ranking is metric- and horizon-dependent,
+which is why all five metrics are reported with equal weight. The date-clustered DM test matters for these
+conclusions: a naive per-observation test on this cross-sectionally dependent panel inflates the statistic by
+roughly the square root of the number of stocks, so a difference that is not significant per date can appear
+significant per observation. \textbf{Multiplicity.} We report per-metric DM contrasts without a
+multiple-comparison correction; the headline conclusion is a set of \emph{null} results (no learned model
+significantly beats HAR-X on QLIKE), which a correction would only reinforce, while the significant
+graph-vs-LSTM contrasts should be read as unadjusted exploratory findings. \textbf{Capacity.} The LSTM+GAT
+adds a graph branch and its parameters to the no-graph LSTM, so the leave-one-out contrast measures the effect
+of adding the implemented graph branch, not of graph structure at matched capacity.
 
 \section{Conclusion}
 For daily Parkinson-variance forecasting on the Vietnamese market, evaluated with the same features, the same
 masked panel and the same date-clustered Diebold--Mariano inference, no learned model has a significantly lower
-QLIKE than HAR-X at any horizon, and HAR-X has the lowest QLIKE point estimate in every cell except VN100 $h1$,
-where the LSTM+GAT is marginally lower (not significant). At the short
-horizons ($h1$, $h5$) the LSTM and LSTM+GAT have the lowest MAE on VN100, and the directed volume$\to$Parkinson
-weighted graph gives the LSTM+GAT a significantly lower QLIKE than the same-feature no-graph LSTM in both
-panels, equal to HAR-X's QLIKE level at VN100 $h5$; at the extended horizons ($h10$, $h22$) HAR-X has the lowest
-MSE, RMSE, QLIKE and $R^2$, and the graph's QLIKE difference from the no-graph LSTM is not significant. The
-ranking is metric- and horizon-dependent, so all five metrics are reported with equal weight.
+QLIKE than HAR-X at any horizon, and HAR-X has the lowest QLIKE seed-mean in every cell on both panels. At the
+short horizons ($h1$, $h5$) the deep models have the lowest MAE on VN100, and the directed volume$\to$Parkinson
+weighted graph gives the LSTM+GAT a significantly lower QLIKE than the same-feature no-graph LSTM at VN30 $h1$,
+VN100 $h1$ and VN100 $h5$ --- an ensemble-level difference of the same order as the learned models' per-seed
+QLIKE dispersion, and absent at VN30 $h5$; at the extended horizons ($h10$, $h22$) HAR-X has the lowest MSE,
+RMSE, QLIKE and $R^2$, and the graph's QLIKE difference from the no-graph LSTM is not significant. The ranking
+is metric- and horizon-dependent, so all five metrics are reported with equal weight.
 
 \begin{thebibliography}{99}
 \bibitem{corsi2009} Corsi, F.: A simple approximate long-memory model of realized volatility. J. Financial Econometrics \textbf{7}(2), 174--196 (2009)

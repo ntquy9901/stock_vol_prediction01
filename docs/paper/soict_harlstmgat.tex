@@ -196,7 +196,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\
 
 \begin{table}[t]
 \centering
-\caption{VN30 (10{,}106 masked obs over 326 test dates at $h1$; 5-seed means). $^{\dagger}$~as in Table~1. Same scaling as
+\caption{VN30 (10{,}106 masked obs over 326 test dates at $h1$; learned: seed mean, QLIKE $\pm$~per-seed std). $^{\dagger}$~as in Table~1. Same scaling as
 Table~\ref{tab:vn100}.}
 \label{tab:vn30}
 \footnotesize
@@ -256,9 +256,9 @@ VN30 & 22 & .520 (H) & .061 (H) & .625 (G) & \textbf{$<$.001 (L)} \\
 \end{table}
 
 \textbf{Short-horizon results ($h1$, $h5$).} HAR-X has the lowest QLIKE in all four short-horizon cells, well
-below the seed-mean QLIKE of the learned models. At VN100 $h1$ the LSTM+GAT has the lowest MSE, RMSE, MAE and
-$R^2$ but a higher QLIKE than HAR-X (seed mean $0.5504$ vs $0.5115$); by DM the deep models have a lower MAE
-than HAR-X ($p<0.001$) and the LSTM+GAT a significantly lower QLIKE than the no-graph LSTM ($p<0.001$). At
+below the seed-mean QLIKE of the learned models. At VN100 $h1$ the LSTM+GAT has the lowest MAE, while HAR-X has the lowest MSE, RMSE and $R^2$; the
+LSTM+GAT has a higher QLIKE than HAR-X (seed mean $0.5504$ vs $0.5115$). By DM the deep models have a lower
+MAE than HAR-X ($p<0.001$) and the LSTM+GAT a significantly lower QLIKE than the no-graph LSTM ($p<0.001$). At
 VN100 $h5$ HAR-X has the lowest QLIKE and the LSTM+GAT the lowest MAE; the LSTM+GAT again has a lower QLIKE than
 the LSTM ($p<0.001$). At VN30 $h1$ HAR-X has the lowest QLIKE ($0.5159$, against deep seed means of
 $0.66$--$0.70$) and the LSTM the lowest MAE ($p=0.003$ vs HAR-X); the LSTM+GAT has a lower QLIKE than the
