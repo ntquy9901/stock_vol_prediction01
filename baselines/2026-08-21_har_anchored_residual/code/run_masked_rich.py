@@ -212,6 +212,24 @@ def _metrics(pred, floor):
             "qlike": M.qlike(y, p, floor), "r2": M.r2(y, p), "n": len(ks)}
 
 
+def seed_metric_stats(seed_dicts, floor):
+    """Per-seed metric summary for a learned model: the MEAN (and std/min/max) of the seed-level metrics
+    across the per-seed prediction dicts, plus the raw per-seed values. This is the faithful '5-seed mean'
+    -- the average of seed-level metrics -- as opposed to ``_metrics(_ens(...))``, which is the metric of
+    the seed-averaged (ensemble) prediction and is generally lower. ``n`` = scored obs (same every seed)."""
+    ms = [_metrics(d, floor) for d in seed_dicts]
+    keys = ("mse", "rmse", "mae", "qlike", "r2")
+    out = {"n": ms[0]["n"], "n_seeds": len(ms)}
+    for k in keys:
+        vals = [float(m[k]) for m in ms]
+        out[k] = float(np.mean(vals))
+        out[k + "_std"] = float(np.std(vals))
+        out[k + "_min"] = float(min(vals))
+        out[k + "_max"] = float(max(vals))
+    out["per_seed"] = {k: [float(m[k]) for m in ms] for k in keys}
+    return out
+
+
 def _dm_all(a, b, horizon, floor):                 # date-clustered DM on QLIKE / SE / AE; favors A if <0
     ks = sorted(set(a) & set(b)); y = np.array([a[k][0] for k in ks])
     pa = np.array([a[k][1] for k in ks]); pb = np.array([b[k][1] for k in ks])
@@ -245,12 +263,19 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     _cx = np.linalg.lstsq(_xtr, D.y_tr[mtr], rcond=None)[0]
     _hx = (np.column_stack([np.ones(len(D.har5_te.reshape(-1, 5))), D.har5_te.reshape(-1, 5)]) @ _cx).reshape(D.y_te.shape)
     HARX = _pred_dict(np.maximum(_hx, 1e-2 * D.t_mean + 1e-12), D.y_te, D.tmask_te, D.d_te, N)
-    lstm = _ens([_pred_dict(train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
-    gat_v = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
+    # keep the per-seed prediction dicts so we can report the MEAN (+-std) of seed-level metrics, not just
+    # the metric of the seed-averaged (ensemble) prediction (which is generally lower -- see seed_metric_stats)
+    lstm_seeds = [_pred_dict(train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds]
+    gat_seeds = [_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds]
+    lstm = _ens(lstm_seeds); gat_v = _ens(gat_seeds)
     preds = {"HAR": HAR, "HAR-X": HARX, "LSTM": lstm, "LSTM_wGAT_vol2pk": gat_v}
+    per_seed = {"LSTM": seed_metric_stats(lstm_seeds, cfg.qlike_floor),
+                "LSTM_wGAT_vol2pk": seed_metric_stats(gat_seeds, cfg.qlike_floor)}
     if with_corr:
-        gat_c = _ens([_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_corr, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds])
+        gat_c_seeds = [_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_corr, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds]
+        gat_c = _ens(gat_c_seeds)
         preds["LSTM_wGAT_corr"] = gat_c
+        per_seed["LSTM_wGAT_corr"] = seed_metric_stats(gat_c_seeds, cfg.qlike_floor)
     metrics = {k: _metrics(v, cfg.qlike_floor) for k, v in preds.items()}
     dm = {"HARX_vs_HAR": _dm_all(HARX, HAR, horizon, cfg.qlike_floor),
           "LSTM_vs_HAR": _dm_all(lstm, HAR, horizon, cfg.qlike_floor),
@@ -265,7 +290,10 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     res = {"dataset": dataset, "horizon": horizon, "design": "masked-union-panel-rich-5feat-weighted-gat",
            "output_param": output_param,
            "num_nodes": N, "n_test_obs": metrics["HAR"]["n"], "n_test_dates": n_dates,
-           "seeds": list(cfg.seeds), "lookback": lookback, "metrics": metrics, "dm_date_clustered": dm,
+           "seeds": list(cfg.seeds), "lookback": lookback,
+           "config": {"batch_size": cfg.batch_size, "epochs": cfg.epochs, "patience": cfg.patience,
+                      "min_epochs": cfg.min_epochs},
+           "metrics": metrics, "metrics_per_seed": per_seed, "dm_date_clustered": dm,
            "seconds": round(time.time() - t0, 1)}
     _subdir = "masked_rich_floor1e2" if output_param == "zscore_floor" else f"masked_rich_{output_param}"
     outp = REPO / "results" / _subdir / f"{dataset}_h{horizon}"

@@ -156,6 +156,23 @@ def test_two_hop_mask_aware():
     assert torch.allclose(out1[0, 0], out2[0, 0], atol=1e-6), "2-hop leaked a non-neighbour into target"
 
 
+def test_seed_metric_stats_mean_std_not_ensemble():
+    """seed_metric_stats reports the MEAN (and std/min/max) of per-seed metrics -- not the metric of the
+    seed-averaged ensemble -- so the paper's '5-seed mean' label is faithful."""
+    from run_masked_rich import seed_metric_stats, _pred_dict
+    y = np.array([[1.0, 2.0]])
+    tmask = np.array([[True, True]])
+    dates = np.array([0])
+    d1 = _pred_dict(np.array([[1.0, 2.0]]), y, tmask, dates, 2)   # perfect -> mse 0
+    d2 = _pred_dict(np.array([[3.0, 4.0]]), y, tmask, dates, 2)   # off by 2 -> mse 4
+    st = seed_metric_stats([d1, d2], floor=1e-8)
+    assert st["n"] == 2 and st["n_seeds"] == 2
+    assert abs(st["mse"] - 2.0) < 1e-9            # mean of per-seed mse (0, 4)
+    assert abs(st["mse_std"] - 2.0) < 1e-9        # std of (0, 4)
+    assert st["mse_min"] == 0.0 and st["mse_max"] == 4.0
+    assert st["per_seed"]["mse"] == [0.0, 4.0]
+
+
 def test_har5_exposed_and_harx_ols_runs():
     """HAR-X fair baseline: build exposes the raw 5-feature vector at t, its first 3 cols are the HAR
     features, and a 5-feature linear OLS fits + yields finite predictions (isolates the extra-feature
