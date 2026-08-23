@@ -41,6 +41,22 @@ def test_write_estimator_processed_same_grid_floored(tmp_path, monkeypatch):
     assert (pd.read_csv(files_r[0])["parkinson_volatility"] > 0).all()
 
 
+def test_keep_tickers_filters_universe(tmp_path, monkeypatch):
+    proc, raw = _synth(tmp_path, tickers=("AA", "BB", "CC"))
+    monkeypatch.setitem(AB.PROC, "synthetic", proc)
+    monkeypatch.setitem(VE.PRICE, "synthetic", raw)
+    out = tmp_path / "o"; out.mkdir()
+    files = AB._write_estimator_processed("synthetic", "parkinson", out, keep_tickers={"AA", "CC"})
+    stems = sorted(Path(f).name.replace("_processed.csv", "") for f in files)
+    assert stems == ["AA", "CC"]                     # BB excluded by the fixed universe
+
+
+def test_screened_tickers_none_for_unscreened_panel():
+    # a panel not in the liquidity-screen set keeps all tickers (None sentinel)
+    assert AB.screened_tickers("vn30") is None
+    assert "hnx" in AB.SCREEN                          # illiquid panels ARE screened
+
+
 def test_harx_scores_smoke(tmp_path, monkeypatch):
     proc, raw = _synth(tmp_path)
     monkeypatch.setitem(AB.PROC, "synthetic", proc)
