@@ -104,7 +104,16 @@ BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
 # --include restricts diff-cover to the files ACTUALLY being pushed (committed PUSH_BASE..HEAD, = $ALLPY).
 # diff-cover otherwise diffs the whole working tree, so unrelated uncommitted edits (stray WIP files) would
 # pollute the changed-line set and false-block. Empty $ALLPY (no changed .py) -> skip the coverage gate.
-if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ] && [ "$COV_OK" = "1" ] && [ -n "$ALLPY" ]; then
+if [ "$COV_OK" != "1" ]; then
+  echo "[pre-push] WARN: changed-scope tests failed — coverage NOT evaluated (tests already blocking)." >&2
+elif [ -z "$ALLPY" ]; then
+  echo "[pre-push]   diff-coverage: N/A (no changed .py in the push)"; DIFF_PCT="na"; BRANCH_PCT="na"
+elif [ -z "$COVARGS" ]; then
+  # F-02 policy (documented, consistent): a TEST-ONLY push (no changed SOURCE file) has no source lines to
+  # gate. This is an explicit N/A, not a silent vacuous pass. The changed tests still ran + passed in step 1.
+  echo "[pre-push]   diff-coverage: N/A (test-only change — no source lines to gate; tests ran in step 1)"
+  DIFF_PCT="na"; BRANCH_PCT="na"
+elif command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ]; then
   DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --include $ALLPY --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
   echo "$DCOUT" | grep -E 'Missing lines|Coverage:|Total:' | tail -12
   echo "$DCOUT" | _logsec "2/4 C0 line diff-coverage"
@@ -120,7 +129,8 @@ if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ] && [ "$COV_O
     echo "[pre-push] BLOCK: C1 branch diff-coverage below ${MIN_BRANCH}%." >&2; FAIL=1
   fi
 else
-  echo "[pre-push] WARN: diff-cover unavailable or tests failed — coverage NOT verified." >&2
+  # F-02: SOURCE changed but coverage could not be produced -> FAIL CLOSED (do not silently pass unverified).
+  echo "[pre-push] BLOCK: source changed but coverage unavailable (diff-cover missing or no coverage.xml)." >&2; FAIL=1
 fi
 
 echo "[pre-push] 3/4 ruff on changed code"

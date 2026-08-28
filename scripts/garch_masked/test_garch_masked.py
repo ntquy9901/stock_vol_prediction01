@@ -60,6 +60,57 @@ def test_garch_pred_skips_validation_interval(monkeypatch):
 import pytest
 
 
+def _synth_panel_files(tmp_path, n_tickers=12, n_days=500, seed=0):
+    """Write synthetic processed Parkinson CSVs + matching raw OHLCV (with volume) and return
+    (files, price_dir) suitable for MR.build_masked_rich -- a REAL panel with a real purge."""
+    import pandas as pd
+    rng = np.random.default_rng(seed)
+    dates = pd.bdate_range("2016-01-01", periods=n_days)
+    proc = tmp_path / "proc"; raw = tmp_path / "raw"; proc.mkdir(); raw.mkdir()
+    for k in range(n_tickers):
+        tk = f"T{k:02d}"
+        v = np.empty(n_days); v[0] = 1e-4 * (k + 1)
+        for t in range(1, n_days):
+            v[t] = 5e-5 * (k + 1) + 0.85 * v[t - 1] + 1e-5 * abs(rng.standard_normal())
+        pd.DataFrame({"date": dates, "parkinson_volatility": v}).to_csv(proc / f"{tk}_processed.csv", index=False)
+        close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
+        span = np.sqrt(v) * close
+        pd.DataFrame({"date": dates, "open": close, "high": close + span, "low": close - span,
+                      "close": close, "volume": rng.integers(1e5, 1e6, n_days)}).to_csv(
+            raw / f"{tk}_ohlcv.csv", index=False)
+    return sorted(str(p) for p in proc.glob("*_processed.csv")), str(raw)
+
+
+@pytest.mark.parametrize("horizon", [1, 5, 10])
+def test_garch_integration_alignment_on_real_purged_panel(tmp_path, monkeypatch, horizon):
+    """External review F-01: prove the GARCH offset on a REAL MR.build_masked_rich panel (with the real
+    train/val/test purge of `horizon` anchors), not a hand-built SimpleNamespace. The delivered design is
+    OBSERVATION-CONTIGUOUS: the purge-dropped anchors are targets that exist in NO series, so for node j the
+    k-th valid TEST observation is the (n_va_j + k)-th step of the frozen path (n_va_j = the node's valid VAL
+    observation count). With garch_forecast mocked as the ramp [1..n_test], each node's chronological test
+    predictions must therefore be exactly [n_va_j+1, n_va_j+2, ...]. This holds at every horizon (a purge-
+    induced off-by-h in observation space would break it), settling the "drift grows with horizon" concern:
+    there is no drift in observation space; the purge changes counts, not the per-node step mapping."""
+    files, price_dir = _synth_panel_files(tmp_path)
+    D = G.MR.build_masked_rich(files, price_dir, lookback=10, horizon=horizon, min_valid=2, min_train_rows=60)
+    def _ramp(series, n_test, horizon, floor, seed=42, return_status=False):
+        arr = np.arange(1.0, n_test + 1)
+        return (arr, {"fallback": False, "reason": "", "arch_available": True}) if return_status else arr
+    monkeypatch.setattr(G.B, "garch_forecast", _ramp)
+    gd = G._garch_pred(D, horizon, cfg=SimpleNamespace(qlike_floor=1e-12))
+    checked = 0
+    for j in range(D.N):
+        n_va = int(D.tmask_va[:, j].sum())
+        te_rows = [i for i in range(D.y_te.shape[0]) if D.tmask_te[i, j]]
+        if not te_rows:
+            continue
+        got = [gd[(j, D.d_te[i])][1] for i in te_rows]                 # chronological (rows are date-ordered)
+        expected = [float(n_va + k + 1) for k in range(len(te_rows))]  # observation-contiguous mapping
+        assert got == expected, f"node {j} h{horizon}: {got[:6]} != {expected[:6]}"
+        checked += 1
+    assert checked >= 2                                                # actually exercised multiple nodes
+
+
 @pytest.mark.parametrize("horizon", [1, 5, 10, 22])
 def test_garch_alignment_with_missing_dates_and_purge(monkeypatch, horizon):
     """External review R-01: prove the observation-space alignment holds when the node has MISSING val/test
