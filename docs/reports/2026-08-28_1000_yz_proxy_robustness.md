@@ -30,16 +30,13 @@ Caveats: per-day YZ (indicator form, not windowed academic YZ); overnight winsor
 split-adjusted); S&P 500 omitted (each cell ~42 min exceeds the background wall-clock; VN panels cover the
 paper's scope). Framing: Parkinson stays the PRIMARY target; YZ is a robustness check, not a main-result swap.
 
-## S&P 500 (single-seed, added after)
+## S&P 500 (5-seed, updated)
 | target | HAR-X | LSTM | LSTM+GAT | lowest |
 |---|---|---|---|---|
-| Parkinson (1 seed) | **0.362** | 0.417 | 0.427 | HAR-X |
-| Yang-Zhang (1 seed) | 0.565 | 0.672 | **0.549** | LSTM+GAT |
+| Parkinson (5 seed) | **0.362** | 0.638 | 0.543 | HAR-X |
+| Yang-Zhang (5 seed) | 0.565 | **0.553** | 0.562 | LSTM (tie) |
 
-Single-seed only (each 5-seed sp500 cell ~42 min exceeds the background wall-clock kill window). Under Parkinson
-HAR-X is clearly lowest; under Yang-Zhang the LSTM+GAT is marginally lower than HAR-X (0.549 vs 0.565) — a
-0.016 single-seed gap within the per-seed dispersion, NOT put in the main 5-seed robustness table. A full
-5-seed S&P 500 check is left to future work. Reported honestly as a caveat in the paper.
+5-seed (each cell ~36 min). Under Parkinson HAR-X is clearly lowest (gap ~0.18); under Yang-Zhang the three models fall within 0.013 (HAR-X 0.565, LSTM 0.553, GAT 0.562) = statistically indistinguishable (within per-seed dispersion), not a clean re-ranking. Added to the robustness table in both papers. The single-seed run had shown GAT lowest (0.549) = seed noise; 5-seed corrects it. Reported honestly as a caveat in the paper.
 
 ## (c) Split-adjusted-price PoC — S&P 500 is ALREADY adjusted
 The overnight artifacts that inflated Yang--Zhang (540% "gaps", zero prior closes) were on the Vietnamese

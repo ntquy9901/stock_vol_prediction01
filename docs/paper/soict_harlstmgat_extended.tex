@@ -424,8 +424,8 @@ QLIKE is scale-invariant, so it is comparable across the two targets.
 \centering
 \caption{Volatility-proxy robustness: five-seed-mean QLIKE (lower is better) of each model when the target is
 the Parkinson variance vs.\ a per-day Yang--Zhang variance, on the same universe/protocol. Bold marks the
-lowest QLIKE per row-block. The lowest-QLIKE model is unchanged under both proxies on every panel (HAR-X on
-VN30/VN100/HOSE; LSTM+GAT on HNX).}
+lowest QLIKE per row-block. The lowest-QLIKE model is unchanged under both proxies on the Vietnamese panels (HAR-X on VN30/VN100/HOSE; LSTM+GAT on HNX);
+on the S\&P 500 the models tie under Yang--Zhang.}
 \label{tab:proxy}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -444,12 +444,17 @@ HOSE & Yang--Zhang & \textbf{1.194} & 1.527 & 1.375 \\
 \midrule
 HNX & Parkinson & 1.872 & 1.821 & \textbf{1.816} \\
 HNX & Yang--Zhang & 1.635 & 1.650 & \textbf{1.623} \\
+\midrule
+SP500 & Parkinson & \textbf{0.362} & 0.638 & 0.543 \\
+SP500 & Yang--Zhang & 0.565 & \textbf{0.553} & 0.562 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The lowest-QLIKE model is \emph{identical} under both targets on all four panels: HAR-X on the liquid VN30,
-VN100 and HOSE, and the LSTM+GAT on the illiquid HNX. The headline finding --- the linear HAR-X is best on the
+The lowest-QLIKE model is \emph{identical} under both targets on the four Vietnamese panels: HAR-X on the
+liquid VN30, VN100 and HOSE, and the LSTM+GAT on the illiquid HNX. On the S\&P 500 (five seeds) HAR-X is
+clearly lowest under Parkinson, while under Yang--Zhang the three models fall within $0.013$ --- inside the
+per-seed dispersion --- so they are statistically indistinguishable rather than re-ranked. The headline finding --- the linear HAR-X is best on the
 liquid large-caps while the graph model attains the lowest QLIKE on the illiquid HNX --- is therefore robust to
 the volatility proxy. The Yang--Zhang target lowers the absolute QLIKE on the less-liquid HOSE and HNX (its
 overnight component records variance on the many near-zero-range days that Parkinson floors) but raises the MSE
@@ -461,9 +466,7 @@ invariance. A fully clean Yang--Zhang comparison requires split/dividend-adjuste
 used here are already adjusted (verified against Yahoo's adjusted close --- the ratio is $1.0000$ with zero
 variance across tickers), so its overnight term is uncorrupted, whereas the Vietnamese OHLCV is not adjusted
 and its overnight return is winsorized at $\pm0.20$; a fully adjusted Vietnamese comparison is left to future
-work. On a single-seed S\&P 500 check the same HAR-X lead holds under Parkinson while the LSTM+GAT is
-marginally lower under Yang--Zhang (0.549 vs 0.565), a single-seed difference within the seed dispersion that a
-full five-seed run would be needed to confirm.
+work.
 
 \section{Discussion}\label{sec:disc}
 No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test,
