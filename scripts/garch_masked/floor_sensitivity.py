@@ -120,20 +120,48 @@ def _flat(D):
     return m, D.y_te[m], dates, cols
 
 
-def screen_files(files, min_rows=250, max_zero_frac=0.5):
+def screen_files(files, min_rows=250, max_zero_frac=0.5, max_nan_frac=0.5, report=None):
     """Liquidity + history screen for a HOSE/HNX universe (data-quality audit 2026-08-23): keep a ticker
-    only if it has >= min_rows processed rows AND its fraction of zero Parkinson-variance days (H==L,
-    illiquid) is <= max_zero_frac. Illiquid tickers make QLIKE/point metrics uninformative. Returns the
-    kept file list; deterministic (sorted)."""
+    only if it has >= min_rows processed rows, its fraction of zero Parkinson-variance days (H==L,
+    illiquid) is <= max_zero_frac, AND its NaN fraction is <= max_nan_frac. Illiquid/NaN-heavy tickers
+    make QLIKE/point metrics uninformative. Returns the kept file list; deterministic (sorted).
+
+    External review M-07: exclusions are no longer silently swallowed -- each dropped ticker is recorded
+    with an explicit reason (missing-column / parse-error / too-few-rows / high-zero-frac / high-nan-frac).
+    Pass a ``report`` dict to receive ``{"kept": [...], "excluded": {file: reason}}``; a summary is printed.
+    """
     import pandas as pd
-    kept = []
+    kept, excluded = [], {}
     for f in sorted(files):
         try:
-            v = pd.read_csv(f)["parkinson_volatility"].to_numpy(float)
-        except Exception:
+            df = pd.read_csv(f)
+        except Exception as exc:                       # unreadable/corrupt CSV -> record, do not silently skip
+            excluded[f] = f"parse-error: {type(exc).__name__}"
             continue
-        if len(v) >= min_rows and float(np.mean(v == 0.0)) <= max_zero_frac:
+        if "parkinson_volatility" not in df.columns:
+            excluded[f] = "missing-column: parkinson_volatility"
+            continue
+        v = df["parkinson_volatility"].to_numpy(float)
+        nan_frac = float(np.mean(~np.isfinite(v))) if len(v) else 1.0
+        zero_frac = float(np.mean(v == 0.0)) if len(v) else 1.0
+        if len(v) < min_rows:
+            excluded[f] = f"too-few-rows: {len(v)} < {min_rows}"
+        elif nan_frac > max_nan_frac:
+            excluded[f] = f"high-nan-frac: {nan_frac:.2f} > {max_nan_frac}"
+        elif zero_frac > max_zero_frac:
+            excluded[f] = f"high-zero-frac: {zero_frac:.2f} > {max_zero_frac}"
+        else:
             kept.append(f)
+    if excluded:
+        by_reason: dict = {}
+        for r in excluded.values():
+            key = r.split(":")[0]
+            by_reason[key] = by_reason.get(key, 0) + 1
+        print(f"[screen] kept {len(kept)}/{len(files)}; excluded {len(excluded)} by reason: {by_reason}",
+              flush=True)
+    if report is not None:
+        report["kept"] = kept
+        report["excluded"] = excluded
     return kept
 
 

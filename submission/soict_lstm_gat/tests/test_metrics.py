@@ -160,3 +160,15 @@ def test_r2_constant_target_nonexact_is_zero():
     y = np.array([0.2, 0.2, 0.2, 0.2])
     p = np.array([0.1, 0.3, 0.25, 0.15])
     assert metrics.r2(y, p) == 0.0
+
+
+def test_dm_rejects_horizon_ge_n():
+    # L-02: the HLN factor / HAC lag are undefined once h >= n. Enforce 1 <= h < n.
+    a = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    b = np.array([1.4, 2.7, 3.1, 4.9, 5.2])          # non-constant difference -> positive long-run var
+    with pytest.raises(ValueError):
+        metrics.diebold_mariano(a, b, h=5)   # h == n
+    with pytest.raises(ValueError):
+        metrics.diebold_mariano(a, b, h=6)   # h > n
+    # h = n - 1 is the largest valid horizon
+    assert np.isfinite(metrics.diebold_mariano(a, b, h=4).dm_hln)

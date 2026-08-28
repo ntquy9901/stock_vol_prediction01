@@ -30,6 +30,12 @@ import metrics as M  # noqa: E402
 import stats as ST  # noqa: E402
 from config import Config  # noqa: E402
 
+try:  # provenance for the GARCH benchmark (external review L-03)
+    from importlib.metadata import version as _pkg_version
+    _ARCH_VERSION = _pkg_version("arch")
+except Exception:
+    _ARCH_VERSION = "unavailable"
+
 DATA = _SUB / "data"
 FILES = {
     "vn30": [DATA / "vn30" / "*_processed.csv", DATA / "*_processed.csv"],
@@ -75,7 +81,7 @@ def _dm(a, b, horizon, floor):
     return out
 
 
-def _garch_pred(D, horizon, cfg):
+def _garch_pred(D, horizon, cfg, status_out=None):
     """Per-node GARCH(1,1): fit on TRAIN-ONLY variance series, forecast the TEST window.
 
     The masked panel has a validation block between train and test (masked_rich splits train/val/test).
@@ -104,10 +110,40 @@ def _garch_pred(D, horizon, cfg):
             continue
         n_va = int(D.tmask_va[:, j].sum())          # validation anchors between train and test for this node
         series = D.y_tr[tr_mask, j]
-        fc_full = B.garch_forecast(series, n_test=n_va + n_te, horizon=horizon, floor=cfg.qlike_floor)
+        fc_full, st = B.garch_forecast(series, n_test=n_va + n_te, horizon=horizon,
+                                       floor=cfg.qlike_floor, return_status=True)
+        if status_out is not None:
+            status_out.append(st)                    # M-08: record per-node GARCH fallback status
         fc = fc_full[n_va:]                          # skip the validation interval -> the test window
         pred[te_mask, j] = np.maximum(fc, floor_node[j])
     return _pred_dict(pred, D.y_te, D.tmask_te, D.d_te, N)
+
+
+def garch_meta(status_list, horizon, cfg):
+    """Aggregate GARCH degradation + provenance for the result artifact (external review M-06/M-08/L-03).
+
+    ``status_list`` are per-node status dicts from ``_garch_pred(status_out=...)``. Reports the fallback
+    rate + reason counts, whether the ``arch`` benchmark actually fit, and enough provenance
+    (seed/horizon/floor/arch version) to reproduce."""
+    n = len(status_list)
+    n_fb = sum(1 for s in status_list if s.get("fallback"))
+    reasons: dict = {}
+    for s in status_list:
+        if s.get("fallback"):
+            reasons[s["reason"]] = reasons.get(s["reason"], 0) + 1
+    return {
+        "schema": 1,
+        "n_nodes": n,
+        "n_fallback": n_fb,
+        "fallback_rate": (n_fb / n) if n else 0.0,
+        "fallback_reasons": reasons,
+        "arch_available": bool(status_list and status_list[0].get("arch_available")),
+        "degraded": n_fb == n and n > 0,             # every node fell back -> benchmark did not fit
+        "horizon": horizon,
+        "seed": getattr(cfg, "seed", 42),
+        "qlike_floor": cfg.qlike_floor,
+        "arch_version": _ARCH_VERSION,
+    }
 
 
 def _harx_pred(D, cfg):
@@ -134,11 +170,13 @@ def main():
             mh = _metrics(harx, cfg.qlike_floor)
             stored = res["metrics"]["HAR-X"]["qlike"]
             assert abs(mh["qlike"] - stored) < 1e-4, f"basis mismatch {ds} h{h}: {mh['qlike']} vs {stored}"
-            g = _garch_pred(D, h, cfg)
+            st_list = []
+            g = _garch_pred(D, h, cfg, status_out=st_list)
             mg = _metrics(g, cfg.qlike_floor)
             dmg = _dm(g, harx, h, cfg.qlike_floor)
             res["metrics"]["GARCH"] = mg
             res["dm_date_clustered"]["GARCH_vs_HARX"] = dmg   # compared vs HAR-X (the paper's 5-feature "HAR")
+            res["garch_meta"] = garch_meta(st_list, h, cfg)   # M-06/M-08/L-03: degradation + provenance
             rp.write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
             row = (ds, h, mg["mse"], mg["rmse"], mg["mae"], mg["qlike"], mg["r2"])
             summary.append(row)

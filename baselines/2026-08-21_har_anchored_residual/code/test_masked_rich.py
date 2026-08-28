@@ -212,6 +212,25 @@ def test_run_out_subdir_writes_separate_results_tree(tmp_path, monkeypatch):
     assert custom.exists()                              # wrote to the custom tree
     assert not (tmp_path / "results" / "masked_rich_floor1e2").exists()   # did NOT touch the delivered tree
     assert "metrics_per_seed" in res and "config" in res
+    # M-05: the (intentionally different) edge overlap thresholds are recorded for transparency
+    ec = res["edge_config"]
+    assert ec["corr_min_overlap"] == MR.EDGE_MIN_OVERLAP and ec["vol2pk_min_pairs"] == MR._MIN_PAIRS
+    assert ec["corr_min_overlap"] != ec["vol2pk_min_pairs"]
+
+
+def test_volume_zscore_warns_on_low_coverage(tmp_path):
+    """External review M-04: a present ohlcv file that covers < 50% of a ticker's own dates turns the
+    missing days into a neutral (zero) shock -- surface it as a warning rather than absorbing it silently."""
+    import pandas as pd
+    files, price = _synth_panel(tmp_path, tickers=("AAA", "BBB", "CCC"))
+    # drop the last 70% of AAA's ohlcv rows -> its volume covers only ~30% of AAA's dates
+    rf = Path(price) / "AAA_ohlcv.csv"
+    df = pd.read_csv(rf)
+    df.iloc[: int(len(df) * 0.30)].to_csv(rf, index=False)
+    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_volatility"]
+                      .rename(Path(f).name.replace("_processed.csv", "")) for f in files], axis=1)
+    with pytest.warns(UserWarning, match="volume coverage"):
+        MR._volume_zscore_wide(wide, price)
 
 
 def test_seed_metric_stats_mean_std_not_ensemble():

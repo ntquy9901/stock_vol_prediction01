@@ -299,6 +299,9 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
            "seeds": list(cfg.seeds), "lookback": lookback,
            "config": {"batch_size": cfg.batch_size, "epochs": cfg.epochs, "patience": cfg.patience,
                       "min_epochs": cfg.min_epochs},
+           # M-05: the two edges use different overlap thresholds by design -- record both for transparency.
+           "edge_config": {"corr_min_overlap": MR.EDGE_MIN_OVERLAP, "vol2pk_min_pairs": MR._MIN_PAIRS,
+                           "top_k": MR.EDGE_TOP_K},
            "metrics": metrics, "metrics_per_seed": per_seed, "dm_date_clustered": dm,
            "seconds": round(time.time() - t0, 1)}
     # out_subdir lets callers write to a SEPARATE results tree (e.g. a volatility-proxy robustness study)

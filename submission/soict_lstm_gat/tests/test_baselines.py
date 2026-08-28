@@ -81,6 +81,21 @@ def test_garch_forecast_fallback_all_nonfinite_returns_floor():
     assert np.allclose(out, 1e-6)
 
 
+def test_garch_forecast_return_status_flags_fallback():
+    """External review M-08: return_status surfaces GARCH degradation. A degenerate short series
+    falls back (fallback=True + reason); a normal series fits (fallback=False)."""
+    fc_bad, st_bad = baselines.garch_forecast(np.array([np.nan, 1e-4]), n_test=3, return_status=True)
+    assert st_bad["fallback"] is True and st_bad["reason"]
+    assert fc_bad.shape == (3,) and np.all(np.isfinite(fc_bad))
+    rng = np.random.default_rng(0)
+    series = np.abs(rng.standard_normal(400)) * 1e-3 + 1e-5
+    fc_ok, st_ok = baselines.garch_forecast(series, n_test=10, return_status=True)
+    assert "fallback" in st_ok and "arch_available" in st_ok
+    assert fc_ok.shape == (10,)
+    # default (no status) still returns a bare array (back-compat)
+    assert isinstance(baselines.garch_forecast(series, n_test=5), np.ndarray)
+
+
 def test_cap_params_reduces_persistence_via_variance_targeting():
     """When alpha+beta exceeds the cap, persistence is scaled to the cap (ratio preserved) and
     omega is re-set by variance targeting so the long-run variance equals the sample target."""

@@ -19,6 +19,7 @@ features. Leakage-safe: every scaler and both edges are estimated on TRAIN rows 
 from __future__ import annotations
 
 import sys
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -31,7 +32,15 @@ import data_utils as du  # noqa: E402  (reuse har_features)
 FIRST_VALID = 21
 N_FEAT = 5
 _VOL_WIN = 20
-_MIN_PAIRS = 30
+# Edge-construction thresholds (single source of truth, recorded in each result's edge_config -- external
+# review M-05). The two edges intentionally use DIFFERENT minimum-overlap thresholds: the SYMMETRIC
+# correlation edge needs many overlapping days for a stable Pearson r (EDGE_MIN_OVERLAP), while the DIRECTED
+# lead-lag volume->PK edge is a shifted pairwise correlation with fewer usable pairs, so it uses a smaller
+# minimum (_MIN_PAIRS).
+_MIN_PAIRS = 30            # directed volume->PK edge: min overlapping (t, t+1) pairs
+EDGE_MIN_OVERLAP = 100    # symmetric correlation edge: min overlapping days for corr()
+EDGE_TOP_K = 5            # Top-K neighbours per node (both edges)
+_MIN_VOL_COVERAGE = 0.5   # warn if a present ohlcv file covers < this fraction of a ticker's own dates
 
 
 @dataclass
@@ -73,6 +82,7 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
     dates = wide.index
     out = np.full((len(dates), wide.shape[1]), np.nan, dtype=float)
     missing = []
+    low_cover = []
     for j, tk in enumerate(wide.columns):
         own = dates[wide[tk].notna().to_numpy()]
         if len(own) == 0:
@@ -82,6 +92,9 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
             raw = pd.read_csv(path, parse_dates=["date"]).sort_values("date")
             vol = raw.set_index("date")["volume"]
             vol = vol[~vol.index.duplicated(keep="last")].reindex(own)
+            cover = float(vol.notna().mean())        # M-04: fraction of the ticker's own dates with real volume
+            if cover < _MIN_VOL_COVERAGE:
+                low_cover.append((tk, round(cover, 3)))
             logv = pd.Series(np.log1p(vol.to_numpy(dtype=float)), index=own)
             mean = logv.rolling(window).mean()
             std = logv.rolling(window).std()
@@ -91,6 +104,12 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
             z = pd.Series(0.0, index=own)   # neutral: no volume series for this ticker
             missing.append(tk)
         out[wide.index.get_indexer(own), j] = z.to_numpy(dtype=float)
+    # M-04: surface (do not silently absorb) partial per-date volume coverage -- a present file that covers
+    # only part of a ticker's dates turns the missing days into a neutral (zero) shock. Report as a warning
+    # rather than fail, since a low-coverage ticker is still eligible; the delivered ETL data is ~complete.
+    if low_cover:
+        warnings.warn(f"volume_zscore: {len(low_cover)} ticker(s) below {_MIN_VOL_COVERAGE:.0%} volume "
+                      f"coverage (missing days zero-filled): {low_cover[:5]}", stacklevel=2)
     # M2: fail loud rather than silently zeroing the volume feature for many tickers (no-silent-degradation).
     # A small bounded allowlist (<=2) is tolerated; more means the volume feature is effectively absent.
     if len(missing) > 2:
@@ -132,7 +151,7 @@ def _directed_vol2pk(vshock: np.ndarray, sqrt_pk: np.ndarray, last_row: int,
 
 
 def build_masked_rich(files, price_dir, lookback, horizon, train_frac=0.8, val_frac=0.1,
-                      min_valid=8, edge_min_overlap=100, top_k=5, min_train_rows=252):
+                      min_valid=8, edge_min_overlap=EDGE_MIN_OVERLAP, top_k=EDGE_TOP_K, min_train_rows=252):
     wide = _load_wide(files)
     tickers = list(wide.columns)
     dates = wide.index

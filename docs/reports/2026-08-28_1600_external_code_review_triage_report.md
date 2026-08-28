@@ -16,13 +16,13 @@
 | M-02 | Medium | **Valid** (no shape guard in point metrics) | Shared `_check_pair` + test | None |
 | M-03 | Medium | **Valid** (QLIKE accepted bad floor / NaN) | Floor+finite validation + tests | None |
 | L-01 | Low | **Valid** (R² NaN/inf on constant target) | Constant-target policy + tests | None |
-| M-04 | Medium | Valid concern | Documented follow-up | None (ETL data weekday-complete) |
-| M-05 | Medium | Valid concern | Documented follow-up | None |
-| M-06 | Medium | Valid concern | Documented follow-up | None |
-| M-07 | Medium | Valid concern | Documented follow-up | None |
-| M-08 | Medium | Valid concern | Documented follow-up | None |
-| L-02 | Low | Valid concern | Documented follow-up | None |
-| L-03 | Low | Valid concern | Documented follow-up | None |
+| M-04 | Medium | Valid concern | Fixed (coverage warning) + test | None (ETL data weekday-complete) |
+| M-05 | Medium | Valid concern | Fixed (edge_config metadata) + test | None |
+| M-06 | Medium | Valid concern | Fixed (resume fingerprint) + tests | None |
+| M-07 | Medium | Valid concern | Fixed (fail-loud reasons + NaN audit) + test | None |
+| M-08 | Medium | Valid concern | Fixed (garch_meta degradation) + tests | None |
+| L-02 | Low | Valid concern | Fixed (DM 1≤h<n) + test | None |
+| L-03 | Low | Valid concern | Fixed (garch_meta provenance) | None |
 
 ## High findings — detail
 
@@ -70,21 +70,32 @@ per-date values match the estimators recomputed on the cleaned raw.
 - **L-01** `r2` constant-target policy: `ss_tot == 0` → `1.0` for an exact prediction else `0.0` (no NaN/inf).
   Tests cover both branches.
 
-## Medium/Low documented as follow-ups (no result impact)
+## Medium/Low — hardening (implemented in round 2, no result impact)
 
-- **M-04** partial per-date volume coverage is zero-filled (guard only counts fully-missing files). The delivered
-  panels come from weekday-complete ETL data, so partial coverage is minimal; a per-date coverage audit that
-  reports (not silently zero-fills) is a hardening follow-up. Aligns with the CLAUDE.md no-silent-degradation rule.
-- **M-05** directed vol→PK edge uses a fixed `_MIN_PAIRS=30` while the correlation edge uses `edge_min_overlap`;
-  unify/config + record in metadata.
-- **M-06** GARCH resume `_has_garch()` only checks the key exists; add a completion/version fingerprint of
-  universe+config+horizon.
-- **M-07** `floor_sensitivity.screen_files` swallows malformed files via `except Exception: continue` and only
-  tests `v==0.0`; add per-reason exclusion logging + NaN-fraction audit.
-- **M-08** GARCH fallback (arch missing / fit fail) is written as an ordinary `GARCH` metric with no
-  fallback-count/reason in the artifact; add degradation metadata + aggregate fallback rate.
-- **L-02** DM only checks `h≥1`; document/enforce `1≤h<n`.
-- **L-03** persist GARCH seed/config/dependency-version provenance in the output artifact.
+All of the below were implemented TDD (failing test first); each is a no-op on the delivered clean data (so no
+result.json changes on re-run — only added metadata / warnings / validation). Tests: submission 58, garch_masked
+15, eda 19, masked_rich 15 — all pass (`.venv_gpu_encode`).
+
+- **M-04** (`masked_rich._volume_zscore_wide`) now computes per-ticker volume coverage and **warns** when a
+  present `*_ohlcv.csv` covers `< 50%` of a ticker's own dates (missing days zero-filled) — surfaces the silent
+  degradation without changing eligibility or numbers. Test asserts the warning fires. (`_MIN_VOL_COVERAGE`.)
+- **M-05** the two edge thresholds are now single-source constants (`EDGE_MIN_OVERLAP=100`, `_MIN_PAIRS=30`,
+  `EDGE_TOP_K=5`) with a comment explaining the intentional difference (symmetric corr needs more overlap than the
+  directed lead-lag edge); recorded as `edge_config` in every `result.json`. Test asserts the block is present.
+- **M-06** (`run_oos_suite._has_garch`) now requires a finite GARCH metric **and** matching `schema==1` +
+  horizon + screened-universe **fingerprint** (`_universe_fp`, order-independent SHA1); a stale/incomplete/
+  different-universe artifact is recomputed instead of silently skipped. New `test_run_oos_suite.py` (7 cases).
+- **M-07** (`floor_sensitivity.screen_files`) no longer blanket-swallows exceptions: each excluded ticker is
+  recorded with an explicit reason (parse-error / missing-column / too-few-rows / high-zero-frac / **high-nan-frac**),
+  a summary is printed, and an optional `report` dict returns kept+excluded. NaN-fraction audit added. Test covers
+  all reasons. Kept universe unchanged on clean data (NaN-frac=0).
+- **M-08** (`baselines.garch_forecast(return_status=True)` + `compute_garch_masked.garch_meta`) surfaces GARCH
+  degradation: per-node fallback status is aggregated into `garch_meta` (`n_fallback`, `fallback_rate`,
+  `fallback_reasons`, `arch_available`, `degraded`) and written to `result.json`. Default call still returns a bare
+  array (back-compat). Tests cover status flags + aggregation.
+- **L-02** (`metrics.diebold_mariano`) enforces `1 ≤ h < n` (HLN factor / HAC lag undefined for `h ≥ n`). Test
+  covers `h==n`, `h>n`, and the largest valid `h==n-1`.
+- **L-03** `garch_meta` persists provenance: `seed`, `horizon`, `qlike_floor`, and the installed `arch` version.
 
 ## Verification
 

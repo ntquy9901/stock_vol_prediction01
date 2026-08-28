@@ -132,6 +132,8 @@ def diebold_mariano(loss_a: np.ndarray, loss_b: np.ndarray, h: int) -> DMResult:
     n = a.size
     if n < 2:
         raise ValueError("Diebold-Mariano requires at least two observations")
+    if h >= n:
+        raise ValueError(f"horizon h must be < n (HLN factor / HAC lag undefined for h >= n), got h={h}, n={n}")
     if not (np.isfinite(a).all() and np.isfinite(b).all()):
         raise ValueError("losses must be finite")
 

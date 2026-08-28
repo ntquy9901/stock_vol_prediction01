@@ -35,6 +35,32 @@ def test_screen_files_liquidity_and_history(tmp_path):
     assert out == [keep]
 
 
+def test_screen_files_reports_reasons_and_nan_and_missing_column(tmp_path):
+    # External review M-07: exclusions are recorded with an explicit reason (not silently swallowed),
+    # a NaN-heavy file is dropped, a missing-column / unreadable file is reported (not a blanket skip).
+    import pandas as pd
+    def _mk(name, n, zero_frac=0.0, nan_frac=0.0, col="parkinson_volatility"):
+        v = np.abs(np.random.default_rng(1).normal(2e-4, 5e-5, n))
+        v[: int(n * zero_frac)] = 0.0
+        v[int(n * (1 - nan_frac)):] = np.nan
+        f = tmp_path / f"{name}_processed.csv"
+        pd.DataFrame({"date": range(n), col: v}).to_csv(f, index=False)
+        return str(f)
+    keep = _mk("KEEP", 300)
+    short = _mk("SHORT", 100)
+    illiq = _mk("ILLIQ", 300, zero_frac=0.60)
+    nanheavy = _mk("NANH", 300, nan_frac=0.60)
+    nocol = _mk("NOCOL", 300, col="wrong_name")
+    rep = {}
+    out = F.screen_files([nocol, nanheavy, illiq, short, keep], report=rep)
+    assert out == [keep]
+    assert rep["kept"] == [keep]
+    assert "too-few-rows" in rep["excluded"][short]
+    assert "high-zero-frac" in rep["excluded"][illiq]
+    assert "high-nan-frac" in rep["excluded"][nanheavy]
+    assert "missing-column" in rep["excluded"][nocol]
+
+
 def test_score_common_floor_no_clip_when_all_above():
     y = np.array([1.0, 2.0, 3.0])
     raw = np.array([1.5, 2.5, 3.5])

@@ -47,11 +47,43 @@ def test_garch_pred_skips_validation_interval(monkeypatch):
         tmask_te=np.ones((nte, 1), bool), t_mean=np.array([1.0]),
         d_te=[f"d{i}" for i in range(nte)])
     # identifiable ramp: fc_full = [1, 2, ..., n_test]; expect the test window = fc_full[n_va:] = [4,5,6,7]
-    monkeypatch.setattr(G.B, "garch_forecast",
-                        lambda series, n_test, horizon, floor: np.arange(1, n_test + 1, dtype=float))
+    def _fake_fc(series, n_test, horizon, floor, return_status=False):
+        arr = np.arange(1, n_test + 1, dtype=float)
+        st = {"fallback": False, "reason": "", "arch_available": True}
+        return (arr, st) if return_status else arr
+    monkeypatch.setattr(G.B, "garch_forecast", _fake_fc)
     gd = G._garch_pred(D, horizon=1, cfg=SimpleNamespace(qlike_floor=1e-8))
     preds = [gd[(0, f"d{i}")][1] for i in range(nte)]
     assert preds == [4.0, 5.0, 6.0, 7.0]   # skipped the first n_va=3 (validation) steps
+
+
+def test_garch_pred_collects_status_and_garch_meta_aggregates(monkeypatch):
+    """External review M-08/L-03: _garch_pred(status_out=...) collects per-node fallback status; garch_meta
+    aggregates the fallback rate + reasons + provenance. One node fits, one falls back -> rate 0.5."""
+    ntr, nva, nte = 40, 3, 4
+    D = SimpleNamespace(
+        N=2, y_tr=np.ones((ntr, 2)), y_te=np.ones((nte, 2)),
+        tmask_tr=np.ones((ntr, 2), bool), tmask_va=np.ones((nva, 2), bool),
+        tmask_te=np.ones((nte, 2), bool), t_mean=np.array([1.0, 1.0]),
+        d_te=[f"d{i}" for i in range(nte)])
+    calls = {"i": 0}
+    def _fake_fc(series, n_test, horizon, floor, return_status=False):
+        arr = np.arange(1, n_test + 1, dtype=float)
+        fb = calls["i"] == 1                       # second node falls back
+        calls["i"] += 1
+        st = {"fallback": fb, "reason": "arch fit/forecast error: x" if fb else "",
+              "arch_available": True}
+        return (arr, st) if return_status else arr
+    monkeypatch.setattr(G.B, "garch_forecast", _fake_fc)
+    cfg = SimpleNamespace(qlike_floor=1e-8, seed=7)
+    st_list = []
+    G._garch_pred(D, horizon=5, cfg=cfg, status_out=st_list)
+    assert len(st_list) == 2
+    meta = G.garch_meta(st_list, horizon=5, cfg=cfg)
+    assert meta["schema"] == 1 and meta["n_nodes"] == 2 and meta["n_fallback"] == 1
+    assert abs(meta["fallback_rate"] - 0.5) < 1e-12
+    assert meta["degraded"] is False and meta["horizon"] == 5 and meta["seed"] == 7
+    assert "arch fit/forecast error: x" in meta["fallback_reasons"]
 
 
 def test_garch_pred_floor_finite_and_count():

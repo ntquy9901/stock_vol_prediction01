@@ -10,11 +10,14 @@ Screen (data-quality audit 2026-08-23): keep tickers with >=250 rows and <=50% z
 days; illiquid/short tickers make QLIKE uninformative. HNX especially is illiquid.
 """
 import glob
+import hashlib
 import json
 import sys
 import time
 from dataclasses import replace
 from pathlib import Path
+
+import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 CODE = REPO / "baselines" / "2026-08-21_har_anchored_residual" / "code"
@@ -42,28 +45,52 @@ PRICE = {
 }
 
 
-def _has_garch(rp):
+def _universe_fp(files):
+    """Order-independent fingerprint of the screened ticker universe (external review M-06)."""
+    stems = sorted(Path(f).name.replace("_processed.csv", "") for f in files)
+    return {"n": len(stems), "hash": hashlib.sha1("|".join(stems).encode()).hexdigest()[:16]}
+
+
+def _has_garch(rp, ds=None, h=None, files=None):
+    """A result is complete for GARCH only if it carries a finite GARCH metric AND (when the current
+    dataset/horizon/universe are known) its stored fingerprint matches -- so a stale/incomplete result
+    from a different screened universe or horizon is recomputed instead of silently skipped (M-06)."""
     if not rp.exists():
         return False
     try:
-        return "GARCH" in json.loads(rp.read_text(encoding="utf-8")).get("metrics", {})
+        res = json.loads(rp.read_text(encoding="utf-8"))
     except Exception:
         return False
+    g = res.get("metrics", {}).get("GARCH")
+    if not g or not np.isfinite(g.get("qlike", np.nan)) or int(g.get("n", 0)) <= 0:
+        return False
+    meta = res.get("garch_meta")
+    if meta is None or meta.get("schema") != 1:
+        return False                                  # pre-fingerprint result -> recompute with metadata
+    if h is not None and int(res.get("horizon", -1)) != int(h):
+        return False
+    if files is not None and meta.get("universe_fp") != _universe_fp(files):
+        return False                                  # screened universe changed -> stale
+    return True
 
 
 def _add_garch(ds, files, price_dir, h, cfg, rp):
     """Rebuild the (deterministic) panel, compute validation-aligned GARCH, patch result.json in place
-    with metrics['GARCH'] and dm_date_clustered['GARCH_vs_HARX'] (basis guard: recomputed HAR-X QLIKE
-    must match the stored value)."""
+    with metrics['GARCH'], dm_date_clustered['GARCH_vs_HARX'] (basis guard: recomputed HAR-X QLIKE must
+    match the stored value) and garch_meta (degradation + universe fingerprint + provenance)."""
     D = MR.build_masked_rich(files, price_dir, cfg.lookback, h)
     harx = CG._harx_pred(D, cfg)
     res = json.loads(rp.read_text(encoding="utf-8"))
     stored = res["metrics"]["HAR-X"]["qlike"]
     mh = CG._metrics(harx, cfg.qlike_floor)
     assert abs(mh["qlike"] - stored) < 1e-4, f"basis mismatch {ds} h{h}: {mh['qlike']} vs {stored}"
-    g = CG._garch_pred(D, h, cfg)
+    st_list = []
+    g = CG._garch_pred(D, h, cfg, status_out=st_list)
     res["metrics"]["GARCH"] = CG._metrics(g, cfg.qlike_floor)
     res["dm_date_clustered"]["GARCH_vs_HARX"] = CG._dm(g, harx, h, cfg.qlike_floor)
+    meta = CG.garch_meta(st_list, h, cfg)
+    meta["universe_fp"] = _universe_fp(files)         # M-06: pin the screened universe for resume validation
+    res["garch_meta"] = meta
     rp.write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
 
 
@@ -82,7 +109,7 @@ def main():
         print(f"===== {ds}: {len(files)}/{n_all} tickers after screen; price_dir={price_dir} =====", flush=True)
         for h in horizons:
             rp = REPO / "results" / "masked_rich_floor1e2" / f"{ds}_h{h}" / "result.json"
-            if _has_garch(rp):
+            if _has_garch(rp, ds, h, files):
                 print(f"[oos] {ds} h{h} already complete (has GARCH) -> skip", flush=True)
                 continue
             t0 = time.time()

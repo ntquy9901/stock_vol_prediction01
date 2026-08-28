@@ -133,7 +133,9 @@ def garch_forecast(
     horizon: int = 1,
     floor: float = FLOOR,
     seed: int = 42,
-) -> np.ndarray:
+    *,
+    return_status: bool = False,
+):
     """GARCH(1,1) variance forecasts for ``n_test`` observations from the end of ``train_series``.
 
     ``train_series`` is a Parkinson-VARIANCE series. Pseudo returns ``sign * sqrt(var) * 100`` are
@@ -143,17 +145,28 @@ def garch_forecast(
     the default ``horizon=1`` the returned array is the 1-, 2-, ..., ``n_test``-step-ahead path.
 
     Always returns shape ``(n_test,)``, every entry finite, positive, and ``>= floor``.
+
+    ``return_status=True`` additionally returns a status dict ``{"fallback": bool, "reason": str,
+    "arch_available": bool}`` so a caller can record GARCH degradation (external review M-08) instead
+    of a silent mean-variance fallback being written as an ordinary benchmark metric.
     """
+    def _pack(arr, fallback, reason):
+        if return_status:
+            return arr, {"fallback": bool(fallback), "reason": reason, "arch_available": _ARCH_AVAILABLE}
+        return arr
+
     train_series = np.asarray(train_series, dtype=float).ravel()
     if n_test < 1:
         raise ValueError(f"n_test must be >= 1, got {n_test}")
     if horizon < 1:
         raise ValueError(f"horizon must be >= 1, got {horizon}")
     if train_series.size < 2 or not np.all(np.isfinite(train_series)):
-        return _fallback_forecast(train_series, n_test, floor, "series too short or non-finite")
+        reason = "series too short or non-finite"
+        return _pack(_fallback_forecast(train_series, n_test, floor, reason), True, reason)
 
     if not _ARCH_AVAILABLE:
-        return _fallback_forecast(train_series, n_test, floor, "arch package unavailable")
+        reason = "arch package unavailable"
+        return _pack(_fallback_forecast(train_series, n_test, floor, reason), True, reason)
 
     try:
         rng = np.random.default_rng(seed)
@@ -179,12 +192,15 @@ def garch_forecast(
         variance_path = _capped_forecast_path(omega, alpha, beta, last_h, last_eps2,
                                               uncond_target, total_steps)
         if variance_path.size < total_steps:
-            return _fallback_forecast(train_series, n_test, floor, "forecast path shorter than requested")
+            reason = "forecast path shorter than requested"
+            return _pack(_fallback_forecast(train_series, n_test, floor, reason), True, reason)
 
         out = variance_path[horizon - 1: horizon - 1 + n_test] / (_RETURN_SCALE ** 2)
         out = np.asarray(out, dtype=float)
         if out.shape != (n_test,) or not np.all(np.isfinite(out)) or not np.all(out > 0):
-            return _fallback_forecast(train_series, n_test, floor, "non-finite / non-positive forecast")
-        return np.maximum(out, floor)
+            reason = "non-finite / non-positive forecast"
+            return _pack(_fallback_forecast(train_series, n_test, floor, reason), True, reason)
+        return _pack(np.maximum(out, floor), False, "")
     except Exception as exc:  # arch may fail to converge / raise on pathological series
-        return _fallback_forecast(train_series, n_test, floor, f"arch fit/forecast error: {exc}")
+        reason = f"arch fit/forecast error: {exc}"
+        return _pack(_fallback_forecast(train_series, n_test, floor, reason), True, reason)
