@@ -14,11 +14,26 @@ def test_yz_daily_is_proxy_yang_zhang_is_windowed(tmp_path):
     Guard the module documents the distinction and both columns exist."""
     import inspect
     doc = inspect.getdoc(VE) or ""
-    assert "TRUE standard Yang--Zhang" in doc and "PER-DAY PROXY" in doc
+    assert "standard Yang--Zhang (2000) estimator" in doc and "PER-DAY PROXY" in doc
     est = VE.estimators_from_ohlcv(pd.DataFrame({
         "date": range(3), "open": [10.0] * 3, "high": [11.0] * 3, "low": [9.0] * 3,
         "close": [10.5] * 3, "volume": [1] * 3}))
     assert {"yz_daily", "yz_rma20", "yang_zhang"} <= set(est.columns)
+
+
+def test_windowed_yz_invalid_row_yields_nan_not_inf():
+    """Code review LOW-1: an invalid mid-series bar (close=0 -> inf log-returns) must NOT poison the rolling
+    Yang-Zhang with inf; windows spanning it are NaN, and yang_zhang is never a wrong finite/inf value."""
+    rng = np.random.default_rng(1)
+    n = 80
+    c = 20.0 + np.cumsum(rng.normal(0, 0.2, n)); o = c.copy()
+    hi = np.maximum(o, c) + 0.2; lo = np.minimum(o, c) - 0.2
+    c[40] = 0.0                                                   # invalid bar mid-series
+    df = pd.DataFrame({"date": range(n), "open": o, "high": hi, "low": lo, "close": c, "volume": [1] * n})
+    yz = VE.estimators_from_ohlcv(df)["yang_zhang"].to_numpy()
+    assert not np.isinf(yz).any()                                # never inf
+    finite = yz[np.isfinite(yz)]
+    assert (finite >= 0).all()                                   # variances non-negative where defined
 
 
 def test_windowed_yang_zhang_matches_reference_formula():

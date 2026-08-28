@@ -3,10 +3,13 @@ problem that inflates QLIKE on illiquid panels.
 
 YANG-ZHANG (senior review HIGH-01, 2026-08-29 -- verified against TTR-R + the strimpel "Volatility Trading"
 Python port):
-  * ``yang_zhang`` is the TRUE standard Yang--Zhang (2000) estimator: the n-day (``_YZ_N``) minimum-variance
+  * ``yang_zhang`` is the standard Yang--Zhang (2000) estimator: the n-day (``_YZ_N``) minimum-variance
     composite = mean-subtracted SAMPLE VARIANCES of the overnight and open-to-close returns + the rolling mean
     of the single-day Rogers--Satchell, blended by k = 0.34/(1.34+(n+1)/(n-1)). It needs the full n-day window.
-    USE THIS for a genuine Yang--Zhang robustness target.
+    USE THIS for a genuine Yang--Zhang robustness target. NOTE (code review LOW-2): the OVERNIGHT return is
+    winsorized at +/- ``overnight_cap`` (default 0.20) because VN prices are not split-adjusted, so the default
+    column is winsorized-YZ; it is textbook-exact at ``overnight_cap=None`` (the within-day open-close term is
+    never winsorized). The test verifies exactness at cap=None.
   * ``yz_daily`` / ``yz_rma20`` are a PER-DAY PROXY (single-day overnight^2 + k*open-close^2 + (1-k)*RS, and its
     RMA smoothing). They borrow the YZ structure + k weight but drop the defining window -> they are NOT the
     Yang--Zhang estimator. Never label them bare "Yang--Zhang"; they are a "YZ-weighted daily range proxy".
@@ -102,9 +105,15 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
     # open-to-close returns + the rolling mean of the single-day Rogers-Satchell, blended by k. This is the
     # academic minimum-variance composite (undefined for a single day; needs the full n-day window).
     _n = _YZ_N
-    var_on = pd.Series(r_on).rolling(_n).var()        # sample variance (ddof=1), mean-subtracted
-    var_oc = pd.Series(ln_co).rolling(_n).var()
-    var_rs = pd.Series(rs).rolling(_n).mean()         # (1/n) sum of single-day RS
+    # LOW-1 (code review): mask invalid rows to NaN BEFORE the rolling, so an invalid mid-series bar
+    # (e.g. close=0 -> inf) does not poison the next n-1 windows with inf; a window spanning an invalid/NaN
+    # row correctly yields NaN (a full clean n-day window is required for the estimator).
+    _ron = pd.Series(np.where(ok & prev_ok, r_on, np.nan))
+    _rco = pd.Series(np.where(ok, ln_co, np.nan))
+    _rrs = pd.Series(np.where(ok, rs, np.nan))
+    var_on = _ron.rolling(_n).var()                   # sample variance (ddof=1), mean-subtracted
+    var_oc = _rco.rolling(_n).var()
+    var_rs = _rrs.rolling(_n).mean()                  # (1/n) sum of single-day RS
     yang_zhang = (var_on + _YZ_K * var_oc + (1.0 - _YZ_K) * var_rs).to_numpy()
     out = pd.DataFrame({
         "close2close": c2c, "parkinson": park, "garman_klass": gk,

@@ -1,7 +1,11 @@
 """Volatility-proxy robustness: run the FULL pipeline (HAR-X / LSTM / LSTM+GAT, 5 seeds) with the target set
-to Parkinson vs Yang-Zhang (yz_daily), on the canonical screened universe, writing to a SEPARATE results tree
-results/masked_rich_yz/<target>/ (never touches the delivered masked_rich_floor1e2). Resumable. Throwaway driver
-(not committed). Usage: python scripts/eda/run_yz_robustness.py [--targets parkinson yz_daily] [--panels ...]."""
+to Parkinson vs the TRUE windowed Yang-Zhang (``yang_zhang``), on the canonical screened universe, writing to a
+SEPARATE results tree results/masked_rich_yz/<target>/ (never touches the delivered masked_rich_floor1e2).
+Resumable. Usage: python scripts/eda/run_yz_robustness.py [--targets parkinson yang_zhang] [--panels ...].
+
+NOTE (CLAUDE.md "named estimators must use the published formula"): the default YZ target is ``yang_zhang`` (the
+standard windowed Yang-Zhang 2000 estimator). The old ``yz_daily`` per-day PROXY must NOT be used as the paper's
+"Yang-Zhang" target -- it is a diagnostic only."""
 import argparse
 import json
 import sys
@@ -45,7 +49,7 @@ def _done(rp):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--targets", nargs="+", default=["parkinson", "yz_daily"])
+    ap.add_argument("--targets", nargs="+", default=["parkinson", "yang_zhang"])  # pragma: no cover - CLI default (windowed YZ / published formula)
     ap.add_argument("--panels", nargs="+", default=["vn30", "vn100", "hnx", "hose", "sp500"])
     ap.add_argument("--horizon", type=int, default=1)
     ap.add_argument("--seeds", type=int, nargs="+", default=None, help="override seeds (e.g. single seed for slow panels)")
