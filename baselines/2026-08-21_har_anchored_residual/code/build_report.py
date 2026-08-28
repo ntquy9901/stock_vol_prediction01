@@ -2,6 +2,12 @@
 
 Builds the plan section-22 tables (overall performance, expert contribution) and the section-23 H1-H6
 accept/reject decision, per dataset x horizon. Objective wording only (no personal address, no self-praise).
+
+LEGACY / NOT AUTHORITATIVE (external review F-03, 2026-08-29): this reads the older ``results/har_anchored``
+tree and the seed-ENSEMBLE ``metrics`` field for learned models. The AUTHORITATIVE generator for the paper's
+final tables is ``scripts/paper/build_final_tables.py`` (masked_rich_floor1e2 canonical results; learned ->
+per-seed mean, deterministic -> ensemble; with SHA-256 provenance). Do NOT quote this script's learned-model
+numbers as paper results -- regenerate from build_final_tables.py.
 """
 from __future__ import annotations
 
