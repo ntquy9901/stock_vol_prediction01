@@ -458,7 +458,7 @@ improvement. The small LSTM+GAT-vs-LSTM QLIKE contrast is itself proxy-dependent
 Parkinson but not under Yang--Zhang, and reversing sign at HOSE --- consistent with that contrast lying within
 the per-seed dispersion reported above. We keep Parkinson as the primary target for its simplicity and split
 invariance; a fully clean Yang--Zhang comparison would use split/dividend-adjusted prices (here the overnight
-return is winsorized at $\pm0.20$), and the S\&P 500 proxy check is left to future work for compute reasons.
+return is winsorized at $\pm0.20$), and on a single-seed S\&P 500 check the same HAR-X lead holds under Parkinson while the LSTM+GAT is marginally lower under Yang--Zhang (0.549 vs 0.565), a single-seed difference within the seed dispersion that a full five-seed run would be needed to confirm.
 
 \section{Discussion}\label{sec:disc}
 No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test,

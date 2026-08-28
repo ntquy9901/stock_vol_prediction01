@@ -29,3 +29,14 @@ volatility proxy" (Table `tab:proxy`), 12 pages, 24/24 cells verified vs result.
 Caveats: per-day YZ (indicator form, not windowed academic YZ); overnight winsorized ±0.20 (raw prices not
 split-adjusted); S&P 500 omitted (each cell ~42 min exceeds the background wall-clock; VN panels cover the
 paper's scope). Framing: Parkinson stays the PRIMARY target; YZ is a robustness check, not a main-result swap.
+
+## S&P 500 (single-seed, added after)
+| target | HAR-X | LSTM | LSTM+GAT | lowest |
+|---|---|---|---|---|
+| Parkinson (1 seed) | **0.362** | 0.417 | 0.427 | HAR-X |
+| Yang-Zhang (1 seed) | 0.565 | 0.672 | **0.549** | LSTM+GAT |
+
+Single-seed only (each 5-seed sp500 cell ~42 min exceeds the background wall-clock kill window). Under Parkinson
+HAR-X is clearly lowest; under Yang-Zhang the LSTM+GAT is marginally lower than HAR-X (0.549 vs 0.565) — a
+0.016 single-seed gap within the per-seed dispersion, NOT put in the main 5-seed robustness table. A full
+5-seed S&P 500 check is left to future work. Reported honestly as a caveat in the paper.
