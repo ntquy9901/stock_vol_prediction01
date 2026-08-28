@@ -200,6 +200,20 @@ def test_train_only_invariance_no_leakage(tmp_path):
     assert not np.allclose(D0.y_te[D0.tmask_te.astype(bool)], D1.y_te[D1.tmask_te.astype(bool)])
 
 
+def test_run_out_subdir_writes_separate_results_tree(tmp_path, monkeypatch):
+    """run(out_subdir=...) must write under results/<out_subdir>/, never clobbering the delivered
+    masked_rich_floor1e2 tree (needed for the volatility-proxy robustness study)."""
+    import run_masked_rich as RMR
+    from config import SMOKE
+    files, price = _synth_panel(tmp_path, tickers=tuple(f"T{i:02d}" for i in range(10)))
+    monkeypatch.setattr(RMR, "REPO", tmp_path)          # redirect result writes into tmp
+    res = RMR.run("synth", files, price, 1, SMOKE, with_corr=False, out_subdir="masked_rich_yz/parkinson")
+    custom = tmp_path / "results" / "masked_rich_yz" / "parkinson" / "synth_h1" / "result.json"
+    assert custom.exists()                              # wrote to the custom tree
+    assert not (tmp_path / "results" / "masked_rich_floor1e2").exists()   # did NOT touch the delivered tree
+    assert "metrics_per_seed" in res and "config" in res
+
+
 def test_seed_metric_stats_mean_std_not_ensemble():
     """seed_metric_stats reports the MEAN (and std/min/max) of per-seed metrics -- not the metric of the
     seed-averaged ensemble -- so the paper's '5-seed mean' label is faithful."""

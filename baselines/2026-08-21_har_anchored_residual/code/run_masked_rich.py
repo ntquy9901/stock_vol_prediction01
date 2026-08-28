@@ -248,7 +248,8 @@ def _dm_all(a, b, horizon, floor):                 # date-clustered DM on QLIKE 
     return out
 
 
-def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, output_param="zscore_floor"):
+def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, output_param="zscore_floor",
+        out_subdir=None):
     t0 = time.time()
     D = MR.build_masked_rich(files, price_dir, lookback, horizon)
     N = D.N
@@ -295,7 +296,10 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
                       "min_epochs": cfg.min_epochs},
            "metrics": metrics, "metrics_per_seed": per_seed, "dm_date_clustered": dm,
            "seconds": round(time.time() - t0, 1)}
-    _subdir = "masked_rich_floor1e2" if output_param == "zscore_floor" else f"masked_rich_{output_param}"
+    # out_subdir lets callers write to a SEPARATE results tree (e.g. a volatility-proxy robustness study)
+    # without clobbering the delivered results/masked_rich_floor1e2 tree.
+    _subdir = out_subdir or ("masked_rich_floor1e2" if output_param == "zscore_floor"
+                             else f"masked_rich_{output_param}")
     outp = REPO / "results" / _subdir / f"{dataset}_h{horizon}"
     outp.mkdir(parents=True, exist_ok=True)
     (outp / "result.json").write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
