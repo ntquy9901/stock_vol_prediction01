@@ -12,11 +12,21 @@ records the status of **C-03** and **C-04** (both owner/environment actions, not
 | v3 findings F-01..F-05 | ✅ Fixed (see v4 guide) |
 | **C-01** ruff not clean | ✅ Fixed — ruff **pyflakes F codes fail-closed**; E/W house-style warn-only + documented |
 | **C-02** blocked-run evidence not preserved | ✅ Fixed — same-sha re-push keeps the prior log as `<sha>.prevN.txt` |
-| **C-03** LaTeX not compile-verified | ⚠️ OPEN — no `pdflatex` in the dev env; needs one compile in a LaTeX env |
+| **C-03** LaTeX not compile-verified | ✅ RESOLVED — compiled with MiKTeX pdfTeX 4.23: exit 0, **no errors, no undefined refs, 14-page PDF**, all 5 `\input{generated/tab_*.tex}` fragments resolved |
 | **C-04** delivered over/under-fit evidence | ⚠️ OPEN — owner decision (optional re-run; NOT a correctness fix, see §3) |
 
-Everything fixable in this environment is done. C-03 and C-04 require, respectively, a LaTeX toolchain and an
-owner go/no-go on re-running the delivered panels — neither is a source-code defect.
+Everything fixable in this environment is done, including C-03 (a MiKTeX install was found at
+`~/AppData/Local/Programs/MiKTeX`; the wired paper compiles cleanly — see §1b). Only C-04 remains, and it is an
+owner go/no-go on re-running the delivered panels — not a source-code defect.
+
+## 1b. C-03 — the wired paper compiles cleanly (verified)
+
+`docs/paper/soict_harlstmgat_crossmarket.tex` was compiled with `pdflatex` (MiKTeX 25.12, pdfTeX 4.23) in
+nonstop/halt-on-error mode, two passes:
+- exit 0, **no LaTeX errors** (`grep '^!'` = none), **no undefined references/citations**.
+- all five `\input{generated/tab_<panel>.tex}` fragments were read (confirmed in the transcript).
+- output: `soict_harlstmgat_crossmarket.pdf` (14 pages). The PDF/.aux/.log are untracked build artifacts (not
+  committed). **To reproduce:** `pdflatex -interaction=nonstopmode soict_harlstmgat_crossmarket.tex` (×2).
 
 ## 1. C-01 — ruff fail-closed on real bugs, warn on house style
 
