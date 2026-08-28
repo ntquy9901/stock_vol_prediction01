@@ -47,7 +47,7 @@ def test_garch_pred_skips_validation_interval(monkeypatch):
         tmask_te=np.ones((nte, 1), bool), t_mean=np.array([1.0]),
         d_te=[f"d{i}" for i in range(nte)])
     # identifiable ramp: fc_full = [1, 2, ..., n_test]; expect the test window = fc_full[n_va:] = [4,5,6,7]
-    def _fake_fc(series, n_test, horizon, floor, return_status=False):
+    def _fake_fc(series, n_test, horizon, floor, seed=42, return_status=False):
         arr = np.arange(1, n_test + 1, dtype=float)
         st = {"fallback": False, "reason": "", "arch_available": True}
         return (arr, st) if return_status else arr
@@ -55,6 +55,38 @@ def test_garch_pred_skips_validation_interval(monkeypatch):
     gd = G._garch_pred(D, horizon=1, cfg=SimpleNamespace(qlike_floor=1e-8))
     preds = [gd[(0, f"d{i}")][1] for i in range(nte)]
     assert preds == [4.0, 5.0, 6.0, 7.0]   # skipped the first n_va=3 (validation) steps
+
+
+import pytest
+
+
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_garch_alignment_with_missing_dates_and_purge(monkeypatch, horizon):
+    """External review R-01: prove the observation-space alignment holds when the node has MISSING val/test
+    observations (sparse masks) and across horizons -- not just a fully-contiguous ramp. The invariant: the
+    k-th valid TEST observation (chronological) receives forecast step (n_va + k), where n_va is the node's
+    count of valid VALIDATION observations, so no test target is paired with the wrong observation step. The
+    purge/horizon shift is absorbed inside garch_forecast (mocked here as a ramp), and the offset is a pure
+    observation count -- independent of the calendar gaps between the retained anchors."""
+    tmask_va = np.array([[True], [False], [True], [False], [True]])        # 3 valid of 5 val rows
+    tmask_te = np.array([[False], [True], [True], [False], [True], [True]])  # 4 valid of 6 test rows
+    n_va, n_te = int(tmask_va.sum()), int(tmask_te.sum())
+    D = SimpleNamespace(
+        N=1, y_tr=np.ones((40, 1)), y_te=np.ones((6, 1)),
+        tmask_tr=np.ones((40, 1), bool), tmask_va=tmask_va, tmask_te=tmask_te,
+        t_mean=np.array([1e-9]), d_te=[f"d{i}" for i in range(6)])
+    captured = {}
+    def _ramp(series, n_test, horizon, floor, seed=42, return_status=False):
+        captured["n_test"], captured["horizon"] = n_test, horizon
+        arr = np.arange(1.0, n_test + 1)                                    # identifiable ramp
+        return (arr, {"fallback": False, "reason": "", "arch_available": True}) if return_status else arr
+    monkeypatch.setattr(G.B, "garch_forecast", _ramp)
+    gd = G._garch_pred(D, horizon=horizon, cfg=SimpleNamespace(qlike_floor=1e-12))
+    # exactly the n_te valid test rows are populated, in chronological order, with fc_full[n_va:]
+    valid_rows = [i for i in range(6) if tmask_te[i, 0]]
+    got = [gd[(0, f"d{i}")][1] for i in valid_rows]
+    assert captured["n_test"] == n_va + n_te and captured["horizon"] == horizon
+    assert got == [float(n_va + k + 1) for k in range(n_te)]                # [4,5,6,7]; skipped the 3 val steps
 
 
 def test_garch_pred_collects_status_and_garch_meta_aggregates(monkeypatch):
@@ -67,7 +99,7 @@ def test_garch_pred_collects_status_and_garch_meta_aggregates(monkeypatch):
         tmask_te=np.ones((nte, 2), bool), t_mean=np.array([1.0, 1.0]),
         d_te=[f"d{i}" for i in range(nte)])
     calls = {"i": 0}
-    def _fake_fc(series, n_test, horizon, floor, return_status=False):
+    def _fake_fc(series, n_test, horizon, floor, seed=42, return_status=False):
         arr = np.arange(1, n_test + 1, dtype=float)
         fb = calls["i"] == 1                       # second node falls back
         calls["i"] += 1

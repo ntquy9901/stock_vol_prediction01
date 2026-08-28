@@ -172,3 +172,36 @@ def test_dm_rejects_horizon_ge_n():
         metrics.diebold_mariano(a, b, h=6)   # h > n
     # h = n - 1 is the largest valid horizon
     assert np.isfinite(metrics.diebold_mariano(a, b, h=4).dm_hln)
+
+
+def test_dm_rejects_horizon_below_one():
+    a = np.array([1.0, 2.0, 3.0]); b = np.array([1.5, 2.1, 3.3])
+    with pytest.raises(ValueError):
+        metrics.diebold_mariano(a, b, h=0)
+
+
+def test_dm_rejects_non_integer_horizon():
+    # R-13: a non-integral horizon must fail loud (ValueError), not a downstream range() TypeError.
+    a = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    b = np.array([1.4, 2.7, 3.1, 4.9, 5.2])
+    with pytest.raises(ValueError):
+        metrics.diebold_mariano(a, b, h=1.5)
+    # integer-valued float is fine
+    assert np.isfinite(metrics.diebold_mariano(a, b, h=1.0).dm_hln)
+
+
+@pytest.mark.parametrize("fn", [metrics.mse, metrics.mae, metrics.qlike, metrics.per_obs_se])
+def test_metrics_reject_empty_input(fn):
+    # R-14: empty arrays -> explicit ValueError, not a NaN metric.
+    with pytest.raises(ValueError):
+        fn(np.array([]), np.array([]))
+
+
+def test_per_obs_se_rejects_shape_mismatch_and_nonfinite():
+    # R-05: per_obs_se now shares the validator (no silent (n,) vs (n,1) broadcast).
+    with pytest.raises(ValueError):
+        metrics.per_obs_se(np.array([1.0, 2.0]), np.array([[1.0], [2.0]]))
+    with pytest.raises(ValueError):
+        metrics.per_obs_se(np.array([1.0, np.nan]), np.array([1.0, 2.0]))
+    np.testing.assert_allclose(metrics.per_obs_se(np.array([1.0, 3.0]), np.array([1.0, 5.0])),
+                               np.array([0.0, 4.0]))

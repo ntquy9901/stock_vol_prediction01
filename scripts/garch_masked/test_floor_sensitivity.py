@@ -61,6 +61,30 @@ def test_screen_files_reports_reasons_and_nan_and_missing_column(tmp_path):
     assert "missing-column" in rep["excluded"][nocol]
 
 
+def test_screen_files_parse_error_reported(tmp_path):
+    # R-06/coverage: an unreadable path (here a directory) must be recorded as parse-error, not abort the loop.
+    baddir = tmp_path / "DIR_processed.csv"; baddir.mkdir()
+    rep = {}
+    out = F.screen_files([str(baddir)], report=rep)
+    assert out == []
+    assert "parse-error" in rep["excluded"][str(baddir)]
+
+
+def test_screen_files_nonnumeric_values_reported_not_raised(tmp_path):
+    # R-06: a column with non-numeric strings must be recorded (non-numeric-value), not raise mid-loop.
+    import pandas as pd
+    good = tmp_path / "GOOD_processed.csv"
+    pd.DataFrame({"date": range(300),
+                  "parkinson_volatility": np.abs(np.random.default_rng(2).normal(2e-4, 5e-5, 300))}
+                 ).to_csv(good, index=False)
+    bad = tmp_path / "BAD_processed.csv"
+    pd.DataFrame({"date": range(300), "parkinson_volatility": ["oops"] * 300}).to_csv(bad, index=False)
+    rep = {}
+    out = F.screen_files([str(bad), str(good)], report=rep)
+    assert out == [str(good)]                                   # good file still processed after the bad one
+    assert "non-numeric-value" in rep["excluded"][str(bad)]
+
+
 def test_score_common_floor_no_clip_when_all_above():
     y = np.array([1.0, 2.0, 3.0])
     raw = np.array([1.5, 2.5, 3.5])

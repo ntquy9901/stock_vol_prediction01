@@ -106,6 +106,36 @@ result.json changes on re-run — only added metadata / warnings / validation). 
   rule); the `pytest` F401 in `test_baselines.py` pre-dates this change (0 uses in git HEAD). ruff is warn-only in
   the pre-push gate.
 
+## Round 3 — residual re-review (R-01..R-14, `code_review_rerun_residuals_2026-08-28.md`)
+
+The reviewer re-ran and closed H-03/H-04/M-02/M-03/M-04/M-05/M-08/L-01/L-02/L-03, then raised residuals.
+All verified on live code + fixed TDD (or shown to already hold). No result.json values changed.
+
+| ID | Sev | Verdict | Action |
+|----|-----|---------|--------|
+| R-01 | High | GARCH alignment is observation-space (self-consistent); needed a stronger proof | Added `test_garch_alignment_with_missing_dates_and_purge` (sparse val/test masks, parametrized h1/5/10/22): the k-th valid test obs gets step `n_va+k` — no calendar offset |
+| R-02 | Med | Valid (mean of extreme finite values overflows to inf) | `_fallback_forecast` clamps non-finite mean to floor + test `[1e308,...]` |
+| R-03 | Med | Valid (seed not forwarded) | `_garch_pred` passes `seed=getattr(cfg,"seed",42)` matching `garch_meta` |
+| R-04 | Med | Valid (`n="n/a"` could raise) | `_has_garch` fully wrapped in try/except → False on any malformed field + 7 cases |
+| R-05 | Med | Valid (`per_obs_se` skipped validator) | now uses `_check_pair` + shape/finite test |
+| R-06 | Med | Valid (non-numeric cells raised) | `pd.to_numeric(coerce)` + distinct `non-numeric-value` reason + test |
+| R-07 | Low | Valid (dedup order not deterministic) | `sort_values(kind="stable")` + test with distinct-valued duplicate |
+| R-08 | Low | Valid (`panel_summary` unsorted) | sort+dedup before estimators + shuffled-equals-clean test |
+| R-09 | Low | Valid (`ok` didn't enforce full geometry) | added `high>=open/close`, `low<=open/close` + geometry test |
+| R-10 | Low | Metadata could drift on override | `run()` passes edge params from the same constants it records |
+| R-11 | Low | Leakage test didn't assert feature invariance | added `X_tr` + `t_std` invariance assertions |
+| R-12 | Low | Valid (YZ resume too broad) | `_done` schema-validates both learned models' finite QLIKE + tests |
+| R-13 | Low | Valid (`h=1.5` → TypeError) | DM rejects non-integral `h` with ValueError + test |
+| R-14 | Low | Valid (empty → NaN) | `_check_pair` rejects empty + parametrized test |
+
+**Coverage (diff-cover on changed lines vs `74bae00`):** **98% C0** (422 changed lines, 6 missing). Every changed
+library / pure-function line and every reachable branch is 100%; the 6 residual lines are the `main()` drivers of
+the throwaway analysis scripts (`compute_garch_masked.py:173-179`, `run_oos_suite.py:112`) — exercised by the real
+OOS suite runs, not unit tests — plus one untriggerable `arch`-import `except` guard (`:36-37`). C1 branch coverage
+on changed lines is well above the 80% floor (validators + fallback + resume-schema branches tested both ways).
+Guard suite: **104 tests pass** (`.venv_gpu_encode`). Tooling: pytest-cov 7.1.0 + diff-cover 10.5.0 (both installed;
+the CLAUDE.md "not installed" note is stale).
+
 ## Data-quality gate
 
 `N/A (no data change)` — this change touches evaluation/metrics/EDA code and tests only; no `data/`,

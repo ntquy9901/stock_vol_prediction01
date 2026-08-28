@@ -111,7 +111,8 @@ def _garch_pred(D, horizon, cfg, status_out=None):
         n_va = int(D.tmask_va[:, j].sum())          # validation anchors between train and test for this node
         series = D.y_tr[tr_mask, j]
         fc_full, st = B.garch_forecast(series, n_test=n_va + n_te, horizon=horizon,
-                                       floor=cfg.qlike_floor, return_status=True)
+                                       floor=cfg.qlike_floor, seed=getattr(cfg, "seed", 42),
+                                       return_status=True)   # R-03: use the cfg seed that garch_meta records
         if status_out is not None:
             status_out.append(st)                    # M-08: record per-node GARCH fallback status
         fc = fc_full[n_va:]                          # skip the validation interval -> the test window

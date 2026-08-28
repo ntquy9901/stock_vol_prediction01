@@ -73,7 +73,9 @@ def _write_estimator_processed(panel, estimator, out_dir, keep_tickers=None):
         # and drop duplicate dates BEFORE computing them -- otherwise an unsorted/duplicated raw file
         # would both corrupt the rolling windows and mis-pair (date, value). No-op on the clean ETL data.
         raw["date"] = pd.to_datetime(raw["date"])
-        raw = raw.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
+        # R-07: STABLE sort so that, for duplicate dates, keep="last" deterministically keeps the row that
+        # appeared last in the original file (mergesort preserves input order within equal keys).
+        raw = raw.sort_values("date", kind="stable").drop_duplicates("date", keep="last").reset_index(drop=True)
         est = VE.estimators_from_ohlcv(raw)
         v = est[estimator].to_numpy(dtype=float)
         # FAIR comparison: keep the SAME date grid for every estimator (do NOT drop rows, which would

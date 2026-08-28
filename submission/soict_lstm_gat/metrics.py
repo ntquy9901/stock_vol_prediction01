@@ -33,6 +33,8 @@ def _check_pair(y: np.ndarray, p: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     p = np.asarray(p, dtype=float)
     if y.shape != p.shape:
         raise ValueError(f"y and p must have the same shape, got {y.shape} vs {p.shape}")
+    if y.size == 0:
+        raise ValueError("y and p must be non-empty")   # R-14: empty -> explicit error, not a NaN metric
     if not (np.isfinite(y).all() and np.isfinite(p).all()):
         raise ValueError("y and p must be finite")
     return y, p
@@ -71,8 +73,7 @@ def r2(y: np.ndarray, p: np.ndarray) -> float:
 
 def per_obs_se(y: np.ndarray, p: np.ndarray) -> np.ndarray:
     """Per-observation squared error ``(y - p) ** 2``."""
-    y = np.asarray(y, dtype=float)
-    p = np.asarray(p, dtype=float)
+    y, p = _check_pair(y, p)   # R-05: same shape+finite guard as the other metrics (no silent broadcast)
     return (y - p) ** 2
 
 
@@ -127,6 +128,9 @@ def diebold_mariano(loss_a: np.ndarray, loss_b: np.ndarray, h: int) -> DMResult:
         raise ValueError("loss_a and loss_b must have the same shape")
     if a.ndim != 1:
         raise ValueError("losses must be one-dimensional per-observation series")
+    if isinstance(h, bool) or not float(h).is_integer():
+        raise ValueError(f"horizon h must be an integer, got {h!r}")   # R-13: h=1.5 fails loud, not TypeError
+    h = int(h)
     if h < 1:
         raise ValueError("horizon h must be >= 1")
     n = a.size

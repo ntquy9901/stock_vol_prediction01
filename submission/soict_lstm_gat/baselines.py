@@ -88,6 +88,10 @@ def _fallback_forecast(train_series: np.ndarray, n_test: int, floor: float, reas
     finite = np.asarray(train_series, dtype=float).ravel()
     finite = finite[np.isfinite(finite)]
     mean_var = float(np.mean(np.maximum(finite, floor))) if finite.size else floor
+    # R-02: extreme finite values (e.g. 1e308) can overflow the mean to +inf -> fall back to the floor
+    # rather than emit a non-finite forecast (the docstring guarantees finite/positive/>= floor).
+    if not np.isfinite(mean_var):
+        mean_var = floor
     mean_var = max(mean_var, floor)
     return np.full(n_test, mean_var, dtype=float)
 

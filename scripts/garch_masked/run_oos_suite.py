@@ -59,19 +59,20 @@ def _has_garch(rp, ds=None, h=None, files=None):
         return False
     try:
         res = json.loads(rp.read_text(encoding="utf-8"))
-    except Exception:
-        return False
-    g = res.get("metrics", {}).get("GARCH")
-    if not g or not np.isfinite(g.get("qlike", np.nan)) or int(g.get("n", 0)) <= 0:
-        return False
-    meta = res.get("garch_meta")
-    if meta is None or meta.get("schema") != 1:
-        return False                                  # pre-fingerprint result -> recompute with metadata
-    if h is not None and int(res.get("horizon", -1)) != int(h):
-        return False
-    if files is not None and meta.get("universe_fp") != _universe_fp(files):
-        return False                                  # screened universe changed -> stale
-    return True
+        g = res.get("metrics", {}).get("GARCH")
+        # R-04: any malformed/typed field (e.g. n="n/a", null qlike) must be treated as incomplete, not raise
+        if not isinstance(g, dict) or not np.isfinite(float(g.get("qlike"))) or int(g.get("n", 0)) <= 0:
+            return False
+        meta = res.get("garch_meta")
+        if not isinstance(meta, dict) or meta.get("schema") != 1:
+            return False                              # pre-fingerprint result -> recompute with metadata
+        if h is not None and int(res.get("horizon", -1)) != int(h):
+            return False
+        if files is not None and meta.get("universe_fp") != _universe_fp(files):
+            return False                              # screened universe changed -> stale
+        return True
+    except (ValueError, TypeError, KeyError, OSError):
+        return False                                  # malformed result -> recompute
 
 
 def _add_garch(ds, files, price_dir, h, cfg, rp):

@@ -52,3 +52,46 @@ def test_has_garch_requires_finite_metric_schema_and_fingerprint(tmp_path):
     assert OS._has_garch(_write(tmp_path, good), "hnx", 1, _files(["AAA", "BBB"])) is False
     # unknown ds/h/files (back-compat call) -> only checks metric presence + schema
     assert OS._has_garch(_write(tmp_path, good)) is True
+
+
+def test_add_garch_writes_metrics_dm_and_garch_meta(tmp_path, monkeypatch):
+    """Coverage/integration: _add_garch patches result.json with GARCH metric + DM + garch_meta (incl. the
+    universe fingerprint), passing the HAR-X basis guard. Panel build + heavy compute are mocked."""
+    from types import SimpleNamespace
+    rp = tmp_path / "result.json"
+    rp.write_text(json.dumps({"horizon": 1, "metrics": {"HAR-X": {"qlike": 1.0}},
+                              "dm_date_clustered": {}}), encoding="utf-8")
+    monkeypatch.setattr(OS.MR, "build_masked_rich", lambda *a, **k: SimpleNamespace())
+    monkeypatch.setattr(OS.CG, "_harx_pred", lambda D, cfg: {"harx": 1})
+    monkeypatch.setattr(OS.CG, "_metrics", lambda pred, floor: {"qlike": 1.0, "n": 5})
+    monkeypatch.setattr(OS.CG, "_dm", lambda g, h, hz, floor: {"qlike": {"p_value": 0.5}})
+    def _fake_gpred(D, h, cfg, status_out=None):
+        if status_out is not None:
+            status_out.append({"fallback": False, "reason": "", "arch_available": True})
+        return {"g": 1}
+    monkeypatch.setattr(OS.CG, "_garch_pred", _fake_gpred)
+    files = _files(["AAA", "BBB"])
+    OS._add_garch("hnx", files, "/price", 1, SimpleNamespace(lookback=10, qlike_floor=1e-8, seed=42), rp)
+    res = json.loads(rp.read_text(encoding="utf-8"))
+    assert res["metrics"]["GARCH"]["qlike"] == 1.0
+    assert "GARCH_vs_HARX" in res["dm_date_clustered"]
+    assert res["garch_meta"]["schema"] == 1
+    assert res["garch_meta"]["universe_fp"] == OS._universe_fp(files)
+
+
+def test_has_garch_failsafe_on_malformed_metadata(tmp_path):
+    # R-04: typed/malformed fields must return False (recompute), never raise.
+    fp = OS._universe_fp(_files(["AAA", "BBB"]))
+    cases = [
+        {"horizon": 1, "metrics": {"GARCH": {"qlike": "n/a", "n": 100}}, "garch_meta": {"schema": 1, "universe_fp": fp}},
+        {"horizon": 1, "metrics": {"GARCH": {"qlike": None, "n": 100}}, "garch_meta": {"schema": 1, "universe_fp": fp}},
+        {"horizon": 1, "metrics": {"GARCH": {"qlike": 1.5, "n": "n/a"}}, "garch_meta": {"schema": 1, "universe_fp": fp}},
+        {"horizon": 1, "metrics": {"GARCH": "not-a-dict"}, "garch_meta": {"schema": 1}},
+        {"horizon": 1, "metrics": {"GARCH": {"qlike": 1.5, "n": 100}}, "garch_meta": "not-a-dict"},
+        {"metrics": {"GARCH": {"qlike": 1.5, "n": 100}}, "garch_meta": {"schema": 1, "universe_fp": fp}},  # no horizon
+    ]
+    for c in cases:
+        assert OS._has_garch(_write(tmp_path, c), "hnx", 1, _files(["AAA", "BBB"])) is False
+    # totally corrupt JSON file
+    rp = tmp_path / "bad.json"; rp.write_text("{not json", encoding="utf-8")
+    assert OS._has_garch(rp, "hnx", 1, _files(["AAA", "BBB"])) is False

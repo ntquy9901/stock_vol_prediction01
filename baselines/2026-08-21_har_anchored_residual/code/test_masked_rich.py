@@ -196,6 +196,10 @@ def test_train_only_invariance_no_leakage(tmp_path):
     assert np.allclose(D0.adj_vol2pk, D1.adj_vol2pk), "vol->PK train edge changed after test-region perturbation"
     assert np.allclose(D0.adj_corr, D1.adj_corr), "corr train edge changed after test-region perturbation"
     assert np.allclose(D0.t_mean, D1.t_mean), "train target scaler changed after test-region perturbation"
+    assert np.allclose(D0.t_std, D1.t_std), "train target std changed after test-region perturbation"
+    # R-11: the train INPUT tensors (already feature-scaled with the train-only feature scaler) must also be
+    # invariant -- proves f_mean/f_std and the transformed train features carry no test-region information.
+    assert np.allclose(D0.X_tr, D1.X_tr), "train feature tensor changed after test-region perturbation"
     # the test targets themselves DID change (sanity: the perturbation reached the test fold)
     assert not np.allclose(D0.y_te[D0.tmask_te.astype(bool)], D1.y_te[D1.tmask_te.astype(bool)])
 
@@ -216,6 +220,18 @@ def test_run_out_subdir_writes_separate_results_tree(tmp_path, monkeypatch):
     ec = res["edge_config"]
     assert ec["corr_min_overlap"] == MR.EDGE_MIN_OVERLAP and ec["vol2pk_min_pairs"] == MR._MIN_PAIRS
     assert ec["corr_min_overlap"] != ec["vol2pk_min_pairs"]
+
+
+def test_run_with_corr_adds_corr_variant(tmp_path, monkeypatch):
+    """Coverage: run(with_corr=True) also trains the correlation-edge GAT variant and reports it per-seed."""
+    import run_masked_rich as RMR
+    from config import SMOKE
+    files, price = _synth_panel(tmp_path, tickers=tuple(f"T{i:02d}" for i in range(10)))
+    monkeypatch.setattr(RMR, "REPO", tmp_path)
+    res = RMR.run("synth", files, price, 1, SMOKE, with_corr=True, out_subdir="masked_rich_corr")
+    assert "LSTM_wGAT_corr" in res["metrics"]                    # corr variant computed
+    assert "LSTM_wGAT_corr" in res["metrics_per_seed"]           # and reported per-seed
+    assert "wGAT_corr_vs_HAR" in res["dm_date_clustered"]
 
 
 def test_volume_zscore_warns_on_low_coverage(tmp_path):

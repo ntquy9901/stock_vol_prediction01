@@ -81,6 +81,38 @@ def test_garch_forecast_fallback_all_nonfinite_returns_floor():
     assert np.allclose(out, 1e-6)
 
 
+def test_garch_forecast_rejects_nonpositive_n_test():
+    with pytest.raises(ValueError):
+        baselines.garch_forecast(np.array([1e-4, 2e-4]), n_test=0)
+
+
+def test_garch_fallback_rejects_invalid_floor():
+    # short series -> fallback path; an invalid (non-positive) floor must raise, not emit a bad forecast
+    with pytest.raises(ValueError):
+        baselines.garch_forecast(np.array([1e-4]), n_test=3, floor=0.0)
+
+
+def test_garch_forecast_fallback_overflow_safe():
+    """External review R-02: extreme finite values whose mean overflows to +inf must fall back to the
+    floor, keeping the finite/positive/>=floor guarantee."""
+    # nan forces the fallback; the 1e308 entries make the mean overflow to +inf -> must clamp to floor
+    out = baselines.garch_forecast(np.array([1e308, 1e308, 1e308, np.nan]), n_test=4, floor=1e-8)
+    assert out.shape == (4,) and np.all(np.isfinite(out)) and np.all(out >= 1e-8)
+    out2, st = baselines.garch_forecast(np.array([1e308, 1e308, 1e308, np.inf]), n_test=2,
+                                        floor=1e-6, return_status=True)
+    assert np.all(np.isfinite(out2)) and np.all(out2 >= 1e-6) and st["fallback"] is True
+
+
+def test_garch_forecast_guards_nonfinite_forecast_path(monkeypatch):
+    """Coverage/defensive: if the fitted path yields a non-finite/non-positive forecast, fall back (finite)."""
+    rng = np.random.default_rng(0)
+    series = np.abs(rng.standard_normal(400)) * 1e-3 + 1e-5
+    monkeypatch.setattr(baselines, "_capped_forecast_path",
+                        lambda *a, **k: np.full(a[6] if len(a) > 6 else k["total_steps"], np.inf))
+    out, st = baselines.garch_forecast(series, n_test=5, return_status=True)
+    assert np.all(np.isfinite(out)) and np.all(out > 0) and st["fallback"] is True
+
+
 def test_garch_forecast_return_status_flags_fallback():
     """External review M-08: return_status surfaces GARCH degradation. A degenerate short series
     falls back (fallback=True + reason); a normal series fits (fallback=False)."""

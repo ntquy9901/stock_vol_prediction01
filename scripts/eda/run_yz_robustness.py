@@ -10,6 +10,8 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
+
 REPO = Path(__file__).resolve().parents[2]
 for _p in (REPO / "submission" / "soict_lstm_gat",
            REPO / "baselines" / "2026-08-21_har_anchored_residual" / "code",
@@ -23,11 +25,21 @@ from config import Config                  # noqa: E402
 
 
 def _done(rp):
+    """A YZ cell is complete only if it has a per-seed block for the learned models with a finite QLIKE
+    mean (R-12: an empty/partial JSON must not be treated as done). Fail-safe: any error -> not done."""
     if not rp.exists():
         return False
     try:
-        return "metrics_per_seed" in json.loads(rp.read_text())
-    except Exception:
+        res = json.loads(rp.read_text())
+        ps = res.get("metrics_per_seed")
+        if not isinstance(ps, dict):
+            return False
+        for model in ("LSTM", "LSTM_wGAT_vol2pk"):
+            m = ps.get(model)
+            if not isinstance(m, dict) or not np.isfinite(float(m.get("qlike"))):
+                return False
+        return True
+    except (ValueError, TypeError, KeyError, OSError):
         return False
 
 

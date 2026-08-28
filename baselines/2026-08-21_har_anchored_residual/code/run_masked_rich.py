@@ -251,7 +251,10 @@ def _dm_all(a, b, horizon, floor):                 # date-clustered DM on QLIKE 
 def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, output_param="zscore_floor",
         out_subdir=None):
     t0 = time.time()
-    D = MR.build_masked_rich(files, price_dir, lookback, horizon)
+    # R-10: pass the edge thresholds explicitly from the same constants recorded in edge_config below, so the
+    # effective edge configuration and the recorded metadata cannot drift (this is the only public build path).
+    D = MR.build_masked_rich(files, price_dir, lookback, horizon,
+                             edge_min_overlap=MR.EDGE_MIN_OVERLAP, top_k=MR.EDGE_TOP_K)
     N = D.N
     mtr = D.tmask_tr.astype(bool)
     coef = B.har_fit(D.har_tr[mtr], D.y_tr[mtr])

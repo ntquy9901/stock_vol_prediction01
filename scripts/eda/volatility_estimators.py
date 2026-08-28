@@ -54,7 +54,11 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
     h = pd.to_numeric(df["high"], errors="coerce").to_numpy(float)
     lo = pd.to_numeric(df["low"], errors="coerce").to_numpy(float)
     c = pd.to_numeric(df["close"], errors="coerce").to_numpy(float)
-    ok = np.isfinite([o, h, lo, c]).all(0) & (o > 0) & (h > 0) & (lo > 0) & (c > 0) & (h >= lo)
+    # R-09: enforce the full OHLC geometry the docstring promises -- high is the day's max and low its min,
+    # so high >= open/close and low <= open/close (a bar violating this is corrupt and would give a
+    # spurious estimator; e.g. Rogers-Satchell/GK log-ratios go negative).
+    ok = (np.isfinite([o, h, lo, c]).all(0) & (o > 0) & (h > 0) & (lo > 0) & (c > 0)
+          & (h >= lo) & (h >= o) & (h >= c) & (lo <= o) & (lo <= c))
     prev_c = np.concatenate([[np.nan], c[:-1]])
     prev_ok = np.isfinite(prev_c) & (prev_c > 0)             # overnight needs a valid positive prior close
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -102,6 +106,9 @@ def panel_summary(panel: str, price_dir: Path, rel_floor: float = 1e-2) -> dict:
         df = pd.read_csv(f)
         if not {"open", "high", "low", "close"} <= set(df.columns):
             continue
+        if "date" in df.columns:                      # R-08: order-dependent estimators need sorted, unique dates
+            df["date"] = pd.to_datetime(df["date"], errors="coerce")
+            df = df.sort_values("date", kind="stable").drop_duplicates("date", keep="last").reset_index(drop=True)
         est = estimators_from_ohlcv(df)
         valid = est[est["ok"]]
         if len(valid) < 50:

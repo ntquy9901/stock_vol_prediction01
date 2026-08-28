@@ -91,6 +91,40 @@ def test_invalid_prices_are_nan():
     assert est["parkinson"].isna().iloc[0]          # non-positive open -> invalid
 
 
+def test_ohlc_geometry_violations_are_invalid():
+    # R-09: high must be the day's max and low its min; a bar where high < close (or low > open) is corrupt.
+    df = pd.DataFrame({
+        "date": [1, 2, 3, 4],
+        "open":  [10.0, 10.0, 10.0, 10.0],
+        "high":  [12.0,  9.5, 12.0, 12.0],   # row1: high < close (9.5<11) invalid
+        "low":   [ 9.0,  9.0, 10.5, 11.0],   # row2: low > open (10.5>10) invalid; row3: low > open (11>10) invalid
+        "close": [11.0, 11.0, 11.0, 11.0],
+        "volume": [1, 1, 1, 1],
+    })
+    ok = VE.estimators_from_ohlcv(df)["ok"].to_numpy()
+    assert ok.tolist() == [True, False, False, False]
+
+
+def test_panel_summary_robust_to_unsorted_duplicate_dates(tmp_path):
+    # R-08: panel_summary must sort + dedup raw before the order-dependent rolling/overnight estimators,
+    # so a shuffled-with-duplicates file yields the SAME summary as its clean, sorted version.
+    rng = np.random.default_rng(3)
+    n = 200
+    dates = pd.bdate_range("2020-01-01", periods=n)
+    c = 20.0 + np.cumsum(rng.normal(0, 0.2, n))
+    span = np.abs(rng.normal(0, 0.3, n))
+    clean = pd.DataFrame({"date": dates, "open": c, "high": c + span, "low": c - span,
+                          "close": c, "volume": rng.integers(1e5, 1e6, n)})
+    d_clean = tmp_path / "clean"; d_mess = tmp_path / "mess"; d_clean.mkdir(); d_mess.mkdir()
+    clean.to_csv(d_clean / "AAA_ohlcv.csv", index=False)
+    messy = pd.concat([clean, clean.iloc[[10, 20]]], ignore_index=True).sample(frac=1.0, random_state=9)
+    messy.to_csv(d_mess / "AAA_ohlcv.csv", index=False)
+    s_clean = VE.panel_summary("synthetic", d_clean)["per_ticker"]
+    s_mess = VE.panel_summary("synthetic", d_mess)["per_ticker"]
+    for e in VE.EST:
+        assert abs(float(s_clean[f"{e}_mean"].iloc[0]) - float(s_mess[f"{e}_mean"].iloc[0])) < 1e-9
+
+
 def test_panel_summary_smoke(tmp_path):
     rng = np.random.default_rng(0)
     n = 200

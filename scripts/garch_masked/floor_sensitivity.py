@@ -141,11 +141,16 @@ def screen_files(files, min_rows=250, max_zero_frac=0.5, max_nan_frac=0.5, repor
         if "parkinson_volatility" not in df.columns:
             excluded[f] = "missing-column: parkinson_volatility"
             continue
-        v = df["parkinson_volatility"].to_numpy(float)
+        # R-06: coerce non-numeric cells to NaN (recorded) instead of letting to_numpy(float) raise and abort
+        raw_col = df["parkinson_volatility"]
+        v = pd.to_numeric(raw_col, errors="coerce").to_numpy(float)
+        nonnum_frac = float(np.mean(raw_col.notna().to_numpy() & ~np.isfinite(v))) if len(v) else 0.0
         nan_frac = float(np.mean(~np.isfinite(v))) if len(v) else 1.0
         zero_frac = float(np.mean(v == 0.0)) if len(v) else 1.0
         if len(v) < min_rows:
             excluded[f] = f"too-few-rows: {len(v)} < {min_rows}"
+        elif nonnum_frac > max_nan_frac:
+            excluded[f] = f"non-numeric-value: {nonnum_frac:.2f} > {max_nan_frac}"
         elif nan_frac > max_nan_frac:
             excluded[f] = f"high-nan-frac: {nan_frac:.2f} > {max_nan_frac}"
         elif zero_frac > max_zero_frac:
