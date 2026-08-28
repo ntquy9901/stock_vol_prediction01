@@ -59,7 +59,10 @@ def garch_baseline(snap, floor: float) -> dict:
         series = np.asarray(tr_series[j], dtype=float)
         n_test = len(test_by_ticker[j])
         try:
-            fc = B.garch_forecast(series, n_test=n_test, horizon=snap.horizon, floor=floor)
+            # HIGH-03 (senior review 2026-08-29): the pre-test series already ends at the test boundary and its
+            # elements are consecutive h-ahead target observations, so the first test target is ONE observation
+            # ahead -> horizon=1. Passing snap.horizon again over-shifted the forecast by (h-1) for h>1.
+            fc = B.garch_forecast(series, n_test=n_test, horizon=1, floor=floor)
         except Exception:
             fc = np.full(n_test, max(float(np.var(series)), floor))
         for i, (date, yraw) in enumerate(test_by_ticker[j]):

@@ -1,12 +1,15 @@
 """Compare daily volatility-VARIANCE estimators from raw OHLCV, focused on the low-range (H approx L)
 problem that inflates QLIKE on illiquid panels.
 
-NAMING (external senior review HIGH-01, 2026-08-29): the ``yz_daily`` / ``yz_rma20`` targets here are an
-INDICATOR-FORM, single-day Yang--Zhang-INSPIRED proxy (in the spirit of the TradingView "YZV" indicator):
-per-day overnight^2 + k*open-close^2 + (1-k)*Rogers--Satchell. This is NOT the standard windowed Yang--Zhang
-(2000) estimator, which combines the overnight, open--close, and Rogers--Satchell VARIANCES over a rolling
-window with a bias-correction weight. Reports/paper must call it an "indicator-form Yang--Zhang-inspired daily
-proxy", never bare "Yang--Zhang"; the robustness claim is a per-day-proxy claim, not a standard-YZ claim.
+YANG-ZHANG (senior review HIGH-01, 2026-08-29 -- verified against TTR-R + the strimpel "Volatility Trading"
+Python port):
+  * ``yang_zhang`` is the TRUE standard Yang--Zhang (2000) estimator: the n-day (``_YZ_N``) minimum-variance
+    composite = mean-subtracted SAMPLE VARIANCES of the overnight and open-to-close returns + the rolling mean
+    of the single-day Rogers--Satchell, blended by k = 0.34/(1.34+(n+1)/(n-1)). It needs the full n-day window.
+    USE THIS for a genuine Yang--Zhang robustness target.
+  * ``yz_daily`` / ``yz_rma20`` are a PER-DAY PROXY (single-day overnight^2 + k*open-close^2 + (1-k)*RS, and its
+    RMA smoothing). They borrow the YZ structure + k weight but drop the defining window -> they are NOT the
+    Yang--Zhang estimator. Never label them bare "Yang--Zhang"; they are a "YZ-weighted daily range proxy".
 
 Per-day estimators (all are variances, comparable to the current Parkinson target):
   close2close   : r_t^2, r_t = ln(C_t / C_{t-1})                         (uses only closes; has overnight)
@@ -89,24 +92,33 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
         rs = np.clip(ln_hc * ln_ho + ln_lc * ln_lo, 0.0, None)   # Rogers-Satchell (clipped >=0)
         c2c = r_cc ** 2
         rs_ov = rs + r_on ** 2
-        # Yang-Zhang per-day (indicator form, e.g. TradingView YZV): instantaneous daily variance using
-        # single-day squared overnight + single-day squared open-close + Rogers-Satchell, blended with the
-        # classical YZ weight k = 0.34/(1.34+(n+1)/(n-1)) (n = _YZ_N). This IS computable each day (unlike
-        # the academic YZ, which uses windowed variances of the returns).
+        # yz_daily: a PER-DAY PROXY (NOT a Yang-Zhang estimator; senior review HIGH-01). It borrows the YZ
+        # component structure + k weight but uses single-day squared returns instead of the windowed sample
+        # variances that DEFINE the estimator. Kept as a heuristic gap-aware daily feature; do not call it
+        # "Yang-Zhang". The true estimator is ``yang_zhang`` below.
         yz_daily = r_on ** 2 + _YZ_K * ln_co ** 2 + (1.0 - _YZ_K) * rs
+    # TRUE standard Yang-Zhang (2000), windowed over n=_YZ_N days (HIGH-01 fix; verified vs TTR-R & the
+    # strimpel "Volatility Trading" Python port): mean-subtracted n-day SAMPLE VARIANCES of the overnight and
+    # open-to-close returns + the rolling mean of the single-day Rogers-Satchell, blended by k. This is the
+    # academic minimum-variance composite (undefined for a single day; needs the full n-day window).
+    _n = _YZ_N
+    var_on = pd.Series(r_on).rolling(_n).var()        # sample variance (ddof=1), mean-subtracted
+    var_oc = pd.Series(ln_co).rolling(_n).var()
+    var_rs = pd.Series(rs).rolling(_n).mean()         # (1/n) sum of single-day RS
+    yang_zhang = (var_on + _YZ_K * var_oc + (1.0 - _YZ_K) * var_rs).to_numpy()
     out = pd.DataFrame({
         "close2close": c2c, "parkinson": park, "garman_klass": gk,
-        "rogers_satchell": rs, "rs_overnight": rs_ov, "yz_daily": yz_daily,
+        "rogers_satchell": rs, "rs_overnight": rs_ov, "yz_daily": yz_daily, "yang_zhang": yang_zhang,
         "is_zero_range": np.isclose(ln_hl, 0.0),      # H approx L day
         "ok": ok,
     })
-    for e in ["garman_klass", "rogers_satchell", "rs_overnight", "yz_daily"]:
+    for e in ["garman_klass", "rogers_satchell", "rs_overnight", "yz_daily", "yang_zhang"]:
         out[e] = out[e].clip(lower=0.0)               # variance estimators are non-negative
     # yz_rma20: the TradingView YZV output = Wilder RMA smoothing of yz_daily (trailing, no look-ahead).
     # NOTE: a smoothed target is highly autocorrelated -> forecasts look artificially easy; it no longer
     # measures next-day variance. Kept for parity with the indicator, flagged in the report.
     out["yz_rma20"] = pd.Series(yz_daily).ewm(alpha=1.0 / _YZ_N, adjust=False, ignore_na=True).mean().to_numpy()
-    out.loc[~ok, EST + ["yz_daily", "yz_rma20"]] = np.nan
+    out.loc[~ok, EST + ["yz_daily", "yz_rma20", "yang_zhang"]] = np.nan
     return out
 
 

@@ -100,11 +100,16 @@ def test_garch_integration_alignment_on_real_purged_panel(tmp_path, monkeypatch,
     there is no drift in observation space; the purge changes counts, not the per-node step mapping."""
     files, price_dir = _synth_panel_files(tmp_path, sparse=sparse)
     D = G.MR.build_masked_rich(files, price_dir, lookback=10, horizon=horizon, min_valid=2, min_train_rows=60)
+    seen_h = set()
     def _ramp(series, n_test, horizon, floor, seed=42, return_status=False):
+        seen_h.add(horizon)
         arr = np.arange(1.0, n_test + 1)
         return (arr, {"fallback": False, "reason": "", "arch_available": True}) if return_status else arr
     monkeypatch.setattr(G.B, "garch_forecast", _ramp)
     gd = G._garch_pred(D, horizon, cfg=SimpleNamespace(qlike_floor=1e-12))
+    # HIGH-03 fix: garch_forecast is called with horizon=1 (obs-space); the experiment horizon must NOT be
+    # re-applied inside garch_forecast (it is already baked into the h-ahead target series).
+    assert seen_h == {1}, f"expected garch horizon=1, saw {seen_h}"
     checked = 0
     for j in range(D.N):
         n_va = int(D.tmask_va[:, j].sum())
@@ -143,7 +148,7 @@ def test_garch_alignment_with_missing_dates_and_purge(monkeypatch, horizon):
     # exactly the n_te valid test rows are populated, in chronological order, with fc_full[n_va:]
     valid_rows = [i for i in range(6) if tmask_te[i, 0]]
     got = [gd[(0, f"d{i}")][1] for i in valid_rows]
-    assert captured["n_test"] == n_va + n_te and captured["horizon"] == horizon
+    assert captured["n_test"] == n_va + n_te and captured["horizon"] == 1   # HIGH-03: obs-space, horizon not re-applied
     assert got == [float(n_va + k + 1) for k in range(n_te)]                # [4,5,6,7]; skipped the 3 val steps
 
 

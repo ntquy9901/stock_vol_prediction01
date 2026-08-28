@@ -110,7 +110,12 @@ def _garch_pred(D, horizon, cfg, status_out=None):
             continue
         n_va = int(D.tmask_va[:, j].sum())          # validation anchors between train and test for this node
         series = D.y_tr[tr_mask, j]
-        fc_full, st = B.garch_forecast(series, n_test=n_va + n_te, horizon=horizon,
+        # HIGH-03 (senior review 2026-08-29): the series is the node's h-ahead TARGET observations sampled at
+        # consecutive (daily) anchors, so the k-th future OBSERVATION is k steps ahead in this series -> pass
+        # garch horizon=1 and read fc_full[n_va:] (the val block occupies steps 1..n_va, the test obs follow).
+        # Passing horizon=h double-applied the horizon and over-shifted by (h-1) obs (<=0.5% on the converged
+        # capped path -> a dominated benchmark, but now aligned exactly).
+        fc_full, st = B.garch_forecast(series, n_test=n_va + n_te, horizon=1,
                                        floor=cfg.qlike_floor, seed=getattr(cfg, "seed", 42),
                                        return_status=True)   # R-03: use the cfg seed that garch_meta records
         if status_out is not None:

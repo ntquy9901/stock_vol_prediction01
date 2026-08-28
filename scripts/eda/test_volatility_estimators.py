@@ -9,17 +9,41 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import volatility_estimators as VE  # noqa: E402
 
 
-def test_yz_named_as_indicator_form_not_standard(tmp_path):
-    """External senior review HIGH-01: the yz_daily/yz_rma20 target is an INDICATOR-FORM per-day proxy, NOT the
-    standard windowed Yang-Zhang estimator. Guard that the module documents this (prevents reverting to the
-    misleading bare 'Yang-Zhang' label) and that both keys still exist."""
+def test_yz_daily_is_proxy_yang_zhang_is_windowed(tmp_path):
+    """Senior review HIGH-01: yz_daily is a per-day PROXY (not YZ); yang_zhang is the TRUE windowed estimator.
+    Guard the module documents the distinction and both columns exist."""
     import inspect
     doc = inspect.getdoc(VE) or ""
-    assert "indicator-form" in doc.lower() and "not the standard windowed" in doc.lower()
+    assert "TRUE standard Yang--Zhang" in doc and "PER-DAY PROXY" in doc
     est = VE.estimators_from_ohlcv(pd.DataFrame({
-        "date": [1, 2], "open": [10.0, 10.0], "high": [11.0, 11.0], "low": [9.0, 9.0],
-        "close": [10.5, 10.5], "volume": [1, 1]}))
-    assert "yz_daily" in est.columns and "yz_rma20" in est.columns
+        "date": range(3), "open": [10.0] * 3, "high": [11.0] * 3, "low": [9.0] * 3,
+        "close": [10.5] * 3, "volume": [1] * 3}))
+    assert {"yz_daily", "yz_rma20", "yang_zhang"} <= set(est.columns)
+
+
+def test_windowed_yang_zhang_matches_reference_formula():
+    """The yang_zhang column must equal the standard Yang-Zhang (2000) windowed composite computed
+    independently (mean-subtracted n-day sample variances of overnight & open-close returns + rolling RS mean,
+    blended by k=0.34/(1.34+(n+1)/(n-1))). Verified against the TTR-R / strimpel definitions."""
+    rng = np.random.default_rng(0)
+    n = 60
+    c = 20.0 + np.cumsum(rng.normal(0, 0.2, n))
+    o = c * np.exp(rng.normal(0, 0.01, n))                       # open near prev close-ish, with a gap
+    hi = np.maximum.reduce([o, c]) + np.abs(rng.normal(0, 0.15, n))
+    lo = np.minimum.reduce([o, c]) - np.abs(rng.normal(0, 0.15, n))
+    df = pd.DataFrame({"date": range(n), "open": o, "high": hi, "low": lo, "close": c, "volume": [1] * n})
+    est = VE.estimators_from_ohlcv(df, overnight_cap=None)       # no winsor -> exact match to raw returns
+    w = VE._YZ_N; k = VE._YZ_K
+    prev_c = np.concatenate([[np.nan], c[:-1]])
+    r_on = np.log(o / prev_c)
+    r_co = np.log(c / o)
+    rs = np.log(hi / c) * np.log(hi / o) + np.log(lo / c) * np.log(lo / o)
+    ref = (pd.Series(r_on).rolling(w).var() + k * pd.Series(r_co).rolling(w).var()
+           + (1 - k) * pd.Series(np.clip(rs, 0, None)).rolling(w).mean()).clip(lower=0.0)
+    got = est["yang_zhang"].to_numpy()
+    ok = est["ok"].to_numpy() & np.isfinite(ref.to_numpy())
+    np.testing.assert_allclose(got[ok], ref.to_numpy()[ok], rtol=1e-9)
+    assert np.isfinite(got[ok]).sum() > 20                       # the windowed estimator produced real values
 
 
 def test_parkinson_formula_matches_definition():
