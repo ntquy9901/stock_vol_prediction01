@@ -29,10 +29,21 @@ MAINROOT="$(cd "$(dirname "$HOOK_SELF")/../.." && pwd)"
 # Captured gate outcomes -> a per-commit JSON the dashboard overlays (real run
 # wins over hand-entry). See scripts/task_dashboard/gate_results/.
 TESTS_OK=1
-DIFF_PCT=""
+DIFF_PCT=""          # C0 line diff-coverage %
+BRANCH_PCT=""        # C1 branch diff-coverage %
+TEST_COUNT=""        # # tests passed in the changed-scope step
+LESSONS_OK="na"      # data-quality + lessons-regression suite result
 RUFF_STATUS="na"
 STATUSF="$ROOT/.qg_gate_status"
 rm -f "$STATUSF"
+
+# Full per-push evidence log (pytest + diff-cover + ruff output) -> docs/reports/gate_logs/<sha>.txt.
+# Written to disk as an audit artifact (like gate_results/<sha>.json); not auto-committed.
+SHORT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
+GATE_LOG="$MAINROOT/docs/reports/gate_logs/${SHORT_SHA}.txt"
+mkdir -p "$(dirname "$GATE_LOG")" 2>/dev/null
+{ echo "# pre-push quality-gate evidence log"; echo "commit: $SHORT_SHA"; date 2>/dev/null || true; echo; } > "$GATE_LOG"
+_logsec() { { echo "=== $1 ==="; cat; echo; } >> "$GATE_LOG"; }   # pipe a step's captured output into a titled log section
 
 # --- TDD gate (step 0): implementation code must ship WITH a test change ---
 # Proxy for test-first: you cannot push new implementation .py without touching a
@@ -74,16 +85,18 @@ done
 echo "[pre-push] 1/4 changed-scope tests (+branch coverage)"
 COV_OK=1
 if [ -n "$TESTPATHS" ]; then
-  if ! PYTHONIOENCODING=utf-8 "$COVPY" -m pytest $TESTPATHS $COVARGS --cov-branch --cov-report=xml:.qg_coverage.xml -q; then
-    echo "[pre-push] BLOCK: changed-scope tests failed." >&2; FAIL=1; TESTS_OK=0; COV_OK=0
-  fi
+  S1OUT="$(PYTHONIOENCODING=utf-8 "$COVPY" -m pytest $TESTPATHS $COVARGS --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
 else
   PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
   if [ -d "$PILOT/test" ]; then TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"; else TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"; fi
   echo "[pre-push]   (no adjacent tests for changed files — pilot smoke suite $TESTDIR)"
-  if ! python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q; then
-    echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1; TESTS_OK=0; COV_OK=0
-  fi
+  S1OUT="$(python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
+fi
+echo "$S1OUT" | tail -3
+echo "$S1OUT" | _logsec "1/4 changed-scope tests"
+TEST_COUNT="$(echo "$S1OUT" | grep -oE '[0-9]+ passed' | grep -oE '[0-9]+' | head -1)"
+if [ "$S1RC" -ne 0 ]; then
+  echo "[pre-push] BLOCK: changed-scope tests failed." >&2; FAIL=1; TESTS_OK=0; COV_OK=0
 fi
 
 echo "[pre-push] 2/4 diff-coverage on changed lines (C0 line >=${MIN_COVER}%, C1 branch >=${MIN_BRANCH}%)"
@@ -94,12 +107,15 @@ BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
 if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ] && [ "$COV_OK" = "1" ] && [ -n "$ALLPY" ]; then
   DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --include $ALLPY --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
   echo "$DCOUT" | grep -E 'Missing lines|Coverage:|Total:' | tail -12
+  echo "$DCOUT" | _logsec "2/4 C0 line diff-coverage"
   DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
   if [ "$DCRC" -ne 0 ]; then
     echo "[pre-push] BLOCK: C0 line diff-coverage below ${MIN_COVER}% (add tests or a justified # pragma: no cover)." >&2; FAIL=1
   fi
   BCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --branch-coverage --include $ALLPY --fail-under="$MIN_BRANCH" 2>&1)"; BCRC=$?
-  echo "[pre-push]   C1 branch: $(echo "$BCOUT" | grep -oE 'Coverage: [0-9.]+%' | head -1)"
+  BRANCH_PCT="$(echo "$BCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
+  echo "[pre-push]   C1 branch: ${BRANCH_PCT:-n/a}%"
+  echo "$BCOUT" | _logsec "2/4 C1 branch diff-coverage"
   if [ "$BCRC" -ne 0 ]; then
     echo "[pre-push] BLOCK: C1 branch diff-coverage below ${MIN_BRANCH}%." >&2; FAIL=1
   fi
@@ -108,9 +124,16 @@ else
 fi
 
 echo "[pre-push] 3/4 ruff on changed code"
-CHANGED=$(git diff --name-only "$BASE"...HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
+# Use PUSH_BASE (@{upstream}) not merge-base: on a direct-to-master push the merge-base collapses to HEAD,
+# which would leave $CHANGED empty and silently skip ruff (recorded "na"). PUSH_BASE = the pushed diff.
+CHANGED=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
 if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
-  if ruff check $CHANGED 2>&1 | tail -5; then RUFF_STATUS="pass"; else RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff findings on changed files." >&2; fi
+  RUFFOUT="$(ruff check $CHANGED 2>&1)"; RUFFRC=$?
+  echo "$RUFFOUT" | tail -5
+  echo "$RUFFOUT" | _logsec "3/4 ruff"
+  if [ "$RUFFRC" -eq 0 ]; then RUFF_STATUS="pass"; else RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff findings on changed files." >&2; fi
+else
+  echo "[pre-push]   (no changed .py or ruff absent — skipped)"
 fi
 
 echo "[pre-push] 4/4 data-quality: tests (every push) + Pandera/Evidently (if data touched)"
@@ -122,9 +145,10 @@ for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py t
 done
 if [ -n "$DQ" ]; then
   echo "[pre-push]   data-quality (raw+processed) + lessons-learned regression tests"
-  if ! python -m pytest $DQ -q; then
-    echo "[pre-push] BLOCK: data-quality tests failed." >&2; FAIL=1
-  fi
+  DQOUT="$(python -m pytest $DQ -q 2>&1)"; DQRC=$?
+  echo "$DQOUT" | tail -2
+  echo "$DQOUT" | _logsec "4/4 data-quality + lessons-regression"
+  if [ "$DQRC" -eq 0 ]; then LESSONS_OK="pass"; else LESSONS_OK="fail"; echo "[pre-push] BLOCK: data-quality/lessons tests failed." >&2; FAIL=1; fi
 else
   echo "[pre-push]   data-quality tests not found on this branch (skipped)"
 fi
@@ -162,7 +186,10 @@ for d in baselines/2026-08-15_volatility/test baselines/2026-08-11_eda_gnn_basel
   [ -d "$MAINROOT/$d" ] && BDIRS="$BDIRS $MAINROOT/$d"
 done
 if [ -x "$GPUPY" ] && [ -n "$BDIRS" ]; then
-  if ! PYTHONIOENCODING=utf-8 "$GPUPY" -m pytest $BDIRS -q; then
+  S5OUT="$(PYTHONIOENCODING=utf-8 "$GPUPY" -m pytest $BDIRS -q 2>&1)"; S5RC=$?
+  echo "$S5OUT" | tail -2
+  echo "$S5OUT" | _logsec "5/5 delivered-baseline tests"
+  if [ "$S5RC" -ne 0 ]; then
     echo "[pre-push] BLOCK: delivered-baseline tests failed." >&2; FAIL=1
   fi
 else
@@ -170,10 +197,10 @@ else
 fi
 
 # --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
-SHORT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 GATE_DIR="$MAINROOT/scripts/task_dashboard/gate_results"
-QG_COMMIT="$SHORT_SHA" QG_BRANCH="$BRANCH" QG_TESTS="$TESTS_OK" QG_DIFF="$DIFF_PCT" \
+QG_COMMIT="$SHORT_SHA" QG_BRANCH="$BRANCH" QG_TESTS="$TESTS_OK" QG_DIFF="$DIFF_PCT" QG_BRANCH_PCT="$BRANCH_PCT" \
+QG_TEST_COUNT="$TEST_COUNT" QG_LESSONS="$LESSONS_OK" QG_LOG="$GATE_LOG" \
 QG_RUFF="$RUFF_STATUS" QG_STATUSF="$STATUSF" QG_GATEDIR="$GATE_DIR" QG_FAIL="$FAIL" \
 python - <<'PY' || echo "[pre-push] WARN: could not write gate-result JSON." >&2
 import os, json, datetime, pathlib
@@ -186,22 +213,37 @@ if sf and os.path.exists(sf):
         pandera = "pass" if lines[0] == "PASS" else ("fail" if lines[0] == "FAIL" else "na")
     if len(lines) > 1:
         evid = lines[1].lower()
-diff = os.environ.get("QG_DIFF") or ""
+def _num(k):
+    v = os.environ.get(k) or ""
+    try:
+        return float(v)
+    except ValueError:
+        return None
+log = os.environ.get("QG_LOG") or ""
 payload = {
     "commit": os.environ["QG_COMMIT"],
     "branch": os.environ.get("QG_BRANCH"),
     "timestamp": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
     "tests_passed": os.environ.get("QG_TESTS") == "1",
-    "diff_cover_pct": float(diff) if diff else None,
+    "test_count": int(_num("QG_TEST_COUNT")) if _num("QG_TEST_COUNT") is not None else None,
+    "cov_c0_line_pct": _num("QG_DIFF"),          # C0 line diff-coverage
+    "cov_c1_branch_pct": _num("QG_BRANCH_PCT"),  # C1 branch diff-coverage
+    "diff_cover_pct": _num("QG_DIFF"),           # kept for dashboard back-compat (== C0)
     "ruff": os.environ.get("QG_RUFF", "na"),
+    "lessons_regression": os.environ.get("QG_LESSONS", "na"),
     "pandera": pandera,
     "evidently": evid,
+    "evidence_log": os.path.relpath(log, os.environ["QG_GATEDIR"] + "/../../..") if log else None,
     "overall": "fail" if os.environ.get("QG_FAIL", "0") != "0" else "pass",
 }
 (gate_dir / (payload["commit"] + ".json")).write_text(json.dumps(payload, indent=2), encoding="utf-8")
 print(f"[pre-push] wrote gate result {gate_dir / (payload['commit'] + '.json')}")
 PY
 
+# append the final verdict to the evidence log, then keep it (do NOT delete -- it is the audit artifact)
+{ echo "=== VERDICT ==="; echo "overall: $([ "$FAIL" -ne 0 ] && echo FAIL || echo PASS)"; \
+  echo "test_count=$TEST_COUNT C0=$DIFF_PCT C1=$BRANCH_PCT ruff=$RUFF_STATUS lessons=$LESSONS_OK"; } >> "$GATE_LOG"
+echo "[pre-push] wrote evidence log $GATE_LOG"
 rm -f .qg_coverage.xml "$STATUSF"
 if [ "$FAIL" -ne 0 ]; then
   echo "[pre-push] QUALITY GATE FAILED — push blocked. Fix, or QG_SKIP=1 with justification." >&2
