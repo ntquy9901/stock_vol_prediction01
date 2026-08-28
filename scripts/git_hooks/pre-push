@@ -86,10 +86,16 @@ echo "[pre-push] 1/4 changed-scope tests (+branch coverage)"
 COV_OK=1
 if [ -n "$TESTPATHS" ]; then
   S1OUT="$(PYTHONIOENCODING=utf-8 "$COVPY" -m pytest $TESTPATHS $COVARGS --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
+elif [ -n "$COVARGS" ]; then
+  # F-02 (v3): SOURCE changed but NO adjacent test was discovered (and no test file changed either). Running
+  # the pilot smoke suite would NOT cover the changed source -> coverage could not be verified. FAIL CLOSED
+  # rather than fall through to a vacuous pass (only a genuine test-only / docs-only push may be N/A).
+  echo "[pre-push] BLOCK: source .py changed with NO adjacent test (test_<module>.py or tests/) — coverage cannot be verified." >&2
+  S1OUT="(blocked: source changed, no adjacent test to verify coverage)"; S1RC=1; FAIL=1; TESTS_OK=0; COV_OK=0
 else
   PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
   if [ -d "$PILOT/test" ]; then TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"; else TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"; fi
-  echo "[pre-push]   (no adjacent tests for changed files — pilot smoke suite $TESTDIR)"
+  echo "[pre-push]   (no changed source/tests — pilot smoke suite $TESTDIR)"
   S1OUT="$(python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
 fi
 echo "$S1OUT" | tail -3

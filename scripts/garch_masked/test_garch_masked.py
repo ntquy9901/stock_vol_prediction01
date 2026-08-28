@@ -60,9 +60,11 @@ def test_garch_pred_skips_validation_interval(monkeypatch):
 import pytest
 
 
-def _synth_panel_files(tmp_path, n_tickers=12, n_days=500, seed=0):
+def _synth_panel_files(tmp_path, n_tickers=12, n_days=1000, seed=0, sparse=False):
     """Write synthetic processed Parkinson CSVs + matching raw OHLCV (with volume) and return
-    (files, price_dir) suitable for MR.build_masked_rich -- a REAL panel with a real purge."""
+    (files, price_dir) suitable for MR.build_masked_rich -- a REAL panel with a real purge. ``sparse=True``
+    punches per-ticker NaN holes in the processed series so tickers have DIFFERENT missing target dates
+    (irregular masks), stressing the observation-count offset."""
     import pandas as pd
     rng = np.random.default_rng(seed)
     dates = pd.bdate_range("2016-01-01", periods=n_days)
@@ -72,7 +74,11 @@ def _synth_panel_files(tmp_path, n_tickers=12, n_days=500, seed=0):
         v = np.empty(n_days); v[0] = 1e-4 * (k + 1)
         for t in range(1, n_days):
             v[t] = 5e-5 * (k + 1) + 0.85 * v[t - 1] + 1e-5 * abs(rng.standard_normal())
-        pd.DataFrame({"date": dates, "parkinson_volatility": v}).to_csv(proc / f"{tk}_processed.csv", index=False)
+        vv = v.copy()
+        if sparse:                                    # drop ~5% of days, a DIFFERENT set per ticker
+            holes = rng.choice(np.arange(30, n_days), size=int(0.05 * n_days), replace=False)
+            vv[holes] = np.nan
+        pd.DataFrame({"date": dates, "parkinson_volatility": vv}).to_csv(proc / f"{tk}_processed.csv", index=False)
         close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
         span = np.sqrt(v) * close
         pd.DataFrame({"date": dates, "open": close, "high": close + span, "low": close - span,
@@ -81,8 +87,9 @@ def _synth_panel_files(tmp_path, n_tickers=12, n_days=500, seed=0):
     return sorted(str(p) for p in proc.glob("*_processed.csv")), str(raw)
 
 
-@pytest.mark.parametrize("horizon", [1, 5, 10])
-def test_garch_integration_alignment_on_real_purged_panel(tmp_path, monkeypatch, horizon):
+@pytest.mark.parametrize("sparse", [False, True])
+@pytest.mark.parametrize("horizon", [1, 5, 10, 22])
+def test_garch_integration_alignment_on_real_purged_panel(tmp_path, monkeypatch, horizon, sparse):
     """External review F-01: prove the GARCH offset on a REAL MR.build_masked_rich panel (with the real
     train/val/test purge of `horizon` anchors), not a hand-built SimpleNamespace. The delivered design is
     OBSERVATION-CONTIGUOUS: the purge-dropped anchors are targets that exist in NO series, so for node j the
@@ -91,7 +98,7 @@ def test_garch_integration_alignment_on_real_purged_panel(tmp_path, monkeypatch,
     predictions must therefore be exactly [n_va_j+1, n_va_j+2, ...]. This holds at every horizon (a purge-
     induced off-by-h in observation space would break it), settling the "drift grows with horizon" concern:
     there is no drift in observation space; the purge changes counts, not the per-node step mapping."""
-    files, price_dir = _synth_panel_files(tmp_path)
+    files, price_dir = _synth_panel_files(tmp_path, sparse=sparse)
     D = G.MR.build_masked_rich(files, price_dir, lookback=10, horizon=horizon, min_valid=2, min_train_rows=60)
     def _ramp(series, n_test, horizon, floor, seed=42, return_status=False):
         arr = np.arange(1.0, n_test + 1)

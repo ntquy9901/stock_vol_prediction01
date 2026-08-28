@@ -42,6 +42,17 @@ def test_learned_missing_per_seed_raises_not_silent_fallback():
         BT.authoritative_cell(res, "LSTM", "qlike")
 
 
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_authoritative_cell_raises_on_nonfinite(bad):
+    # F-01 (v3): never render a NaN/inf paper number -> fail loud.
+    r = _res(); r["metrics_per_seed"]["LSTM"]["qlike"] = bad
+    with pytest.raises(ValueError, match="not finite"):
+        BT.authoritative_cell(r, "LSTM", "qlike")
+    r2 = _res(); r2["metrics"]["HAR"]["qlike"] = bad
+    with pytest.raises(ValueError, match="not finite"):
+        BT.authoritative_cell(r2, "HAR", "qlike")
+
+
 def test_absent_model_returns_none():
     res = {"metrics": {"HAR": {"qlike": 0.9, "r2": 0.1}}}
     assert BT.authoritative_cell(res, "GARCH", "qlike") is None
@@ -73,6 +84,59 @@ def test_build_tables_skips_all_none_model_and_renders_dash(tmp_path):
     assert BT._fmt(None) == "-"                                         # dash formatter (line 80)
     md = BT.render_markdown(table)
     assert "| - |" in md or " - " in md                                # HAR-X missing-qlike cell shown as "-"
+
+
+def test_render_paper_panel_scales_bolds_and_adds_std(tmp_path):
+    r = _res()                                            # one horizon present (h1); also test h5 absent -> skipped
+    del r["metrics"]["HAR-X"]["mae"]                      # a missing cell -> "-" in the paper row (branch cover)
+    for h in (1, 5):
+        d = tmp_path / f"vn30_h{h}"
+        if h == 1:                                        # only h1 exists -> other horizons skipped in the table
+            d.mkdir(); (d / "result.json").write_text(json.dumps(r), encoding="utf-8")
+    table = BT.build_tables(tmp_path, panels=("vn30",), horizons=(1, 5))
+    tex = BT.render_paper_panel(table, "vn30", horizons=(1, 5))   # h5 has no rows -> continue branch
+    assert r"\begin{tabular}{llccccc}" in tex and r"\bottomrule" in tex
+    assert r"\textbf{0.6600\,$\pm$.060}" in tex           # LSTM+GAT QLIKE is the column min -> whole cell bolded
+    assert r"0.7000\,$\pm$.050" in tex                    # LSTM per-seed std, not bolded
+    assert "10000000.000" in tex                          # MSE scaled by 1e7 (raw 1.0)
+    assert " - " in tex                                   # HAR-X missing MAE rendered as "-"
+
+
+def test_render_paper_panel_multi_horizon_has_internal_midrule(tmp_path):
+    for h in (1, 5):                                      # two horizons -> a \midrule separates the groups
+        d = tmp_path / f"vn30_h{h}"; d.mkdir()
+        (d / "result.json").write_text(json.dumps(_res()), encoding="utf-8")
+    table = BT.build_tables(tmp_path, panels=("vn30",), horizons=(1, 5))
+    tex = BT.render_paper_panel(table, "vn30", horizons=(1, 5))
+    assert tex.count(r"\midrule") == 2                    # one after header + one between the two horizon groups
+    assert "1 & HAR-X" in tex and "5 & HAR-X" in tex
+
+
+def test_crossmarket_paper_inputs_generated_fragments():
+    """F-01/F-03 build-check: the authoritative paper must \\input the generated per-panel fragments (single
+    provenance path from result JSON -> paper), and each referenced fragment file must exist."""
+    repo = Path(__file__).resolve().parents[2]
+    paper = repo / "docs" / "paper" / "soict_harlstmgat_crossmarket.tex"
+    if not paper.exists():
+        pytest.skip("crossmarket paper not present")  # pragma: no cover
+    tex = paper.read_text(encoding="utf-8")
+    for panel in ("vn30", "vn100", "hose", "hnx", "sp500"):
+        assert f"\\input{{generated/tab_{panel}.tex}}" in tex, f"paper does not \\input {panel} fragment"
+        assert (repo / "docs" / "paper" / "generated" / f"tab_{panel}.tex").exists(), f"missing fragment {panel}"
+
+
+def test_generator_reproduces_published_vn30_numbers_real_data():
+    """DRIFT-LOCK (real-data smoke): the authoritative generator must reproduce the numbers in the published
+    crossmarket paper table for VN30 h1 (HAR-X best QLIKE 0.5159; LSTM per-seed 0.7037 +- .054). Guards against
+    the paper and the canonical results silently diverging. Skips if the delivered results are absent."""
+    root = Path(__file__).resolve().parents[2] / "results" / "masked_rich_floor1e2"
+    if not (root / "vn30_h1" / "result.json").exists():
+        pytest.skip("delivered results not present")  # pragma: no cover
+    table = BT.build_tables(root, panels=("vn30",), horizons=(1,))
+    tex = BT.render_paper_panel(table, "vn30", horizons=(1,))
+    assert r"\textbf{0.5159}" in tex                      # HAR-X QLIKE best -> matches paper Table (tab:vn30)
+    assert r"0.7037\,$\pm$.054" in tex                    # LSTM per-seed QLIKE +- std -> matches paper
+    assert r"1.927" in tex and r"4.389" in tex            # HAR-X MSE(x1e7)/RMSE(x1e4) -> matches paper
 
 
 def test_render_markdown_and_latex_carry_provenance_and_per_seed(tmp_path):

@@ -12,6 +12,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import overfit_check as OF  # noqa: E402
 
 
+def _is_masked_rich_result(res: dict) -> bool:
+    """Identify a masked-rich TRAINING result by SCHEMA, not by a literal learned-model key (F-04 v3): a partial
+    artifact that lost its LSTM block must still be recognised as a training result so its missing evidence
+    FAILS rather than being skipped. A GARCH-only / unrelated artifact (no design, no per-seed, no learned
+    model at all) is genuinely not a training result and is skipped."""
+    if not isinstance(res, dict):
+        return False
+    design = str(res.get("design", ""))
+    if "masked" in design:                                      # the delivered runner stamps this design string
+        return True
+    if "metrics_per_seed" in res:                               # only training results carry per-seed stats
+        return True
+    metrics = res.get("metrics", {})
+    if isinstance(metrics, dict) and any(m in metrics for m in OF.LEARNED):
+        return True                                             # any learned model present -> training result
+    return False
+
+
 def check_files(paths):
     """Return {path: [problems]} for every result.json that IS a training result and fails the evidence check."""
     problems = {}
@@ -21,8 +39,8 @@ def check_files(paths):
         except Exception as e:                                  # unreadable/corrupt -> a real problem
             problems[p] = [f"unreadable: {type(e).__name__}: {e}"]
             continue
-        if not isinstance(res, dict) or "LSTM" not in res.get("metrics", {}):
-            continue                                            # not a masked-rich training result -> skip
+        if not _is_masked_rich_result(res):
+            continue                                            # genuinely not a training result -> skip
         ok, probs = OF.check_result_evidence(res)
         if not ok:
             problems[p] = probs

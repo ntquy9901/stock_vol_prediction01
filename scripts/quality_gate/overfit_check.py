@@ -13,7 +13,10 @@ Rationale for the metric choices:
 """
 from __future__ import annotations
 
+import math
+
 _REQUIRED_METRIC_KEYS = ("qlike", "r2")
+LEARNED = ("LSTM", "LSTM_wGAT_vol2pk")   # learned models that must carry over/under-fit evidence
 
 
 def classify_fit(train: dict, val: dict, test: dict, *,
@@ -27,6 +30,11 @@ def classify_fit(train: dict, val: dict, test: dict, *,
     for name, m in (("train", train), ("val", val), ("test", test)):
         if not isinstance(m, dict) or any(k not in m for k in _REQUIRED_METRIC_KEYS):
             return {"status": "unknown", "reasons": [f"missing {name} metrics {_REQUIRED_METRIC_KEYS}"]}
+        # F-03 (v3): a NaN/inf metric would make every threshold comparison False -> fail-OPEN ('ok'). Reject
+        # non-finite evidence as 'unknown' (the gate treats non-ok as a failure) instead of silently passing.
+        for k in _REQUIRED_METRIC_KEYS:
+            if not math.isfinite(float(m[k])):
+                return {"status": "unknown", "reasons": [f"{name} {k} is not finite ({m[k]})"]}
 
     vq, tq = float(val["qlike"]), float(test["qlike"])
     val_test_gap_rel = (tq - vq) / abs(vq) if vq != 0 else float("inf")
@@ -48,7 +56,7 @@ def classify_fit(train: dict, val: dict, test: dict, *,
             "reasons": reasons}
 
 
-def check_result_evidence(res: dict, *, learned=("LSTM", "LSTM_wGAT_vol2pk"), **thresholds) -> tuple[bool, list]:
+def check_result_evidence(res: dict, *, learned=LEARNED, **thresholds) -> tuple[bool, list]:
     """Validate a result.json dict CARRIES the over/under-fit evidence and every learned model is 'ok'.
 
     Returns ``(passed, problems)``. A result is acceptable iff it has ``train_metrics`` + ``val_metrics`` +

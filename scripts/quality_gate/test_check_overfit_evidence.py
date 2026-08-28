@@ -43,6 +43,26 @@ def test_gate_skips_non_training_result(tmp_path):
     assert CO.check_files([str(p)]) == {}
 
 
+def test_gate_blocks_partial_masked_rich_missing_a_learned_model(tmp_path):
+    # F-04 (v3): a masked-rich result (identified by design/per-seed) that LOST its LSTM block must FAIL,
+    # not be skipped as "not a training result".
+    r = _good()
+    r["design"] = "masked-union-panel-rich-5feat-weighted-gat"
+    del r["metrics"]["LSTM"]; del r["train_metrics"]["LSTM"]; del r["val_metrics"]["LSTM"]
+    p = tmp_path / "vn30_h1_result.json"; p.write_text(json.dumps(r), encoding="utf-8")
+    probs = CO.check_files([str(p)])
+    assert str(p) in probs and any("LSTM" in x for x in probs[str(p)])
+
+
+def test_masked_rich_detector_recognises_design_and_per_seed():
+    assert CO._is_masked_rich_result({"design": "masked-union-panel", "metrics": {}}) is True
+    assert CO._is_masked_rich_result({"metrics_per_seed": {"LSTM": {}}}) is True
+    assert CO._is_masked_rich_result({"metrics": {"LSTM_wGAT_vol2pk": {"qlike": 0.6}}}) is True
+    assert CO._is_masked_rich_result({"metrics": {"HAR-X": {"qlike": 0.5}}}) is False   # deterministic-only
+    assert CO._is_masked_rich_result("not-a-dict") is False                              # non-dict guard
+    assert CO._is_masked_rich_result({}) is False                                        # empty artifact
+
+
 def test_gate_flags_unreadable_file(tmp_path):
     p = tmp_path / "bad.json"; p.write_text("{not json", encoding="utf-8")
     probs = CO.check_files([str(p)])

@@ -2,6 +2,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import overfit_check as OC  # noqa: E402
 
@@ -34,6 +36,17 @@ def test_classify_underfit_when_train_r2_poor():
 def test_classify_unknown_on_missing_metrics():
     v = OC.classify_fit({"qlike": 0.5}, {"qlike": 0.5, "r2": 0.4}, {"qlike": 0.5, "r2": 0.4})
     assert v["status"] == "unknown"
+
+
+@pytest.mark.parametrize("split", ["train", "val", "test"])
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_classify_nonfinite_metric_is_unknown_not_ok(split, bad):
+    # F-03 (v3): a NaN/inf in any split must NOT pass as 'ok' (would be fail-open).
+    m = {"train": {"qlike": 0.68, "r2": 0.30}, "val": {"qlike": 0.70, "r2": 0.24},
+         "test": {"qlike": 0.71, "r2": 0.23}}
+    m[split]["qlike"] = bad
+    v = OC.classify_fit(m["train"], m["val"], m["test"])
+    assert v["status"] == "unknown" and any("not finite" in r for r in v["reasons"])
 
 
 def test_check_result_evidence_missing_blocks():

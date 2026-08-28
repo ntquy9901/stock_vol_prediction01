@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 
 LEARNED = ("LSTM", "LSTM_wGAT_vol2pk", "LSTM_wGAT_corr")
@@ -42,12 +43,18 @@ def authoritative_cell(res: dict, model: str, metric: str) -> dict | None:
         cell = ps[model]
         if metric not in cell:
             return None
-        return {"value": float(cell[metric]), "std": (float(cell[metric + "_std"]) if metric + "_std" in cell else None),
-                "source": "per_seed"}
+        val = float(cell[metric])
+        if not math.isfinite(val):                              # F-01 (v3): never render a NaN/inf paper number
+            raise ValueError(f"learned model '{model}' metric '{metric}' is not finite ({cell[metric]})")
+        std = float(cell[metric + "_std"]) if metric + "_std" in cell else None
+        return {"value": val, "std": std, "source": "per_seed"}
     m = res.get("metrics", {})
     if model not in m or metric not in m[model]:
         return None
-    return {"value": float(m[model][metric]), "std": None, "source": "ensemble"}
+    val = float(m[model][metric])
+    if not math.isfinite(val):
+        raise ValueError(f"model '{model}' metric '{metric}' is not finite ({m[model][metric]})")
+    return {"value": val, "std": None, "source": "ensemble"}
 
 
 def _sha256(path: Path) -> str:
@@ -106,6 +113,57 @@ def render_latex(table: dict) -> str:
     return "\n".join(out) + "\n"
 
 
+# --- paper-format per-panel LaTeX (external review F-03 wiring) ------------------------------------------
+# The paper scales MSE by 1e7 and RMSE/MAE by 1e4 (raw variance ~1e-7); QLIKE/R^2 are raw. Best-in-column
+# (per horizon) is bolded (min for losses, max for R^2). Learned QLIKE carries the per-seed std. The
+# subjective within-noise "dagger" markers of the hand tables are intentionally NOT reproduced (numbers only).
+_SCALE = {"mse": 1e7, "rmse": 1e4, "mae": 1e4, "qlike": 1.0, "r2": 1.0}
+_DEC = {"mse": 3, "rmse": 3, "mae": 3, "qlike": 4, "r2": 4}
+_PAPER_MODELS = (("HAR-X", "HAR-X"), ("GARCH", "GARCH"), ("LSTM", "LSTM"), ("LSTM_wGAT_vol2pk", "LSTM+GAT"))
+
+
+def _scaled_value(metric: str, cell: dict | None):
+    return None if cell is None else cell["value"] * _SCALE[metric]
+
+
+def render_paper_panel(table: dict, panel: str, horizons=HORIZONS) -> str:
+    """A paper-ready ``tabular`` body for one panel: horizon-grouped rows, best-in-column bolded, learned QLIKE
+    with per-seed std. Regenerable + authoritative (learned = per-seed, deterministic = ensemble)."""
+    by = {(r["horizon"], r["model"]): r["cells"] for r in table["rows"] if r["panel"] == panel}
+    lines = [r"\begin{tabular}{llccccc}", r"\toprule",
+             r"$h$ & Model & MSE & RMSE & MAE & QLIKE & $R^2$ \\", r"\midrule"]
+    first = True
+    for h in horizons:
+        present = [(key, disp) for key, disp in _PAPER_MODELS if (h, key) in by]
+        if not present:
+            continue
+        if not first:
+            lines.append(r"\midrule")
+        first = False
+        best = {}
+        for mt in METRICS:
+            vals = [(_scaled_value(mt, by[(h, key)].get(mt))) for key, _ in present]
+            vals = [v for v in vals if v is not None]
+            if vals:
+                best[mt] = max(vals) if mt == "r2" else min(vals)
+        for key, disp in present:
+            cells = by[(h, key)]
+            out = []
+            for mt in METRICS:
+                sv = _scaled_value(mt, cells.get(mt))
+                if sv is None:
+                    out.append("-"); continue
+                txt = f"{sv:.{_DEC[mt]}f}"
+                if mt == "qlike" and cells[mt].get("std") is not None:
+                    txt += r"\,$\pm$" + f"{cells[mt]['std']:.3f}".lstrip("0")
+                if mt in best and abs(sv - best[mt]) < 10 ** (-_DEC[mt] - 1):
+                    txt = r"\textbf{" + txt + "}"
+                out.append(txt)
+            lines.append(f"{h} & {disp} & " + " & ".join(out) + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(lines) + "\n"
+
+
 def main(argv=None):  # pragma: no cover - CLI entry driver
     import argparse
     ap = argparse.ArgumentParser()
@@ -117,8 +175,13 @@ def main(argv=None):  # pragma: no cover - CLI entry driver
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     (out / "final_tables.md").write_text(render_markdown(table), encoding="utf-8")
     (out / "final_tables.tex").write_text(render_latex(table), encoding="utf-8")
-    print(f"wrote {out/'final_tables.md'} and .tex ({len(table['rows'])} rows, "
-          f"{len(table['provenance'])} panels)")
+    panels_written = []
+    for panel in PANELS:                                     # per-panel paper-format fragments for \input
+        if any(r["panel"] == panel for r in table["rows"]):
+            (out / f"tab_{panel}.tex").write_text(render_paper_panel(table, panel), encoding="utf-8")
+            panels_written.append(panel)
+    print(f"wrote {out/'final_tables.md'} + .tex + tab_<panel>.tex for {panels_written} "
+          f"({len(table['rows'])} rows, {len(table['provenance'])} panels)")
     return 0
 
 
