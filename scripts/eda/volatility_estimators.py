@@ -95,6 +95,10 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
         rs = np.clip(ln_hc * ln_ho + ln_lc * ln_lo, 0.0, None)   # Rogers-Satchell (clipped >=0)
         c2c = r_cc ** 2
         rs_ov = rs + r_on ** 2
+        # Garman-Klass-Yang-Zhang (GKYZ): the standard Garman-Klass intraday estimator PLUS Yang-Zhang's
+        # single-day overnight-jump term ln(O_t/C_{t-1})^2. A DAILY, drift-/gap-aware realized variance (uses
+        # all of OHLC + the gap) -> a fair proxy-robustness target alongside Parkinson. sigma^2 = overnight^2 + GK.
+        gkyz = r_on ** 2 + gk
         # yz_daily: a PER-DAY PROXY (NOT a Yang-Zhang estimator; senior review HIGH-01). It borrows the YZ
         # component structure + k weight but uses single-day squared returns instead of the windowed sample
         # variances that DEFINE the estimator. Kept as a heuristic gap-aware daily feature; do not call it
@@ -116,18 +120,18 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
     var_rs = _rrs.rolling(_n).mean()                  # (1/n) sum of single-day RS
     yang_zhang = (var_on + _YZ_K * var_oc + (1.0 - _YZ_K) * var_rs).to_numpy()
     out = pd.DataFrame({
-        "close2close": c2c, "parkinson": park, "garman_klass": gk,
+        "close2close": c2c, "parkinson": park, "garman_klass": gk, "gkyz": gkyz,
         "rogers_satchell": rs, "rs_overnight": rs_ov, "yz_daily": yz_daily, "yang_zhang": yang_zhang,
         "is_zero_range": np.isclose(ln_hl, 0.0),      # H approx L day
         "ok": ok,
     })
-    for e in ["garman_klass", "rogers_satchell", "rs_overnight", "yz_daily", "yang_zhang"]:
+    for e in ["garman_klass", "gkyz", "rogers_satchell", "rs_overnight", "yz_daily", "yang_zhang"]:
         out[e] = out[e].clip(lower=0.0)               # variance estimators are non-negative
     # yz_rma20: the TradingView YZV output = Wilder RMA smoothing of yz_daily (trailing, no look-ahead).
     # NOTE: a smoothed target is highly autocorrelated -> forecasts look artificially easy; it no longer
     # measures next-day variance. Kept for parity with the indicator, flagged in the report.
     out["yz_rma20"] = pd.Series(yz_daily).ewm(alpha=1.0 / _YZ_N, adjust=False, ignore_na=True).mean().to_numpy()
-    out.loc[~ok, EST + ["yz_daily", "yz_rma20", "yang_zhang"]] = np.nan
+    out.loc[~ok, EST + ["gkyz", "yz_daily", "yz_rma20", "yang_zhang"]] = np.nan
     return out
 
 
