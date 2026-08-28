@@ -246,6 +246,19 @@ Khi **thử nghiệm** model (không phải final run):
 - **Full run (vd 40/70 epoch)** chỉ khi user approve sau khi xem 5/10 epoch.
 - Lý do: training dài tốn thời gian; nhiều baseline no-lift (4/4 news + body) → checkpoint sớm đỡ lãng phí.
 
+**Over/under-fit evidence BẮT BUỘC + ENFORCED (user mandate 2026-08-29):** mỗi lần train phải **capture
+evidence** để CHỨNG MINH (không chỉ khẳng định) model không overfit/underfit, và evidence này bị gate chặn:
+- **Capture trong lúc train:** result.json PHẢI có `train_metrics` + `val_metrics` (cạnh `metrics`=test) cho
+  từng model + `fit_diagnostics` (verdict per model) + `learning_curves` (train/val MSE mỗi epoch, per seed).
+  `run_masked_rich.train_masked_rich(return_splits=True)` + `run()` đã sinh sẵn; logic verdict ở
+  `scripts/quality_gate/overfit_check.py::classify_fit` (overfit = val→test QLIKE xấu đi >25% hoặc train→test
+  R² drop >0.20; underfit = train_r2 & test_r2 đều < floor).
+- **Gate chặn (pre-push):** `scripts/quality_gate/check_overfit_evidence.py` chạy trên mọi `result.json`
+  masked_rich trong push diff — thiếu evidence hoặc model overfit/underfit → **BLOCK**. Test:
+  `test_overfit_check.py`, `test_check_overfit_evidence.py` (chạy mỗi push).
+- Các delivered result.json cũ (test-only, trước mandate) không nằm trong push diff nên không bị retro-check;
+  nhưng mọi lần train/commit result.json MỚI từ nay phải kèm evidence.
+
 ## Ablation study — LEAVE-ONE-OUT (ENFORCED)
 
 > Áp dụng theo yêu cầu user 2026-08-15. Lý do: một pass trước làm ablation kiểu incremental

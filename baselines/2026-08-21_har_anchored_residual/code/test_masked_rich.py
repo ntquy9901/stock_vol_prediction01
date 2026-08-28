@@ -216,6 +216,13 @@ def test_run_out_subdir_writes_separate_results_tree(tmp_path, monkeypatch):
     assert custom.exists()                              # wrote to the custom tree
     assert not (tmp_path / "results" / "masked_rich_floor1e2").exists()   # did NOT touch the delivered tree
     assert "metrics_per_seed" in res and "config" in res
+    # over/under-fit evidence (user mandate 2026-08-29): train/val metrics + per-model verdict + curves
+    for blk in ("train_metrics", "val_metrics", "fit_diagnostics", "learning_curves"):
+        assert blk in res, blk
+    for m in ("HAR", "HAR-X", "LSTM", "LSTM_wGAT_vol2pk"):
+        assert "qlike" in res["train_metrics"][m] and "r2" in res["val_metrics"][m]
+        assert res["fit_diagnostics"][m]["status"] in ("ok", "overfit", "underfit", "unknown")
+    assert len(res["learning_curves"]["LSTM"]["val"]) == len(res["seeds"])   # one val curve per seed
     # M-05: the (intentionally different) edge overlap thresholds are recorded for transparency
     ec = res["edge_config"]
     assert ec["corr_min_overlap"] == MR.EDGE_MIN_OVERLAP and ec["vol2pk_min_pairs"] == MR._MIN_PAIRS

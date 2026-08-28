@@ -24,11 +24,13 @@ from torch import nn
 torch.backends.cudnn.benchmark = True
 
 _SUB = Path(__file__).resolve().parents[3] / "submission" / "soict_lstm_gat"
-sys.path.insert(0, str(_SUB)); sys.path.insert(0, str(Path(__file__).resolve().parent))
+_QG = Path(__file__).resolve().parents[3] / "scripts" / "quality_gate"
+sys.path.insert(0, str(_SUB)); sys.path.insert(0, str(_QG)); sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import baselines as B  # noqa: E402
 import metrics as M  # noqa: E402
 import stats as ST  # noqa: E402
+import overfit_check as OF  # noqa: E402
 from config import Config, SMOKE  # noqa: E402
 import masked_rich as MR  # noqa: E402
 
@@ -123,7 +125,7 @@ def _batches(nrow, bs, shuffle, seed=0):
         yield idx[i:i + bs]
 
 
-def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor"):
+def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor", return_splits=False):
     """output_param: 'zscore_floor' (delivered default: standardized target, linear denorm, 1e-2*mean
     floor) or 'ratio_exp' (node-scaled ratio target y/mean + exp output, no relative floor; the
     review-validated parameterization that removes QLIKE seed-instability -- see
@@ -166,7 +168,8 @@ def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor")
             return np.maximum(np.exp(np.minimum(pn, 15.0)) * D.t_mean, tiny)
         return np.maximum(pn * D.t_std + D.t_mean, 1e-2 * D.t_mean + 1e-12)
 
-    best = np.inf; best_state = None; wait = 0
+    best = np.inf; best_state = None; wait = 0; best_ep = 0
+    train_curve = []; val_curve = []                         # per-epoch masked MSE -> learning curve (overfit evidence)
     for ep in range(cfg.epochs):
         net.train()
         for idx in _batches(len(Xtr), bs, True, seed + ep):
@@ -177,16 +180,23 @@ def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor")
         pva = infer(D.X_va, D.nmask_va)
         m = D.tmask_va.astype(bool)
         vmse = float(np.mean((pva[m] - D.y_va[m]) ** 2))
+        ptr = infer(D.X_tr, D.nmask_tr); mtr = D.tmask_tr.astype(bool)   # train-fit curve (underfit evidence)
+        train_curve.append(float(np.mean((ptr[mtr] - D.y_tr[mtr]) ** 2)))
+        val_curve.append(vmse)
         sched.step(vmse)
         if vmse < best - 1e-12:
-            best = vmse; best_state = {k: v.detach().cpu().clone() for k, v in net.state_dict().items()}; wait = 0
+            best = vmse; best_state = {k: v.detach().cpu().clone() for k, v in net.state_dict().items()}; wait = 0; best_ep = ep + 1
         else:
             wait += 1
         if ep + 1 >= cfg.min_epochs and wait >= cfg.patience:
             break
     if best_state:
         net.load_state_dict(best_state)
-    return infer(D.X_te, D.nmask_te)
+    te = infer(D.X_te, D.nmask_te)
+    if return_splits:                                        # train/val predictions + learning curves for the fit verdict
+        return {"test": te, "val": infer(D.X_va, D.nmask_va), "train": infer(D.X_tr, D.nmask_tr),
+                "train_curve": train_curve, "val_curve": val_curve, "best_epoch": best_ep}
+    return te
 
 
 def _pred_dict(pred, y, tmask, dates, N):
@@ -210,6 +220,18 @@ def _metrics(pred, floor):
     ks = sorted(pred); y = np.array([pred[k][0] for k in ks]); p = np.array([pred[k][1] for k in ks])
     return {"mse": M.mse(y, p), "rmse": M.rmse(y, p), "mae": M.mae(y, p),
             "qlike": M.qlike(y, p, floor), "r2": M.r2(y, p), "n": len(ks)}
+
+
+def _split_metrics(pred, y, tmask, floor):
+    """QLIKE/MSE/R2 on a masked split array (train or val) -- no dates needed (over/under-fit evidence)."""
+    m = tmask.astype(bool)
+    yv, pv = y[m], pred[m]
+    return {"mse": M.mse(yv, pv), "qlike": M.qlike(yv, pv, floor), "r2": M.r2(yv, pv), "n": int(m.sum())}
+
+
+def _ens_split(outs, key):
+    """Seed-ensemble a train/val/test prediction array (mean over seeds) for the fit verdict."""
+    return np.mean([o[key] for o in outs], axis=0)
 
 
 def seed_metric_stats(seed_dicts, floor):
@@ -269,8 +291,10 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     HARX = _pred_dict(np.maximum(_hx, 1e-2 * D.t_mean + 1e-12), D.y_te, D.tmask_te, D.d_te, N)
     # keep the per-seed prediction dicts so we can report the MEAN (+-std) of seed-level metrics, not just
     # the metric of the seed-averaged (ensemble) prediction (which is generally lower -- see seed_metric_stats)
-    lstm_seeds = [_pred_dict(train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds]
-    gat_seeds = [_pred_dict(train_masked_rich(D, cfg, s, True, D.adj_vol2pk, output_param), D.y_te, D.tmask_te, D.d_te, N) for s in cfg.seeds]
+    lstm_out = [train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param, return_splits=True) for s in cfg.seeds]
+    gat_out = [train_masked_rich(D, cfg, s, True, D.adj_vol2pk, output_param, return_splits=True) for s in cfg.seeds]
+    lstm_seeds = [_pred_dict(o["test"], D.y_te, D.tmask_te, D.d_te, N) for o in lstm_out]
+    gat_seeds = [_pred_dict(o["test"], D.y_te, D.tmask_te, D.d_te, N) for o in gat_out]
     lstm = _ens(lstm_seeds); gat_v = _ens(gat_seeds)
     preds = {"HAR": HAR, "HAR-X": HARX, "LSTM": lstm, "LSTM_wGAT_vol2pk": gat_v}
     per_seed = {"LSTM": seed_metric_stats(lstm_seeds, cfg.qlike_floor),
@@ -286,6 +310,26 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     # quantity; test_ensemble_metric_differs_from_perseed_mean_schema_contract pins the difference).
     # For HAR/HAR-X (deterministic) the two coincide.
     metrics = {k: _metrics(v, cfg.qlike_floor) for k, v in preds.items()}
+
+    # --- OVER/UNDER-FIT EVIDENCE (user mandate 2026-08-29): train + val metrics + a per-model fit verdict +
+    # learning curves, so the result.json can PROVE (not just assert) generalisation. The gate
+    # (scripts/quality_gate/check_overfit_evidence.py) blocks a pushed result.json that lacks this or is
+    # over/under-fit. HAR/HAR-X train/val use the same OLS coefficients on the train/val feature blocks.
+    fl = cfg.qlike_floor; nfloor = 1e-2 * D.t_mean + 1e-12
+    hp_tr = np.maximum(B.har_predict(D.har_tr.reshape(-1, 3), coef, floor=fl).reshape(D.y_tr.shape), nfloor)
+    hp_va = np.maximum(B.har_predict(D.har_va.reshape(-1, 3), coef, floor=fl).reshape(D.y_va.shape), nfloor)
+    hx_tr = np.maximum((np.column_stack([np.ones(len(D.har5_tr.reshape(-1, 5))), D.har5_tr.reshape(-1, 5)]) @ _cx).reshape(D.y_tr.shape), nfloor)
+    hx_va = np.maximum((np.column_stack([np.ones(len(D.har5_va.reshape(-1, 5))), D.har5_va.reshape(-1, 5)]) @ _cx).reshape(D.y_va.shape), nfloor)
+    tr_pred = {"HAR": hp_tr, "HAR-X": hx_tr, "LSTM": _ens_split(lstm_out, "train"), "LSTM_wGAT_vol2pk": _ens_split(gat_out, "train")}
+    va_pred = {"HAR": hp_va, "HAR-X": hx_va, "LSTM": _ens_split(lstm_out, "val"), "LSTM_wGAT_vol2pk": _ens_split(gat_out, "val")}
+    train_metrics = {m: _split_metrics(tr_pred[m], D.y_tr, D.tmask_tr, fl) for m in tr_pred}
+    val_metrics = {m: _split_metrics(va_pred[m], D.y_va, D.tmask_va, fl) for m in va_pred}
+    fit_diagnostics = {m: OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in tr_pred}
+    learning_curves = {
+        "LSTM": {"train": [o["train_curve"] for o in lstm_out], "val": [o["val_curve"] for o in lstm_out],
+                 "best_epoch": [o["best_epoch"] for o in lstm_out]},
+        "LSTM_wGAT_vol2pk": {"train": [o["train_curve"] for o in gat_out], "val": [o["val_curve"] for o in gat_out],
+                             "best_epoch": [o["best_epoch"] for o in gat_out]}}
     dm = {"HARX_vs_HAR": _dm_all(HARX, HAR, horizon, cfg.qlike_floor),
           "LSTM_vs_HAR": _dm_all(lstm, HAR, horizon, cfg.qlike_floor),
           "LSTM_vs_HARX": _dm_all(lstm, HARX, horizon, cfg.qlike_floor),
@@ -306,6 +350,9 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
            "edge_config": {"corr_min_overlap": MR.EDGE_MIN_OVERLAP, "vol2pk_min_pairs": MR._MIN_PAIRS,
                            "top_k": MR.EDGE_TOP_K},
            "metrics": metrics, "metrics_per_seed": per_seed, "dm_date_clustered": dm,
+           # over/under-fit evidence (train/val/test + verdict + curves) -- see scripts/quality_gate/overfit_check.py
+           "train_metrics": train_metrics, "val_metrics": val_metrics,
+           "fit_diagnostics": fit_diagnostics, "learning_curves": learning_curves,
            "seconds": round(time.time() - t0, 1)}
     # out_subdir lets callers write to a SEPARATE results tree (e.g. a volatility-proxy robustness study)
     # without clobbering the delivered results/masked_rich_floor1e2 tree.

@@ -150,7 +150,8 @@ echo "[pre-push] 4/4 data-quality: tests (every push) + Pandera/Evidently (if da
 # Data-quality test scripts run on EVERY push (cheap ~2s; enforces regardless of branch/base, since
 # on a master push the merge-base collapses to HEAD and a diff-gated check would silently no-op).
 DQ=""
-for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py tests/test_lessons_regression.py; do
+for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py tests/test_lessons_regression.py \
+         scripts/quality_gate/test_overfit_check.py scripts/quality_gate/test_check_overfit_evidence.py; do
   [ -f "$MAINROOT/$t" ] && DQ="$DQ $MAINROOT/$t"
 done
 if [ -n "$DQ" ]; then
@@ -162,6 +163,19 @@ if [ -n "$DQ" ]; then
 else
   echo "[pre-push]   data-quality tests not found on this branch (skipped)"
 fi
+# Over/under-fit evidence gate (user mandate 2026-08-29): any masked-rich result.json in THIS push must
+# carry train/val/test metrics + a per-model 'ok' fit verdict (no over/under-fit). Only checks result.json
+# actually being pushed; pre-existing (test-only) results are not in the diff and are not retro-checked.
+RESULTS_CHG=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*result.json' 2>/dev/null | grep -E 'masked_rich' || true)
+if [ -n "$RESULTS_CHG" ]; then
+  echo "[pre-push]   over/under-fit evidence gate on $(echo "$RESULTS_CHG" | wc -l | tr -d ' ') changed result.json"
+  RCHG_ABS=""; for r in $RESULTS_CHG; do RCHG_ABS="$RCHG_ABS $MAINROOT/$r"; done
+  OFOUT="$(python "$MAINROOT/scripts/quality_gate/check_overfit_evidence.py" $RCHG_ABS 2>&1)"; OFRC=$?
+  echo "$OFOUT" | tail -8
+  echo "$OFOUT" | _logsec "4/4 over-under-fit evidence gate"
+  if [ "$OFRC" -ne 0 ]; then echo "[pre-push] BLOCK: result.json missing fit evidence or over/under-fit." >&2; FAIL=1; fi
+fi
+
 DATA_TOUCHED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null | grep -iE 'data|manifest|scaling|dataset|panel' || true)
 if [ -n "$DATA_TOUCHED" ]; then
   # scripts/quality_gate lives in the MAIN repo root (not in feature-branch
