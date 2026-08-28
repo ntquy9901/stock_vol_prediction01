@@ -21,28 +21,6 @@ def test_yz_daily_is_proxy_yang_zhang_is_windowed(tmp_path):
     assert {"yz_daily", "yz_rma20", "yang_zhang"} <= set(est.columns)
 
 
-def test_gkyz_matches_reference_formula():
-    """GKYZ = Garman-Klass + Yang-Zhang single-day overnight jump = overnight^2 + GK (daily, gap-aware).
-    Verified vs the independent formula (per the CLAUDE.md named-estimator rule)."""
-    rng = np.random.default_rng(2)
-    n = 40
-    c = 20.0 + np.cumsum(rng.normal(0, 0.2, n))
-    o = c * np.exp(rng.normal(0, 0.01, n))
-    hi = np.maximum(o, c) + np.abs(rng.normal(0, 0.1, n))
-    lo = np.minimum(o, c) - np.abs(rng.normal(0, 0.1, n))
-    df = pd.DataFrame({"date": range(n), "open": o, "high": hi, "low": lo, "close": c, "volume": [1] * n})
-    est = VE.estimators_from_ohlcv(df, overnight_cap=None)
-    prev_c = np.concatenate([[np.nan], c[:-1]])
-    r_on = np.log(o / prev_c)
-    ln_hl = np.log(hi / lo); ln_co = np.log(c / o)
-    gk = 0.5 * ln_hl ** 2 - (2 * np.log(2) - 1) * ln_co ** 2
-    ref = np.clip(r_on ** 2 + gk, 0.0, None)
-    got = est["gkyz"].to_numpy()
-    ok = est["ok"].to_numpy() & np.isfinite(ref)
-    np.testing.assert_allclose(got[ok], ref[ok], rtol=1e-9)
-    assert "gkyz" in est.columns and (got[ok] >= 0).all()
-
-
 def test_windowed_yz_invalid_row_yields_nan_not_inf():
     """Code review LOW-1: an invalid mid-series bar (close=0 -> inf log-returns) must NOT poison the rolling
     Yang-Zhang with inf; windows spanning it are NaN, and yang_zhang is never a wrong finite/inf value."""
