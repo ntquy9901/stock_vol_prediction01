@@ -85,15 +85,49 @@ HAR-X QLIKE on HNX is 1.87 by the same panel-correct pipeline.)
   universe — see above; the earlier 9.5 was not real.)
 - **close2close is worst** (pure return noise, lowest efficiency).
 
+### C2. Exact Yang–Zhang per-day formula (added after review)
+The `rs_overnight` proxy above (RS + raw overnight²) is a crude YZ analog. The exact **per-day** Yang–Zhang
+used by charting indicators (e.g. TradingView YZV) is `σ²_daily = r_o² + k·r_c² + (1−k)·RS` with
+`r_o=ln(O/C_{-1})`, `r_c=ln(C/O)`, `k=0.34/(1.34+(n+1)/(n−1))` (≈0.139 for n=20); the indicator then RMA-smooths
+it. Both were implemented (`yz_daily`, `yz_rma20`) and re-tested on the canonical universe:
+
+| panel | estimator | QLIKE | MSE | R² | floored% |
+|---|---|---|---|---|---|
+| vn30 | **parkinson** | **0.5159** | 1.93e-7 | 0.231 | 0.40% |
+| vn30 | yz_daily | 0.7217 | 7.66e-7 | 0.241 | 0.05% |
+| vn30 | yz_rma20 (smoothed) | 0.0037 ⚠ | 1.97e-9 | 0.985 | 0% |
+| hnx | parkinson | 1.8721 | 1.40e-6 | 0.215 | 13.06% |
+| hnx | **yz_daily** | **1.6354** | 5.00e-6 | 0.180 | 10.75% |
+| hnx | yz_rma20 (smoothed) | 0.0055 ⚠ | 1.25e-8 | 0.990 | 0% |
+
+**This nuances the earlier conclusion:** the *exact* per-day YZ (with the k weight) is **not uniformly worse**.
+It is worse than Parkinson on the liquid vn30 QLIKE (0.722 vs 0.516) but **better on the illiquid hnx QLIKE
+(1.635 vs 1.872)** — because its overnight component cuts the floored-day fraction (10.75% vs 13.06%), exactly
+the price-limit-market benefit the literature predicts. Its MSE is worse on both (overnight spikes are penalized
+by L2). So YZ-vs-Parkinson is **metric- and liquidity-dependent**, not a clean loss. The crude `rs_overnight`
+(0.891 vn30) overstated the loss because it lacked the k weight.
+
+**`yz_rma20` (the smoothed indicator output) gives QLIKE≈0.004, R²≈0.99 — an ARTIFACT, not skill.** A 20-day
+trailing-RMA target is nearly constant day-to-day (autocorrelation ≈1), so "predicting next day" is trivial; it
+no longer measures next-day variance. It must not be compared to a single-day target. (No leakage — RMA is
+trailing — but the metric is meaningless as a forecast.)
+
 ## Conclusion / recommendation
-- **For forecasting in this pipeline, keep Parkinson.** Garman–Klass is equivalent on the liquid panel (no
-  measurable change) and marginally worse on the illiquid one; rs_overnight (Yang–Zhang-style) and close2close
-  are worse on both.
-- **Overnight-augmented / Yang–Zhang-style targets do not help per-day forecasting here** because the overnight
-  component is not persistent. Note the two data-quality traps that had to be fixed to see this cleanly (the
-  raw prices are not split-adjusted, so overnight is corrupted; and the liquidity screen must be pinned to the
-  delivered universe) — a fully fair YZ test would still want split/dividend-ADJUSTED prices, which this repo's
-  raw OHLCV is not. The intraday comparison (Parkinson vs GK) needs no such caveat and shows no gain.
+- **Keep Parkinson as the default** — it is best or tied-best on MSE everywhere and on QLIKE for the liquid
+  panels, and it is the simplest and split-immune. Garman–Klass is equivalent on liquid / marginally worse on
+  illiquid.
+- **Yang–Zhang is not simply worse — it is metric- and liquidity-dependent.** The *exact* per-day YZ (`yz_daily`,
+  with the k weight) has a **lower QLIKE than Parkinson on the illiquid HNX (1.635 vs 1.872)** because its
+  overnight term reduces floored zero-range days — the price-limit-market benefit the literature predicts — but
+  a **higher MSE** (overnight spikes) and a worse QLIKE on liquid vn30. So if the objective is **QLIKE on
+  illiquid/price-limit universes**, YZ (per-day, exact) is worth considering; for MSE or liquid large-caps,
+  Parkinson wins.
+- **Do NOT use the RMA-smoothed indicator output (`yz_rma20`) as a target** — its QLIKE≈0.004 / R²≈0.99 is an
+  artifact of a near-constant 20-day-smoothed target, not forecasting skill.
+- **Caveats for any YZ adoption:** (1) the raw prices are not split/dividend-adjusted, so the overnight term is
+  corrupted (winsorized here, but adjusted prices are the proper fix); (2) the k weight matters (the crude
+  RS+overnight² proxy overstated the loss). The intraday-only comparison (Parkinson vs GK) needs neither caveat
+  and shows no gain.
 - The literature's "Yang–Zhang is the best *estimator*" concerns **estimation** accuracy (Section B, real at the
   data level) but does **not** translate into **forecast** gains for this HAR/LSTM/GAT setup, matching the
   deep-research caveat that estimator-swap gains are "modest and not guaranteed."

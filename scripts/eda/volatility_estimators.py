@@ -28,6 +28,8 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "garch_masked"))
 
 _LN2 = np.log(2.0)
+_YZ_N = 20                                            # Yang-Zhang window (RMA period / k parameter)
+_YZ_K = 0.34 / (1.34 + (_YZ_N + 1) / (_YZ_N - 1))     # classical YZ weight ~0.139 for n=20
 EST = ["close2close", "parkinson", "garman_klass", "rogers_satchell", "rs_overnight"]
 
 PRICE = {
@@ -67,19 +69,27 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
             r_on = np.clip(r_on, -overnight_cap, overnight_cap)
         park = ln_hl ** 2 / (4 * _LN2)
         gk = 0.5 * ln_hl ** 2 - (2 * _LN2 - 1) * ln_co ** 2
-        rs = ln_hc * ln_ho + ln_lc * ln_lo       # Rogers-Satchell = ln(H/C)ln(H/O) + ln(L/C)ln(L/O)
+        rs = np.clip(ln_hc * ln_ho + ln_lc * ln_lo, 0.0, None)   # Rogers-Satchell (clipped >=0)
         c2c = r_cc ** 2
         rs_ov = rs + r_on ** 2
+        # Yang-Zhang per-day (indicator form, e.g. TradingView YZV): instantaneous daily variance using
+        # single-day squared overnight + single-day squared open-close + Rogers-Satchell, blended with the
+        # classical YZ weight k = 0.34/(1.34+(n+1)/(n-1)) (n = _YZ_N). This IS computable each day (unlike
+        # the academic YZ, which uses windowed variances of the returns).
+        yz_daily = r_on ** 2 + _YZ_K * ln_co ** 2 + (1.0 - _YZ_K) * rs
     out = pd.DataFrame({
         "close2close": c2c, "parkinson": park, "garman_klass": gk,
-        "rogers_satchell": rs, "rs_overnight": rs_ov,
+        "rogers_satchell": rs, "rs_overnight": rs_ov, "yz_daily": yz_daily,
         "is_zero_range": np.isclose(ln_hl, 0.0),      # H approx L day
         "ok": ok,
     })
-    out.loc[~ok, EST] = np.nan
-    # GK/RS can be slightly negative on noisy bars; clip at 0 (they are variance estimators)
-    for e in ["garman_klass", "rogers_satchell", "rs_overnight"]:
-        out[e] = out[e].clip(lower=0.0)
+    for e in ["garman_klass", "rogers_satchell", "rs_overnight", "yz_daily"]:
+        out[e] = out[e].clip(lower=0.0)               # variance estimators are non-negative
+    # yz_rma20: the TradingView YZV output = Wilder RMA smoothing of yz_daily (trailing, no look-ahead).
+    # NOTE: a smoothed target is highly autocorrelated -> forecasts look artificially easy; it no longer
+    # measures next-day variance. Kept for parity with the indicator, flagged in the report.
+    out["yz_rma20"] = pd.Series(yz_daily).ewm(alpha=1.0 / _YZ_N, adjust=False, ignore_na=True).mean().to_numpy()
+    out.loc[~ok, EST + ["yz_daily", "yz_rma20"]] = np.nan
     return out
 
 

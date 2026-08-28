@@ -58,6 +58,33 @@ def test_overnight_winsorized_against_unadjusted_split():
     assert raw["rs_overnight"].iloc[1] > 1.0
 
 
+def test_yz_daily_matches_indicator_formula():
+    df = pd.DataFrame({"date": [1, 2], "open": [10.0, 10.2], "high": [10.0, 10.6],
+                       "low": [10.0, 9.9], "close": [10.0, 10.3], "volume": [1, 1]})
+    est = VE.estimators_from_ohlcv(df, overnight_cap=None)   # exact, no winsor
+    r = est.iloc[1]
+    r_o = np.log(10.2 / 10.0)
+    r_c = np.log(10.3 / 10.2)
+    rs = np.log(10.6 / 10.3) * np.log(10.6 / 10.2) + np.log(9.9 / 10.3) * np.log(9.9 / 10.2)
+    exp = r_o ** 2 + VE._YZ_K * r_c ** 2 + (1.0 - VE._YZ_K) * max(rs, 0.0)   # r_o^2 + k r_c^2 + (1-k) RS
+    assert abs(r["yz_daily"] - exp) < 1e-9
+    assert "yz_rma20" in est.columns and np.isfinite(r["yz_rma20"])
+
+
+def test_yz_rma_is_smoother_than_yz_daily():
+    # a series with alternating high/low daily variance -> RMA smoothing reduces variance of the series
+    rng = np.random.default_rng(1)
+    n = 300
+    c = 20.0 + np.cumsum(rng.normal(0, 0.2, n))
+    span = np.abs(rng.normal(0, 0.4, n))
+    df = pd.DataFrame({"date": range(n), "open": c, "high": c + span, "low": c - span,
+                       "close": c + rng.normal(0, 0.1, n), "volume": 1})
+    est = VE.estimators_from_ohlcv(df)
+    d = est["yz_daily"].dropna().to_numpy()
+    s = est["yz_rma20"].dropna().to_numpy()
+    assert np.nanstd(s) < np.nanstd(d)          # smoothed series is less volatile
+
+
 def test_invalid_prices_are_nan():
     df = pd.DataFrame({"date": [1], "open": [0.0], "high": [1.0], "low": [1.0], "close": [1.0], "volume": [1]})
     est = VE.estimators_from_ohlcv(df)
