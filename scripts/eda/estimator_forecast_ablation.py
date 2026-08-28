@@ -69,6 +69,11 @@ def _write_estimator_processed(panel, estimator, out_dir, keep_tickers=None):
         if not rf.exists():
             continue
         raw = pd.read_csv(rf)
+        # External review H-04: the estimators are order-dependent (rolling/ewm/diff), so sort by date
+        # and drop duplicate dates BEFORE computing them -- otherwise an unsorted/duplicated raw file
+        # would both corrupt the rolling windows and mis-pair (date, value). No-op on the clean ETL data.
+        raw["date"] = pd.to_datetime(raw["date"])
+        raw = raw.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
         est = VE.estimators_from_ohlcv(raw)
         v = est[estimator].to_numpy(dtype=float)
         # FAIR comparison: keep the SAME date grid for every estimator (do NOT drop rows, which would

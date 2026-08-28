@@ -76,9 +76,18 @@ def har_predict(X: np.ndarray, coef: np.ndarray, floor: float = FLOOR) -> np.nda
 # GARCH(1,1)
 # --------------------------------------------------------------------------------------------------
 def _fallback_forecast(train_series: np.ndarray, n_test: int, floor: float, reason: str) -> np.ndarray:
-    """Constant variance forecast = mean of the (positive-floored) train variance series."""
+    """Constant variance forecast = mean of the (positive-floored) train variance series.
+
+    Uses only the FINITE entries of ``train_series`` (this path is reached precisely when the
+    series is short/degenerate, possibly with NaN/inf), so the docstring guarantee of a finite,
+    positive, ``>= floor`` output holds; if nothing finite remains, returns ``floor``.
+    """
+    if not (np.isfinite(floor) and floor > 0.0):
+        raise ValueError(f"floor must be finite and positive, got {floor}")
     logger.warning("garch_forecast falling back to train-variance mean: %s", reason)
-    mean_var = float(np.mean(np.maximum(train_series, floor)))
+    finite = np.asarray(train_series, dtype=float).ravel()
+    finite = finite[np.isfinite(finite)]
+    mean_var = float(np.mean(np.maximum(finite, floor))) if finite.size else floor
     mean_var = max(mean_var, floor)
     return np.full(n_test, mean_var, dtype=float)
 

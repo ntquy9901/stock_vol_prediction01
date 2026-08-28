@@ -84,6 +84,14 @@ def _garch_pred(D, horizon, cfg):
     skipping the validation interval, so each test target gets a forecast aligned to its distance from
     train-end (Codex review 2026-08-22, finding 2). GARCH mean-reverts, so this uses the mean-reverted
     (test-window) part of the path rather than the transient early steps.
+
+    On the ``n_va`` observation-count offset (external review 2026-08-28, H-02): the GARCH series is the
+    node's masked train-target OBSERVATIONS, so the forecast recursion steps in observation units, not
+    calendar days. The node's own validation observations are exactly the ``n_va`` steps that precede its
+    test observations in that same series, so ``fc_full[n_va:]`` is the observation-consistent alignment.
+    A calendar-day offset would instead MIS-match the (irregularly-spaced) observation-indexed path. This
+    is an inherent approximation of applying GARCH to a masked panel; GARCH is a dominated benchmark and
+    the step-alignment does not change its ranking.
     """
     N = D.N
     pred = np.zeros_like(D.y_te)

@@ -101,8 +101,10 @@ def per_ticker_frame(D, cfg, price_dir, floor, horizon):
     gy, gp = _series_by_node(garch, D.N)
     tmask = D.tmask_te.astype(bool)
     node_floor = 1e-2 * D.t_mean + 1e-12
+    # Pooled SSE totals per MODEL: each model's ticker shares must sum to 1 against its OWN total
+    # (external review H-03: reusing the HAR-X total for GARCH gave shares that do not partition).
     tot_sse_h = sum(float(np.sum((hy[j] - hp[j]) ** 2)) for j in range(D.N) if hy[j].size)
-    tot_ql_h = sum(float(np.sum(M.per_obs_qlike(hy[j], hp[j], floor))) for j in range(D.N) if hy[j].size)
+    tot_sse_g = sum(float(np.sum((gy[j] - gp[j]) ** 2)) for j in range(D.N) if gy[j].size)
     rows = []
     for j in range(D.N):
         y = D.y_te[tmask[:, j], j]
@@ -122,15 +124,15 @@ def per_ticker_frame(D, cfg, price_dir, floor, horizon):
             "skew": float(_skew(y)) if y.size > 2 else np.nan,
             "vol_missing_frac": _volume_missing_frac(D.tickers[j], price_dir),
         }
-        for name, yy, pp, tot_sse, tot_ql in (("harx", hy[j], hp[j], tot_sse_h, tot_ql_h),
-                                              ("garch", gy[j], gp[j], tot_sse_h, tot_ql_h)):
+        for name, yy, pp, tot_sse in (("harx", hy[j], hp[j], tot_sse_h),
+                                      ("garch", gy[j], gp[j], tot_sse_g)):
             sse = float(np.sum((yy - pp) ** 2))
             row[f"{name}_mse"] = M.mse(yy, pp)
             row[f"{name}_mae"] = M.mae(yy, pp)
             row[f"{name}_qlike"] = M.qlike(yy, pp, floor)
             row[f"{name}_r2"] = M.r2(yy, pp)
             row[f"{name}_clip_rate"] = float(np.mean(pp <= node_floor[j] * (1 + 1e-9)))
-            row[f"{name}_sse_share"] = sse / tot_sse_h if tot_sse_h > 0 else np.nan
+            row[f"{name}_sse_share"] = sse / tot_sse if tot_sse > 0 else np.nan
         rows.append(row)
     return pd.DataFrame(rows)
 

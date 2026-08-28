@@ -41,6 +41,33 @@ def test_write_estimator_processed_same_grid_floored(tmp_path, monkeypatch):
     assert (pd.read_csv(files_r[0])["parkinson_volatility"] > 0).all()
 
 
+def test_write_estimator_processed_is_date_sorted_and_deduped(tmp_path, monkeypatch):
+    # External review H-04: raw with shuffled + duplicate dates must not corrupt the order-dependent
+    # rolling/ewm estimators nor the (date, value) pairing. The written processed CSV must be sorted,
+    # unique-by-date, and its per-date values must match the estimator computed on the CLEANED raw.
+    proc, raw = _synth(tmp_path, tickers=("AA",), n=300)
+    rf = raw / "AA_ohlcv.csv"
+    clean = pd.read_csv(rf)
+    dup = pd.concat([clean, clean.iloc[[10, 20, 30]]], ignore_index=True)   # inject duplicate dates
+    shuffled = dup.sample(frac=1.0, random_state=7).reset_index(drop=True)  # shuffle row order
+    shuffled.to_csv(rf, index=False)
+    monkeypatch.setitem(AB.PROC, "synthetic", proc)
+    monkeypatch.setitem(VE.PRICE, "synthetic", raw)
+    out = tmp_path / "out"; out.mkdir()
+    files = AB._write_estimator_processed("synthetic", "yz_rma20", out)
+    got = pd.read_csv(files[0], parse_dates=["date"])
+    assert got["date"].is_monotonic_increasing                 # sorted
+    assert not got["date"].duplicated().any()                  # deduped
+    # values match estimators computed on the CLEANED (sorted, unique) raw
+    ref_raw = clean.copy(); ref_raw["date"] = pd.to_datetime(ref_raw["date"])
+    ref_raw = ref_raw.sort_values("date").drop_duplicates("date", keep="last").reset_index(drop=True)
+    ref = VE.estimators_from_ohlcv(ref_raw)["yz_rma20"].to_numpy(float)
+    ref = np.where(np.isfinite(ref), np.maximum(ref, 1e-10), np.nan)
+    ref_df = pd.DataFrame({"date": ref_raw["date"], "v": ref}).dropna()
+    merged = got.merge(ref_df, on="date")
+    np.testing.assert_allclose(merged["parkinson_volatility"], merged["v"], rtol=1e-9)
+
+
 def test_keep_tickers_filters_universe(tmp_path, monkeypatch):
     proc, raw = _synth(tmp_path, tickers=("AA", "BB", "CC"))
     monkeypatch.setitem(AB.PROC, "synthetic", proc)

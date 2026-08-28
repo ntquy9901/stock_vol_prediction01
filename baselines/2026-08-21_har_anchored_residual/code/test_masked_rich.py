@@ -231,6 +231,22 @@ def test_seed_metric_stats_mean_std_not_ensemble():
     assert st["per_seed"]["mse"] == [0.0, 4.0]
 
 
+def test_ensemble_metric_differs_from_perseed_mean_schema_contract():
+    """External review H-01: pin the schema contract that ``metrics`` (metric of the seed-AVERAGED
+    ensemble, used only for the DM forecast) and ``metrics_per_seed`` (MEAN of seed-level metrics,
+    the paper-reported number) are DISTINCT quantities -- so a future edit cannot silently conflate
+    them. For the same two seeds: ensemble mse = 1.0, per-seed mean mse = 2.0."""
+    from run_masked_rich import seed_metric_stats, _pred_dict, _ens, _metrics
+    y = np.array([[1.0, 2.0]]); tmask = np.array([[True, True]]); dates = np.array([0])
+    d1 = _pred_dict(np.array([[1.0, 2.0]]), y, tmask, dates, 2)   # perfect
+    d2 = _pred_dict(np.array([[3.0, 4.0]]), y, tmask, dates, 2)   # off by 2
+    ens_mse = _metrics(_ens([d1, d2]), 1e-8)["mse"]               # ens pred [2,3] -> mse 1.0
+    ps_mean_mse = seed_metric_stats([d1, d2], 1e-8)["mse"]        # mean(0, 4) = 2.0
+    assert abs(ens_mse - 1.0) < 1e-9
+    assert abs(ps_mean_mse - 2.0) < 1e-9
+    assert ens_mse != pytest.approx(ps_mean_mse)                  # the two fields must not be swapped
+
+
 def test_har5_exposed_and_harx_ols_runs():
     """HAR-X fair baseline: build exposes the raw 5-feature vector at t, its first 3 cols are the HAR
     features, and a 5-feature linear OLS fits + yields finite predictions (isolates the extra-feature

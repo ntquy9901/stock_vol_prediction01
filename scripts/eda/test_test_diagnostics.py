@@ -51,8 +51,11 @@ def test_per_ticker_frame_columns_and_shares(tmp_path):
     for c in ["ticker", "n_test", "mean_var", "vol_of_vol", "low_range_frac",
               "vol_missing_frac", "harx_qlike", "harx_mse", "harx_sse_share", "garch_qlike"]:
         assert c in df.columns, c
-    # SSE shares are a proper partition of the pooled HAR-X SSE (sum to 1)
+    # SSE shares are a proper partition of the pooled SSE per model (sum to 1) -- external review
+    # H-03: GARCH shares must use the GARCH pooled total, not the HAR-X total, so they also sum to 1.
     assert abs(df["harx_sse_share"].sum() - 1.0) < 1e-6
+    assert "garch_sse_share" in df.columns
+    assert abs(df["garch_sse_share"].sum() - 1.0) < 1e-6
     # synthetic volume is always present -> no missing volume
     assert (df["vol_missing_frac"].fillna(0) == 0).all()
     # metrics finite and QLIKE positive

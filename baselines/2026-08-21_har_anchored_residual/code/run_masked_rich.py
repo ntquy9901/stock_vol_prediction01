@@ -277,6 +277,11 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
         gat_c = _ens(gat_c_seeds)
         preds["LSTM_wGAT_corr"] = gat_c
         per_seed["LSTM_wGAT_corr"] = seed_metric_stats(gat_c_seeds, cfg.qlike_floor)
+    # SCHEMA (external review H-01): for the learned models ``metrics`` is the metric of the seed-
+    # AVERAGED (ensemble) prediction -- used for the DM forecast only. The PAPER-REPORTED learned
+    # number is the MEAN of seed-level metrics in ``metrics_per_seed`` (a distinct, generally-higher
+    # quantity; test_ensemble_metric_differs_from_perseed_mean_schema_contract pins the difference).
+    # For HAR/HAR-X (deterministic) the two coincide.
     metrics = {k: _metrics(v, cfg.qlike_floor) for k, v in preds.items()}
     dm = {"HARX_vs_HAR": _dm_all(HARX, HAR, horizon, cfg.qlike_floor),
           "LSTM_vs_HAR": _dm_all(lstm, HAR, horizon, cfg.qlike_floor),

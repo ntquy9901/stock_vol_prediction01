@@ -23,10 +23,24 @@ from scipy import stats
 _EPSILON = 1e-8
 
 
-def mse(y: np.ndarray, p: np.ndarray) -> float:
-    """Mean squared error."""
+def _check_pair(y: np.ndarray, p: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Coerce to float arrays and require equal shape + finite values (fail loud).
+
+    Guards against silent NumPy broadcasting of mismatched shapes (e.g. ``(n,)`` vs
+    ``(n, 1)`` -> ``(n, n)``) and against NaN/inf poisoning the reduction.
+    """
     y = np.asarray(y, dtype=float)
     p = np.asarray(p, dtype=float)
+    if y.shape != p.shape:
+        raise ValueError(f"y and p must have the same shape, got {y.shape} vs {p.shape}")
+    if not (np.isfinite(y).all() and np.isfinite(p).all()):
+        raise ValueError("y and p must be finite")
+    return y, p
+
+
+def mse(y: np.ndarray, p: np.ndarray) -> float:
+    """Mean squared error."""
+    y, p = _check_pair(y, p)
     return float(np.mean((y - p) ** 2))
 
 
@@ -37,17 +51,21 @@ def rmse(y: np.ndarray, p: np.ndarray) -> float:
 
 def mae(y: np.ndarray, p: np.ndarray) -> float:
     """Mean absolute error."""
-    y = np.asarray(y, dtype=float)
-    p = np.asarray(p, dtype=float)
+    y, p = _check_pair(y, p)
     return float(np.mean(np.abs(y - p)))
 
 
 def r2(y: np.ndarray, p: np.ndarray) -> float:
-    """Coefficient of determination (1 - SS_res / SS_tot)."""
-    y = np.asarray(y, dtype=float)
-    p = np.asarray(p, dtype=float)
+    """Coefficient of determination (1 - SS_res / SS_tot).
+
+    Constant-target policy (``ss_tot == 0``): return 1.0 for an exact prediction, else 0.0
+    (there is no variance to explain), instead of dividing by zero -> NaN/inf.
+    """
+    y, p = _check_pair(y, p)
     ss_res = float(np.sum((y - p) ** 2))
     ss_tot = float(np.sum((y - y.mean()) ** 2))
+    if ss_tot == 0.0:
+        return 1.0 if ss_res == 0.0 else 0.0
     return float(1.0 - ss_res / ss_tot)
 
 
@@ -63,9 +81,15 @@ def per_obs_qlike(y: np.ndarray, p: np.ndarray, floor: float = _EPSILON) -> np.n
 
     Both target and prediction are clamped to ``>= floor`` (identical basis), then
     ``r = y / p`` and loss ``= r - log(r) - 1`` (== 0 when the forecast is exact).
+
+    ``floor`` must be finite and positive (else the positivity clamp is meaningless), and
+    ``y``/``p`` must be finite (NaN/inf fail loud rather than silently surviving ``np.maximum``).
     """
-    y = np.maximum(np.asarray(y, dtype=float), floor)
-    p = np.maximum(np.asarray(p, dtype=float), floor)
+    if not (np.isfinite(floor) and floor > 0.0):
+        raise ValueError(f"floor must be finite and positive, got {floor}")
+    y, p = _check_pair(y, p)
+    y = np.maximum(y, floor)
+    p = np.maximum(p, floor)
     ratio = y / p
     return ratio - np.log(ratio) - 1.0
 

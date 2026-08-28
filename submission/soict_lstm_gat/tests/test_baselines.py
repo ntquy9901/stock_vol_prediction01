@@ -64,6 +64,23 @@ def test_garch_forecast_fallback_on_degenerate_series():
     assert np.all(out > 0.0)
 
 
+def test_garch_forecast_finite_on_nonfinite_series():
+    """External review M-01: a NaN/inf-contaminated (and short) series routes to the fallback,
+    which must still honour the finite/positive/>=floor guarantee (was returning NaN)."""
+    series = np.array([np.nan, np.inf, 1e-4, np.nan])
+    out = baselines.garch_forecast(series, n_test=6, floor=1e-8)
+    assert out.shape == (6,)
+    assert np.all(np.isfinite(out))
+    assert np.all(out >= 1e-8)
+
+
+def test_garch_forecast_fallback_all_nonfinite_returns_floor():
+    """External review M-01: if nothing finite remains, fall back to the floor, not NaN."""
+    series = np.array([np.nan, np.inf, -np.inf])
+    out = baselines.garch_forecast(series, n_test=3, floor=1e-6)
+    assert np.allclose(out, 1e-6)
+
+
 def test_cap_params_reduces_persistence_via_variance_targeting():
     """When alpha+beta exceeds the cap, persistence is scaled to the cap (ratio preserved) and
     omega is re-set by variance targeting so the long-run variance equals the sample target."""

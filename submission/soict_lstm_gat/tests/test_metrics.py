@@ -119,3 +119,44 @@ def test_dm_raises_on_non_finite_losses():
     b = np.array([0.5, 1.5, 2.5, 3.5])
     with pytest.raises(ValueError):
         metrics.diebold_mariano(a, b, h=1)
+
+
+# --- input-validation hardening (external review 2026-08-28: M-02/M-03/L-01) ---
+
+@pytest.mark.parametrize("bad_floor", [0.0, -1e-8, np.nan, np.inf])
+def test_qlike_rejects_invalid_floor(bad_floor):
+    # M-03: a non-positive / non-finite floor cannot deliver the "clamp to >= floor" guarantee.
+    y = np.array([0.02, 0.05, 0.1])
+    p = np.array([0.03, 0.04, 0.15])
+    with pytest.raises(ValueError):
+        metrics.per_obs_qlike(y, p, floor=bad_floor)
+
+
+def test_qlike_rejects_non_finite_input():
+    # M-03: NaN/inf must fail loud, not silently survive np.maximum and poison the mean.
+    y = np.array([0.02, np.nan, 0.1])
+    p = np.array([0.03, 0.04, 0.15])
+    with pytest.raises(ValueError):
+        metrics.qlike(y, p)
+
+
+@pytest.mark.parametrize("fn", [metrics.mse, metrics.mae, metrics.r2, metrics.qlike])
+def test_point_metrics_reject_shape_mismatch(fn):
+    # M-02: (n,) vs (n,1) would broadcast to an (n,n) result silently -- reject instead.
+    y = np.array([1.0, 2.0, 3.0])
+    p = np.array([[1.0], [2.0], [3.0]])
+    with pytest.raises(ValueError):
+        fn(y, p)
+
+
+def test_r2_constant_target_exact_match_is_one():
+    # L-01: ss_tot == 0. Exact prediction -> perfect fit -> 1.0 (not NaN/inf).
+    y = np.array([0.2, 0.2, 0.2, 0.2])
+    assert metrics.r2(y, y.copy()) == pytest.approx(1.0)
+
+
+def test_r2_constant_target_nonexact_is_zero():
+    # L-01: constant target, imperfect prediction -> 0.0 (no explained variance to gain).
+    y = np.array([0.2, 0.2, 0.2, 0.2])
+    p = np.array([0.1, 0.3, 0.25, 0.15])
+    assert metrics.r2(y, p) == 0.0
