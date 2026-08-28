@@ -146,7 +146,7 @@ Scaling: MSE x1e-7, RMSE/MAE x1e-4; QLIKE & R2 raw. Learned rows = 5-seed mean; 
 | 10 | 0.035(B) | 0.634(B) | 0.821(B) | 0.000(A) | 0.002(B) | 0.000(B) |
 | 22 | 0.179(B) | 0.467(B) | 0.265(B) | 0.000(A) | 0.192(B) | 0.000(B) |
 
-## 3. Volatility-proxy robustness (full pipeline, QLIKE, h1, 5 seeds): Parkinson vs Yang-Zhang
+## 3. Volatility-proxy robustness (full pipeline, QLIKE, h1, 5 seeds): Parkinson vs Yang-Zhang (indicator-form per-day proxy, NOT standard windowed YZ)
 
 | Panel | Target | HAR-X | LSTM | LSTM+GAT |
 |---|---|---|---|---|

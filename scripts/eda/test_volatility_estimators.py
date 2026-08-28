@@ -9,6 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import volatility_estimators as VE  # noqa: E402
 
 
+def test_yz_named_as_indicator_form_not_standard(tmp_path):
+    """External senior review HIGH-01: the yz_daily/yz_rma20 target is an INDICATOR-FORM per-day proxy, NOT the
+    standard windowed Yang-Zhang estimator. Guard that the module documents this (prevents reverting to the
+    misleading bare 'Yang-Zhang' label) and that both keys still exist."""
+    import inspect
+    doc = inspect.getdoc(VE) or ""
+    assert "indicator-form" in doc.lower() and "not the standard windowed" in doc.lower()
+    est = VE.estimators_from_ohlcv(pd.DataFrame({
+        "date": [1, 2], "open": [10.0, 10.0], "high": [11.0, 11.0], "low": [9.0, 9.0],
+        "close": [10.5, 10.5], "volume": [1, 1]}))
+    assert "yz_daily" in est.columns and "yz_rma20" in est.columns
+
+
 def test_parkinson_formula_matches_definition():
     df = pd.DataFrame({"date": [1, 2], "open": [10.0, 10.0], "high": [11.0, 10.5],
                        "low": [9.0, 9.5], "close": [10.0, 10.0], "volume": [1, 1]})

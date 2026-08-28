@@ -1,4 +1,10 @@
 """
+LEGACY / NON-AUTHORITATIVE (external senior review HIGH-02, 2026-08-29). Its outlier removal (n_std=3) can
+compute statistics over the full series before splitting (look-ahead leakage), and the split-first variant
+regenerates HAR features per fold (losing rolling context). NOT the pipeline behind any published result; the
+authoritative leakage-safe path is ``baselines/2026-08-21_har_anchored_residual/code/masked_rich.py``. Do not
+reproduce paper numbers from here.
+
 Multi-Stock Dataset for LSTM-GAT Hybrid
 
 Processes all 30 VN30 stocks simultaneously for graph-based modeling.
@@ -15,7 +21,6 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from typing import Tuple, Dict, Optional
-from datetime import datetime
 from scipy import stats
 
 from src.common.har_features import generate_har_features

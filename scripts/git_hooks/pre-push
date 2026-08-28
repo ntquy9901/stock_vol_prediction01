@@ -158,8 +158,10 @@ if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
   echo "$RUFFOUT" | tail -5
   echo "$RUFFOUT" | _logsec "3/4 ruff (full E/F/W — informational)"
   [ "$RUFFRC" -eq 0 ] && RUFF_STATUS="pass" || { RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff E/W house-style findings (warn-only)." >&2; }
-  RUFFF="$(ruff check --select F $CHANGED 2>&1)"; RUFFFRC=$?
-  echo "$RUFFF" | _logsec "3/4 ruff --select F (real bugs — fail-closed)"
+  # Fail-closed on the pyflakes F codes that are REAL bugs. F541 (f-string without placeholders) is cosmetic
+  # (a harmless redundant f-prefix), so it is excluded from the block and stays warn-only via the full lint.
+  RUFFF="$(ruff check --select F --ignore F541 $CHANGED 2>&1)"; RUFFFRC=$?
+  echo "$RUFFF" | _logsec "3/4 ruff --select F (real bugs, excl. cosmetic F541 — fail-closed)"
   if [ "$RUFFFRC" -ne 0 ]; then
     echo "$RUFFF" | tail -6
     echo "[pre-push] BLOCK: ruff pyflakes (F) findings — real bugs (unused import / undefined name / redefinition)." >&2; FAIL=1

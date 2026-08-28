@@ -375,18 +375,20 @@ HOSE and S\&P 500 panels, whereas the learned models' QLIKE advantage appears on
 The forecast target so far is the Parkinson variance. Parkinson uses only the intraday high--low range and is
 valid under zero drift and no opening jumps, so a natural question is whether the model comparison depends on
 this choice. We re-run the full pipeline (HAR-X, LSTM, LSTM+GAT; five seeds; the same masked panel, universe and
-protocol) with the target replaced by a per-day Yang--Zhang variance,
-$\sigma^2_{\mathrm{YZ},t}=r_{o,t}^2+k\,r_{c,t}^2+(1-k)\,\mathrm{RS}_t$ with the overnight return
+protocol) with the target replaced by an \emph{indicator-form Yang--Zhang-inspired} per-day variance proxy,
+$\sigma^2_{\mathrm{YZ\text{-}ind},t}=r_{o,t}^2+k\,r_{c,t}^2+(1-k)\,\mathrm{RS}_t$ with the overnight return
 $r_o=\ln(O_t/C_{t-1})$, the open-to-close return $r_c=\ln(C_t/O_t)$, the Rogers--Satchell term $\mathrm{RS}_t$,
-and $k=0.34/(1.34+(n{+}1)/(n{-}1))\approx0.14$ ($n{=}20$), the drift- and opening-jump-aware range estimator.
-QLIKE is scale-invariant, so it is comparable across the two targets.
+and $k=0.34/(1.34+(n{+}1)/(n{-}1))\approx0.14$ ($n{=}20$). This is a single-day composite in the spirit of the
+TradingView ``YZV'' indicator; it is \emph{not} the standard windowed Yang--Zhang~(2000) estimator (which
+combines these three variances over a rolling window), so the claim below is a per-day-proxy robustness check,
+not a standard-Yang--Zhang result. QLIKE is scale-invariant, so it is comparable across the two targets.
 
 \begin{table}[t]
 \centering
 \caption{Volatility-proxy robustness: five-seed-mean QLIKE (lower is better) of each model when the target is
-the Parkinson variance vs.\ a per-day Yang--Zhang variance, on the same universe/protocol. Bold marks the
+the Parkinson variance vs.\ an indicator-form Yang--Zhang-inspired per-day proxy (\emph{not} standard windowed YZ), on the same universe/protocol. Bold marks the
 lowest QLIKE per row-block. The lowest-QLIKE model is unchanged under both proxies on the Vietnamese panels (HAR-X on VN30/VN100/HOSE; LSTM+GAT on HNX);
-on the S\&P 500 the models tie under Yang--Zhang.}
+on the S\&P 500 the models tie under the YZ-inspired proxy.}
 \label{tab:proxy}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -395,35 +397,35 @@ on the S\&P 500 the models tie under Yang--Zhang.}
 Panel & Target & HAR-X & LSTM & LSTM+GAT \\
 \midrule
 VN100 & Parkinson & \textbf{0.512} & 0.621 & 0.552 \\
-VN100 & Yang--Zhang & \textbf{0.527} & 0.640 & 0.540 \\
+VN100 & YZ-ind. & \textbf{0.527} & 0.640 & 0.540 \\
 \midrule
 VN30 & Parkinson & \textbf{0.516} & 0.679 & 0.619 \\
-VN30 & Yang--Zhang & \textbf{0.722} & 0.775 & 0.777 \\
+VN30 & YZ-ind. & \textbf{0.722} & 0.775 & 0.777 \\
 \midrule
 HOSE & Parkinson & \textbf{1.244} & 1.310 & 1.355 \\
-HOSE & Yang--Zhang & \textbf{1.194} & 1.527 & 1.375 \\
+HOSE & YZ-ind. & \textbf{1.194} & 1.527 & 1.375 \\
 \midrule
 HNX & Parkinson & 1.872 & 1.821 & \textbf{1.816} \\
-HNX & Yang--Zhang & 1.635 & 1.650 & \textbf{1.623} \\
+HNX & YZ-ind. & 1.635 & 1.650 & \textbf{1.623} \\
 \midrule
 SP500 & Parkinson & \textbf{0.362} & 0.638 & 0.543 \\
-SP500 & Yang--Zhang & 0.565 & \textbf{0.553} & 0.562 \\
+SP500 & YZ-ind. & 0.565 & \textbf{0.553} & 0.562 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 The lowest-QLIKE model is \emph{identical} under both targets on the four Vietnamese panels: HAR-X on the
 liquid VN30, VN100 and HOSE, and the LSTM+GAT on the illiquid HNX. On the S\&P 500 (five seeds) HAR-X is
-clearly lowest under Parkinson, while under Yang--Zhang the three models fall within $0.013$ --- inside the
+clearly lowest under Parkinson, while under the YZ-inspired proxy the three models fall within $0.013$ --- inside the
 per-seed dispersion --- so they are statistically indistinguishable rather than re-ranked. The same pattern holds at h5/h10/h22 (full results in the accompanying review sheet): HAR-X remains lowest on the liquid panels and a deep model on HNX under both proxies at every horizon. The headline finding --- the linear HAR-X is best on the
 liquid large-caps while the graph model attains the lowest QLIKE on the illiquid HNX --- is therefore robust to
-the volatility proxy. The Yang--Zhang target lowers the absolute QLIKE on the less-liquid HOSE and HNX (its
+the volatility proxy. The YZ-inspired proxy lowers the absolute QLIKE on the less-liquid HOSE and HNX (its
 overnight component records variance on the many near-zero-range days that Parkinson floors) but raises the MSE
 by roughly three to four times (its overnight jumps are large and not persistent), so it is not a free
 improvement. The small LSTM+GAT-vs-LSTM QLIKE contrast is itself proxy-dependent --- significant at VN30 under
-Parkinson but not under Yang--Zhang, and reversing sign at HOSE --- consistent with that contrast lying within
+Parkinson but not under the YZ-inspired proxy, and reversing sign at HOSE --- consistent with that contrast lying within
 the per-seed dispersion reported above. We keep Parkinson as the primary target for its simplicity and split
-invariance. A fully clean Yang--Zhang comparison requires split/dividend-adjusted prices: the S\&P 500 series
+invariance. A fully clean YZ-inspired-proxy comparison requires split/dividend-adjusted prices: the S\&P 500 series
 used here are already adjusted (verified against Yahoo's adjusted close --- the ratio is $1.0000$ with zero
 variance across tickers), so its overnight term is uncorrupted, whereas the Vietnamese OHLCV is not adjusted
 and its overnight return is winsorized at $\pm0.20$; a fully adjusted Vietnamese comparison is left to future

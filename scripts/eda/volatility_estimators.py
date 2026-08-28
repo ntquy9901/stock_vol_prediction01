@@ -1,6 +1,13 @@
 """Compare daily volatility-VARIANCE estimators from raw OHLCV, focused on the low-range (H approx L)
 problem that inflates QLIKE on illiquid panels.
 
+NAMING (external senior review HIGH-01, 2026-08-29): the ``yz_daily`` / ``yz_rma20`` targets here are an
+INDICATOR-FORM, single-day Yang--Zhang-INSPIRED proxy (in the spirit of the TradingView "YZV" indicator):
+per-day overnight^2 + k*open-close^2 + (1-k)*Rogers--Satchell. This is NOT the standard windowed Yang--Zhang
+(2000) estimator, which combines the overnight, open--close, and Rogers--Satchell VARIANCES over a rolling
+window with a bias-correction weight. Reports/paper must call it an "indicator-form Yang--Zhang-inspired daily
+proxy", never bare "Yang--Zhang"; the robustness claim is a per-day-proxy claim, not a standard-YZ claim.
+
 Per-day estimators (all are variances, comparable to the current Parkinson target):
   close2close   : r_t^2, r_t = ln(C_t / C_{t-1})                         (uses only closes; has overnight)
   parkinson     : ln(H/L)^2 / (4 ln2)                                    (CURRENT target; intraday range only)

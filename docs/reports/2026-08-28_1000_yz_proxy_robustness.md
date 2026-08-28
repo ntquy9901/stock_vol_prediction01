@@ -1,4 +1,4 @@
-# Volatility-proxy robustness (Parkinson vs Yang-Zhang) — paper data (2026-08-28)
+# Volatility-proxy robustness (Parkinson vs Yang-Zhang (indicator-form per-day proxy, NOT standard windowed YZ)) — paper data (2026-08-28)
 
 Question from the estimator study: is the model ranking robust to the choice of daily volatility proxy?
 Re-ran the FULL pipeline (HAR-X / LSTM / LSTM+GAT, 5 seeds, same masked panel/universe/protocol) with the

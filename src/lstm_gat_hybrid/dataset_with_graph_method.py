@@ -1,4 +1,13 @@
 """
+LEGACY / NON-AUTHORITATIVE (external senior review HIGH-02, 2026-08-29). This news-fusion-lineage pipeline
+computes outlier statistics over the COMPLETE ticker history (``remove_outliers``) and, in the
+``*_with_graph_method`` entry, can apply that processing BEFORE the chronological split — a look-ahead
+leakage path (mean/std/clip bounds may see validation/test rows). It is NOT the pipeline behind any published
+result. The AUTHORITATIVE, leakage-safe path for the paper is the masked-rich runner
+``baselines/2026-08-21_har_anchored_residual/code/{masked_rich.py,run_masked_rich.py}`` (train-only scalers +
+train-only graph edges, regression-tested by ``test_train_only_invariance_no_leakage``). Do NOT use this
+module for reproducing paper numbers; treat its outputs as non-reproducible legacy.
+
 Split-first data-loading pipeline for the news-fusion baseline lineage.
 
 Provides remove_outliers/_reindex_to_common_dates (the P1.2 cross-stock
