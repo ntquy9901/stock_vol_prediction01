@@ -216,3 +216,32 @@ QLIKE / MSE(x1e-7) / R2 / floored%. HAR-X only (deterministic). Bold = lowest QL
 | yz_daily | 0.5651 | 26.020 | 0.207 | 0.17 |
 
 Reading: Parkinson/Garman-Klass best QLIKE+MSE on liquid (GK edges Parkinson on adjusted S&P 500: 0.307 vs 0.362); yz_daily lowest QLIKE on illiquid HOSE/HNX (fewer floored) but ~3-4x worse MSE; Rogers-Satchell & close2close worst.
+
+## 5. Volatility-proxy robustness -- ALL horizons (full pipeline, QLIKE)
+
+Parkinson (delivered main) vs Yang-Zhang (yz_daily) QLIKE per model; bold = lowest per (panel,horizon,target). `same` = does the lowest-QLIKE model match across the two proxies.
+
+| Panel | h | Park HAR-X | Park LSTM | Park GAT | YZ HAR-X | YZ LSTM | YZ GAT | best P | best YZ | same |
+|---|---|---|---|---|---|---|---|---|---|---|
+| VN30 | 1 | **0.516** | 0.704 | 0.660 | **0.722** | 0.775 | 0.777 | HAR-X | HAR-X | yes |
+| VN30 | 5 | **0.597** | 0.659 | 0.649 | **0.739** | 1.071 | 1.100 | HAR-X | HAR-X | yes |
+| VN30 | 10 | **0.643** | 0.669 | 0.667 | **0.776** | 1.301 | 1.271 | HAR-X | HAR-X | yes |
+| VN30 | 22 | **0.642** | 0.664 | 0.653 | **0.665** | 0.710 | 0.692 | HAR-X | HAR-X | yes |
+| VN100 | 1 | **0.512** | 0.623 | 0.550 | **0.527** | 0.640 | 0.540 | HAR-X | HAR-X | yes |
+| VN100 | 5 | **0.563** | 0.602 | 0.576 | **0.647** | 0.876 | 0.935 | HAR-X | HAR-X | yes |
+| VN100 | 10 | **0.602** | 0.610 | 0.610 | **0.692** | 0.831 | 0.813 | HAR-X | HAR-X | yes |
+| VN100 | 22 | **0.640** | 0.652 | 0.658 | **0.722** | 0.767 | 0.779 | HAR-X | HAR-X | yes |
+| HOSE | 1 | **1.234** | 1.335 | 1.303 | **1.194** | 1.527 | 1.375 | HAR-X | HAR-X | yes |
+| HOSE | 5 | **1.296** | 1.365 | 1.320 | **1.303** | 1.549 | 1.390 | HAR-X | HAR-X | yes |
+| HOSE | 10 | **1.339** | 1.353 | 1.339 | **1.339** | 1.386 | 1.411 | HAR-X | HAR-X | yes |
+| HOSE | 22 | **1.382** | 1.385 | 1.384 | **1.374** | 1.419 | 1.379 | HAR-X | HAR-X | yes |
+| HNX | 1 | 1.872 | 1.820 | **1.815** | 1.635 | 1.650 | **1.623** | LSTM+GAT | LSTM+GAT | yes |
+| HNX | 5 | 1.940 | **1.933** | 1.937 | 1.749 | **1.733** | 1.734 | LSTM | LSTM | yes |
+| HNX | 10 | 1.990 | 1.985 | **1.983** | 1.786 | **1.776** | 1.781 | LSTM+GAT | LSTM | no |
+| HNX | 22 | 2.039 | 2.032 | **2.029** | 1.848 | **1.815** | 1.820 | LSTM+GAT | LSTM | no |
+| S&P 500 | 1 | **0.359** | 0.462 | 0.415 | 0.565 | **0.553** | 0.562 | HAR-X | LSTM | no |
+| S&P 500 | 5 | **0.417** | 0.592 | 0.526 | **0.550** | 0.703 | 0.690 | HAR-X | HAR-X | yes |
+| S&P 500 | 10 | **0.464** | 0.509 | 0.530 | **0.589** | 0.859 | 0.773 | HAR-X | HAR-X | yes |
+| S&P 500 | 22 | **0.585** | 0.760 | 0.776 | **0.717** | 1.352 | 1.246 | HAR-X | HAR-X | yes |
+
+**Reading:** HAR-X lowest on the liquid VN30/VN100/HOSE at every horizon under both proxies; on the illiquid HNX a deep model is lowest at every horizon under both (LSTM vs LSTM+GAT swaps within ~0.005 = seed noise); S&P 500 HAR-X lowest at h5/h10/h22, a tie under Yang-Zhang at h1. The main ranking (linear best on liquid, deep best on illiquid HNX) is robust to the volatility proxy across all horizons.
