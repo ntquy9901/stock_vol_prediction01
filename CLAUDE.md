@@ -259,6 +259,29 @@ evidence** để CHỨNG MINH (không chỉ khẳng định) model không overfi
 - Các delivered result.json cũ (test-only, trước mandate) không nằm trong push diff nên không bị retro-check;
   nhưng mọi lần train/commit result.json MỚI từ nay phải kèm evidence.
 
+## Named estimators/metrics must use the PUBLISHED formula (ENFORCED)
+
+> Áp dụng theo yêu cầu user 2026-08-29. Lý do: một pass trước tạo `yz_daily` = per-day proxy (bình phương
+> return 1 ngày) nhưng gắn nhãn "Yang-Zhang", trong khi Yang-Zhang chuẩn là **windowed sample variance qua n
+> ngày** — mislabeling phương pháp, làm claim mạnh hơn thực tế. Rule này để không tái lập.
+
+- **Bất kỳ estimator/metric mang TÊN học thuật** (Yang-Zhang, Garman-Klass, Rogers-Satchell, Parkinson, HAR,
+  HARQ, GARCH, QLIKE, Diebold-Mariano, …) **PHẢI implement ĐÚNG công thức gốc** từ paper/nguồn chuẩn. **KHÔNG
+  tự tạo "proxy" / "indicator-form" / "per-day" rồi gắn tên estimator đó** — đó là mislabeling.
+- **Yang-Zhang cụ thể:** dùng công thức windowed gốc Yang & Zhang (2000) — `σ²_YZ = σ²_overnight +
+  k·σ²_open-close + (1−k)·σ²_RS`, với σ²_overnight & σ²_open-close là **sample variance mean-subtracted qua n
+  ngày** (ddof=1) của `ln(O_t/C_{t−1})` và `ln(C_t/O_t)`, σ²_RS là rolling mean của Rogers-Satchell 1 ngày,
+  `k=0.34/(1.34+(n+1)/(n−1))`. Đã implement: `scripts/eda/volatility_estimators.py::estimators_from_ohlcv`
+  cột `yang_zhang`; test `test_windowed_yang_zhang_matches_reference_formula` so khớp công thức reference
+  (verified vs TTR-R + strimpel "Volatility Trading").
+- **Biến thể (per-day, smoothed, proxy) PHẢI đặt tên KHÁC rõ ràng** (vd `yz_daily` = "YZ-weighted daily range
+  proxy", KHÔNG phải "Yang-Zhang") và report/paper **nêu rõ nó KHÔNG phải estimator chuẩn**.
+- **Verify bắt buộc:** implement xong 1 estimator/metric có tên → viết **test so khớp công thức gốc**
+  (independent recompute, không reuse code implementation) + **trích nguồn** (paper/ref trong docstring).
+  Không có test-vs-formula + nguồn → KHÔNG được gọi nó bằng tên estimator chuẩn.
+- **Code review flag:** `/code-review` phải bắt mọi estimator/metric gắn tên học thuật mà công thức lệch nguồn
+  hoặc thiếu test-vs-formula như finding (mặc định MAJOR nếu số đó vào paper).
+
 ## Ablation study — LEAVE-ONE-OUT (ENFORCED)
 
 > Áp dụng theo yêu cầu user 2026-08-15. Lý do: một pass trước làm ablation kiểu incremental
