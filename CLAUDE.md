@@ -296,7 +296,11 @@ evidence** để CHỨNG MINH (không chỉ khẳng định) model không overfi
 - **Language/toolchain:** Python 3.11 (pip)
 - **Test command:** `python -m pytest`
 - **Coverage + diff-coverage:** pytest-cov (7.1.0) + diff-cover (10.5.0) ĐÃ cài + wired vào pre-push gate. Gate: `--cov-branch` → `diff-cover coverage.xml --fail-under=100` (C0 line) và `diff-cover ... --branch-coverage --fail-under=95` (C1 branch) trên changed lines. Lesson-regression: `tests/test_lessons_regression.py` chạy mỗi push.
-- **Lint command:** `pip install ruff` → `ruff check .` *(chưa setup — cần install)*
+- **Lint command:** `ruff check .` (ruff 0.16.1 đã cài). **Policy (review 2026-08-29):** pre-push gate
+  **FAIL-CLOSED trên ruff pyflakes `F` codes** (F401 unused import, F811 redefinition, F821 undefined name —
+  bug thật). Các `E`/`W` là **house-style WARN-only** cố ý: repo dùng `;`-joined statements (E702), dòng dài
+  (E501), lambda (E731) cho code số gọn — không block, khớp §3 Surgical (match existing style). Field `ruff`
+  trong gate JSON là full-lint status (informational); block thực sự là `ruff check --select F`.
 - **Lint excludes:** `.agents .claude _bmad archive data`
 - **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*
 - **Code-review tool:** `/code-review` skill (Claude Code)

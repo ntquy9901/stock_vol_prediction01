@@ -42,6 +42,12 @@ rm -f "$STATUSF"
 SHORT_SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 GATE_LOG="$MAINROOT/docs/reports/gate_logs/${SHORT_SHA}.txt"
 mkdir -p "$(dirname "$GATE_LOG")" 2>/dev/null
+# C-02 (review): a re-push of the same sha (e.g. after fixing a blocked run) must NOT silently erase the prior
+# attempt's evidence. Keep the previous log as .prevN.txt so blocked-then-passed audit trails are preserved.
+if [ -f "$GATE_LOG" ]; then
+  _pn=1; while [ -f "$MAINROOT/docs/reports/gate_logs/${SHORT_SHA}.prev${_pn}.txt" ]; do _pn=$((_pn+1)); done
+  cp "$GATE_LOG" "$MAINROOT/docs/reports/gate_logs/${SHORT_SHA}.prev${_pn}.txt" 2>/dev/null
+fi
 { echo "# pre-push quality-gate evidence log"; echo "commit: $SHORT_SHA"; date 2>/dev/null || true; echo; } > "$GATE_LOG"
 _logsec() { { echo "=== $1 ==="; cat; echo; } >> "$GATE_LOG"; }   # pipe a step's captured output into a titled log section
 
@@ -144,10 +150,20 @@ echo "[pre-push] 3/4 ruff on changed code"
 # which would leave $CHANGED empty and silently skip ruff (recorded "na"). PUSH_BASE = the pushed diff.
 CHANGED=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*.py' 2>/dev/null | grep -vE '^(archive|\.agents|\.claude|_bmad|data)/' || true)
 if command -v ruff >/dev/null 2>&1 && [ -n "$CHANGED" ]; then
+  # C-01 policy (review 2026-08-29): the E/W codes are WARN-only house style (the repo deliberately uses
+  # semicolon-joined statements E702, long lines E501, and lambdas E731 for compact numeric code). The
+  # pyflakes F codes (unused imports F401, undefined names F821, redefinitions F811, ...) are REAL bugs and
+  # are FAIL-CLOSED. So "ruff" in the gate JSON is the informational full-lint status; the block is on F.
   RUFFOUT="$(ruff check $CHANGED 2>&1)"; RUFFRC=$?
   echo "$RUFFOUT" | tail -5
-  echo "$RUFFOUT" | _logsec "3/4 ruff"
-  if [ "$RUFFRC" -eq 0 ]; then RUFF_STATUS="pass"; else RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff findings on changed files." >&2; fi
+  echo "$RUFFOUT" | _logsec "3/4 ruff (full E/F/W — informational)"
+  [ "$RUFFRC" -eq 0 ] && RUFF_STATUS="pass" || { RUFF_STATUS="fail"; echo "[pre-push] WARN: ruff E/W house-style findings (warn-only)." >&2; }
+  RUFFF="$(ruff check --select F $CHANGED 2>&1)"; RUFFFRC=$?
+  echo "$RUFFF" | _logsec "3/4 ruff --select F (real bugs — fail-closed)"
+  if [ "$RUFFFRC" -ne 0 ]; then
+    echo "$RUFFF" | tail -6
+    echo "[pre-push] BLOCK: ruff pyflakes (F) findings — real bugs (unused import / undefined name / redefinition)." >&2; FAIL=1
+  fi
 else
   echo "[pre-push]   (no changed .py or ruff absent — skipped)"
 fi
