@@ -40,3 +40,15 @@ Single-seed only (each 5-seed sp500 cell ~42 min exceeds the background wall-clo
 HAR-X is clearly lowest; under Yang-Zhang the LSTM+GAT is marginally lower than HAR-X (0.549 vs 0.565) — a
 0.016 single-seed gap within the per-seed dispersion, NOT put in the main 5-seed robustness table. A full
 5-seed S&P 500 check is left to future work. Reported honestly as a caveat in the paper.
+
+## (c) Split-adjusted-price PoC — S&P 500 is ALREADY adjusted
+The overnight artifacts that inflated Yang--Zhang (540% "gaps", zero prior closes) were on the Vietnamese
+(vnstock) data, not the S&P 500. Verified: the bundled S&P 500 OHLCV **matches Yahoo's split/dividend-adjusted
+close** exactly — ratio `myraw/yf_Adj_Close` = 1.0000 with 0.0000 std and corr 1.00000 for AAPL/MSFT/NVDA over
+2015--2022, and the series is smooth across known splits (e.g. AAPL 4:1 on 2020-08-31: 120.96 -> 125.06, no 4x
+jump; it equals Yahoo Adj Close 120.96/125.06, not raw Close 124.81/129.04). So the S&P 500 Yang--Zhang result
+is on clean adjusted prices and needs no adjustment (the winsorization is belt-and-suspenders there, catching
+only the 2000 AAPL-crash day). The unadjusted-price problem is specific to the Vietnamese OHLCV, where a fully
+adjusted comparison is the real future-work item (vnstock adjusted-price availability is uncertain). Paper
+caveat (extended + crossmarket) updated to state this. yfinance in base python3; check is CPU/network, run in
+parallel with the (b) 5-seed S&P 500 GPU run.
