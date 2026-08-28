@@ -1,0 +1,52 @@
+\relax 
+\citation{corsi2009}
+\@writefile{toc}{\contentsline {title}{Multi-Horizon Stock Volatility Forecasting}{1}{}\protected@file@percent }
+\@writefile{toc}{\authcount {2}}
+\@writefile{toc}{\contentsline {author}{Author One \and Author Two}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{}\protected@file@percent }
+\citation{corsi2009}
+\citation{audrino2025}
+\citation{harq2016}
+\citation{lstm1997}
+\citation{gat2018}
+\citation{chen2022}
+\citation{gnnhar2025}
+\citation{dy2012}
+\citation{patton2011}
+\citation{dm1995}
+\citation{hln1997}
+\citation{parkinson1980}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{}\protected@file@percent }
+\citation{gat2018}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch (directed volume$\to $Parkinson Top-5 weighted two-hop attention) are concatenated into an MLP head; the leave-one-out comparison removes the GAT branch to give the same-feature LSTM.}}{4}{}\protected@file@percent }
+\newlabel{fig:arch}{{1}{4}{}{figure.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Data}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experiments}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{4}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces VN100 (46{,}308 masked obs over 454 test dates at $h1$; 5-seed means). Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger }$~marks metrics where LSTM+GAT improves over the no-graph LSTM. MSE $\times 10^{-7}$, RMSE $\times 10^{-4}$, MAE $\times 10^{-4}$.}}{5}{}\protected@file@percent }
+\newlabel{tab:vn100}{{1}{5}{}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces VN30 (10{,}106 masked obs over 326 test dates at $h1$; 5-seed means). $^{\dagger }$~as in Table~1. Same scaling as Table~\ref {tab:vn100}.}}{6}{}\protected@file@percent }
+\newlabel{tab:vn30}{{2}{6}{}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Targeted date-clustered DM contrasts ($p$-value; favoured model in parentheses; bold if $p<0.05$). H=HAR, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}}{7}{}\protected@file@percent }
+\newlabel{tab:dm}{{3}{7}{}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{7}{}\protected@file@percent }
+\newlabel{sec:disc}{{7}{7}{}{section.7}{}}
+\bibcite{corsi2009}{1}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces S\&P 500 (exploratory, single seed): the same masked panel and five features as Tables~1--2, 442 nodes, 1{,}624 test dates. Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$; bold = best per horizon. HAR is the same five-feature model as in Tables~1--2. GARCH not run on this panel.}}{8}{}\protected@file@percent }
+\newlabel{tab:sp500}{{4}{8}{}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Output-parameterization robustness (LSTM, $h5$, 5 seeds): QLIKE mean$\pm $std. A: z-score $+$ linear $+$ floor (original); B: ratio $+$ linear $+$ floor; C: ratio $+$ exp (no floor); D: ratio $+$ softplus (no floor). HAR QLIKE is 0.5962 (VN30) and 0.5694 (VN100).}}{8}{}\protected@file@percent }
+\newlabel{tab:robust}{{5}{8}{}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{8}{}\protected@file@percent }
+\bibcite{parkinson1980}{2}
+\bibcite{lstm1997}{3}
+\bibcite{gat2018}{4}
+\bibcite{dm1995}{5}
+\bibcite{hln1997}{6}
+\bibcite{patton2011}{7}
+\bibcite{harq2016}{8}
+\bibcite{chen2022}{9}
+\bibcite{gnnhar2025}{10}
+\bibcite{dy2012}{11}
+\bibcite{audrino2025}{12}
+\gdef \@abspage@last{9}

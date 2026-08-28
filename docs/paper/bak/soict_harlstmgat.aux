@@ -1,0 +1,61 @@
+\relax 
+\citation{corsi2009}
+\@writefile{toc}{\contentsline {title}{HAR versus Deep and Graph-Attention Models for Multi-Horizon Volatility Forecasting: A Panel-Correct Study on Vietnamese and U.S. Equities}{1}{}\protected@file@percent }
+\@writefile{toc}{\authcount {2}}
+\@writefile{toc}{\contentsline {author}{Author One \and Author Two}{1}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{}\protected@file@percent }
+\citation{corsi2009}
+\citation{audrino2025}
+\citation{harq2016}
+\citation{lstm1997}
+\citation{gat2018}
+\citation{chen2022}
+\citation{gnnhar2025}
+\citation{glasso2008}
+\citation{patton2011}
+\citation{dm1995}
+\citation{hln1997}
+\citation{parkinson1980}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{}\protected@file@percent }
+\citation{gat2018}
+\citation{patton2011}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Data}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Experiments}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Results}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Main study --- per-observation LSTM (descriptive point estimates)}{4}{}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Main study (per-observation, per-stock 80/10/10): QLIKE point estimates (lower is better; 5-seed mean; best in bold). This is a descriptive design comparison; panel-correct significance is not marked here, because the date-clustered DM verdicts are computed on the snapshot design (Table~\ref {tab:haranchor-vnsummary}, Sec.~\ref {sec:haranchor}). A naive per-observation DM on this design flags the short-horizon Vietnamese LSTM-vs-HAR gaps as significant, but overstates significance on a cross-sectionally dependent panel by a factor of order $\sqrt  {N}$ (Method).}}{5}{}\protected@file@percent }
+\newlabel{tab:main}{{1}{5}{}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Graph-check (common-date snapshot, lookback 10): QLIKE (5-seed mean; best in bold) and the leave-one-out Diebold--Mariano statistic (DM$_{\mathrm  {LOO}}$) comparing LSTM+GAT with LSTM(w/o GAT) on QLIKE ($*$: $p<0.05$; a positive value favours the no-graph model). The graph never improves QLIKE.}}{5}{}\protected@file@percent }
+\newlabel{tab:graph}{{2}{5}{}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Graph-check ablation}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Lookback variation and data scaling}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}HAR-anchored residual and forecast-combination study (E0--E10)}{6}{}\protected@file@percent }
+\newlabel{sec:haranchor}{{6.4}{6}{}{subsection.6.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces HAR-anchored ladder on the Vietnamese panels (common-date snapshot; 5-seed means): QLIKE for HAR (E0), the full-target deep models (E1 LSTM, E2 LSTM+GAT) and the convex combination (E3, the closest competitor to HAR), with the date-clustered DM $p$ of E3 vs HAR (lower QLIKE is better). No rung beats HAR at any horizon, so no significance marker ($*$, date-clustered $p<0.05$ vs HAR) appears; the full detail (E0--E10 with $R^2_{OOS}$ and per-rung DM $p$) is in Table~\ref {tab:haranchor-vndetail} (Appendix).}}{7}{}\protected@file@percent }
+\newlabel{tab:haranchor-vnsummary}{{3}{7}{}{table.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces HAR-anchored ladder on the S\&P~500 subset (457 nodes; 5-seed means, date-clustered DM $p$ vs HAR). $*$ marks a model that significantly beats HAR on QLIKE ($p<0.05$). Non-fragile rungs shown; the additive/graph residual rungs E5--E8 are numerically fragile on this cross-section and are discussed in the text.}}{8}{}\protected@file@percent }
+\newlabel{tab:haranchor-sp500}{{4}{8}{}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{9}{}\protected@file@percent }
+\newlabel{sec:disc}{{7}{9}{}{section.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Limitations}{9}{}\protected@file@percent }
+\bibcite{corsi2009}{1}
+\bibcite{parkinson1980}{2}
+\bibcite{lstm1997}{3}
+\bibcite{gat2018}{4}
+\bibcite{glasso2008}{5}
+\bibcite{dm1995}{6}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Conclusion}{10}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Full HAR-anchored ladder tables (VN30, VN100)}{10}{}\protected@file@percent }
+\newlabel{app:ladder}{{A}{10}{}{section.1}{}}
+\bibcite{hln1997}{7}
+\bibcite{patton2011}{8}
+\bibcite{harq2016}{9}
+\bibcite{chen2022}{10}
+\bibcite{gnnhar2025}{11}
+\bibcite{audrino2025}{12}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch over a graphical-lasso partial-correlation graph are concatenated into an MLP head; the leave-one-out ablation removes the GAT branch to give the main LSTM.}}{11}{}\protected@file@percent }
+\newlabel{fig:arch}{{1}{11}{}{figure.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Full HAR-anchored ladder (E0--E10) on VN30 and VN100 (common-date snapshot; 5-seed means): QLIKE (lower better), out-of-sample $R^2$ vs HAR, and date-clustered DM $p$ vs HAR. n/a: the static gate has no per-observation differential from HAR. Summarised in Table~\ref {tab:haranchor-vnsummary}.}}{12}{}\protected@file@percent }
+\newlabel{tab:haranchor-vndetail}{{5}{12}{}{table.5}{}}
+\gdef \@abspage@last{12}
