@@ -105,6 +105,23 @@ def test_ohlc_geometry_violations_are_invalid():
     assert ok.tolist() == [True, False, False, False]
 
 
+def test_ohlc_float32_noise_within_tolerance_stays_valid():
+    # R-09 regression (reviewer-found): float32 price storage puts high ~1e-7 below max(open,close); the raw
+    # quality gate certifies these CLEAN (OHLC_RTOL=1e-5), so the estimator mask must NOT drop them.
+    close = 7265.588
+    df = pd.DataFrame({
+        "date": [1],
+        "open":  [7265.0],
+        "high":  [close * (1 - 5e-7)],       # 1e-7-ish below close -> gate-clean float32 noise
+        "low":   [7260.0],
+        "close": [close],
+        "volume": [1],
+    })
+    ok = VE.estimators_from_ohlcv(df)["ok"].to_numpy()
+    assert ok.tolist() == [True]             # tolerance keeps it valid (exact compare would drop it)
+    assert np.isfinite(VE.estimators_from_ohlcv(df)["parkinson"].iloc[0])
+
+
 def test_panel_summary_robust_to_unsorted_duplicate_dates(tmp_path):
     # R-08: panel_summary must sort + dedup raw before the order-dependent rolling/overnight estimators,
     # so a shuffled-with-duplicates file yields the SAME summary as its clean, sorted version.

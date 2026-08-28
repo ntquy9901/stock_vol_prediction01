@@ -249,6 +249,24 @@ def test_volume_zscore_warns_on_low_coverage(tmp_path):
         MR._volume_zscore_wide(wide, price)
 
 
+def test_volume_zscore_fails_loud_on_present_but_empty_files(tmp_path):
+    """Reviewer 2026-08-29 (M-04 upper bound): a present ohlcv file whose dates don't intersect the panel
+    (all-NaN volume) is SEMANTICALLY MISSING and must count toward the >2 fail-loud cap, not just warn --
+    otherwise volume is silently zeroed for an unbounded number of tickers."""
+    import pandas as pd
+    files, price = _synth_panel(tmp_path, tickers=tuple(f"T{i:02d}" for i in range(6)))
+    # overwrite 3 tickers' ohlcv with dates far outside the panel -> reindex(own) yields all-NaN volume
+    for tk in ("T00", "T01", "T02"):
+        rf = Path(price) / f"{tk}_ohlcv.csv"
+        df = pd.read_csv(rf)
+        df["date"] = pd.bdate_range("1990-01-01", periods=len(df)).astype(str)   # non-intersecting dates
+        df.to_csv(rf, index=False)
+    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_volatility"]
+                      .rename(Path(f).name.replace("_processed.csv", "")) for f in files], axis=1)
+    with pytest.raises(ValueError, match="no usable volume"):
+        MR._volume_zscore_wide(wide, price)
+
+
 def test_seed_metric_stats_mean_std_not_ensemble():
     """seed_metric_stats reports the MEAN (and std/min/max) of per-seed metrics -- not the metric of the
     seed-averaged ensemble -- so the paper's '5-seed mean' label is faithful."""

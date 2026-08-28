@@ -157,7 +157,11 @@ Coverage % đơn thuần KHÔNG chứng minh chất lượng — adversarial rev
 - **Data-pipeline test phải có real-data-sample smoke.** Synthetic fixture bỏ sót lỗi encoding (UTF-8 vs cp1252), mixed date format (ISO vs DD/MM), mixed timezone, schema drift giữa nguồn crawl khác nhau (đúng loại lỗi từng gặp ở `aggregate_news_sources.py`). Ít nhất 1 test/phase đọc 1 lát cắt nhỏ dữ liệu thật (không phải toàn bộ) và assert chạy không exception + output hợp lý.
 - **Code review = 3-layer (Blind Hunter + Edge Case Hunter + Acceptance Auditor) qua `/code-review`, chạy TRƯỚC khi coi done.** Self-review KHÔNG thay thế được. Xử lý hết finding critical/major trước khi done; ghi minor thành follow-up trong summary report. **Với code train/inference/data-processing: review PHẢI có 1 lăng kính hiệu năng** — bắt batch=1 anti-pattern, GPU under-utilization, transfer/sync mỗi step, loop chỉ main-thread (per §Performance & batching ENFORCED).
 
-**Tooling gap hiện tại:** `diff-cover --fail-under=100` chưa từng được set up/chạy thật trong repo này (xem "Tooling gaps" ở §Per-project setup) — cho tới khi cài xong, ghi `Not run` + lý do trong summary report thay vì claim đã đạt C0=100%.
+**Tooling status (cập nhật 2026-08-29):** `diff-cover` ĐÃ cài (10.5.0) + pytest-cov (7.1.0) và ĐÃ wired vào
+pre-push gate (step 2): mỗi push sinh `coverage.xml` (chạy test cạnh file đổi dưới GPU venv, `--cov-branch`)
+rồi chạy 2 gate — **C0 line `diff-cover --fail-under=100`** và **C1 branch `--branch-coverage --fail-under=95`**
+trên changed lines so với `@{upstream}`. Env knob `QG_MIN_COVER` / `QG_MIN_BRANCH`. Dòng entry-driver
+`main()` không unit-test được đánh `# pragma: no cover`; residual chỉ là các nhánh đó.
 
 ## Summary report (per change)
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
@@ -278,7 +282,7 @@ Khi **thử nghiệm** model (không phải final run):
 ## Per-project setup (stack specifics — chỗ DUY NHẤT hardcoded stack)
 - **Language/toolchain:** Python 3.11 (pip)
 - **Test command:** `python -m pytest`
-- **Coverage + diff-coverage:** `pip install pytest-cov diff-cover` → `python -m pytest --cov=src --cov-report=xml` rồi `diff-cover coverage.xml --fail-under=100` (C0 gate; C1≥80% soi thủ công trong report — xem §Testing quality rules ENFORCED) *(chưa setup — cần install)*
+- **Coverage + diff-coverage:** pytest-cov (7.1.0) + diff-cover (10.5.0) ĐÃ cài + wired vào pre-push gate. Gate: `--cov-branch` → `diff-cover coverage.xml --fail-under=100` (C0 line) và `diff-cover ... --branch-coverage --fail-under=95` (C1 branch) trên changed lines. Lesson-regression: `tests/test_lessons_regression.py` chạy mỗi push.
 - **Lint command:** `pip install ruff` → `ruff check .` *(chưa setup — cần install)*
 - **Lint excludes:** `.agents .claude _bmad archive data`
 - **Smoke command:** `python -m pytest -m smoke` *(cần register marker `smoke` trong pytest.ini)*
@@ -286,7 +290,11 @@ Khi **thử nghiệm** model (không phải final run):
 - **Data-quality gate (ENFORCED, xem §Definition of Done):** `python scripts/quality_gate/run_quality_gate.py` — Pandera schema (`data/processed` + news panel) + Evidently drift (train-vs-test → `drift.html`). *(pandera 0.32.1 + evidently 0.7.21 đã cài, verified trên pandas 3.0.)*
 - **Python extras:** tránh bare `except` + mutable default args; dùng type hints + `pathlib`
 
-> **Tooling status (2026-08-08):** ruff (0.16.1), pandera (0.32.1), evidently (0.7.21), pytest (9.1.1) ĐÃ install; data-quality gate (`scripts/quality_gate/`) hoạt động (Pandera schema + Evidently drift, verified). **Còn gap:** pytest-cov + diff-cover chưa install (diff-cover C0/C1 ghi `Not run`); smoke marker registration cần xác nhận trong pytest.ini.
+> **Tooling status (2026-08-29):** ruff (0.16.1), pandera (0.32.1), evidently (0.7.21), pytest (9.1.1),
+> **pytest-cov (7.1.0), diff-cover (10.5.0)** ĐÃ install; data-quality gate (`scripts/quality_gate/`) hoạt
+> động. **Coverage gate ĐÃ wired vào pre-push (step 2): C0 line=100% + C1 branch=95% trên changed lines,
+> hard-block.** Lesson-regression suite (`tests/test_lessons_regression.py`) chạy mỗi push. **Còn gap:**
+> smoke marker registration cần xác nhận trong pytest.ini.
 
 ---
 

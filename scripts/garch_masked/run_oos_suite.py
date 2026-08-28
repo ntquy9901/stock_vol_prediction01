@@ -95,7 +95,7 @@ def _add_garch(ds, files, price_dir, h, cfg, rp):
     rp.write_text(json.dumps(res, indent=2, default=float), encoding="utf-8")
 
 
-def main():
+def main():  # pragma: no cover - CLI entry driver; exercised by real OOS runs, not unit tests
     from config import SMOKE
     args = [a for a in sys.argv[1:] if a != "--smoke"]
     smoke = "--smoke" in sys.argv

@@ -33,7 +33,7 @@ from config import Config  # noqa: E402
 try:  # provenance for the GARCH benchmark (external review L-03)
     from importlib.metadata import version as _pkg_version
     _ARCH_VERSION = _pkg_version("arch")
-except Exception:
+except Exception:  # pragma: no cover - arch is installed; guard only for a broken environment
     _ARCH_VERSION = "unavailable"
 
 DATA = _SUB / "data"
@@ -157,7 +157,7 @@ def _harx_pred(D, cfg):
     return _pred_dict(hx, D.y_te, D.tmask_te, D.d_te, D.N)
 
 
-def main():
+def main():  # pragma: no cover - CLI entry driver; exercised by real OOS runs, not unit tests
     cfg = Config()
     summary = []
     for ds in ("vn30", "vn100"):

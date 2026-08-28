@@ -5,7 +5,8 @@
 # Activate once per clone:  git config core.hooksPath scripts/git_hooks
 #
 # Env knobs:
-#   QG_MIN_COVER   diff-coverage %% floor that BLOCKS the push (default 80; target 100)
+#   QG_MIN_COVER   C0 line diff-coverage %% floor that BLOCKS the push (default 100)
+#   QG_MIN_BRANCH  C1 branch diff-coverage %% floor that BLOCKS the push (default 95)
 #   QG_SKIP=1      emergency bypass (records intent; use only when justified)
 set -uo pipefail
 
@@ -16,7 +17,8 @@ fi
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
-MIN_COVER="${QG_MIN_COVER:-80}"
+MIN_COVER="${QG_MIN_COVER:-100}"     # C0 line coverage floor on changed lines
+MIN_BRANCH="${QG_MIN_BRANCH:-95}"    # C1 branch coverage floor on changed lines
 FAIL=0
 
 # Main repo root (scripts/ lives here even when pushing from a feature-branch
@@ -48,29 +50,61 @@ if [ -n "$CODE_CHG" ] && [ -z "$TEST_CHG" ]; then
   FAIL=1
 fi
 
-PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
-if [ -d "$PILOT/test" ]; then
-  TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"
-else
-  TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"
-fi
+# Coverage is measured on the CHANGED lines vs what is already pushed (PUSH_BASE = @{upstream}); a direct
+# master push compared to `master` would collapse to an empty diff, so we compare to the remote tip instead.
+# Tests are DISCOVERED next to each changed source (its own dir's test_*.py + tests/ or test/ subdir) and
+# run under the GPU venv (torch) so torch-dependent modules are actually exercised; --cov spans the changed
+# dirs so diff-cover has real data for every changed line. Falls back to the pilot smoke suite when a change
+# has no adjacent tests (e.g. a pure config/doc-only .py touch).
+COVPY="$MAINROOT/.venv_gpu_encode/Scripts/python.exe"; [ -x "$COVPY" ] || COVPY=python
+COVARGS=""; TESTPATHS=""; SEEN_DIRS=" "
+for f in $ALLPY; do
+  case "$f" in
+    *test_*|*/test/*|*/tests/*)          # a changed TEST file -> run exactly that file (avoid globbing a big tests/ dir)
+      [ -f "$f" ] && TESTPATHS="$TESTPATHS $f" ;;
+    *)                                    # a changed SOURCE file -> cover its dir + run its ADJACENT tests only
+      d=$(dirname "$f"); b=$(basename "$f" .py)
+      case "$SEEN_DIRS" in *" $d "*) : ;; *) SEEN_DIRS="$SEEN_DIRS$d "; [ -d "$d" ] && COVARGS="$COVARGS --cov=$d" ;; esac
+      # sibling test_<module>.py + a tests/ or test/ subdir -- NOT a broad test_*.py glob (which would drag in
+      # unrelated / pre-existing-broken sibling tests and false-block the push).
+      for tp in "$d/test_$b.py" "$d/tests" "$d/test"; do [ -e "$tp" ] && TESTPATHS="$TESTPATHS $tp"; done ;;
+  esac
+done
 
-echo "[pre-push] 1/4 pytest (+coverage) on $TESTDIR"
-if ! python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-report=xml:.qg_coverage.xml -q; then
-  echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1; TESTS_OK=0
-fi
-
-echo "[pre-push] 2/4 diff-coverage on changed lines (floor ${MIN_COVER}%)"
-BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
-if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ]; then
-  DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$BASE" --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
-  echo "$DCOUT" | tail -12
-  DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
-  if [ "$DCRC" -ne 0 ]; then
-    echo "[pre-push] BLOCK: diff-coverage below ${MIN_COVER}% (target 100%)." >&2; FAIL=1
+echo "[pre-push] 1/4 changed-scope tests (+branch coverage)"
+COV_OK=1
+if [ -n "$TESTPATHS" ]; then
+  if ! PYTHONIOENCODING=utf-8 "$COVPY" -m pytest $TESTPATHS $COVARGS --cov-branch --cov-report=xml:.qg_coverage.xml -q; then
+    echo "[pre-push] BLOCK: changed-scope tests failed." >&2; FAIL=1; TESTS_OK=0; COV_OK=0
   fi
 else
-  echo "[pre-push] WARN: diff-cover not available — coverage NOT verified." >&2
+  PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
+  if [ -d "$PILOT/test" ]; then TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"; else TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"; fi
+  echo "[pre-push]   (no adjacent tests for changed files — pilot smoke suite $TESTDIR)"
+  if ! python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q; then
+    echo "[pre-push] BLOCK: tests failed." >&2; FAIL=1; TESTS_OK=0; COV_OK=0
+  fi
+fi
+
+echo "[pre-push] 2/4 diff-coverage on changed lines (C0 line >=${MIN_COVER}%, C1 branch >=${MIN_BRANCH}%)"
+BASE="$(git merge-base HEAD master 2>/dev/null || echo master)"
+# --include restricts diff-cover to the files ACTUALLY being pushed (committed PUSH_BASE..HEAD, = $ALLPY).
+# diff-cover otherwise diffs the whole working tree, so unrelated uncommitted edits (stray WIP files) would
+# pollute the changed-line set and false-block. Empty $ALLPY (no changed .py) -> skip the coverage gate.
+if command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ] && [ "$COV_OK" = "1" ] && [ -n "$ALLPY" ]; then
+  DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --include $ALLPY --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
+  echo "$DCOUT" | grep -E 'Missing lines|Coverage:|Total:' | tail -12
+  DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
+  if [ "$DCRC" -ne 0 ]; then
+    echo "[pre-push] BLOCK: C0 line diff-coverage below ${MIN_COVER}% (add tests or a justified # pragma: no cover)." >&2; FAIL=1
+  fi
+  BCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --branch-coverage --include $ALLPY --fail-under="$MIN_BRANCH" 2>&1)"; BCRC=$?
+  echo "[pre-push]   C1 branch: $(echo "$BCOUT" | grep -oE 'Coverage: [0-9.]+%' | head -1)"
+  if [ "$BCRC" -ne 0 ]; then
+    echo "[pre-push] BLOCK: C1 branch diff-coverage below ${MIN_BRANCH}%." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push] WARN: diff-cover unavailable or tests failed — coverage NOT verified." >&2
 fi
 
 echo "[pre-push] 3/4 ruff on changed code"
@@ -83,11 +117,11 @@ echo "[pre-push] 4/4 data-quality: tests (every push) + Pandera/Evidently (if da
 # Data-quality test scripts run on EVERY push (cheap ~2s; enforces regardless of branch/base, since
 # on a master push the merge-base collapses to HEAD and a diff-gated check would silently no-op).
 DQ=""
-for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py; do
+for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py tests/test_lessons_regression.py; do
   [ -f "$MAINROOT/$t" ] && DQ="$DQ $MAINROOT/$t"
 done
 if [ -n "$DQ" ]; then
-  echo "[pre-push]   data-quality tests (raw+processed)"
+  echo "[pre-push]   data-quality (raw+processed) + lessons-learned regression tests"
   if ! python -m pytest $DQ -q; then
     echo "[pre-push] BLOCK: data-quality tests failed." >&2; FAIL=1
   fi

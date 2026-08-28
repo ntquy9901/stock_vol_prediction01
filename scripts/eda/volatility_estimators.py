@@ -28,6 +28,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "garch_masked"))
 
 _LN2 = np.log(2.0)
+_OHLC_RTOL = 1e-5                                      # matches tests/test_raw_prices_quality.py: absorb float32 noise
 _YZ_N = 20                                            # Yang-Zhang window (RMA period / k parameter)
 _YZ_K = 0.34 / (1.34 + (_YZ_N + 1) / (_YZ_N - 1))     # classical YZ weight ~0.139 for n=20
 EST = ["close2close", "parkinson", "garman_klass", "rogers_satchell", "rs_overnight"]
@@ -56,9 +57,14 @@ def estimators_from_ohlcv(df: pd.DataFrame, overnight_cap: float | None = 0.20) 
     c = pd.to_numeric(df["close"], errors="coerce").to_numpy(float)
     # R-09: enforce the full OHLC geometry the docstring promises -- high is the day's max and low its min,
     # so high >= open/close and low <= open/close (a bar violating this is corrupt and would give a
-    # spurious estimator; e.g. Rogers-Satchell/GK log-ratios go negative).
+    # spurious estimator; e.g. Rogers-Satchell/GK log-ratios go negative). Use the SAME relative tolerance
+    # as the raw-data quality gate (tests/test_raw_prices_quality.py OHLC_RTOL=1e-5): float32 price storage
+    # yields ~1e-7 spurious violations, so an EXACT compare would drop gate-clean rows (measured: 22,348
+    # S&P 500 rows) and stop the delivered Parkinson numbers reproducing. Tolerance keeps clean data a no-op.
+    hi_oc = np.maximum(o, c)
+    lo_oc = np.minimum(o, c)
     ok = (np.isfinite([o, h, lo, c]).all(0) & (o > 0) & (h > 0) & (lo > 0) & (c > 0)
-          & (h >= lo) & (h >= o) & (h >= c) & (lo <= o) & (lo <= c))
+          & (h >= lo) & (h >= hi_oc * (1 - _OHLC_RTOL)) & (lo <= lo_oc * (1 + _OHLC_RTOL)))
     prev_c = np.concatenate([[np.nan], c[:-1]])
     prev_ok = np.isfinite(prev_c) & (prev_c > 0)             # overnight needs a valid positive prior close
     with np.errstate(divide="ignore", invalid="ignore"):

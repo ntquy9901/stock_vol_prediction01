@@ -40,7 +40,8 @@ _VOL_WIN = 20
 _MIN_PAIRS = 30            # directed volume->PK edge: min overlapping (t, t+1) pairs
 EDGE_MIN_OVERLAP = 100    # symmetric correlation edge: min overlapping days for corr()
 EDGE_TOP_K = 5            # Top-K neighbours per node (both edges)
-_MIN_VOL_COVERAGE = 0.5   # warn if a present ohlcv file covers < this fraction of a ticker's own dates
+_MIN_VOL_COVERAGE = 0.5    # warn if a present ohlcv file covers < this fraction of a ticker's own dates
+_EMPTY_VOL_COVERAGE = 0.05  # <= this fraction == present-but-empty == semantically missing (fail-loud cap)
 
 
 @dataclass
@@ -83,6 +84,7 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
     out = np.full((len(dates), wide.shape[1]), np.nan, dtype=float)
     missing = []
     low_cover = []
+    effectively_absent = []
     for j, tk in enumerate(wide.columns):
         own = dates[wide[tk].notna().to_numpy()]
         if len(own) == 0:
@@ -93,7 +95,9 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
             vol = raw.set_index("date")["volume"]
             vol = vol[~vol.index.duplicated(keep="last")].reindex(own)
             cover = float(vol.notna().mean())        # M-04: fraction of the ticker's own dates with real volume
-            if cover < _MIN_VOL_COVERAGE:
+            if cover <= _EMPTY_VOL_COVERAGE:
+                effectively_absent.append(tk)        # present file but ~no intersecting dates == missing
+            elif cover < _MIN_VOL_COVERAGE:
                 low_cover.append((tk, round(cover, 3)))
             logv = pd.Series(np.log1p(vol.to_numpy(dtype=float)), index=own)
             mean = logv.rolling(window).mean()
@@ -106,15 +110,20 @@ def _volume_zscore_wide(wide: pd.DataFrame, price_dir: Path | str, window: int =
         out[wide.index.get_indexer(own), j] = z.to_numpy(dtype=float)
     # M-04: surface (do not silently absorb) partial per-date volume coverage -- a present file that covers
     # only part of a ticker's dates turns the missing days into a neutral (zero) shock. Report as a warning
-    # rather than fail, since a low-coverage ticker is still eligible; the delivered ETL data is ~complete.
+    # rather than fail, since a partial-coverage ticker still has usable volume; the delivered ETL data is
+    # ~complete.
     if low_cover:
         warnings.warn(f"volume_zscore: {len(low_cover)} ticker(s) below {_MIN_VOL_COVERAGE:.0%} volume "
                       f"coverage (missing days zero-filled): {low_cover[:5]}", stacklevel=2)
-    # M2: fail loud rather than silently zeroing the volume feature for many tickers (no-silent-degradation).
-    # A small bounded allowlist (<=2) is tolerated; more means the volume feature is effectively absent.
-    if len(missing) > 2:
-        raise ValueError(f"volume_zscore: {len(missing)} tickers lack an *_ohlcv.csv under {price_dir} "
-                         f"(silent-zero volume for >2 tickers is not allowed): {missing[:5]}...")
+    # M2 + M-04 upper bound (reviewer 2026-08-29): fail loud rather than silently zeroing the volume feature
+    # for many tickers (no-silent-degradation). A present file that covers ~no dates is SEMANTICALLY MISSING
+    # (all-NaN volume -> all-zero shock), so it counts toward the same bounded allowlist as an absent file --
+    # otherwise a present-but-empty file would evade the >2 cap and zero volume for unbounded tickers.
+    absent = missing + effectively_absent
+    if len(absent) > 2:
+        raise ValueError(f"volume_zscore: {len(absent)} tickers have no usable volume under {price_dir} "
+                         f"(missing file or present-but-empty; silent-zero volume for >2 not allowed): "
+                         f"missing={missing[:5]} empty={effectively_absent[:5]}")
     return out
 
 
