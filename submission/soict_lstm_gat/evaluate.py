@@ -89,6 +89,15 @@ def all_metrics(pred: dict, floor: float) -> dict:
 
 
 def dm_compare(pred_a: dict, pred_b: dict, horizon: int, loss: str, floor: float):
+    """Per-observation Diebold-Mariano over the pooled (ticker, date) keys.
+
+    CAVEAT (external review F-05): the keys are sorted, so on pooled multi-ticker data the per-observation
+    loss vector is ticker-major and the HAC (Newey-West) autocovariance for ``horizon > 1`` crosses the seam
+    between one ticker's last obs and the next ticker's first obs, mildly biasing the long-run variance. This
+    helper is a convenience diagnostic; the PAPER's significance uses the date-clustered DM
+    (``baselines/2026-08-21_har_anchored_residual/code/stats.py::date_clustered_dm``), which aggregates per
+    date first and has no cross-ticker seam. Do NOT quote this helper's p-values as paper significance for h>1.
+    """
     keys = sorted(set(pred_a) & set(pred_b))
     y = np.array([pred_a[k][0] for k in keys])
     pa = np.array([pred_a[k][1] for k in keys]); pb = np.array([pred_b[k][1] for k in keys])

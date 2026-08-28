@@ -113,6 +113,17 @@ def test_garch_forecast_guards_nonfinite_forecast_path(monkeypatch):
     assert np.all(np.isfinite(out)) and np.all(out > 0) and st["fallback"] is True
 
 
+def test_garch_status_records_nonpositive_count():
+    """External review F-04: zero/negative finite variance entries are floored (legit H~L sanitization),
+    fallback stays False, but the count is recorded in the status for input-quality audit."""
+    series = np.array([1e-4, 0.0, 2e-4, -1e-6, 3e-4] * 80, dtype=float)   # 2 nonpositive per block
+    _, st = baselines.garch_forecast(series, n_test=5, return_status=True)
+    assert "nonpositive_count" in st and st["nonpositive_count"] == 160     # 2 * 80 blocks
+    _, st_clean = baselines.garch_forecast(np.abs(np.random.default_rng(1).standard_normal(300)) * 1e-3 + 1e-5,
+                                           n_test=5, return_status=True)
+    assert st_clean["nonpositive_count"] == 0
+
+
 def test_garch_forecast_return_status_flags_fallback():
     """External review M-08: return_status surfaces GARCH degradation. A degenerate short series
     falls back (fallback=True + reason); a normal series fits (fallback=False)."""

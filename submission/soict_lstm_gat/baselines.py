@@ -156,7 +156,12 @@ def garch_forecast(
     """
     def _pack(arr, fallback, reason):
         if return_status:
-            return arr, {"fallback": bool(fallback), "reason": reason, "arch_available": _ARCH_AVAILABLE}
+            # nonpositive_count (external review F-04): Parkinson VARIANCE is >= 0; zero/negative entries are
+            # floored when forming pseudo-returns (sqrt(max(var, floor))). This is legitimate sanitization of
+            # H~L (zero-range) days, not a bug -- but record the count so a caller can audit the input quality.
+            nonpos = int(np.sum(np.asarray(train_series, dtype=float) <= 0.0))
+            return arr, {"fallback": bool(fallback), "reason": reason, "arch_available": _ARCH_AVAILABLE,
+                         "nonpositive_count": nonpos}
         return arr
 
     train_series = np.asarray(train_series, dtype=float).ravel()
