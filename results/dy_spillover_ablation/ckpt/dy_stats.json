@@ -1,0 +1,18 @@
+{
+  "n_nodes": 154,
+  "row_sum_mean": 1.0,
+  "row_sum_min": 0.9999999999999996,
+  "row_sum_max": 1.0000000000000004,
+  "total_connectedness_index": 44.72975569568061,
+  "mean_from_others": 0.44729755695680606,
+  "mean_to_others": 0.44729755695680606,
+  "max_to_others": 1.3286672208655785,
+  "diag_mean_own_share": 0.5527024430431939,
+  "asymmetry_frob": 0.611259439743604,
+  "var_lag_p": 1,
+  "fevd_horizon_H": 10,
+  "alpha": 0.05,
+  "l1_ratio": 0.5,
+  "top_k": 5,
+  "n_train_rows": 4124
+}
