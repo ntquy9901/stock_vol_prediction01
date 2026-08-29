@@ -126,28 +126,26 @@ def test_render_dm_voltg_covers_branches(tmp_path):
     assert "& - \\\\" in tex                            # missing ae p-value rendered as '-'
 
 
-def test_render_est_qlike_bolds_lower_and_groups():
-    def _tab(panel, h, har_q, vga_q):
-        return {"rows": [
-            {"panel": panel, "horizon": h, "model": "HAR-X", "cells": {"qlike": {"value": har_q, "std": None}}},
-            {"panel": panel, "horizon": h, "model": "LSTM_wGAT_vol2pk", "cells": {"qlike": {"value": vga_q, "std": None}}},
-        ]}
-    sources = [("Parkinson", _tab("vn100", 1, 0.51, 0.55)),   # HAR-X lower
-               ("Rogers--Satchell", _tab("vn100", 1, 3.85, 3.66))]  # VolGA lower
-    tex = B.render_est_qlike(sources, "vn100", horizons=(1,))
-    assert "Estimator & $h$ & HAR-X & VolGA" in tex
-    assert r"\textbf{0.5100}" in tex   # Parkinson: HAR-X lower -> bold
-    assert r"\textbf{3.6600}" in tex   # Rogers: VolGA lower -> bold
-    assert tex.index("Parkinson") < tex.index("Rogers--Satchell")
+def _mkrow(panel, h, model, mse, qlike, std=None):
+    return {"panel": panel, "horizon": h, "model": model,
+            "cells": {"mse": {"value": mse, "std": None}, "rmse": {"value": mse * 10, "std": None},
+                      "mae": {"value": mse * 5, "std": None}, "qlike": {"value": qlike, "std": std}}}
 
 
-def test_render_est_qlike_skips_missing_and_continuation():
-    def _row(panel, h, model, q):
-        return {"panel": panel, "horizon": h, "model": model, "cells": {"qlike": {"value": q, "std": None}}}
-    t = {"rows": [_row("vn30", 1, "HAR-X", 0.5), _row("vn30", 1, "LSTM_wGAT_vol2pk", 0.6),
-                  _row("vn30", 5, "HAR-X", 0.7), _row("vn30", 5, "LSTM_wGAT_vol2pk", 0.65)]}
-    # sp500 absent from this table -> that estimator/panel yields no rows (skipped)
-    tex = B.render_est_qlike([("Parkinson", t)], "vn30", horizons=(1, 5))
-    assert "\n & 5 &" in tex          # continuation row for 2nd horizon
-    empty = B.render_est_qlike([("Parkinson", t)], "sp500", horizons=(1,))
-    assert "Parkinson" not in empty   # no rows for sp500 -> estimator block skipped
+def test_render_est_allmarkets_hnx_first_four_metrics_and_labels():
+    t = {"rows": [
+        _mkrow("hnx", 1, "HAR-X", 1.4e-6, 1.87), _mkrow("hnx", 1, "LSTM_wGAT_vol2pk", 1.37e-6, 1.81, std=0.004),
+        _mkrow("vn30", 1, "HAR-X", 1.0e-6, 0.51), _mkrow("vn30", 1, "LSTM_wGAT_vol2pk", 1.2e-6, 0.55),
+    ]}
+    tex = B.render_est_allmarkets(t, panels=("hnx", "vn30"), horizons=(1,))
+    assert "$h$ & Model & MSE & RMSE & MAE & QLIKE" in tex   # all four metrics
+    assert r"\multicolumn{6}{l}{\textbf{HNX}}" in tex        # market label row
+    assert tex.index("HNX") < tex.index("VN30")             # HNX first
+    assert r"\textbf{1.8100" in tex                          # VolGA lower QLIKE on HNX -> bold
+    assert r"\,$\pm$.004" in tex                             # per-seed std kept
+
+
+def test_render_est_allmarkets_skips_absent_market():
+    t = {"rows": [_mkrow("hnx", 1, "HAR-X", 1e-6, 1.0), _mkrow("hnx", 1, "LSTM_wGAT_vol2pk", 1e-6, 0.9)]}
+    tex = B.render_est_allmarkets(t, panels=("hnx", "sp500"), horizons=(1,))
+    assert "HNX" in tex and "S\&P 500" not in tex           # sp500 has no rows -> block skipped

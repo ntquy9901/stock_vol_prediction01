@@ -112,36 +112,49 @@ def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) ->
     return "\n".join(lines) + "\n"
 
 
-def render_est_qlike(sources, panel, horizons=HORIZONS) -> str:
-    """Per-market QLIKE comparison (HAR-X vs VolGA) across estimators. ``sources`` is a list of
-    ``(label, table)`` (each table from build_tables of one estimator's results). QLIKE is scale-invariant so
-    it is the metric comparable across estimators; the lower QLIKE per row is bolded."""
-    lines = [r"\begin{tabular}{ll cc}", r"\toprule",
-             r"Estimator & $h$ & HAR-X & VolGA \\", r"\midrule"]
-    first = True
-    for label, table in sources:
+_MKT_ORDER = ("hnx", "vn100", "vn30", "sp500")            # HNX first in every estimator table
+_MKT_LABEL = {"hnx": "HNX", "vn100": "VN100", "vn30": "VN30", "sp500": r"S\&P 500"}
+
+
+def render_est_allmarkets(table, panels=_MKT_ORDER, models=EST_MODELS,
+                          metrics=METRICS_NO_R2, horizons=HORIZONS) -> str:
+    """One estimator, all four metrics, every market (HNX first). Markets are row-blocks with a bold spanning
+    label; within a market each horizon lists HAR-X and VolGA, lowest-per-metric bolded. Scales are comparable
+    within a single estimator, so all four metrics are shown."""
+    ncol = 2 + len(metrics)
+    lines = [r"\begin{tabular}{ll" + "c" * len(metrics) + "}", r"\toprule",
+             "$h$ & Model & " + " & ".join(_HDR[m] for m in metrics) + r" \\"]
+    for panel in panels:
         by = {(r["horizon"], r["model"]): r["cells"] for r in table["rows"] if r["panel"] == panel}
-        rows = []
+        block = []
         for h in horizons:
-            har = by.get((h, "HAR-X"), {}).get("qlike")
-            vga = by.get((h, "LSTM_wGAT_vol2pk"), {}).get("qlike")
-            if har is None or vga is None:
+            present = [(k, d) for k, d in models if (h, k) in by]
+            if not present:
                 continue
-            hv, vv = har["value"], vga["value"]
-            ht, vt = f"{hv:.4f}", f"{vv:.4f}"
-            if hv <= vv:
-                ht = r"\textbf{" + ht + "}"
-            else:
-                vt = r"\textbf{" + vt + "}"
-            rows.append((h, ht, vt))
-        if not rows:
+            best = {}
+            for mt in metrics:
+                vals = [v for v in (_scaled_value(mt, by[(h, k)].get(mt)) for k, _ in present) if v is not None]
+                if vals:
+                    best[mt] = min(vals)
+            for k, disp in present:
+                cells = by[(h, k)]
+                out = []
+                for mt in metrics:
+                    sv = _scaled_value(mt, cells.get(mt))
+                    if sv is None:
+                        out.append("-"); continue
+                    txt = f"{sv:.{_DEC[mt]}f}"
+                    if mt == "qlike" and cells[mt].get("std") is not None:
+                        txt += r"\,$\pm$" + f"{cells[mt]['std']:.3f}".lstrip("0")
+                    if mt in best and abs(sv - best[mt]) < 10 ** (-_DEC[mt] - 1):
+                        txt = r"\textbf{" + txt + "}"
+                    out.append(txt)
+                block.append(f"{h} & {disp} & " + " & ".join(out) + r" \\")
+        if not block:
             continue
-        if not first:
-            lines.append(r"\midrule")
-        first = False
-        lines.append(f"{label} & {rows[0][0]} & {rows[0][1]} & {rows[0][2]}" + r" \\")
-        for h, ht, vt in rows[1:]:
-            lines.append(f" & {h} & {ht} & {vt}" + r" \\")
+        lines.append(r"\midrule")
+        lines.append(r"\multicolumn{" + str(ncol) + r"}{l}{\textbf{" + _MKT_LABEL[panel] + r"}} \\")
+        lines.extend(block)
     lines += [r"\bottomrule", r"\end{tabular}"]
     return "\n".join(lines) + "\n"
 
@@ -156,31 +169,21 @@ def main():  # pragma: no cover - I/O entry driver
     for p in ("vn100", "vn30", "sp500"):
         (out / f"tab_abl_{p}.tex").write_text(render_panel(floor, p, FULL_MODELS), encoding="utf-8")
     written = ["tab_main_hnx", "tab_abl_graph_hnx", "tab_abl_vn100", "tab_abl_vn30", "tab_abl_sp500"]
-    # Parkinson reference (all four horizons, from the delivered floor1e2 tree) so the estimator tables are
-    # directly comparable in the same HAR-X vs LSTM+GAT format.
-    (out / "tab_abl_parkinson.tex").write_text(render_panel(floor, "hnx", EST_MODELS), encoding="utf-8")
-    written.append("tab_abl_parkinson")
     (out / "tab_dm_voltg.tex").write_text(
         render_dm_voltg(repo / "results" / "masked_rich_floor1e2"), encoding="utf-8")
     written.append("tab_dm_voltg")
-    # per-market QLIKE across estimators (which model/estimator is best), HAR-X vs VolGA
+    # estimator tables: one per estimator, all markets (HNX first), all four metrics, HAR-X vs VolGA
     yz = repo / "results" / "masked_rich_yz"
-    est_sources = [("Parkinson", floor)]
-    if (yz / "yang_zhang").exists():
-        est_sources.append(("Yang--Zhang", build_tables(yz / "yang_zhang")))
-    if (yz / "rogers_satchell").exists():
-        est_sources.append(("Rogers--Satchell", build_tables(yz / "rogers_satchell")))
-    for p in ("vn100", "vn30", "sp500"):
-        (out / f"tab_est_qlike_{p}.tex").write_text(render_est_qlike(est_sources, p), encoding="utf-8")
-        written.append(f"tab_est_qlike_{p}")
+    est_tables = [("parkinson", floor)]
     for est in ("yang_zhang", "rogers_satchell"):
-        root = repo / "results" / "masked_rich_yz" / est
-        if not root.exists():
-            continue
-        t = build_tables(root)
-        if t["rows"]:
-            (out / f"tab_abl_{est}.tex").write_text(render_panel(t, "hnx", EST_MODELS), encoding="utf-8")
-            written.append(f"tab_abl_{est}")
+        root = yz / est
+        if root.exists():
+            t = build_tables(root)
+            if t["rows"]:
+                est_tables.append((est, t))
+    for name, tbl in est_tables:
+        (out / f"tab_est_{name}.tex").write_text(render_est_allmarkets(tbl), encoding="utf-8")
+        written.append(f"tab_est_{name}")
     print("wrote:", ", ".join(written))
 
 
