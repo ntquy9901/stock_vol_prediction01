@@ -74,7 +74,7 @@ data design fixed across HAR-X, an LSTM, and VolGA, spanning HNX, the VN30, VN10
 single component; (ii) the finding that the learned models' advantage concentrates where the linear benchmark is
 weakest --- on HNX VolGA has a significantly lower QLIKE than HAR at three of four horizons and the lowest
 error on all four metrics at the daily horizon, while on the larger panels the learned models
-significantly reduce the absolute error and stay competitive on QLIKE --- together with a leave-one-out reading
+significantly reduce the absolute error and stay competitive on QLIKE --- together with a reading
 of the graph branch, whose contribution over the same-feature LSTM is horizon-dependent (a significant QLIKE
 gain on HNX at the longer horizons, otherwise of the same order as the per-seed dispersion); and (iii) a
 panel-correct significance protocol --- because
@@ -211,7 +211,7 @@ is weakest.
 
 \FloatBarrier
 \section{Ablation studies}\label{sec:abl}
-\subsection{Graph component (leave-one-out)}
+\subsection{Graph component}
 Removing the GAT branch gives the same-feature no-graph LSTM (Table~\ref{tab:abl-graph}). On HNX the graph adds a
 significant QLIKE gain over the no-graph LSTM at the longer horizons ($h10$: $p=0.015$; $h22$: $p=0.031$), is
 neutral at $h1$ ($p=0.56$) and favours the plain LSTM at $h5$ ($p=0.023$); the effect is of the same order as
@@ -349,10 +349,17 @@ single-day measures). Same scaling as Table~\ref{tab:abl-park}.}
 On the primary HNX market the proposed model VolGA gives the lower forecast error (Table~\ref{tab:main-hnx}): at
 the daily horizon ($h1$) it has the lowest MSE, RMSE, MAE and QLIKE (QLIKE $1.8152$ vs HAR-X $1.8717$), and its
 QLIKE is significantly below HAR-X at $h1$, $h10$ and $h22$ (date-clustered DM, $p<0.001$, $0.022$, $0.016$;
-$p=0.18$ at $h5$); at $h1$ its absolute-error gain over HAR-X is also significant ($p<0.001$). On HNX the graph
-branch contributes over the same-feature no-graph LSTM at the longer horizons ($h10$: $p=0.015$; $h22$:
-$p=0.031$), consistent with the linear
-benchmark cannot capture.
+$p=0.18$ at $h5$); at $h1$ its absolute-error gain over HAR-X is also significant ($p<0.001$). On HNX the graph branch contributes over the same-feature no-graph LSTM at the longer horizons
+($h10$: $p=0.015$; $h22$: $p=0.031$).
+
+\textbf{Why VolGA helps most on HNX.} HNX is a smaller market whose stocks trade less actively --- a large
+share of its trading days show no intraday price change --- so its day-to-day volatility is more irregular and
+harder to forecast: every model, HAR-X included, has a higher QLIKE on HNX than on the other markets. A simple
+linear rule such as HAR predicts tomorrow's volatility as a smooth weighted average of its recent past; on the
+heavily traded markets that assumption is already close to optimal, leaving little for a more complex model to
+add. On the more irregular HNX series the non-linear temporal branch and the cross-stock graph can capture
+structure the linear rule misses --- so the added machinery earns its keep where the simple benchmark is
+weakest.
 
 On the VN100 and VN30 panels HAR-X keeps the lowest QLIKE at every horizon, with no learned model
 significantly lower on that loss --- consistent with the difficulty of improving on HAR on large-cap markets ---
