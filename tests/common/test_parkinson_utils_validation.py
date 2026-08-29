@@ -72,6 +72,19 @@ def test_multi_row_one_bad_row_raises():
         validate_ohlc_data(df)
 
 
+def test_validate_tolerates_floating_point_noise():
+    # adjusted-price fp noise: low above high by ~1e-13 of the price scale -> accepted
+    df = _frame(open_=100.0, high=100.0, low=100.0 + 1e-11, close=100.0)
+    assert validate_ohlc_data(df) is True
+
+
+def test_validate_still_rejects_material_violation_above_tolerance():
+    # low above high by ~0.5% (>> 1e-6 relative tol) -> rejected
+    df = _frame(open_=100.0, high=100.0, low=100.5, close=100.0)
+    with pytest.raises(ValueError, match="geometry"):
+        validate_ohlc_data(df)
+
+
 def test_geometry_check_does_not_break_finite_variance_path():
     # Sanity: a valid frame still yields a finite Parkinson variance downstream.
     from src.common.parkinson_utils import calculate_parkinson_volatility

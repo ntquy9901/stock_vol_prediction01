@@ -12,6 +12,12 @@ import pandas as pd
 import numpy as np
 from typing import Tuple
 
+# Relative tolerance for OHLC-geometry validation: rows are rejected only when a bar
+# violates high>=low / high>=max(open,close) / low<=min(open,close) by more than this
+# fraction of the bar's price scale. Adjusted-price floating-point noise (~1e-17) passes;
+# material violations (e.g. low well above open) are rejected. (data audit 2026-08-29)
+_OHLC_GEOMETRY_RTOL = 1e-6
+
 
 def calculate_parkinson_volatility(df: pd.DataFrame) -> pd.Series:
     """
@@ -72,10 +78,18 @@ def validate_ohlc_data(df: pd.DataFrame) -> bool:
 
     # 3. Valid OHLC ordering: high is the bar max, low is the bar min. Impossible
     #    geometry (e.g. high < low, or high below open/close) would otherwise pass
-    #    validation and produce a finite-but-meaningless Parkinson variance.
+    #    validation and produce a finite-but-meaningless Parkinson variance. Use a
+    #    RELATIVE tolerance so adjusted-price floating-point noise (e.g. Yahoo
+    #    auto_adjust differences ~1e-17) is not flagged, while material violations are.
     row_max = df[['open', 'close']].max(axis=1)
     row_min = df[['open', 'close']].min(axis=1)
-    bad_geometry = (df['high'] < df['low']) | (df['high'] < row_max) | (df['low'] > row_min)
+    scale = df[['open', 'high', 'low', 'close']].abs().max(axis=1).clip(lower=1e-12)
+    tol = _OHLC_GEOMETRY_RTOL * scale
+    bad_geometry = (
+        (df['low'] - df['high'] > tol)
+        | (row_max - df['high'] > tol)
+        | (df['low'] - row_min > tol)
+    )
     if bad_geometry.any():
         raise ValueError(
             "Invalid OHLC geometry: require high>=low, high>=max(open,close), "
