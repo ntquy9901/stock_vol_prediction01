@@ -69,10 +69,10 @@ _DM_PANELS = ("hnx", "vn100", "vn30", "sp500")
 
 
 def _fmt_p(p: float | None) -> str:
-    """DM p-value: '<.001' for tiny, else '.NNN' (no leading zero); '-' if missing."""
+    """DM p-value with a leading zero for clarity: '<0.001' for tiny, else '0.NNN'; '-' if missing."""
     if p is None:
         return "-"
-    return r"$<$.001" if p < 0.001 else f"{p:.3f}".lstrip("0")
+    return r"$<$0.001" if p < 0.001 else f"{p:.3f}"
 
 
 def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) -> str:
@@ -96,7 +96,7 @@ def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) ->
                 p, fav = c.get("p_value"), c.get("favors")
                 if p is None:
                     cells.append("-"); continue
-                tag = f"{_fmt_p(p)} ({'V' if fav == 'A' else 'H'})"
+                tag = f"{_fmt_p(p)} ({'VolGA' if fav == 'A' else 'HAR-X'})"
                 cells.append(r"\textbf{" + tag + "}" if p < 0.05 else tag)
             rows.append(f"{h} & " + " & ".join(cells))
         if not rows:

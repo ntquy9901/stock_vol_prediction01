@@ -87,8 +87,8 @@ def test_missing_metric_renders_dash():
 
 
 def test_fmt_p_dm():
-    assert B._fmt_p(1e-10) == r"$<$.001"
-    assert B._fmt_p(0.03) == ".030"
+    assert B._fmt_p(1e-10) == r"$<$0.001"
+    assert B._fmt_p(0.03) == "0.030"
     assert B._fmt_p(None) == "-"
 
 
@@ -105,8 +105,8 @@ def test_render_dm_voltg_hnx_first_and_voltg_vs_harx(tmp_path):
     assert "Panel & $h$ & QLIKE & MAE" in tex
     # HNX must appear before VN30
     assert tex.index("HNX") < tex.index("VN30")
-    assert r"\textbf{$<$.001 (V)}" in tex   # QLIKE favours VolGA, significant
-    assert ".200 (H)" in tex                 # MAE favours HAR-X, not significant
+    assert r"\textbf{$<$0.001 (VolGA)}" in tex   # QLIKE favours VolGA, significant
+    assert "0.200 (HAR-X)" in tex                 # MAE favours HAR-X, not significant
 
 
 def test_render_dm_voltg_covers_branches(tmp_path):
