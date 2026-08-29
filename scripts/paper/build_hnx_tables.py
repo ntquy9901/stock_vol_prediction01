@@ -65,6 +65,53 @@ def render_panel(table: dict, panel: str, models, metrics=METRICS_NO_R2, horizon
     return "\n".join(lines) + "\n"
 
 
+_DM_PANELS = ("hnx", "vn100", "vn30", "sp500")
+
+
+def _fmt_p(p: float | None) -> str:
+    """DM p-value: '<.001' for tiny, else '.NNN' (no leading zero); '-' if missing."""
+    if p is None:
+        return "-"
+    return r"$<$.001" if p < 0.001 else f"{p:.3f}".lstrip("0")
+
+
+def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) -> str:
+    """Date-clustered DM table of VolGA vs HAR-X (QLIKE and MAE) per panel/horizon, HNX first. Reads the
+    ``wGAT_vol2pk_vs_HARX`` block from each result.json (qlike + ae losses); favoured model in parentheses
+    (V=VolGA, H=HAR-X), bold if p<0.05."""
+    import json
+    lines = [r"\begin{tabular}{ll cc}", r"\toprule",
+             r"Panel & $h$ & QLIKE & MAE \\", r"\midrule"]
+    first = True
+    for panel in panels:
+        rows = []
+        for h in horizons:
+            rp = results_root / f"{panel}_h{h}" / "result.json"
+            if not rp.exists():
+                continue
+            dm = json.loads(rp.read_text()).get("dm_date_clustered", {}).get("wGAT_vol2pk_vs_HARX", {})
+            cells = []
+            for loss in ("qlike", "ae"):
+                c = dm.get(loss, {})
+                p, fav = c.get("p_value"), c.get("favors")
+                if p is None:
+                    cells.append("-"); continue
+                tag = f"{_fmt_p(p)} ({'V' if fav == 'A' else 'H'})"
+                cells.append(r"\textbf{" + tag + "}" if p < 0.05 else tag)
+            rows.append(f"{h} & " + " & ".join(cells))
+        if not rows:
+            continue
+        if not first:
+            lines.append(r"\midrule")
+        first = False
+        disp = panel.upper() if panel != "sp500" else r"S\&P 500"
+        lines.append(f"{disp} & " + rows[0] + r" \\")
+        for r in rows[1:]:
+            lines.append(f" & {r}" + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(lines) + "\n"
+
+
 def main():  # pragma: no cover - I/O entry driver
     repo = Path(__file__).resolve().parents[2]
     out = repo / "docs" / "paper" / "generated"
@@ -79,6 +126,9 @@ def main():  # pragma: no cover - I/O entry driver
     # directly comparable in the same HAR-X vs LSTM+GAT format.
     (out / "tab_abl_parkinson.tex").write_text(render_panel(floor, "hnx", EST_MODELS), encoding="utf-8")
     written.append("tab_abl_parkinson")
+    (out / "tab_dm_voltg.tex").write_text(
+        render_dm_voltg(repo / "results" / "masked_rich_floor1e2"), encoding="utf-8")
+    written.append("tab_dm_voltg")
     for est in ("yang_zhang", "rogers_satchell"):
         root = repo / "results" / "masked_rich_yz" / est
         if not root.exists():

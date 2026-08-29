@@ -84,3 +84,43 @@ def test_missing_metric_renders_dash():
                              "mae": {"value": 6.5e-4, "std": None}}}]}
     tex = B.render_panel(t, "hnx", (("HAR-X", "HAR-X"),))
     assert "1 & HAR-X & - &" in tex  # MSE column is a dash
+
+
+def test_fmt_p_dm():
+    assert B._fmt_p(1e-10) == r"$<$.001"
+    assert B._fmt_p(0.03) == ".030"
+    assert B._fmt_p(None) == "-"
+
+
+def test_render_dm_voltg_hnx_first_and_voltg_vs_harx(tmp_path):
+    import json
+    def _cell(favq, pq, fava, pa):
+        d = {"dm_date_clustered": {"wGAT_vol2pk_vs_HARX": {
+            "qlike": {"favors": favq, "p_value": pq}, "ae": {"favors": fava, "p_value": pa}}}}
+        return json.dumps(d)
+    for panel in ("hnx", "vn30"):
+        (tmp_path / f"{panel}_h1").mkdir(parents=True)
+        (tmp_path / f"{panel}_h1" / "result.json").write_text(_cell("A", 1e-10, "B", 0.2))
+    tex = B.render_dm_voltg(tmp_path, panels=("hnx", "vn30"), horizons=(1,))
+    assert "Panel & $h$ & QLIKE & MAE" in tex
+    # HNX must appear before VN30
+    assert tex.index("HNX") < tex.index("VN30")
+    assert r"\textbf{$<$.001 (V)}" in tex   # QLIKE favours VolGA, significant
+    assert ".200 (H)" in tex                 # MAE favours HAR-X, not significant
+
+
+def test_render_dm_voltg_covers_branches(tmp_path):
+    import json
+    (tmp_path / "hnx_h1").mkdir(parents=True)
+    (tmp_path / "hnx_h1" / "result.json").write_text(json.dumps(
+        {"dm_date_clustered": {"wGAT_vol2pk_vs_HARX": {
+            "qlike": {"favors": "A", "p_value": 1e-10}, "ae": {"favors": "B", "p_value": 0.2}}}}))
+    (tmp_path / "hnx_h5").mkdir()
+    (tmp_path / "hnx_h5" / "result.json").write_text(json.dumps(
+        {"dm_date_clustered": {"wGAT_vol2pk_vs_HARX": {
+            "qlike": {"favors": "A", "p_value": 0.03}, "ae": {"favors": "A", "p_value": None}}}}))
+    # vn30 has NO result files -> panel produces no rows and is skipped
+    tex = B.render_dm_voltg(tmp_path, panels=("hnx", "vn30"), horizons=(1, 5))
+    assert "HNX" in tex and "VN30" not in tex          # empty panel skipped (missing files + no-rows branches)
+    assert "\n & 5 &" in tex                            # continuation row for the 2nd horizon
+    assert "& - \\\\" in tex                            # missing ae p-value rendered as '-'
