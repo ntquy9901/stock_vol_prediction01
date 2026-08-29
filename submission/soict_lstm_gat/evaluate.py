@@ -6,6 +6,11 @@ import torch
 
 import metrics as M
 
+# A constant-variance fallback is NOT a fitted GARCH(1,1); tolerate only a tiny fraction of tickers
+# failing to fit (bounded allowlist, CLAUDE.md "no silent degradation"), otherwise fail loud so a
+# degraded comparator is never silently reported as "GARCH".
+_GARCH_MAX_FALLBACK_FRAC = 0.02
+
 
 def predict_test(train_result, snap) -> dict:
     """Run a trained model over the test snapshots -> {(ticker_id, date): (y_raw, pred_raw)}.
@@ -55,6 +60,7 @@ def garch_baseline(snap, floor: float) -> dict:
         for j in range(snap.num_nodes):
             test_by_ticker[j].append((s["date"], float(s["y_raw"][j])))
     out = {}
+    fallback_tickers = []
     for j in range(snap.num_nodes):
         series = np.asarray(tr_series[j], dtype=float)
         n_test = len(test_by_ticker[j])
@@ -64,9 +70,22 @@ def garch_baseline(snap, floor: float) -> dict:
             # ahead -> horizon=1. Passing snap.horizon again over-shifted the forecast by (h-1) for h>1.
             fc = B.garch_forecast(series, n_test=n_test, horizon=1, floor=floor)
         except Exception:
+            # A fitting failure => constant unconditional-variance forecast; record it (HIGH-01).
             fc = np.full(n_test, max(float(np.var(series)), floor))
+            fallback_tickers.append(j)
         for i, (date, yraw) in enumerate(test_by_ticker[j]):
             out[(j, date)] = (yraw, float(fc[i]))
+    frac = len(fallback_tickers) / max(snap.num_nodes, 1)
+    if frac > _GARCH_MAX_FALLBACK_FRAC:
+        raise ValueError(
+            f"GARCH fitting fell back to constant variance for {len(fallback_tickers)}/{snap.num_nodes} "
+            f"tickers ({frac:.1%} > {_GARCH_MAX_FALLBACK_FRAC:.0%}); the 'GARCH' comparator would be a "
+            f"degraded (non-GARCH) forecast. Affected ticker ids: {fallback_tickers}"
+        )
+    if fallback_tickers:
+        print(f"[garch_baseline] WARNING: {len(fallback_tickers)}/{snap.num_nodes} ticker(s) used a "
+              f"constant-variance fallback (ids: {fallback_tickers}); within the "
+              f"{_GARCH_MAX_FALLBACK_FRAC:.0%} allowlist.", flush=True)
     return out
 
 

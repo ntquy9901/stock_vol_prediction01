@@ -46,3 +46,36 @@ def test_garch_baseline_uses_horizon_one(monkeypatch):
     monkeypatch.setattr(B, "garch_forecast", _spy)
     E.garch_baseline(_snap(horizon=22), floor=1e-8)
     assert seen["horizon"] == 1
+
+
+def test_garch_baseline_fails_loud_when_most_tickers_fall_back(monkeypatch):
+    """HIGH-01: if GARCH fitting fails for more than the allowlist fraction of tickers, the constant-variance
+    fallback must NOT be silently reported as GARCH -- garch_baseline raises."""
+    import baselines as B
+
+    def _always_fail(*a, **k):
+        raise RuntimeError("convergence failure")
+
+    monkeypatch.setattr(B, "garch_forecast", _always_fail)
+    import pytest
+    with pytest.raises(ValueError, match="degraded"):
+        E.garch_baseline(_snap(n_nodes=2), floor=1e-8)
+
+
+def test_garch_baseline_tolerates_fallback_within_allowlist(monkeypatch, capsys):
+    """A single failing ticker out of many (<= 2%) is allowed but surfaced with a loud warning, not silent."""
+    import baselines as B
+    real = B.garch_forecast
+    state = {"n": 0}
+
+    def _fail_first(series, n_test, horizon=1, floor=1e-8, **kw):
+        state["n"] += 1
+        if state["n"] == 1:
+            raise RuntimeError("convergence failure")
+        return real(series, n_test=n_test, horizon=horizon, floor=floor)
+
+    monkeypatch.setattr(B, "garch_forecast", _fail_first)
+    snap = _snap(n_nodes=100, n_tr=120, n_te=4)
+    out = E.garch_baseline(snap, floor=1e-8)  # 1/100 = 1% <= 2% -> no raise
+    assert len(out) == snap.num_nodes * len(snap.test)
+    assert "constant-variance fallback" in capsys.readouterr().out
