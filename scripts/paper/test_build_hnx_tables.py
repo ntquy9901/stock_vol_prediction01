@@ -55,6 +55,17 @@ def test_absent_panel_yields_empty_body():
     assert r"\toprule" in tex and "HAR-X" not in tex  # header only, no rows
 
 
+def test_est_models_drops_no_graph_lstm():
+    # estimator tables compare only HAR-X and LSTM+GAT -- the plain LSTM row must be absent
+    t = _table()
+    t["rows"].append({"panel": "hnx", "horizon": 1, "model": "LSTM",
+                      "cells": {"mse": {"value": 1.3e-6, "std": 0.01}, "qlike": {"value": 1.85, "std": 0.01},
+                                "rmse": {"value": 1.15e-3, "std": None}, "mae": {"value": 6.45e-4, "std": None}}})
+    tex = B.render_panel(t, "hnx", B.EST_MODELS)
+    assert "HAR-X" in tex and "LSTM+GAT" in tex
+    assert "& LSTM &" not in tex  # the no-graph LSTM row is excluded
+
+
 def test_multi_horizon_inserts_midrule_between_blocks():
     t = _table()
     # add an h5 block so the second block triggers the between-block \midrule
