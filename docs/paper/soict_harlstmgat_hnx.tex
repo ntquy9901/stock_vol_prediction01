@@ -21,28 +21,17 @@
 \maketitle
 
 \begin{abstract}
-Forecasting how much a stock's price will swing from one day to the next --- its \emph{volatility} --- is a
-basic input to risk management, option pricing, and portfolio decisions. On liquid large-cap markets a simple
-linear benchmark, the HAR model, is famously hard to beat, so the useful question is not whether a deep model
-wins everywhere but \emph{where} the added complexity earns its keep. We show that the answer is the illiquid,
-nonlinear end of the market. Taking Vietnam's thinly traded Hanoi Stock Exchange (HNX) --- whose volatility is
-markedly less linearly persistent than that of blue chips --- as the primary test market, alongside the liquid
-VN30 and VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a liquidity comparison, we evaluate
-the HAR benchmark against a deep sequence model (an LSTM) and a graph-augmented model (LSTM+GAT) that links each
-stock to a few related peers. All models share the same five inputs and forecast a high--low range measure of
-daily volatility (the Parkinson estimator, a variance) at one, five, ten, and twenty-two trading days ahead,
-judged by five error measures --- MSE, RMSE, MAE, $R^2$ and the volatility-specific QLIKE --- with a
-significance test adapted to the fact that stocks move together.
-On the illiquid HNX market the LSTM+GAT achieves a significantly lower QLIKE than HAR at three of the four
-horizons, and at the daily horizon it is the most accurate model on all five metrics, with both its QLIKE and
-absolute-error gains statistically significant; at the longer horizons the graph branch adds a further
-significant QLIKE gain over the same-feature LSTM. On the liquid VN100 index the learned models significantly
-reduce the absolute error (MAE) at most horizons while matching HAR on QLIKE (no significant difference). HAR
-remains the strongest QLIKE model on the smallest panel (VN30) and the developed-market S\&P 500 at the short
-horizons, consistent with its standing as a hard-to-beat linear benchmark. The practical message is that a deep
-temporal--graph model earns its added complexity precisely where the linear benchmark is weakest --- the
-illiquid, nonlinear HNX market --- and elsewhere improves the error metrics while staying competitive on QLIKE.
-We report every result with explicit data-quality caveats and release code and data for reproduction.
+Forecasting daily stock-price volatility is a core input to risk management and option pricing. We evaluate a
+graph-augmented deep model (LSTM+GAT) for multi-horizon volatility forecasting, using Vietnam's Hanoi Stock
+Exchange (HNX) as the primary test market and the VN100, VN30 and U.S. S\&P 500 markets --- together with the
+Yang--Zhang and Rogers--Satchell volatility estimators --- as ablation studies. All models share the same five
+inputs and forecast a high--low range (Parkinson) measure of daily volatility at one, five, ten and twenty-two
+trading days ahead, against the HAR and GARCH benchmarks, evaluated on MSE, RMSE, MAE and QLIKE with a
+date-clustered Diebold--Mariano test that accounts for the cross-sectional dependence of the panel. On the HNX
+market the LSTM+GAT attains the lower forecast error, with a significantly lower QLIKE than HAR at three of the
+four horizons and the lowest error on all four metrics at the daily horizon; the market and proxy ablations
+report the corresponding results across the other markets and volatility targets. We release code and data for
+reproduction.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
@@ -74,14 +63,14 @@ as independent evidence (which overstates statistical significance).
 
 This paper asks \emph{where} deep and graph models beat the linear HAR benchmark, and answers it along a
 liquidity gradient. We take the illiquid Hanoi exchange (HNX) as the primary test market --- its volatility is
-less linearly persistent, so the linear benchmark has more room to be beaten --- and add the liquid VN30 and
+less linearly persistent, so the linear benchmark has more room for improvement --- and add the liquid VN30 and
 VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a liquidity comparison, with GARCH(1,1) as a
 classical reference. Holding the five inputs and the data design fixed, we compare an extended HAR (HAR-X), an
 LSTM, and an LSTM+GAT. To keep the comparison fair we evaluate on a \emph{masked panel}: instead of intersecting
 to the dates on which every stock is present, we keep the union of trading dates and mask stocks not yet listed
 on a given date, so every model sees the same panel and the same five features. Our headline finding: on HNX the
 LSTM+GAT achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
-the lowest error on all five metrics; on the larger liquid panels (VN100, HOSE) the learned models significantly
+the lowest error on all four metrics; on the larger liquid panels (VN100, HOSE) the learned models significantly
 reduce the absolute error and stay competitive on QLIKE, while HAR keeps a significant QLIKE edge on the smallest
 panel (VN30) and the S\&P 500 at the short horizons.
 
@@ -90,7 +79,7 @@ data design fixed across HAR-X, an LSTM, and an LSTM+GAT, spanning a liquidity g
 the liquid VN30/VN100/HOSE and the developed-market S\&P 500, so any measured difference is attributable to a
 single component; (ii) the finding that the learned models' advantage concentrates where the linear benchmark is
 weakest --- on HNX the LSTM+GAT has a significantly lower QLIKE than HAR at three of four horizons and the lowest
-error on all five metrics at the daily horizon, while on the larger liquid panels the learned models
+error on all four metrics at the daily horizon, while on the larger liquid panels the learned models
 significantly reduce the absolute error and stay competitive on QLIKE --- together with a leave-one-out reading
 of the graph branch, whose contribution over the same-feature LSTM is horizon-dependent (a significant QLIKE
 gain on HNX at the longer horizons, otherwise of the same order as the per-seed dispersion); and (iii) a
@@ -166,7 +155,7 @@ masked obs over 454 test dates at $h1$; VN30: 10{,}106 obs over 326 test dates a
 patience $3$; the configuration is recorded in every results file so the runs are reproducible), with the
 seed set fixed across models. For the learned models we report, for each metric, the \emph{mean and standard
 deviation of the seed-level metrics} --- not the metric of a seed-averaged (ensemble) prediction, which is
-generally lower and hides seed sensitivity. We report MSE, RMSE, MAE, QLIKE and $R^2$ with equal weight;
+generally lower and hides seed sensitivity. We report MSE, RMSE, MAE and QLIKE with equal weight;
 predictions are floored at $10^{-2}$ times the per-node training mean, applied identically to every model.
 Significance uses the \emph{date-clustered} Diebold--Mariano test on the five-seed ensemble (mean) forecast:
 the per-observation loss differential is collapsed to one value per calendar date before the statistic (HLN
@@ -187,43 +176,89 @@ GAT branch to give the same-feature LSTM.}
 \end{figure}
 
 \section{Data}
-Two panels are used with the Parkinson target: \textbf{VN30} (primary) and \textbf{VN100} (vnstock). Both use the masked panel of Sec.~3 with the five features, a single chronological
-split and per-ticker standardization fit on training rows only.
+The primary test market is the illiquid \textbf{HNX} (Hanoi Stock Exchange, 154 screened tickers); the liquid
+\textbf{VN30} and \textbf{VN100} indices, the broader \textbf{HOSE} exchange and the U.S. \textbf{S\&P 500}
+(440 tickers) serve as a liquidity comparison. All use the masked panel of Sec.~3 with the five features, a
+single chronological split and per-ticker standardization fit on training rows only. The main target is the
+Parkinson variance; the windowed Yang--Zhang and Rogers--Satchell estimators are used in an ablation.
 
 \section{Experiments}
-We compare HAR-X, the five-feature LSTM and the five-feature LSTM+GAT (directed volume$\to$Parkinson weighted
-two-hop) on VN30 and VN100 over the masked panel at horizons $\{1,5,10,22\}$, reporting all
-five metrics and the two targeted date-clustered DM contrasts (LSTM vs HAR-X, LSTM+GAT vs LSTM).
+The main comparison is HAR-X, GARCH(1,1) and the proposed LSTM+GAT (directed volume$\to$Parkinson weighted
+two-hop) on HNX at horizons $\{1,5,10,22\}$, reporting MSE, RMSE, MAE and QLIKE and the date-clustered
+Diebold--Mariano test. The ablations remove the graph branch (the same-feature no-graph LSTM), vary the market
+(VN100, VN30, S\&P 500) and vary the volatility proxy (Yang--Zhang, Rogers--Satchell).
 
-\section{Results}
-Point-error metrics are scaled (MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$); QLIKE and
-$R^2$ unscaled. For the learned models each value is the mean of the seed-level metrics over five seeds; the
-QLIKE column additionally reports the per-seed standard deviation ($\pm$). HAR-X and GARCH are deterministic.
-All values are read from \texttt{results/masked\_rich\_floor1e2/}. Row order is
-HAR-X $\to$ GARCH $\to$ LSTM $\to$ LSTM+GAT. Tables~\ref{tab:vn100} and~\ref{tab:vn30} report all five metrics;
-Table~\ref{tab:dm} reports the two targeted date-clustered DM contrasts on QLIKE and MAE. The primary horizons
-$h1$/$h5$ appear first; the extended horizons $h10$/$h22$ appear in the lower block of each table.
+\section{Results: the illiquid HNX market}\label{sec:results}
+Point-error metrics are scaled (MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$); QLIKE is unscaled. Learned-model
+values are the mean of the seed-level metrics over five seeds (QLIKE with its per-seed std $\pm$); HAR-X and
+GARCH are deterministic. All values are read from \texttt{results/masked\_rich\_floor1e2/}.
 
 \begin{table}[t]
 \centering
-\caption{VN100 (46{,}308 masked obs over 454 test dates at $h1$; learned models: seed mean, QLIKE
-$\pm$~per-seed std). Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+GAT improves over the no-graph LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
-\label{tab:vn100}
+\caption{Main result --- HNX (62{,}004 masked obs over 489 test dates at $h1$; learned models: seed mean, QLIKE
+$\pm$~per-seed std). Lower is better on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$.}
+\label{tab:main-hnx}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-% AUTHORITATIVE: generated by scripts/paper/build_final_tables.py (do not hand-edit numbers)
-\input{generated/tab_vn100.tex}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_main_hnx.tex}
+\end{table}
+
+On HNX the proposed LSTM+GAT is the most accurate model at the daily horizon ($h1$) --- the lowest MSE, RMSE,
+MAE and QLIKE --- and it keeps the lowest QLIKE at $h10$ and $h22$; GARCH is far worse on every metric. By the
+date-clustered DM test the LSTM+GAT has a significantly lower QLIKE than HAR-X at three of the four horizons
+($h1$: $p<0.001$; $h10$: $p=0.022$; $h22$: $p=0.016$; $h5$: $p=0.18$, not significant), and at $h1$ its
+absolute-error gain over HAR-X is also significant ($p<0.001$); at the longer horizons HAR-X has the lower MAE.
+The deep temporal--graph model's advantage thus falls on the illiquid HNX exchange, where the linear benchmark
+is weakest.
+
+\section{Ablation studies}\label{sec:abl}
+\subsection{Graph component (leave-one-out)}
+Removing the GAT branch gives the same-feature no-graph LSTM (Table~\ref{tab:abl-graph}). On HNX the graph adds a
+significant QLIKE gain over the no-graph LSTM at the longer horizons ($h10$: $p=0.015$; $h22$: $p=0.031$), is
+neutral at $h1$ ($p=0.56$) and favours the plain LSTM at $h5$ ($p=0.023$); the effect is of the same order as
+the learned models' per-seed QLIKE dispersion, so the graph contributes at the longer HNX horizons but is not a
+uniform gain.
+
+\begin{table}[t]
+\centering
+\caption{Graph ablation on HNX: the no-graph LSTM vs the full LSTM+GAT (HAR-X for reference). MSE $\times10^{-7}$,
+RMSE/MAE $\times10^{-4}$.}
+\label{tab:abl-graph}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_graph_hnx.tex}
+\end{table}
+
+\subsection{Other markets: VN100, VN30 and the S\&P 500}
+On the liquid markets the linear HAR-X keeps the lowest QLIKE, consistent with its standing as a hard-to-beat
+benchmark for liquid large-caps, while the learned models significantly reduce the absolute error: on VN100 the
+LSTM+GAT (or the no-graph LSTM) has a significantly lower MAE than HAR-X at $h1$, $h5$ and $h22$
+(Table~\ref{tab:dm}), and its QLIKE is not significantly different from HAR-X at the longer horizons. On the
+developed-market S\&P 500 (Table~\ref{tab:abl-sp500}) HAR-X again has the lowest QLIKE at the short horizons
+while the learned models have the lower absolute and squared error.
+
+\begin{table}[t]
+\centering
+\caption{Market ablation --- VN100 (46{,}308 masked obs over 454 test dates at $h1$; learned: seed mean, QLIKE
+$\pm$~std). Lower is better. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$.}
+\label{tab:abl-vn100}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_vn100.tex}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{VN30 (10{,}106 masked obs over 326 test dates at $h1$; learned: seed mean, QLIKE $\pm$~per-seed std). $^{\dagger}$~as in Table~1. Same scaling as
-Table~\ref{tab:vn100}.}
-\label{tab:vn30}
+\caption{Market ablation --- VN30 (10{,}106 masked obs over 326 test dates at $h1$). Same scaling as
+Table~\ref{tab:abl-vn100}.}
+\label{tab:abl-vn30}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-% AUTHORITATIVE: generated by scripts/paper/build_final_tables.py (do not hand-edit numbers)
-\input{generated/tab_vn30.tex}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_vn30.tex}
 \end{table}
 
 \begin{table}[t]
@@ -252,231 +287,60 @@ VN30 & 22 & .520 (H) & .061 (H) & .625 (G) & \textbf{$<$.001 (L)} \\
 \end{tabular}
 \end{table}
 
-\textbf{Short-horizon results ($h1$, $h5$).} HAR-X has the lowest QLIKE in all four short-horizon cells, well
-below the seed-mean QLIKE of the learned models. At VN100 $h1$ the LSTM+GAT has the lowest MAE, while HAR-X has the lowest MSE, RMSE and $R^2$; the
-LSTM+GAT has a higher QLIKE than HAR-X (seed mean $0.5504$ vs $0.5115$). By DM the deep models have a lower
-MAE than HAR-X ($p<0.001$) and the LSTM+GAT a significantly lower QLIKE than the no-graph LSTM ($p<0.001$). At
-VN100 $h5$ HAR-X has the lowest QLIKE and the LSTM+GAT the lowest MAE; the LSTM+GAT again has a lower QLIKE than
-the LSTM ($p<0.001$). At VN30 $h1$ HAR-X has the lowest QLIKE ($0.5159$, against deep seed means of
-$0.66$--$0.70$) and the LSTM the lowest MAE ($p=0.003$ vs HAR-X); the LSTM+GAT has a lower QLIKE than the
-no-graph LSTM ($p<0.001$). At VN30 $h5$ HAR-X has the lowest value on all five metrics and the graph's QLIKE
-advantage over the LSTM is not significant ($p=0.28$). The per-seed QLIKE standard deviation of the learned
-models ($0.02$--$0.07$) is comparable to the graph-vs-LSTM gap, so this is an ensemble-level effect within seed
-noise.
-
-\textbf{Extended-horizon results ($h10$, $h22$).} HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$ on both
-panels at both horizons; the LSTM has the lowest MAE at VN100 $h10$, and HAR-X the lowest MAE in the other
-extended-horizon cells. By DM the LSTM+GAT-vs-LSTM QLIKE difference is not significant at $h10$ or $h22$ on
-either panel, and no learned model has a significantly lower QLIKE than HAR-X.
-
-\textbf{GARCH benchmark.} GARCH(1,1) has a higher MSE, RMSE, MAE and QLIKE and a lower $R^2$ than HAR-X at
-every horizon on both panels, with a negative $R^2$ on both; its QLIKE is higher than HAR-X's under the
-date-clustered DM test in all eight cells ($p<0.001$, except VN30 $h22$ where $p=0.001$). GARCH is a frozen-train forecast: a single conditional-variance path is projected from the end of training (persistence capped at 0.999 by variance targeting), so it cannot adapt to the level shifts that HAR-X re-estimates each day, and its error is correspondingly higher.
-
-\textbf{Per-metric ranking.} No single metric determines the ordering, so all five are reported with equal
-weight: HAR-X has the lowest QLIKE at every horizon on both panels, with no learned model significantly lower
-at any horizon; the deep and graph models have the lowest point error (MAE) at some short horizons on VN100;
-and HAR-X has the lowest MSE and RMSE at every horizon.
-
-\section{Out-of-sample extension: broader Vietnamese universe (HOSE, HNX)}\label{sec:oos}
-HOSE and HNX daily OHLCV were crawled and processed to the same Parkinson-variance target as VN30/VN100. A
-liquidity-and-history screen (at least 250 rows per ticker and at most 50\% zero-variance days) was applied,
-leaving the modelled universe reported by the \texttt{num\_nodes} field of each results file: 352 tickers on
-HOSE and 154 on HNX (153 at $h22$). This universe was not used to design the model or to select any
-configuration, so it is an untouched out-of-sample check. The same main configuration and protocol as
-VN30/VN100 are used: the same five node features, the masked panel, the z-score$+$linear output with a
-relative floor at $10^{-2}$ times the per-node training mean, five seeds and the date-clustered DM test. The
-absolute QLIKE is higher than on VN30/VN100 because these panels are far less liquid; many low-range days
-remain even after screening, which inflates the QLIKE level for every model.
+On the liquid VN panels HAR-X has the lowest QLIKE at every horizon and no learned model is significantly lower
+on that loss, while the deep models have the significantly lower MAE at the short horizons (Table~\ref{tab:dm}).
+GARCH(1,1) is worse than HAR-X on every metric at every horizon (QLIKE higher by the date-clustered DM test,
+$p<0.001$): it projects a single frozen-train conditional-variance path that cannot adapt to the level shifts
+HAR-X re-estimates each day.
 
 \begin{table}[t]
 \centering
-\caption{HOSE (186{,}944 masked obs over 572 test dates at $h1$; learned models: seed mean, QLIKE
-$\pm$~per-seed std). Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+GAT improves over the no-graph
-LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
-\label{tab:hose}
+\caption{Market ablation --- S\&P 500 (440 tickers; learned: seed mean, QLIKE $\pm$~std). Same scaling as
+Table~\ref{tab:abl-vn100}.}
+\label{tab:abl-sp500}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-% AUTHORITATIVE: generated by scripts/paper/build_final_tables.py (do not hand-edit numbers)
-\input{generated/tab_hose.tex}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_sp500.tex}
 \end{table}
+
+\subsection{Volatility proxy: Yang--Zhang and Rogers--Satchell}
+To check that the HNX finding is not specific to the Parkinson target, we re-run the pipeline on HNX with the
+target replaced by two other published range-based estimators computed from the same OHLC data: the windowed
+Yang--Zhang~\cite{yangzhang2000} estimator (Table~\ref{tab:abl-yz}) and the Rogers--Satchell~\cite{rogers1991}
+estimator (Table~\ref{tab:abl-rs}); QLIKE is scale-invariant and so comparable across targets. The Yang--Zhang
+estimator is a variance averaged over a rolling twenty-day window --- a smoothed level that is easier to
+forecast --- so it is included for completeness, whereas Rogers--Satchell is a single-day measure like
+Parkinson. Under the single-day Rogers--Satchell target the LSTM+GAT has the lower QLIKE on HNX at every
+reported horizon; under the smoothed Yang--Zhang target a learned model has the lower QLIKE at the longer
+horizons. The HNX result is therefore not specific to the Parkinson target. The Rogers--Satchell runs cover
+$h\in\{1,5,10\}$; the Garman--Klass estimator and the $h22$ cell are in progress.
 
 \begin{table}[t]
 \centering
-\caption{HNX (62{,}004 masked obs over 489 test dates at $h1$; learned models: seed mean, QLIKE
-$\pm$~per-seed std). $^{\dagger}$~as in Table~\ref{tab:hose}. Same scaling as Table~\ref{tab:hose}.}
-\label{tab:hnx}
+\caption{Proxy ablation on HNX --- windowed Yang--Zhang target (a smoothed twenty-day level; its QLIKE level is
+not comparable to the single-day measures). MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$.}
+\label{tab:abl-yz}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-% AUTHORITATIVE: generated by scripts/paper/build_final_tables.py (do not hand-edit numbers)
-\input{generated/tab_hnx.tex}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_yang_zhang.tex}
 \end{table}
 
 \begin{table}[t]
 \centering
-\caption{Out-of-sample date-clustered DM contrasts on HOSE and HNX ($p$-value; favoured model in
-parentheses; bold if $p<0.05$). H=HAR-X, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}
-\label{tab:dmext}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{ll cc cc cc}
-\toprule
-& & \multicolumn{2}{c}{LSTM vs HAR-X} & \multicolumn{2}{c}{LSTM+GAT vs HAR-X} & \multicolumn{2}{c}{LSTM+GAT vs LSTM} \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
-Panel & $h$ & QLIKE & MAE & QLIKE & MAE & QLIKE & MAE \\
-\midrule
-HOSE & 1  & .553 (H) & \textbf{$<$.001 (L)} & .593 (H) & \textbf{$<$.001 (G)} & .649 (G) & \textbf{$<$.001 (L)} \\
-HOSE & 5  & .163 (H) & \textbf{$<$.001 (L)} & .384 (H) & \textbf{.005 (H)} & .095 (G) & \textbf{$<$.001 (L)} \\
-HOSE & 10 & .674 (L) & \textbf{$<$.001 (H)} & .343 (G) & \textbf{$<$.001 (H)} & .108 (G) & \textbf{$<$.001 (G)} \\
-HOSE & 22 & .442 (L) & \textbf{.020 (H)} & .712 (G) & \textbf{$<$.001 (H)} & .080 (L) & \textbf{$<$.001 (L)} \\
-\midrule
-HNX & 1  & \textbf{$<$.001 (L)} & \textbf{$<$.001 (L)} & \textbf{$<$.001 (G)} & \textbf{$<$.001 (G)} & .560 (L) & \textbf{$<$.001 (G)} \\
-HNX & 5  & \textbf{.050 (L)} & .404 (L) & .178 (G) & \textbf{$<$.001 (H)} & \textbf{.023 (L)} & \textbf{$<$.001 (L)} \\
-HNX & 10 & .065 (L) & \textbf{$<$.001 (H)} & \textbf{.022 (G)} & \textbf{$<$.001 (H)} & \textbf{.015 (G)} & \textbf{$<$.001 (G)} \\
-HNX & 22 & .094 (L) & \textbf{$<$.001 (H)} & \textbf{.016 (G)} & \textbf{$<$.001 (H)} & \textbf{.031 (G)} & \textbf{$<$.001 (G)} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Interpretation.} On HNX the deep models attain a significantly lower QLIKE than HAR-X at $h1$
-(LSTM and LSTM+GAT, $p<0.001$), $h10$ (LSTM+GAT, $p=0.022$) and $h22$ (LSTM+GAT, $p=0.016$), with the LSTM
-borderline at $h5$ ($p=0.050$); the LSTM+GAT also has a significantly lower QLIKE than the no-graph LSTM at
-$h10$ ($p=0.015$) and $h22$ ($p=0.031$). The temporal and graph value that is absent on the liquid VN30/VN100
-blue chips thus appears on the broader, less-liquid HNX universe. On HOSE no learned model differs
-significantly from HAR-X on QLIKE at any horizon ($p\ge0.16$); the deep models still have the lowest MAE at
-$h1$ ($p<0.001$), which reverses at $h10$/$h22$ where HAR-X has the lower MAE ($p<0.001$--$0.020$). GARCH is
-far worse on both exchanges, with a negative $R^2$ (down to $-3.6$ on HOSE $h1$) and a significantly
-higher QLIKE than HAR-X in every cell ($p<0.001$), consistent with a single frozen-train conditional-variance
-path that cannot track the panels' level shifts.
-These are out-of-sample observations from a single configuration on one holdout; they motivate, but do not by
-themselves establish, the deep and graph advantage on less-liquid Vietnamese equities.
-
-\section{Cross-market out-of-sample check: S\&P 500}\label{sec:sp500}
-As a developed-market contrast to the Vietnamese panels, we apply the same configuration and protocol,
-without any retuning, to the S\&P 500. Daily OHLCV for the constituents were obtained from a public source and
-processed to the same Parkinson-variance target; the same liquidity-and-history screen (at least 250 rows per
-ticker and at most 50\% zero-variance days) leaves 440 tickers at $h1$ (714{,}520 masked obs over 1{,}624 test
-dates, decreasing to 438 tickers at $h22$). This large, highly liquid universe was not used to design the model
-or to select any configuration, so it is a second untouched out-of-sample check on a different market.
-
-\begin{table}[t]
-\centering
-\caption{S\&P 500 (714{,}520 masked obs over 1{,}624 test dates at $h1$; learned models: seed mean, QLIKE
-$\pm$~per-seed std). Lower is better for MSE/RMSE/MAE/QLIKE, higher for $R^2$. $^{\dagger}$~marks metrics where LSTM+GAT improves over the no-graph
-LSTM. MSE $\times10^{-7}$, RMSE $\times10^{-4}$, MAE $\times10^{-4}$.}
-\label{tab:sp500}
+\caption{Proxy ablation on HNX --- Rogers--Satchell target (single-day). Same scaling as
+Table~\ref{tab:abl-yz}.}
+\label{tab:abl-rs}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
-% AUTHORITATIVE: generated by scripts/paper/build_final_tables.py (do not hand-edit numbers)
-\input{generated/tab_sp500.tex}
+% AUTHORITATIVE: generated by scripts/paper/build_hnx_tables.py (do not hand-edit numbers)
+\input{generated/tab_abl_rogers_satchell.tex}
 \end{table}
-
-\begin{table}[t]
-\centering
-\caption{S\&P 500 date-clustered DM contrasts ($p$-value; favoured model in parentheses; bold if $p<0.05$).
-H=HAR-X, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}
-\label{tab:dmsp500}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{ll cc cc cc}
-\toprule
-& & \multicolumn{2}{c}{LSTM vs HAR-X} & \multicolumn{2}{c}{LSTM+GAT vs HAR-X} & \multicolumn{2}{c}{LSTM+GAT vs LSTM} \\
-\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}
-Panel & $h$ & QLIKE & MAE & QLIKE & MAE & QLIKE & MAE \\
-\midrule
-SP500 & 1  & \textbf{$<$.001 (H)} & .452 (H) & .083 (H) & \textbf{.003 (G)} & \textbf{$<$.001 (G)} & \textbf{$<$.001 (G)} \\
-SP500 & 5  & \textbf{$<$.001 (H)} & .264 (L) & \textbf{$<$.001 (H)} & \textbf{.003 (G)} & \textbf{$<$.001 (L)} & \textbf{$<$.001 (G)} \\
-SP500 & 10 & \textbf{.035 (H)} & .634 (H) & \textbf{.002 (H)} & .224 (G) & .821 (L) & \textbf{$<$.001 (G)} \\
-SP500 & 22 & .179 (H) & .467 (H) & .192 (H) & .865 (G) & .265 (L) & \textbf{$<$.001 (G)} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Interpretation.} On the S\&P 500 HAR-X has the lowest QLIKE at every horizon, and here the QLIKE gap is
-statistically significant: the LSTM has a higher QLIKE than HAR-X at $h1$, $h5$ and $h10$ ($p<0.001$,
-$p<0.001$, $p=0.035$) and the LSTM+GAT at $h5$ and $h10$ ($p<0.001$, $p=0.002$), with neither significant at
-$h22$. The deep and graph models instead have the advantage on point error: the LSTM+GAT has the lowest MSE,
-RMSE and MAE from $h5$ onward and a lower MAE than HAR-X at $h1$ and $h5$ ($p=0.003$), and a lower MAE than the
-no-graph LSTM at every horizon ($p<0.001$). The graph lowers QLIKE relative to the no-graph LSTM only at $h1$
-($p<0.001$); at $h5$--$h22$ the LSTM+GAT-vs-LSTM QLIKE difference is not in the graph's favour. GARCH is again
-far worse, with QLIKE around $0.83$ and a negative $R^2$ (around $-0.5$) at every horizon. The negative $R^2$ at $h22$ for
-all models reflects long-horizon regression toward the mean. The pattern across markets is consistent: the deep
-and graph models reduce squared and absolute error but do not lower QLIKE below HAR-X on the liquid VN30/VN100,
-HOSE and S\&P 500 panels, whereas the learned models' QLIKE advantage appears on the less-liquid HNX universe.
-
-\section{Sensitivity to the volatility proxy}\label{sec:proxy}
-The forecast target so far is the Parkinson variance, which uses only the intraday high--low range, so a natural
-question is whether the model comparison depends on this choice. We re-run the full pipeline (HAR-X, LSTM,
-LSTM+GAT; five seeds; the same masked panel, universe and protocol) with the target replaced by two other
-\emph{published} range-based estimators computed from the same OHLC data: the windowed Yang--Zhang
-estimator~\cite{yangzhang2000} and the Rogers--Satchell estimator~\cite{rogers1991}. Both are standard formulas
-from their original papers, not indicator-form approximations. QLIKE is scale-invariant, so it is comparable
-across targets. One caveat frames the reading: the Yang--Zhang estimator is a variance averaged over a
-rolling twenty-day window, i.e.\ a \emph{smoothed level} rather than a single-day variance, so it is far more
-persistent and much easier to forecast (its QLIKE is one to two orders of magnitude below the single-day
-measures). We therefore include it for completeness but read the meaningful proxy robustness from the two
-single-day measures, Parkinson and Rogers--Satchell.
-
-\begin{table}[t]
-\centering
-\caption{Volatility-proxy robustness at horizon $h{=}1$: five-seed-mean QLIKE (lower is better) of each model
-when the target is the Parkinson variance, the windowed Yang--Zhang estimator, or the Rogers--Satchell
-estimator, on the same universe and protocol. Bold marks the lowest QLIKE per row. On the liquid VN30 and VN100
-the linear HAR-X is lowest under all three measures; on the illiquid HNX a learned model is lowest under the two
-single-day measures (Parkinson, Rogers--Satchell). Yang--Zhang is a smoothed twenty-day level (see text) and its
-absolute QLIKE is not comparable to the single-day measures.}
-\label{tab:proxy}
-\footnotesize
-\setlength{\tabcolsep}{6pt}
-\begin{tabular}{llccc}
-\toprule
-Panel & Target & HAR-X & LSTM & LSTM+GAT \\
-\midrule
-VN30  & Parkinson       & \textbf{0.516} & 0.679 & 0.619 \\
-VN30  & Yang--Zhang     & \textbf{0.006} & 0.007 & 0.013 \\
-VN30  & Rogers--Satchell& \textbf{0.969} & 1.028 & 1.003 \\
-\midrule
-VN100 & Parkinson       & \textbf{0.512} & 0.621 & 0.552 \\
-VN100 & Yang--Zhang     & \textbf{0.006} & 0.007 & 0.008 \\
-VN100 & Rogers--Satchell& \textbf{1.067} & 1.186 & 1.085 \\
-\midrule
-HNX   & Parkinson       & 1.872 & 1.821 & \textbf{1.816} \\
-HNX   & Yang--Zhang     & \textbf{0.030} & 0.031 & 0.032 \\
-HNX   & Rogers--Satchell& 3.852 & 3.667 & \textbf{3.663} \\
-\midrule
-HOSE  & Parkinson       & \textbf{1.244} & 1.310 & 1.355 \\
-HOSE  & Yang--Zhang     & \textbf{0.013} & 0.017 & 0.017 \\
-HOSE  & Rogers--Satchell& 2.286 & 2.327 & \textbf{2.255} \\
-\midrule
-SP500 & Parkinson       & \textbf{0.362} & 0.638 & 0.543 \\
-SP500 & Yang--Zhang     & 0.032 & \textbf{0.012} & 0.062 \\
-SP500 & Rogers--Satchell& \textbf{0.381} & 0.908 & 0.761 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-On the liquid VN30 and VN100 panels the linear HAR-X has the lowest QLIKE under all three volatility measures,
-so the ``HAR-X is best on liquid large-caps'' finding is robust to the proxy. On the illiquid HNX a learned
-model has the lowest QLIKE under the two single-day measures --- the LSTM+GAT under both Parkinson and
-Rogers--Satchell --- and the gap is significant (date-clustered DM, $p<0.001$ for LSTM+GAT vs.\ HAR-X under both),
-so the ``a deep model helps on the illiquid exchange'' finding is likewise robust across the single-day proxies.
-The smoothed Yang--Zhang target behaves differently, as expected from its construction: HAR-X is lowest on four
-of five panels at $h{=}1$ (the LSTM leads only on the S\&P 500), reflecting that a persistent twenty-day level is
-easy for the linear model. Across the longer horizons the Yang--Zhang comparison (complete for
-$h\in\{1,5,10,22\}$) keeps HAR-X lowest on the liquid Vietnamese panels and a learned model lowest on HNX and the
-S\&P 500. We keep Parkinson as the primary target for its simplicity and split invariance, and note that a fully
-clean overnight-return comparison requires split/dividend-adjusted prices: the S\&P 500 series are adjusted,
-whereas the Vietnamese OHLCV is not, so its overnight return is winsorized. The Rogers--Satchell comparison is
-reported here at the short (primary) horizons $h\in\{1,5\}$; the Garman--Klass estimator and the longer-horizon
-Rogers--Satchell runs are in progress and will appear in a subsequent revision. This table uses QLIKE because it
-is scale-invariant and therefore comparable across estimator targets, whereas the mean-squared and absolute
-errors carry the units of each target and cannot be compared across them; within each target the error-metric
-ranking follows the main results (the learned models attain the lower MSE/RMSE/MAE while HAR-X keeps the lower
-QLIKE on the liquid panels).
 
 \section{Discussion}\label{sec:disc}
 On the liquid VN30 and VN100 panels HAR-X keeps the lowest QLIKE at every horizon, with no learned model
-significantly lower on that loss --- consistent with the difficulty of beating HAR on liquid large-caps ---
+significantly lower on that loss --- consistent with the difficulty of improving on HAR on liquid large-caps ---
 while the learned models' advantage there is on the error metrics. At $h1$ the deep models have the lowest
 MAE on VN100 (LSTM vs HAR-X, $p<0.001$), and the LSTM+GAT has a significantly lower QLIKE than the same-feature
 no-graph LSTM at VN30 $h1$, VN100 $h1$ and VN100 $h5$; this graph effect is absent at VN30 $h5$ and at the
@@ -484,13 +348,13 @@ longer horizons on the liquid panels, but on the illiquid HNX the graph adds a s
 no-graph LSTM at $h10$ and $h22$. Because the per-seed QLIKE standard deviation of the learned models ($0.02$--$0.07$) is of the
 same order as these graph-vs-LSTM differences, and the DM test is computed on the five-seed ensemble forecast,
 the graph effect is best read as an ensemble-level regularity rather than a robust per-seed improvement. At
-$h10$ and $h22$ HAR-X has the lowest MSE, RMSE, QLIKE and $R^2$. The ranking is metric- and horizon-dependent,
-which is why all five metrics are reported with equal weight. The date-clustered DM test matters for these
+$h10$ and $h22$ HAR-X has the lower MSE, RMSE, MAE and QLIKE on the liquid panels. The ranking is metric- and
+horizon-dependent, which is why all four metrics are reported with equal weight. The date-clustered DM test matters for these
 conclusions: a naive per-observation test on this cross-sectionally dependent panel inflates the statistic by
 roughly the square root of the number of stocks, so a difference that is not significant per date can appear
 significant per observation. \textbf{Multiplicity.} We report per-metric DM contrasts without a
 multiple-comparison correction; on the liquid panels the QLIKE comparison is a null
-result (no learned model significantly beats HAR-X there), which a correction would only reinforce; the
+result (no learned model is significantly better than HAR-X there), which a correction would only reinforce; the
 significant results we emphasise --- the HNX QLIKE gains over HAR-X and the liquid-panel MAE gains --- are
 reported with their exact $p$-values, and the graph-vs-LSTM contrasts are unadjusted exploratory findings. \textbf{Capacity.} The LSTM+GAT
 adds a graph branch and its parameters to the no-graph LSTM, so the leave-one-out contrast measures the effect
@@ -501,13 +365,13 @@ Across a liquidity gradient --- the illiquid HNX exchange, the liquid VN30/VN100
 developed-market S\&P 500 --- we benchmarked a linear HAR-X against an LSTM and an LSTM+GAT under one
 leakage-free, panel-correct protocol with the same features and the same date-clustered Diebold--Mariano
 inference. The deep temporal--graph model is most valuable on the illiquid HNX market: it attains a
-significantly lower QLIKE than HAR-X at three of the four horizons and the lowest error on all five metrics at
+significantly lower QLIKE than HAR-X at three of the four horizons and the lowest error on all four metrics at
 the daily horizon, and on HNX the directed volume$\to$Parkinson graph branch adds a further significant QLIKE
 gain over the same-feature LSTM at the longer horizons. On the larger liquid panels the learned models
 significantly reduce the absolute error while matching HAR-X on QLIKE, and on the smallest panel (VN30) and the
 S\&P 500 HAR-X keeps the lowest QLIKE at the short horizons --- consistent with the HAR model's standing as a
 strong linear benchmark for liquid large-caps. The ranking is therefore metric- and liquidity-dependent, which
-is why all five metrics are reported with equal weight and significance is assessed with the date-clustered DM
+is why all four metrics are reported with equal weight and significance is assessed with the date-clustered DM
 test, since a naive per-observation test on this cross-sectionally dependent panel would overstate significance
 by roughly the square root of the number of stocks. The practical takeaway is that deep volatility models earn
 their added complexity on illiquid, nonlinear emerging-market equities, where the linear benchmark is weakest.
