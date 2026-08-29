@@ -112,8 +112,8 @@ def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) ->
     return "\n".join(lines) + "\n"
 
 
-_MKT_ORDER = ("hnx", "vn100", "vn30", "sp500")            # HNX first in every estimator table
-_MKT_LABEL = {"hnx": "HNX", "vn100": "VN100", "vn30": "VN30", "sp500": r"S\&P 500"}
+_MKT_ORDER = ("hnx", "vn100", "vn30", "hose", "sp500")     # HNX first in every estimator table
+_MKT_LABEL = {"hnx": "HNX", "vn100": "VN100", "vn30": "VN30", "hose": "HOSE", "sp500": r"S\&P 500"}
 
 
 def render_est_allmarkets(table, panels=_MKT_ORDER, models=EST_MODELS,
@@ -166,9 +166,9 @@ def main():  # pragma: no cover - I/O entry driver
     floor = build_tables(repo / "results" / "masked_rich_floor1e2")
     (out / "tab_main_hnx.tex").write_text(render_panel(floor, "hnx", MAIN_MODELS), encoding="utf-8")
     (out / "tab_abl_graph_hnx.tex").write_text(render_panel(floor, "hnx", GRAPH_ABL_MODELS), encoding="utf-8")
-    for p in ("vn100", "vn30", "sp500"):
+    for p in ("vn100", "vn30", "hose", "sp500"):
         (out / f"tab_abl_{p}.tex").write_text(render_panel(floor, p, FULL_MODELS), encoding="utf-8")
-    written = ["tab_main_hnx", "tab_abl_graph_hnx", "tab_abl_vn100", "tab_abl_vn30", "tab_abl_sp500"]
+    written = ["tab_main_hnx", "tab_abl_graph_hnx", "tab_abl_vn100", "tab_abl_vn30", "tab_abl_hose", "tab_abl_sp500"]
     (out / "tab_dm_voltg.tex").write_text(
         render_dm_voltg(repo / "results" / "masked_rich_floor1e2"), encoding="utf-8")
     written.append("tab_dm_voltg")

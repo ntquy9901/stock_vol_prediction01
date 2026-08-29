@@ -149,3 +149,17 @@ def test_render_est_allmarkets_skips_absent_market():
     t = {"rows": [_mkrow("hnx", 1, "HAR-X", 1e-6, 1.0), _mkrow("hnx", 1, "LSTM_wGAT_vol2pk", 1e-6, 0.9)]}
     tex = B.render_est_allmarkets(t, panels=("hnx", "sp500"), horizons=(1,))
     assert "HNX" in tex and "S\&P 500" not in tex           # sp500 has no rows -> block skipped
+
+
+def test_render_est_allmarkets_missing_metric_dash():
+    # a model row missing 'mse' -> that column renders '-'
+    t = {"rows": [
+        {"panel": "hnx", "horizon": 1, "model": "HAR-X",
+         "cells": {"rmse": {"value": 1.1e-3, "std": None}, "mae": {"value": 6.5e-4, "std": None},
+                   "qlike": {"value": 1.9, "std": None}}},
+        {"panel": "hnx", "horizon": 1, "model": "LSTM_wGAT_vol2pk",
+         "cells": {"mse": {"value": 1.0e-6, "std": None}, "rmse": {"value": 1.2e-3, "std": None},
+                   "mae": {"value": 6.4e-4, "std": None}, "qlike": {"value": 1.8, "std": None}}},
+    ]}
+    tex = B.render_est_allmarkets(t, panels=("hnx",), horizons=(1,))
+    assert "1 & HAR-X & - &" in tex   # missing MSE -> dash
