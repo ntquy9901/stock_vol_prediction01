@@ -63,9 +63,8 @@ as independent evidence (which overstates statistical significance).
 This paper asks \emph{where} deep and graph models improve on the linear HAR benchmark, across several markets. We take the Hanoi exchange (HNX) as the primary test market and add the VN30 and
 VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a cross-market comparison, with GARCH(1,1) as a
 classical reference. Holding the five inputs and the data design fixed, we compare an extended HAR (HAR-X), an
-LSTM, and VolGA. To keep the comparison fair we evaluate on a \emph{masked panel}: instead of intersecting
-to the dates on which every stock is present, we keep the union of trading dates and mask stocks not yet listed
-on a given date, so every model sees the same panel and the same five features. Our headline finding: on HNX VolGA achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
+LSTM, and VolGA, all trained and evaluated on the same panel with the same five features so the only difference
+is the model. Our headline finding: on HNX VolGA achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
 the lowest error on all four metrics; on the larger panels (VN100, HOSE) the learned models significantly
 reduce the absolute error and stay competitive on QLIKE, while HAR keeps a significant QLIKE edge on the smallest
 panel (VN30) and the S\&P 500 at the short horizons.
@@ -144,21 +143,14 @@ evaluation (dropout, weight decay, gradient clipping, ReduceLROnPlateau, early s
 (Fig.~\ref{fig:arch}): the LSTM branch plus a Graph Attention Network branch~\cite{gat2018} that reads the five
 node features at $t$ and attends over a directed volume$\to$Parkinson Top-5, edge-weighted, two-hop graph
 estimated on training rows only; the branches are concatenated into an MLP head. The leave-one-out comparison
-against the same-feature LSTM isolates the graph's marginal contribution. \emph{GARCH}: a GARCH(1,1)
-conditional-variance model fit per ticker on the training Parkinson-variance series (via pseudo-returns), with
-persistence capped at $0.999$ by variance targeting so near-integrated fits do not diverge over the frozen
-multi-step forecast path; a classical benchmark that forecasts the variance series directly and does not use
-the node features. The pseudo-returns carry a random sign, but a symmetric GARCH(1,1) conditional variance
-depends only on squared residuals, so the variance forecast is nearly sign-invariant (sign-seed variation
-under $5\%$).
+against the same-feature LSTM isolates the graph's marginal contribution. \emph{GARCH}: a classical GARCH(1,1)
+benchmark fit per ticker on the training variance series; it forecasts the variance directly and does not use
+the node features.
 
-\textbf{Masked panel.} A GAT operates over a common-date cross-section, which naively forces a
-common-date intersection (only dates on which every ticker is present) that discards most ticker-days and
-places the whole test set in one recent period. We instead use a masked panel: the GAT operates
-over a common-date cross-section with node and target masks for tickers not yet listed on a given date, so
-late-listed tickers are included without dropping whole dates, and a mask-aware loss ignores absent tickers.
-Every model is trained and evaluated on the same panel with the same five features and split (VN100: 46{,}308
-masked obs over 454 test dates at $h1$; VN30: 10{,}106 obs over 326 test dates at $h1$).
+\textbf{Masked panel.} Not every stock is listed on every date. Rather than keep only the dates on which all
+stocks trade (which discards most of the data), we keep every trading date and mask out stocks not yet listed,
+with a mask-aware loss that ignores the masked stocks, so every model is trained and evaluated on the same
+panel.
 
 \textbf{Protocol.} Each configuration runs five seeds (batch size $32$, up to $20$ epochs, early-stopping
 patience $3$; the configuration is recorded in every results file so the runs are reproducible), with the
