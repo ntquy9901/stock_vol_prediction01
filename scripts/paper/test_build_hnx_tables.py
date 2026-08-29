@@ -124,3 +124,30 @@ def test_render_dm_voltg_covers_branches(tmp_path):
     assert "HNX" in tex and "VN30" not in tex          # empty panel skipped (missing files + no-rows branches)
     assert "\n & 5 &" in tex                            # continuation row for the 2nd horizon
     assert "& - \\\\" in tex                            # missing ae p-value rendered as '-'
+
+
+def test_render_est_qlike_bolds_lower_and_groups():
+    def _tab(panel, h, har_q, vga_q):
+        return {"rows": [
+            {"panel": panel, "horizon": h, "model": "HAR-X", "cells": {"qlike": {"value": har_q, "std": None}}},
+            {"panel": panel, "horizon": h, "model": "LSTM_wGAT_vol2pk", "cells": {"qlike": {"value": vga_q, "std": None}}},
+        ]}
+    sources = [("Parkinson", _tab("vn100", 1, 0.51, 0.55)),   # HAR-X lower
+               ("Rogers--Satchell", _tab("vn100", 1, 3.85, 3.66))]  # VolGA lower
+    tex = B.render_est_qlike(sources, "vn100", horizons=(1,))
+    assert "Estimator & $h$ & HAR-X & VolGA" in tex
+    assert r"\textbf{0.5100}" in tex   # Parkinson: HAR-X lower -> bold
+    assert r"\textbf{3.6600}" in tex   # Rogers: VolGA lower -> bold
+    assert tex.index("Parkinson") < tex.index("Rogers--Satchell")
+
+
+def test_render_est_qlike_skips_missing_and_continuation():
+    def _row(panel, h, model, q):
+        return {"panel": panel, "horizon": h, "model": model, "cells": {"qlike": {"value": q, "std": None}}}
+    t = {"rows": [_row("vn30", 1, "HAR-X", 0.5), _row("vn30", 1, "LSTM_wGAT_vol2pk", 0.6),
+                  _row("vn30", 5, "HAR-X", 0.7), _row("vn30", 5, "LSTM_wGAT_vol2pk", 0.65)]}
+    # sp500 absent from this table -> that estimator/panel yields no rows (skipped)
+    tex = B.render_est_qlike([("Parkinson", t)], "vn30", horizons=(1, 5))
+    assert "\n & 5 &" in tex          # continuation row for 2nd horizon
+    empty = B.render_est_qlike([("Parkinson", t)], "sp500", horizons=(1,))
+    assert "Parkinson" not in empty   # no rows for sp500 -> estimator block skipped

@@ -112,6 +112,40 @@ def render_dm_voltg(results_root: Path, panels=_DM_PANELS, horizons=HORIZONS) ->
     return "\n".join(lines) + "\n"
 
 
+def render_est_qlike(sources, panel, horizons=HORIZONS) -> str:
+    """Per-market QLIKE comparison (HAR-X vs VolGA) across estimators. ``sources`` is a list of
+    ``(label, table)`` (each table from build_tables of one estimator's results). QLIKE is scale-invariant so
+    it is the metric comparable across estimators; the lower QLIKE per row is bolded."""
+    lines = [r"\begin{tabular}{ll cc}", r"\toprule",
+             r"Estimator & $h$ & HAR-X & VolGA \\", r"\midrule"]
+    first = True
+    for label, table in sources:
+        by = {(r["horizon"], r["model"]): r["cells"] for r in table["rows"] if r["panel"] == panel}
+        rows = []
+        for h in horizons:
+            har = by.get((h, "HAR-X"), {}).get("qlike")
+            vga = by.get((h, "LSTM_wGAT_vol2pk"), {}).get("qlike")
+            if har is None or vga is None:
+                continue
+            hv, vv = har["value"], vga["value"]
+            ht, vt = f"{hv:.4f}", f"{vv:.4f}"
+            if hv <= vv:
+                ht = r"\textbf{" + ht + "}"
+            else:
+                vt = r"\textbf{" + vt + "}"
+            rows.append((h, ht, vt))
+        if not rows:
+            continue
+        if not first:
+            lines.append(r"\midrule")
+        first = False
+        lines.append(f"{label} & {rows[0][0]} & {rows[0][1]} & {rows[0][2]}" + r" \\")
+        for h, ht, vt in rows[1:]:
+            lines.append(f" & {h} & {ht} & {vt}" + r" \\")
+    lines += [r"\bottomrule", r"\end{tabular}"]
+    return "\n".join(lines) + "\n"
+
+
 def main():  # pragma: no cover - I/O entry driver
     repo = Path(__file__).resolve().parents[2]
     out = repo / "docs" / "paper" / "generated"
@@ -129,6 +163,16 @@ def main():  # pragma: no cover - I/O entry driver
     (out / "tab_dm_voltg.tex").write_text(
         render_dm_voltg(repo / "results" / "masked_rich_floor1e2"), encoding="utf-8")
     written.append("tab_dm_voltg")
+    # per-market QLIKE across estimators (which model/estimator is best), HAR-X vs VolGA
+    yz = repo / "results" / "masked_rich_yz"
+    est_sources = [("Parkinson", floor)]
+    if (yz / "yang_zhang").exists():
+        est_sources.append(("Yang--Zhang", build_tables(yz / "yang_zhang")))
+    if (yz / "rogers_satchell").exists():
+        est_sources.append(("Rogers--Satchell", build_tables(yz / "rogers_satchell")))
+    for p in ("vn100", "vn30", "sp500"):
+        (out / f"tab_est_qlike_{p}.tex").write_text(render_est_qlike(est_sources, p), encoding="utf-8")
+        written.append(f"tab_est_qlike_{p}")
     for est in ("yang_zhang", "rogers_satchell"):
         root = repo / "results" / "masked_rich_yz" / est
         if not root.exists():
