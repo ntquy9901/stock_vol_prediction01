@@ -34,13 +34,14 @@ inputs, we compare the linear HAR benchmark against a deep sequence model (an LS
 extended with a graph-attention branch that links each stock to a few related peers. All models forecast a
 high--low range measure of daily volatility (the Parkinson estimator, a variance) at one, five, ten, and
 twenty-two trading days ahead, judged by five standard error measures and a significance test adapted to the
-fact that stocks move together. On the liquid VN30 and VN100 indices the simple HAR benchmark is the most
-accurate on the volatility-specific error at every horizon, with no learned model significantly better, although
-the deep models lead on absolute error at the shortest horizon. Re-running the identical, un-retuned setup on the
-broader Vietnamese market and on the U.S. S\&P 500 shows the outcome depends on liquidity: on the thinly traded
-HNX exchange the deep and graph models become significantly more accurate than HAR at several horizons, while on
-liquid markets HAR remains hard to beat, and adding the graph rarely improves on the deep model beyond
-training-seed noise. We report every result with explicit data-quality caveats rather than as a uniform win.
+fact that stocks move together. The outcome is metric-dependent, so we report all five measures. On the liquid VN30 and VN100 indices the
+simple HAR benchmark has the lowest QLIKE (the volatility-specific loss) at every horizon, with no learned
+model significantly better on that loss; the deep and graph models, however, attain the lower mean-squared and
+absolute error (MSE, RMSE, MAE) at the short horizons. Re-running the identical, un-retuned setup on the
+broader Vietnamese market and on the U.S. S\&P 500 shows the split also depends on liquidity: on the thinly
+traded HNX exchange the deep and graph models are more accurate than HAR across all five metrics at several
+horizons, while on the liquid markets HAR keeps the lowest QLIKE but the learned models keep the lower squared
+and absolute error. Adding the graph rarely improves on the deep model beyond training-seed noise. We report every result with explicit data-quality caveats rather than as a uniform win.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
@@ -460,7 +461,11 @@ S\&P 500. We keep Parkinson as the primary target for its simplicity and split i
 clean overnight-return comparison requires split/dividend-adjusted prices: the S\&P 500 series are adjusted,
 whereas the Vietnamese OHLCV is not, so its overnight return is winsorized. The Rogers--Satchell comparison is
 reported here at the short (primary) horizons $h\in\{1,5\}$; the Garman--Klass estimator and the longer-horizon
-Rogers--Satchell runs are in progress and will appear in a subsequent revision.
+Rogers--Satchell runs are in progress and will appear in a subsequent revision. This table uses QLIKE because it
+is scale-invariant and therefore comparable across estimator targets, whereas the mean-squared and absolute
+errors carry the units of each target and cannot be compared across them; within each target the error-metric
+ranking follows the main results (the learned models attain the lower MSE/RMSE/MAE while HAR-X keeps the lower
+QLIKE on the liquid panels).
 
 \section{Discussion}\label{sec:disc}
 No learned model has a significantly lower QLIKE than HAR-X at any horizon under the date-clustered DM test,
