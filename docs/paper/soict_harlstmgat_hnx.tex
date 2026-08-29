@@ -61,25 +61,22 @@ reported gains are often confounded by evaluation choices --- for example restri
 which every stock is simultaneously present (which discards most of the data), or counting many co-moving stocks
 as independent evidence (which overstates statistical significance).
 
-This paper asks \emph{where} deep and graph models improve on the linear HAR benchmark, and answers it along a
-liquidity gradient. We take the illiquid Hanoi exchange (HNX) as the primary test market --- its volatility is
-less linearly persistent, so the linear benchmark has more room for improvement --- and add the liquid VN30 and
-VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a liquidity comparison, with GARCH(1,1) as a
+This paper asks \emph{where} deep and graph models improve on the linear HAR benchmark, across several markets. We take the Hanoi exchange (HNX) as the primary test market and add the VN30 and
+VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a cross-market comparison, with GARCH(1,1) as a
 classical reference. Holding the five inputs and the data design fixed, we compare an extended HAR (HAR-X), an
 LSTM, and an LSTM+GAT. To keep the comparison fair we evaluate on a \emph{masked panel}: instead of intersecting
 to the dates on which every stock is present, we keep the union of trading dates and mask stocks not yet listed
 on a given date, so every model sees the same panel and the same five features. Our headline finding: on HNX the
 LSTM+GAT achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
-the lowest error on all four metrics; on the larger liquid panels (VN100, HOSE) the learned models significantly
+the lowest error on all four metrics; on the larger panels (VN100, HOSE) the learned models significantly
 reduce the absolute error and stay competitive on QLIKE, while HAR keeps a significant QLIKE edge on the smallest
 panel (VN30) and the S\&P 500 at the short horizons.
 
 Our contributions are: (i) a multi-horizon, multi-seed, multi-market benchmark that holds the feature set and
-data design fixed across HAR-X, an LSTM, and an LSTM+GAT, spanning a liquidity gradient from the illiquid HNX to
-the liquid VN30/VN100/HOSE and the developed-market S\&P 500, so any measured difference is attributable to a
+data design fixed across HAR-X, an LSTM, and an LSTM+GAT, spanning HNX, the VN30, VN100 and HOSE panels and the developed-market S\&P 500, so any measured difference is attributable to a
 single component; (ii) the finding that the learned models' advantage concentrates where the linear benchmark is
 weakest --- on HNX the LSTM+GAT has a significantly lower QLIKE than HAR at three of four horizons and the lowest
-error on all four metrics at the daily horizon, while on the larger liquid panels the learned models
+error on all four metrics at the daily horizon, while on the larger panels the learned models
 significantly reduce the absolute error and stay competitive on QLIKE --- together with a leave-one-out reading
 of the graph branch, whose contribution over the same-feature LSTM is horizon-dependent (a significant QLIKE
 gain on HNX at the longer horizons, otherwise of the same order as the per-seed dispersion); and (iii) a
@@ -87,7 +84,7 @@ panel-correct significance protocol --- because
 co-moving stocks are not independent, we cluster the Diebold--Mariano test by date, since a naive per-stock test
 overstates significance roughly in proportion to the square root of the number of stocks.
 Every reported number is taken from a stored results file, and we document the data-quality limitations ---
-notably the high share of zero-range (no-intraday-move) days on the illiquid exchange and the unverified split
+notably the high share of zero-range (no-intraday-move) days on HNX and the unverified split
 adjustment of the Vietnamese prices --- rather than presenting the data as uniformly clean.
 
 \paragraph{Terminology (for readers outside finance).}
@@ -176,9 +173,9 @@ GAT branch to give the same-feature LSTM.}
 \end{figure}
 
 \section{Data}
-The primary test market is the illiquid \textbf{HNX} (Hanoi Stock Exchange, 154 screened tickers); the liquid
+The primary test market is \textbf{HNX} (Hanoi Stock Exchange, 154 screened tickers); the
 \textbf{VN30} and \textbf{VN100} indices, the broader \textbf{HOSE} exchange and the U.S. \textbf{S\&P 500}
-(440 tickers) serve as a liquidity comparison. All use the masked panel of Sec.~3 with the five features, a
+(440 tickers) serve as a cross-market comparison. All use the masked panel of Sec.~3 with the five features, a
 single chronological split and per-ticker standardization fit on training rows only. The main target is the
 Parkinson variance; the windowed Yang--Zhang and Rogers--Satchell estimators are used in an ablation.
 
@@ -188,7 +185,7 @@ two-hop) on HNX at horizons $\{1,5,10,22\}$, reporting MSE, RMSE, MAE and QLIKE 
 Diebold--Mariano test. The ablations remove the graph branch (the same-feature no-graph LSTM), vary the market
 (VN100, VN30, S\&P 500) and vary the volatility estimator (Yang--Zhang, Rogers--Satchell).
 
-\section{Results: the illiquid HNX market}\label{sec:results}
+\section{Results: the HNX market}\label{sec:results}
 Point-error metrics are scaled (MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$); QLIKE is unscaled. Learned-model
 values are the mean of the seed-level metrics over five seeds (QLIKE with its per-seed std $\pm$); HAR-X and
 GARCH are deterministic. All values are read from \texttt{results/masked\_rich\_floor1e2/}.
@@ -209,7 +206,7 @@ MAE and QLIKE --- and it keeps the lowest QLIKE at $h10$ and $h22$; GARCH is far
 date-clustered DM test the LSTM+GAT has a significantly lower QLIKE than HAR-X at three of the four horizons
 ($h1$: $p<0.001$; $h10$: $p=0.022$; $h22$: $p=0.016$; $h5$: $p=0.18$, not significant), and at $h1$ its
 absolute-error gain over HAR-X is also significant ($p<0.001$); at the longer horizons HAR-X has the lower MAE.
-The deep temporal--graph model's advantage thus falls on the illiquid HNX exchange, where the linear benchmark
+The deep temporal--graph model's advantage thus falls on the HNX market, where the linear benchmark
 is weakest.
 
 \section{Ablation studies}\label{sec:abl}
@@ -232,8 +229,8 @@ RMSE/MAE $\times10^{-4}$.}
 \end{table}
 
 \subsection{Other markets: VN100, VN30 and the S\&P 500}
-On the liquid markets the linear HAR-X keeps the lowest QLIKE, consistent with its standing as a hard-to-beat
-benchmark for liquid large-caps, while the learned models significantly reduce the absolute error: on VN100 the
+On the VN30, VN100 and S\&P 500 markets the linear HAR-X keeps the lowest QLIKE, consistent with its standing as a
+hard-to-beat benchmark for large-cap markets, while the learned models significantly reduce the absolute error: on VN100 the
 LSTM+GAT (or the no-graph LSTM) has a significantly lower MAE than HAR-X at $h1$, $h5$ and $h22$
 (Table~\ref{tab:dm}), and its QLIKE is not significantly different from HAR-X at the longer horizons. On the
 developed-market S\&P 500 (Table~\ref{tab:abl-sp500}) HAR-X again has the lowest QLIKE at the short horizons
@@ -287,7 +284,7 @@ VN30 & 22 & .520 (H) & .061 (H) & .625 (G) & \textbf{$<$.001 (L)} \\
 \end{tabular}
 \end{table}
 
-On the liquid VN panels HAR-X has the lowest QLIKE at every horizon and no learned model is significantly lower
+On the VN30 and VN100 panels HAR-X has the lowest QLIKE at every horizon and no learned model is significantly lower
 on that loss, while the deep models have the significantly lower MAE at the short horizons (Table~\ref{tab:dm}).
 GARCH(1,1) is worse than HAR-X on every metric at every horizon (QLIKE higher by the date-clustered DM test,
 $p<0.001$): it projects a single frozen-train conditional-variance path that cannot adapt to the level shifts
@@ -361,43 +358,43 @@ the daily horizon ($h1$) it has the lowest MSE, RMSE, MAE and QLIKE (QLIKE $1.81
 QLIKE is significantly below HAR-X at $h1$, $h10$ and $h22$ (date-clustered DM, $p<0.001$, $0.022$, $0.016$;
 $p=0.18$ at $h5$); at $h1$ its absolute-error gain over HAR-X is also significant ($p<0.001$). On HNX the graph
 branch contributes over the same-feature no-graph LSTM at the longer horizons ($h10$: $p=0.015$; $h22$:
-$p=0.031$), consistent with the illiquid, less-linearly-persistent dynamics leaving structure the linear
+$p=0.031$), consistent with the linear
 benchmark cannot capture.
 
-On the liquid VN100 and VN30 panels HAR-X keeps the lowest QLIKE at every horizon, with no learned model
-significantly lower on that loss --- consistent with the difficulty of improving on HAR on liquid large-caps ---
+On the VN100 and VN30 panels HAR-X keeps the lowest QLIKE at every horizon, with no learned model
+significantly lower on that loss --- consistent with the difficulty of improving on HAR on large-cap markets ---
 while the learned models' advantage there is on the error metrics: at $h1$ the deep models have the lowest MAE
 on VN100 ($p<0.001$ vs HAR-X). Because the per-seed QLIKE standard deviation of the learned models
 ($0.02$--$0.07$) is of the same order as the graph-vs-LSTM differences, and the DM test is computed on the
-five-seed ensemble forecast, the graph effect on the liquid panels is best read as an ensemble-level regularity
+five-seed ensemble forecast, the graph effect on the VN panels is best read as an ensemble-level regularity
 rather than a robust per-seed improvement. At $h10$ and $h22$ HAR-X has the lower MSE, RMSE, MAE and QLIKE on the
-liquid panels. The ranking is metric- and horizon-dependent, which is why all four metrics are reported with
+VN panels. The ranking is metric- and horizon-dependent, which is why all four metrics are reported with
 equal weight. The date-clustered DM test matters for these
 conclusions: a naive per-observation test on this cross-sectionally dependent panel inflates the statistic by
 roughly the square root of the number of stocks, so a difference that is not significant per date can appear
 significant per observation. \textbf{Multiplicity.} We report per-metric DM contrasts without a
-multiple-comparison correction; on the liquid panels the QLIKE comparison is a null
+multiple-comparison correction; on the VN and S\&P 500 panels the QLIKE comparison is a null
 result (no learned model is significantly better than HAR-X there), which a correction would only reinforce; the
-significant results we emphasise --- the HNX QLIKE gains over HAR-X and the liquid-panel MAE gains --- are
+significant results we emphasise --- the HNX QLIKE gains over HAR-X and the VN100 MAE gains --- are
 reported with their exact $p$-values, and the graph-vs-LSTM contrasts are unadjusted exploratory findings. \textbf{Capacity.} The LSTM+GAT
 adds a graph branch and its parameters to the no-graph LSTM, so the leave-one-out contrast measures the effect
 of adding the implemented graph branch, not of graph structure at matched capacity.
 
 \section{Conclusion}
-Across a liquidity gradient --- the illiquid HNX exchange, the liquid VN30/VN100/HOSE panels and the
+Across several markets --- the HNX exchange, the VN30, VN100 and HOSE panels and the
 developed-market S\&P 500 --- we benchmarked a linear HAR-X against an LSTM and an LSTM+GAT under one
 leakage-free, panel-correct protocol with the same features and the same date-clustered Diebold--Mariano
-inference. The deep temporal--graph model is most valuable on the illiquid HNX market: it attains a
+inference. The deep temporal--graph model is most valuable on the HNX market: it attains a
 significantly lower QLIKE than HAR-X at three of the four horizons and the lowest error on all four metrics at
 the daily horizon, and on HNX the directed volume$\to$Parkinson graph branch adds a further significant QLIKE
-gain over the same-feature LSTM at the longer horizons. On the larger liquid panels the learned models
+gain over the same-feature LSTM at the longer horizons. On the larger panels the learned models
 significantly reduce the absolute error while matching HAR-X on QLIKE, and on the smallest panel (VN30) and the
 S\&P 500 HAR-X keeps the lowest QLIKE at the short horizons --- consistent with the HAR model's standing as a
-strong linear benchmark for liquid large-caps. The ranking is therefore metric- and liquidity-dependent, which
+strong linear benchmark for large-cap markets. The ranking is therefore metric- and market-dependent, which
 is why all four metrics are reported with equal weight and significance is assessed with the date-clustered DM
 test, since a naive per-observation test on this cross-sectionally dependent panel would overstate significance
 by roughly the square root of the number of stocks. The practical takeaway is that deep volatility models earn
-their added complexity on illiquid, nonlinear emerging-market equities, where the linear benchmark is weakest.
+their added complexity on the HNX market, where the linear benchmark is weakest.
 
 \begin{thebibliography}{99}
 \bibitem{corsi2009} Corsi, F.: A simple approximate long-memory model of realized volatility. J. Financial Econometrics \textbf{7}(2), 174--196 (2009)
