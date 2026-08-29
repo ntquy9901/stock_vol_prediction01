@@ -118,7 +118,11 @@ def test_run_training_stubbed(monkeypatch, tmp_path):
 
     def fake_train(Dd, cfg, seed, use_graph, adj, output_param="zscore_floor", return_splits=False):
         off = 0.0 if not use_graph else (1e-4 if adj is Dd.adj_vol2pk else 2e-4)
-        return Dd.y_te + off
+        test = Dd.y_te + off
+        if return_splits:
+            return {"test": test, "val": Dd.y_va + off, "train": Dd.y_tr + off,
+                    "train_curve": [1e-6], "val_curve": [1.1e-6], "best_epoch": 1}
+        return test
 
     monkeypatch.setattr(RSA.RMR, "train_masked_rich", fake_train)
     monkeypatch.setattr(RSA, "build_panel_masked",
@@ -132,6 +136,39 @@ def test_run_training_stubbed(monkeypatch, tmp_path):
     for m in res["metrics_ensemble"].values():
         assert np.isfinite(m["qlike"])
         assert {"mse", "rmse", "mae", "qlike", "r2"} <= set(m)
+
+
+def test_run_training_emits_overfit_evidence(monkeypatch, tmp_path):
+    """run_training must stamp train/val metrics + per-model fit verdict + per-seed learning curves
+    (CLAUDE.md over/under-fit mandate 2026-08-29) so the result.json can PROVE generalisation."""
+    D = _tiny_D()
+
+    def fake_train(Dd, cfg, seed, use_graph, adj, output_param="zscore_floor", return_splits=False):
+        off = 0.0 if not use_graph else (1e-4 if adj is Dd.adj_vol2pk else 2e-4)
+        test = Dd.y_te + off
+        if return_splits:
+            return {"test": test, "val": Dd.y_va + off, "train": Dd.y_tr + off,
+                    "train_curve": [1e-6, 5e-7], "val_curve": [1.1e-6, 6e-7], "best_epoch": 2}
+        return test
+
+    monkeypatch.setattr(RSA.RMR, "train_masked_rich", fake_train)
+    monkeypatch.setattr(RSA, "build_panel_masked",
+                        lambda panel, cfg, horizon, out_dir, keep_tickers=None: (D, []))
+    cfg = Config(seeds=(42, 123), epochs=2, min_epochs=1, patience=1)
+    res = RSA.run_training(PANEL, cfg, horizon=1, out_dir=str(tmp_path))
+    configs = {"sector_GAT", "stat_GAT_vol2pk", "no_graph_LSTM"}
+    for block in ("train_metrics", "val_metrics", "fit_diagnostics", "learning_curves"):
+        assert block in res, f"missing {block}"
+        assert set(res[block]) == configs, block
+    for k in configs:
+        assert {"qlike", "r2"} <= set(res["train_metrics"][k])
+        assert {"qlike", "r2"} <= set(res["val_metrics"][k])
+        assert res["fit_diagnostics"][k]["status"] in {"ok", "overfit", "underfit", "unknown"}
+        lc = res["learning_curves"][k]
+        assert len(lc["train"]) == 2 and len(lc["val"]) == 2 and len(lc["best_epoch"]) == 2
+        assert isinstance(lc["train"][0], list)  # per-epoch MSE list per seed
+    # verdict VALUES are the classifier's job (scripts/quality_gate/test_overfit_check.py); this test pins
+    # only that run_training PLUMBS a valid verdict (status in the allowed set, checked in the loop above).
 
 
 def test_main_dry_branch(monkeypatch, capsys):

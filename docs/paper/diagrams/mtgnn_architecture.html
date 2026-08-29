@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>MTGNN learned-adjacency architecture (LearnedGraphNet)</title>
+<style>
+  body{font-family:"Segoe UI",Arial,sans-serif;background:#f5f6f8;color:#1c2733;margin:0;padding:24px}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#5a6b7b;font-size:13px;margin-bottom:18px}
+  .canvas{max-width:1040px;margin:auto}
+  svg{width:100%;height:auto;background:#fff;border:1px solid #dce3ea;border-radius:10px}
+  .lgd{font-size:12px;color:#40515f;margin-top:12px;line-height:1.6}
+  .chip{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+  code{background:#eef2f6;padding:1px 5px;border-radius:4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="canvas">
+  <h1>LearnedGraphNet — MTGNN adaptive graph plugged into the delivered MaskedRichNet</h1>
+  <div class="sub">Paper: Wu et al. 2020, "Connecting the Dots" (arXiv:2005.11650), §3.1 Graph Learning Layer ·
+    ref code: github.com/nnzhan/MTGNN <code>layer.py::graph_constructor</code>.
+    The MTGNN block (orange) is the ONLY part swapped in — every other branch is inherited unchanged so the
+    ablation isolates the edge mechanism.</div>
+
+  <svg viewBox="0 0 1040 720" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arw" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#5a6b7b"/>
+      </marker>
+      <marker id="arwO" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+        <path d="M0,0 L7,3 L0,6 Z" fill="#d9822b"/>
+      </marker>
+    </defs>
+
+    <!-- INPUT -->
+    <rect x="300" y="20" width="440" height="60" rx="8" fill="#eaf1fb" stroke="#3b73c4"/>
+    <text x="520" y="44" text-anchor="middle" font-size="14" font-weight="600">INPUT  x : [B, N, seq, 5]</text>
+    <text x="520" y="64" text-anchor="middle" font-size="11" fill="#40515f">B = batch of dates · N = tickers · seq = lookback · 5 features
+      [parkinson, har_weekly, har_monthly, market_pk, vol_zscore20]</text>
+
+    <!-- split lines -->
+    <path d="M420,80 L250,140" stroke="#5a6b7b" fill="none" marker-end="url(#arw)"/>
+    <path d="M620,80 L720,140" stroke="#5a6b7b" fill="none" marker-end="url(#arw)"/>
+
+    <!-- LSTM BRANCH -->
+    <rect x="70" y="145" width="360" height="150" rx="8" fill="#eef7ef" stroke="#3f9d54"/>
+    <text x="250" y="170" text-anchor="middle" font-size="14" font-weight="600">LSTM branch — temporal</text>
+    <text x="250" y="196" text-anchor="middle" font-size="12" fill="#40515f">reshape → [B·N, seq, 5]</text>
+    <text x="250" y="218" text-anchor="middle" font-size="12" fill="#40515f">2-layer LSTM (hidden = 64), dropout 0.2</text>
+    <text x="250" y="240" text-anchor="middle" font-size="12" fill="#40515f">take last hidden state</text>
+    <text x="250" y="270" text-anchor="middle" font-size="13" font-weight="600" fill="#2b6b3c">→ h : [B, N, 64]</text>
+
+    <!-- GAT BRANCH -->
+    <rect x="610" y="145" width="360" height="150" rx="8" fill="#fdeef0" stroke="#c4485b"/>
+    <text x="790" y="170" text-anchor="middle" font-size="14" font-weight="600">GAT branch — spatial</text>
+    <text x="790" y="196" text-anchor="middle" font-size="12" fill="#40515f">raw features at LAST day t:</text>
+    <text x="790" y="216" text-anchor="middle" font-size="12" fill="#40515f">x[:, :, -1, :] → [B, N, 5]</text>
+    <text x="790" y="240" text-anchor="middle" font-size="12" fill="#40515f">2-hop WeightedGATLayer(adj_b), 4 heads</text>
+    <text x="790" y="270" text-anchor="middle" font-size="13" font-weight="600" fill="#9c3546">→ gnn : [B, N, 256]</text>
+
+    <!-- MTGNN BLOCK -->
+    <rect x="560" y="330" width="460" height="210" rx="10" fill="#fef3e6" stroke="#d9822b" stroke-width="2"/>
+    <text x="790" y="356" text-anchor="middle" font-size="14" font-weight="700" fill="#b5680f">★ MTGNN GraphConstructor — learns the edge</text>
+    <text x="790" y="384" text-anchor="middle" font-size="12" fill="#40515f">E1, E2 ∈ ℝ^(N×d) learnable node embeddings (d = 40)</text>
+    <text x="790" y="406" text-anchor="middle" font-size="12" fill="#40515f">M1 = tanh(α·Θ1·E1) ,  M2 = tanh(α·Θ2·E2)   (α = 3)</text>
+    <text x="790" y="428" text-anchor="middle" font-size="12" fill="#40515f">A = ReLU(tanh(α·(M1 M2ᵀ − M2 M1ᵀ)))  → directed/asym.</text>
+    <text x="790" y="450" text-anchor="middle" font-size="12" fill="#40515f">per-row top-k (k = 20) + rand·0.01 tie-break → sparse Â</text>
+    <text x="790" y="472" text-anchor="middle" font-size="12" fill="#40515f">+ self-loop = 1.0 ,  × nmask  (zero invalid source mã)</text>
+    <text x="790" y="500" text-anchor="middle" font-size="13" font-weight="700" fill="#b5680f">→ adj_b : [B, N, N]  (built every forward)</text>
+
+    <!-- MTGNN feeds GAT -->
+    <path d="M770,330 L790,295" stroke="#d9822b" stroke-width="2" fill="none" marker-end="url(#arwO)"/>
+    <text x="838" y="316" font-size="11" fill="#b5680f">adj_b → GAT</text>
+
+    <!-- branches to fusion -->
+    <path d="M250,295 L420,575" stroke="#5a6b7b" fill="none" marker-end="url(#arw)"/>
+    <path d="M790,540 L620,575" stroke="#5a6b7b" fill="none" marker-end="url(#arw)"/>
+
+    <!-- FUSION -->
+    <rect x="300" y="580" width="440" height="60" rx="8" fill="#eef0f3" stroke="#5a6b7b"/>
+    <text x="520" y="605" text-anchor="middle" font-size="14" font-weight="600">FUSION  cat([ h(64) , gnn(256) ]) → head MLP</text>
+    <text x="520" y="625" text-anchor="middle" font-size="11" fill="#40515f">HAR-X residual anchor · per-ticker StandardScaler · QLIKE floor</text>
+
+    <!-- OUTPUT -->
+    <path d="M520,640 L520,672" stroke="#5a6b7b" fill="none" marker-end="url(#arw)"/>
+    <rect x="330" y="675" width="380" height="38" rx="8" fill="#e9f7ee" stroke="#2b6b3c"/>
+    <text x="520" y="699" text-anchor="middle" font-size="13" font-weight="600" fill="#1f5730">ŷ : [B, N] — volatility forecast per ticker per day</text>
+  </svg>
+
+  <div class="lgd">
+    <span class="chip" style="background:#eef7ef"></span>LSTM temporal branch (inherited)&nbsp;&nbsp;
+    <span class="chip" style="background:#fdeef0"></span>GAT spatial branch, 2-hop (inherited)&nbsp;&nbsp;
+    <span class="chip" style="background:#fef3e6;border:1px solid #d9822b"></span><b>MTGNN learned edge — the only swapped block</b><br>
+    Fixed-edge variants (<code>adj_vol2pk</code>, sector ICB, DY spillover) replace ONLY the orange block with a
+    precomputed, frozen adjacency; the learned variant rebuilds <code>adj_b</code> from the embeddings on every
+    forward. MTGNN's original mix-hop propagation is deliberately replaced by the same 2-hop
+    <code>WeightedGATLayer</code> across all edge choices, so the ablation isolates the edge, not the propagator.
+  </div>
+</div>
+</body>
+</html>

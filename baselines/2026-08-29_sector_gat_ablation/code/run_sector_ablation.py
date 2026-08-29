@@ -105,10 +105,13 @@ def forward_pass_smoke(D, adj, batch=2):
 
 
 def _train_variant(D, cfg, use_graph, adj):
-    """Seed-ensembled TEST prediction dict for one edge choice (run_masked_rich conventions)."""
-    seed_dicts = [RMR._pred_dict(RMR.train_masked_rich(D, cfg, s, use_graph, adj),
-                                 D.y_te, D.tmask_te, D.d_te, D.N) for s in cfg.seeds]
-    return RMR._ens(seed_dicts), seed_dicts
+    """One edge choice: (ensemble TEST pred dict, per-seed TEST pred dicts, per-seed split outputs).
+
+    ``return_splits=True`` keeps each seed's train/val predictions + per-epoch learning curves so the
+    caller can stamp the CLAUDE.md over/under-fit evidence (train/val metrics + fit verdict + curves)."""
+    outs = [RMR.train_masked_rich(D, cfg, s, use_graph, adj, return_splits=True) for s in cfg.seeds]
+    seed_dicts = [RMR._pred_dict(o["test"], D.y_te, D.tmask_te, D.d_te, D.N) for o in outs]
+    return RMR._ens(seed_dicts), seed_dicts, outs
 
 
 def run_training(panel, cfg, horizon, sector_csv=None, out_dir=None):
@@ -119,14 +122,25 @@ def run_training(panel, cfg, horizon, sector_csv=None, out_dir=None):
     with tempfile.TemporaryDirectory() as td:
         D, _ = build_panel_masked(panel, cfg, horizon, td, keep_tickers=EFA.screened_tickers(panel))
         adj_sec, cov = sector_adj_for(D.tickers, sector_csv)
-        sector_pred, sector_seeds = _train_variant(D, cfg, True, adj_sec)
-        stat_pred, stat_seeds = _train_variant(D, cfg, True, D.adj_vol2pk)
-        lstm_pred, lstm_seeds = _train_variant(D, cfg, False, D.adj_vol2pk)
+        sector_pred, sector_seeds, sector_outs = _train_variant(D, cfg, True, adj_sec)
+        stat_pred, stat_seeds, stat_outs = _train_variant(D, cfg, True, D.adj_vol2pk)
+        lstm_pred, lstm_seeds, lstm_outs = _train_variant(D, cfg, False, D.adj_vol2pk)
         fl = cfg.qlike_floor
         preds = {"sector_GAT": sector_pred, "stat_GAT_vol2pk": stat_pred, "no_graph_LSTM": lstm_pred}
         seedmap = {"sector_GAT": sector_seeds, "stat_GAT_vol2pk": stat_seeds, "no_graph_LSTM": lstm_seeds}
+        outsmap = {"sector_GAT": sector_outs, "stat_GAT_vol2pk": stat_outs, "no_graph_LSTM": lstm_outs}
         metrics = {k: RMR._metrics(v, fl) for k, v in preds.items()}
         per_seed = {k: RMR.seed_metric_stats(v, fl) for k, v in seedmap.items()}
+        # OVER/UNDER-FIT EVIDENCE (CLAUDE.md mandate 2026-08-29): seed-ensembled train/val split metrics +
+        # a per-model fit verdict + per-seed learning curves, so the JSON can PROVE (not assert) generalisation.
+        tr_pred = {k: RMR._ens_split(outsmap[k], "train") for k in outsmap}
+        va_pred = {k: RMR._ens_split(outsmap[k], "val") for k in outsmap}
+        train_metrics = {k: RMR._split_metrics(tr_pred[k], D.y_tr, D.tmask_tr, fl) for k in outsmap}
+        val_metrics = {k: RMR._split_metrics(va_pred[k], D.y_va, D.tmask_va, fl) for k in outsmap}
+        fit_diagnostics = {k: RMR.OF.classify_fit(train_metrics[k], val_metrics[k], metrics[k]) for k in outsmap}
+        learning_curves = {k: {"train": [o["train_curve"] for o in outsmap[k]],
+                               "val": [o["val_curve"] for o in outsmap[k]],
+                               "best_epoch": [o["best_epoch"] for o in outsmap[k]]} for k in outsmap}
         dm = {
             "sector_vs_stat": RMR._dm_all(sector_pred, stat_pred, horizon, fl),
             "sector_vs_no_graph": RMR._dm_all(sector_pred, lstm_pred, horizon, fl),
@@ -141,6 +155,8 @@ def run_training(panel, cfg, horizon, sector_csv=None, out_dir=None):
                                                     "n_sectors", "avg_off_degree", "max_off_degree",
                                                     "n_singletons")},
             "metrics_ensemble": metrics, "metrics_per_seed": per_seed, "dm": dm,
+            "train_metrics": train_metrics, "val_metrics": val_metrics,
+            "fit_diagnostics": fit_diagnostics, "learning_curves": learning_curves,
         }
         if out_dir:
             out = Path(out_dir); out.mkdir(parents=True, exist_ok=True)
