@@ -19,11 +19,11 @@ from build_final_tables import build_tables, _scaled_value, _DEC  # noqa: E402
 
 METRICS_NO_R2 = ("mse", "rmse", "mae", "qlike")
 _HDR = {"mse": "MSE", "rmse": "RMSE", "mae": "MAE", "qlike": "QLIKE"}
-MAIN_MODELS = (("HAR-X", "HAR-X"), ("GARCH", "GARCH"), ("LSTM_wGAT_vol2pk", "LSTM+GAT"))
-GRAPH_ABL_MODELS = (("HAR-X", "HAR-X"), ("LSTM", "LSTM"), ("LSTM_wGAT_vol2pk", "LSTM+GAT"))
+MAIN_MODELS = (("HAR-X", "HAR-X"), ("GARCH", "GARCH"), ("LSTM_wGAT_vol2pk", "VolGA"))
+GRAPH_ABL_MODELS = (("HAR-X", "HAR-X"), ("LSTM", "LSTM"), ("LSTM_wGAT_vol2pk", "VolGA"))
 # estimator-comparison tables compare only the benchmark and the proposed model (no no-graph LSTM row)
-EST_MODELS = (("HAR-X", "HAR-X"), ("LSTM_wGAT_vol2pk", "LSTM+GAT"))
-FULL_MODELS = (("HAR-X", "HAR-X"), ("GARCH", "GARCH"), ("LSTM", "LSTM"), ("LSTM_wGAT_vol2pk", "LSTM+GAT"))
+EST_MODELS = (("HAR-X", "HAR-X"), ("LSTM_wGAT_vol2pk", "VolGA"))
+FULL_MODELS = (("HAR-X", "HAR-X"), ("GARCH", "GARCH"), ("LSTM", "LSTM"), ("LSTM_wGAT_vol2pk", "VolGA"))
 HORIZONS = (1, 5, 10, 22)
 
 

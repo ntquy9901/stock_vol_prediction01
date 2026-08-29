@@ -8,30 +8,29 @@
 \graphicspath{{diagrams/}}   % figure lives in docs/paper/diagrams/ (do NOT add ./ — collides with output pdf)
 \usepackage{booktabs}
 \usepackage{amsmath}
+\usepackage{placeins}
 \usepackage[T1]{fontenc}
 
 \begin{document}
 
-\title{Multi-Horizon Stock Volatility Forecasting}
+\title{VolGA: A Graph-Attention Network for Multi-Horizon Stock Volatility Forecasting}
 
 \author{Author One\inst{1} \and Author Two\inst{1}}
-\authorrunning{Multi-Horizon Volatility Forecasting}
+\authorrunning{VolGA: Multi-Horizon Volatility Forecasting}
 \institute{Affiliation, City, Country \\ \email{\{author1,author2\}@example.edu}}
 
 \maketitle
 
 \begin{abstract}
-Forecasting daily stock-price volatility is a core input to risk management and option pricing. We evaluate a
-graph-augmented deep model (LSTM+GAT) for multi-horizon volatility forecasting, using Vietnam's Hanoi Stock
+Forecasting daily stock-price volatility is a core input to risk management and option pricing. We evaluate \emph{VolGA} (Volatility Graph-Attention), a model that fuses a per-stock temporal branch with a graph-attention branch, for multi-horizon volatility forecasting, using Vietnam's Hanoi Stock
 Exchange (HNX) as the primary test market and the VN100, VN30 and U.S. S\&P 500 markets --- together with the
 Yang--Zhang and Rogers--Satchell volatility estimators --- as ablation studies. All models share the same five
 inputs and forecast a high--low range (Parkinson) measure of daily volatility at one, five, ten and twenty-two
 trading days ahead, against the HAR and GARCH benchmarks, evaluated on MSE, RMSE, MAE and QLIKE with a
 date-clustered Diebold--Mariano test that accounts for the cross-sectional dependence of the panel. On the HNX
-market the LSTM+GAT attains the lower forecast error, with a significantly lower QLIKE than HAR at three of the
+market VolGA attains the lower forecast error, with a significantly lower QLIKE than HAR at three of the
 four horizons and the lowest error on all four metrics at the daily horizon; the market and estimator ablations
-report the corresponding results across the other markets and volatility targets. We release code and data for
-reproduction.
+report the corresponding results across the other markets and volatility targets.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
@@ -64,18 +63,17 @@ as independent evidence (which overstates statistical significance).
 This paper asks \emph{where} deep and graph models improve on the linear HAR benchmark, across several markets. We take the Hanoi exchange (HNX) as the primary test market and add the VN30 and
 VN100 indices, the broader HOSE exchange and the U.S. S\&P 500 as a cross-market comparison, with GARCH(1,1) as a
 classical reference. Holding the five inputs and the data design fixed, we compare an extended HAR (HAR-X), an
-LSTM, and an LSTM+GAT. To keep the comparison fair we evaluate on a \emph{masked panel}: instead of intersecting
+LSTM, and VolGA. To keep the comparison fair we evaluate on a \emph{masked panel}: instead of intersecting
 to the dates on which every stock is present, we keep the union of trading dates and mask stocks not yet listed
-on a given date, so every model sees the same panel and the same five features. Our headline finding: on HNX the
-LSTM+GAT achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
+on a given date, so every model sees the same panel and the same five features. Our headline finding: on HNX VolGA achieves a significantly lower QLIKE than HAR at three of the four horizons and, at the daily horizon,
 the lowest error on all four metrics; on the larger panels (VN100, HOSE) the learned models significantly
 reduce the absolute error and stay competitive on QLIKE, while HAR keeps a significant QLIKE edge on the smallest
 panel (VN30) and the S\&P 500 at the short horizons.
 
 Our contributions are: (i) a multi-horizon, multi-seed, multi-market benchmark that holds the feature set and
-data design fixed across HAR-X, an LSTM, and an LSTM+GAT, spanning HNX, the VN30, VN100 and HOSE panels and the developed-market S\&P 500, so any measured difference is attributable to a
+data design fixed across HAR-X, an LSTM, and VolGA, spanning HNX, the VN30, VN100 and HOSE panels and the developed-market S\&P 500, so any measured difference is attributable to a
 single component; (ii) the finding that the learned models' advantage concentrates where the linear benchmark is
-weakest --- on HNX the LSTM+GAT has a significantly lower QLIKE than HAR at three of four horizons and the lowest
+weakest --- on HNX VolGA has a significantly lower QLIKE than HAR at three of four horizons and the lowest
 error on all four metrics at the daily horizon, while on the larger panels the learned models
 significantly reduce the absolute error and stay competitive on QLIKE --- together with a leave-one-out reading
 of the graph branch, whose contribution over the same-feature LSTM is horizon-dependent (a significant QLIKE
@@ -121,14 +119,26 @@ test~\cite{dm1995} and the Harvey--Leybourne--Newbold small-sample correction~\c
 \textbf{Target and features.} The target is the Parkinson variance~\cite{parkinson1980} at day $t{+}h$, a
 non-negative point forecast. The primary target is short-term, horizons $h\in\{1,5\}$ (one trading day and one
 trading week ahead); $h\in\{10,22\}$ (two weeks and roughly one trading month) are an extended study. All
-three feature-based models (HAR-X, LSTM, LSTM+GAT) use the same five node features per ticker at $t$: the daily Parkinson variance, its 5-day
+three feature-based models (HAR-X, LSTM, VolGA) use the same five node features per ticker at $t$: the daily Parkinson variance, its 5-day
 rolling mean (weekly), its 22-day rolling mean (monthly), a market Parkinson factor (the causal cross-sectional
 median of the square-root Parkinson variance) and a 20-day volume z-score.
+
+\textbf{Volatility estimators.} The primary target is the Parkinson variance; the ablation of
+Sec.~\ref{sec:abl} also uses the Rogers--Satchell and windowed Yang--Zhang estimators. From the daily open $O$,
+high $H$, low $L$ and close $C$ ($\ln$ is the natural logarithm), each is a daily variance estimator:
+\begin{align*}
+\sigma^2_{\mathrm{Park}} &= \tfrac{1}{4\ln 2}\,\ln(H/L)^2 && \text{(Parkinson: high--low range only),}\\
+\sigma^2_{\mathrm{RS}} &= \ln(H/C)\ln(H/O)+\ln(L/C)\ln(L/O) && \text{(Rogers--Satchell: drift-independent, one day),}\\
+\sigma^2_{\mathrm{YZ}} &= \sigma^2_{o}+k\,\sigma^2_{c}+(1-k)\,\overline{\sigma^2_{\mathrm{RS}}} && \text{(Yang--Zhang: windowed, $n{=}20$ days),}
+\end{align*}
+where for Yang--Zhang $\sigma^2_{o}$ and $\sigma^2_{c}$ are the $n$-day sample variances of the overnight return
+$\ln(O_t/C_{t-1})$ and the open-to-close return $\ln(C_t/O_t)$, $\overline{\sigma^2_{\mathrm{RS}}}$ is the
+rolling mean of the daily Rogers--Satchell term, and $k=0.34/(1.34+(n{+}1)/(n{-}1))$~\cite{yangzhang2000,rogers1991}.
 
 \textbf{Models.} \emph{HAR-X} (baseline): pooled OLS on the five features (the HAR cascade augmented with a market Parkinson factor and a volume z-score), linear. \emph{LSTM}: a two-layer LSTM
 (hidden 64) over the lookback window of the five features; a single pooled model is trained over all tickers,
 each standardized by its own scaler fit on training rows only, with a linear output inverse-transformed for
-evaluation (dropout, weight decay, gradient clipping, ReduceLROnPlateau, early stopping). \emph{LSTM+GAT}
+evaluation (dropout, weight decay, gradient clipping, ReduceLROnPlateau, early stopping). \emph{VolGA}
 (Fig.~\ref{fig:arch}): the LSTM branch plus a Graph Attention Network branch~\cite{gat2018} that reads the five
 node features at $t$ and attends over a directed volume$\to$Parkinson Top-5, edge-weighted, two-hop graph
 estimated on training rows only; the branches are concatenated into an MLP head. The leave-one-out comparison
@@ -159,14 +169,14 @@ the per-observation loss differential is collapsed to one value per calendar dat
 correction, HAC lag $h{-}1$) is computed. This is the panel-correct treatment for a cross-section that shares
 each trading date; a naive per-observation test treats the effective sample as the number of tickers times the
 number of dates and inflates the statistic by roughly the square root of the number of stocks (about six on
-VN30, ten on VN100). We report two targeted contrasts --- LSTM vs HAR-X and LSTM+GAT vs LSTM --- on QLIKE and
+VN30, ten on VN100). We report two targeted contrasts --- LSTM vs HAR-X and VolGA vs LSTM --- on QLIKE and
 MAE. Per-metric contrasts are reported without a multiple-comparison correction (unadjusted).
 
 \begin{figure}[t]
 \centering
 % figure generated by docs/paper/diagrams/generate_arch.py -> diagrams/soict_harlstmgat.{pdf,png,svg}
 \includegraphics[width=\textwidth]{diagrams/soict_harlstmgat.png}
-\caption{LSTM+GAT: a per-node LSTM temporal branch and a GAT spatial branch (directed volume$\to$Parkinson
+\caption{VolGA: a per-node LSTM temporal branch and a GAT spatial branch (directed volume$\to$Parkinson
 Top-5 weighted two-hop attention) are concatenated into an MLP head; the leave-one-out comparison removes the
 GAT branch to give the same-feature LSTM.}
 \label{fig:arch}
@@ -180,16 +190,12 @@ single chronological split and per-ticker standardization fit on training rows o
 Parkinson variance; the windowed Yang--Zhang and Rogers--Satchell estimators are used in an ablation.
 
 \section{Experiments}
-The main comparison is HAR-X, GARCH(1,1) and the proposed LSTM+GAT (directed volume$\to$Parkinson weighted
+The main comparison is HAR-X, GARCH(1,1) and the proposed model VolGA (directed volume$\to$Parkinson weighted
 two-hop) on HNX at horizons $\{1,5,10,22\}$, reporting MSE, RMSE, MAE and QLIKE and the date-clustered
 Diebold--Mariano test. The ablations remove the graph branch (the same-feature no-graph LSTM), vary the market
 (VN100, VN30, S\&P 500) and vary the volatility estimator (Yang--Zhang, Rogers--Satchell).
 
 \section{Results: the HNX market}\label{sec:results}
-Point-error metrics are scaled (MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$); QLIKE is unscaled. Learned-model
-values are the mean of the seed-level metrics over five seeds (QLIKE with its per-seed std $\pm$); HAR-X and
-GARCH are deterministic. All values are read from \texttt{results/masked\_rich\_floor1e2/}.
-
 \begin{table}[t]
 \centering
 \caption{Main result --- HNX (62{,}004 masked obs over 489 test dates at $h1$; learned models: seed mean, QLIKE
@@ -201,14 +207,15 @@ $\pm$~per-seed std). Lower is better on every metric. MSE $\times10^{-7}$, RMSE/
 \input{generated/tab_main_hnx.tex}
 \end{table}
 
-On HNX the proposed LSTM+GAT is the most accurate model at the daily horizon ($h1$) --- the lowest MSE, RMSE,
+On HNX the proposed model VolGA is the most accurate model at the daily horizon ($h1$) --- the lowest MSE, RMSE,
 MAE and QLIKE --- and it keeps the lowest QLIKE at $h10$ and $h22$; GARCH is far worse on every metric. By the
-date-clustered DM test the LSTM+GAT has a significantly lower QLIKE than HAR-X at three of the four horizons
+date-clustered DM test VolGA has a significantly lower QLIKE than HAR-X at three of the four horizons
 ($h1$: $p<0.001$; $h10$: $p=0.022$; $h22$: $p=0.016$; $h5$: $p=0.18$, not significant), and at $h1$ its
 absolute-error gain over HAR-X is also significant ($p<0.001$); at the longer horizons HAR-X has the lower MAE.
 The deep temporal--graph model's advantage thus falls on the HNX market, where the linear benchmark
 is weakest.
 
+\FloatBarrier
 \section{Ablation studies}\label{sec:abl}
 \subsection{Graph component (leave-one-out)}
 Removing the GAT branch gives the same-feature no-graph LSTM (Table~\ref{tab:abl-graph}). On HNX the graph adds a
@@ -219,7 +226,7 @@ uniform gain.
 
 \begin{table}[t]
 \centering
-\caption{Graph ablation on HNX: the no-graph LSTM vs the full LSTM+GAT (HAR-X for reference). MSE $\times10^{-7}$,
+\caption{Graph ablation on HNX: the no-graph LSTM vs the full VolGA (HAR-X for reference). MSE $\times10^{-7}$,
 RMSE/MAE $\times10^{-4}$.}
 \label{tab:abl-graph}
 \footnotesize
@@ -231,7 +238,7 @@ RMSE/MAE $\times10^{-4}$.}
 \subsection{Other markets: VN100, VN30 and the S\&P 500}
 On the VN30, VN100 and S\&P 500 markets the linear HAR-X keeps the lowest QLIKE, consistent with its standing as a
 hard-to-beat benchmark for large-cap markets, while the learned models significantly reduce the absolute error: on VN100 the
-LSTM+GAT (or the no-graph LSTM) has a significantly lower MAE than HAR-X at $h1$, $h5$ and $h22$
+VolGA (or the no-graph LSTM) has a significantly lower MAE than HAR-X at $h1$, $h5$ and $h22$
 (Table~\ref{tab:dm}), and its QLIKE is not significantly different from HAR-X at the longer horizons. On the
 developed-market S\&P 500 (Table~\ref{tab:abl-sp500}) HAR-X again has the lowest QLIKE at the short horizons
 while the learned models have the lower absolute and squared error.
@@ -261,13 +268,13 @@ Table~\ref{tab:abl-vn100}.}
 \begin{table}[t]
 \centering
 \caption{Targeted date-clustered DM contrasts on the 5-seed ensemble forecast ($p$-value; favoured model in parentheses; bold if $p<0.05$; unadjusted).
-H=HAR-X, L=LSTM, G=LSTM+GAT, on QLIKE and MAE.}
+H=HAR-X, L=LSTM, G=VolGA, on QLIKE and MAE.}
 \label{tab:dm}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{ll cc cc}
 \toprule
-& & \multicolumn{2}{c}{LSTM vs HAR-X} & \multicolumn{2}{c}{LSTM+GAT vs LSTM} \\
+& & \multicolumn{2}{c}{LSTM vs HAR-X} & \multicolumn{2}{c}{VolGA vs LSTM} \\
 \cmidrule(lr){3-4}\cmidrule(lr){5-6}
 Panel & $h$ & QLIKE & MAE & QLIKE & MAE \\
 \midrule
@@ -303,26 +310,17 @@ Table~\ref{tab:abl-vn100}.}
 
 \subsection{Alternative volatility estimators}
 To check that the HNX result is not specific to the Parkinson target, we re-run the pipeline on HNX with the
-target replaced by two other published range-based estimators computed from the same OHLC data (open $O$, high
-$H$, low $L$, close $C$; $\ln$ is the natural logarithm). All three are daily variance estimators:
-\begin{align*}
-\sigma^2_{\mathrm{Park}} &= \tfrac{1}{4\ln 2}\,\ln(H/L)^2 && \text{(Parkinson: high--low range only),}\\
-\sigma^2_{\mathrm{RS}} &= \ln(H/C)\ln(H/O)+\ln(L/C)\ln(L/O) && \text{(Rogers--Satchell: drift-independent, one day),}\\
-\sigma^2_{\mathrm{YZ}} &= \sigma^2_{o}+k\,\sigma^2_{c}+(1-k)\,\overline{\sigma^2_{\mathrm{RS}}} && \text{(Yang--Zhang: windowed over $n{=}20$ days),}
-\end{align*}
-where for Yang--Zhang $\sigma^2_{o}$ and $\sigma^2_{c}$ are the $n$-day sample variances of the overnight return
-$\ln(O_t/C_{t-1})$ and the open-to-close return $\ln(C_t/O_t)$, $\overline{\sigma^2_{\mathrm{RS}}}$ is the rolling
-mean of the daily Rogers--Satchell term, and $k=0.34/(1.34+(n{+}1)/(n{-}1))$~\cite{yangzhang2000,rogers1991}.
-QLIKE is scale-invariant, so it is comparable across targets; Table~\ref{tab:abl-park} (Parkinson) is the
-reference. Yang--Zhang is a smoothed twenty-day level and is far easier to forecast, so its absolute QLIKE is
+target replaced by the two other published estimators defined in the Method --- the single-day Rogers--Satchell
+and the windowed Yang--Zhang. QLIKE is scale-invariant, so it is comparable across targets;
+Table~\ref{tab:abl-park} (Parkinson) is the reference. Yang--Zhang is a smoothed twenty-day level and is far easier to forecast, so its absolute QLIKE is
 much lower and is not comparable to the single-day measures --- it is shown for completeness. Under the
-single-day Rogers--Satchell target the LSTM+GAT has the lower QLIKE on HNX at every reported horizon, and under
+single-day Rogers--Satchell target VolGA has the lower QLIKE on HNX at every reported horizon, and under
 Yang--Zhang a learned model has the lower QLIKE at the longer horizons, so the HNX result holds across
 estimators. The Rogers--Satchell runs cover $h\in\{1,5,10\}$; the $h22$ cell is in progress.
 
 \begin{table}[t]
 \centering
-\caption{HNX --- Parkinson target (the main estimator; HAR-X vs the proposed LSTM+GAT). MSE $\times10^{-7}$,
+\caption{HNX --- Parkinson target (the main estimator; HAR-X vs the proposed model VolGA). MSE $\times10^{-7}$,
 RMSE/MAE $\times10^{-4}$.}
 \label{tab:abl-park}
 \footnotesize
@@ -352,8 +350,9 @@ single-day measures). Same scaling as Table~\ref{tab:abl-park}.}
 \input{generated/tab_abl_rogers_satchell.tex}
 \end{table}
 
+\FloatBarrier
 \section{Discussion}\label{sec:disc}
-On the primary HNX market the proposed LSTM+GAT gives the lower forecast error (Table~\ref{tab:main-hnx}): at
+On the primary HNX market the proposed model VolGA gives the lower forecast error (Table~\ref{tab:main-hnx}): at
 the daily horizon ($h1$) it has the lowest MSE, RMSE, MAE and QLIKE (QLIKE $1.8152$ vs HAR-X $1.8717$), and its
 QLIKE is significantly below HAR-X at $h1$, $h10$ and $h22$ (date-clustered DM, $p<0.001$, $0.022$, $0.016$;
 $p=0.18$ at $h5$); at $h1$ its absolute-error gain over HAR-X is also significant ($p<0.001$). On HNX the graph
@@ -376,13 +375,13 @@ significant per observation. \textbf{Multiplicity.} We report per-metric DM cont
 multiple-comparison correction; on the VN and S\&P 500 panels the QLIKE comparison is a null
 result (no learned model is significantly better than HAR-X there), which a correction would only reinforce; the
 significant results we emphasise --- the HNX QLIKE gains over HAR-X and the VN100 MAE gains --- are
-reported with their exact $p$-values, and the graph-vs-LSTM contrasts are unadjusted exploratory findings. \textbf{Capacity.} The LSTM+GAT
+reported with their exact $p$-values, and the graph-vs-LSTM contrasts are unadjusted exploratory findings. \textbf{Capacity.} The VolGA
 adds a graph branch and its parameters to the no-graph LSTM, so the leave-one-out contrast measures the effect
 of adding the implemented graph branch, not of graph structure at matched capacity.
 
 \section{Conclusion}
 Across several markets --- the HNX exchange, the VN30, VN100 and HOSE panels and the
-developed-market S\&P 500 --- we benchmarked a linear HAR-X against an LSTM and an LSTM+GAT under one
+developed-market S\&P 500 --- we benchmarked a linear HAR-X against an LSTM and VolGA under one
 leakage-free, panel-correct protocol with the same features and the same date-clustered Diebold--Mariano
 inference. The deep temporal--graph model is most valuable on the HNX market: it attains a
 significantly lower QLIKE than HAR-X at three of the four horizons and the lowest error on all four metrics at

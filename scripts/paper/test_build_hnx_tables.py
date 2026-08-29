@@ -7,7 +7,7 @@ import build_hnx_tables as B  # noqa: E402
 
 
 def _table():
-    # two models at h1; LSTM+GAT lower QLIKE, HAR-X lower MSE
+    # two models at h1; VolGA lower QLIKE, HAR-X lower MSE
     return {"rows": [
         {"panel": "hnx", "horizon": 1, "model": "HAR-X",
          "cells": {"mse": {"value": 1.0e-6, "std": None}, "qlike": {"value": 1.90, "std": None},
@@ -33,14 +33,14 @@ def test_column_spec_matches_four_metrics():
 
 def test_model_subset_includes_only_requested():
     tex = B.render_panel(_table(), "hnx", B.MAIN_MODELS)
-    assert "HAR-X" in tex and "LSTM+GAT" in tex
+    assert "HAR-X" in tex and "VolGA" in tex
     # GARCH not in this fixture -> row absent, no crash
     assert "LSTM &" not in tex  # plain no-graph LSTM not requested by MAIN_MODELS
 
 
 def test_bold_marks_best_per_metric():
     tex = B.render_panel(_table(), "hnx", B.MAIN_MODELS)
-    # LSTM+GAT has the lower QLIKE (1.81) -> bolded; HAR-X lower MSE (scaled 10.000) -> bolded
+    # VolGA has the lower QLIKE (1.81) -> bolded; HAR-X lower MSE (scaled 10.000) -> bolded
     assert r"\textbf{1.8100" in tex
     assert r"\textbf{10.000}" in tex
 
@@ -56,13 +56,13 @@ def test_absent_panel_yields_empty_body():
 
 
 def test_est_models_drops_no_graph_lstm():
-    # estimator tables compare only HAR-X and LSTM+GAT -- the plain LSTM row must be absent
+    # estimator tables compare only HAR-X and VolGA -- the plain LSTM row must be absent
     t = _table()
     t["rows"].append({"panel": "hnx", "horizon": 1, "model": "LSTM",
                       "cells": {"mse": {"value": 1.3e-6, "std": 0.01}, "qlike": {"value": 1.85, "std": 0.01},
                                 "rmse": {"value": 1.15e-3, "std": None}, "mae": {"value": 6.45e-4, "std": None}}})
     tex = B.render_panel(t, "hnx", B.EST_MODELS)
-    assert "HAR-X" in tex and "LSTM+GAT" in tex
+    assert "HAR-X" in tex and "VolGA" in tex
     assert "& LSTM &" not in tex  # the no-graph LSTM row is excluded
 
 
