@@ -70,6 +70,18 @@ def validate_ohlc_data(df: pd.DataFrame) -> bool:
     if df[['open', 'high', 'low', 'close']].isnull().any().any():
         raise ValueError("OHLC prices cannot be NaN")
 
+    # 3. Valid OHLC ordering: high is the bar max, low is the bar min. Impossible
+    #    geometry (e.g. high < low, or high below open/close) would otherwise pass
+    #    validation and produce a finite-but-meaningless Parkinson variance.
+    row_max = df[['open', 'close']].max(axis=1)
+    row_min = df[['open', 'close']].min(axis=1)
+    bad_geometry = (df['high'] < df['low']) | (df['high'] < row_max) | (df['low'] > row_min)
+    if bad_geometry.any():
+        raise ValueError(
+            "Invalid OHLC geometry: require high>=low, high>=max(open,close), "
+            "low<=min(open,close)"
+        )
+
     return True
 
 
