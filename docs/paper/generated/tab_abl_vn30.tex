@@ -1,0 +1,25 @@
+\begin{tabular}{llcccc}
+\toprule
+$h$ & Model & MSE & RMSE & MAE & QLIKE \\
+\midrule
+1 & HAR-X & \textbf{1.927} & \textbf{4.389} & 2.389 & \textbf{0.5159} \\
+1 & GARCH & 2.788 & 5.280 & 3.480 & 0.7954 \\
+1 & LSTM & 1.931 & 4.395 & \textbf{2.352} & 0.7037\,$\pm$.054 \\
+1 & LSTM+GAT & 1.927 & 4.390 & 2.379 & 0.6602\,$\pm$.064 \\
+\midrule
+5 & HAR-X & \textbf{2.139} & \textbf{4.625} & \textbf{2.583} & \textbf{0.5965} \\
+5 & GARCH & 2.783 & 5.276 & 3.489 & 0.7859 \\
+5 & LSTM & 2.158 & 4.645 & 2.636 & 0.6595\,$\pm$.043 \\
+5 & LSTM+GAT & 2.148 & 4.635 & 2.596 & 0.6491\,$\pm$.027 \\
+\midrule
+10 & HAR-X & \textbf{2.301} & \textbf{4.797} & \textbf{2.733} & \textbf{0.6428} \\
+10 & GARCH & 2.829 & 5.319 & 3.508 & 0.7774 \\
+10 & LSTM & 2.313 & 4.809 & 2.742 & 0.6687\,$\pm$.015 \\
+10 & LSTM+GAT & 2.325 & 4.822 & 2.749 & 0.6672\,$\pm$.029 \\
+\midrule
+22 & HAR-X & \textbf{2.272} & \textbf{4.766} & \textbf{2.785} & \textbf{0.6422} \\
+22 & GARCH & 2.719 & 5.214 & 3.437 & 0.7452 \\
+22 & LSTM & 2.376 & 4.874 & 2.868 & 0.6636\,$\pm$.013 \\
+22 & LSTM+GAT & 2.379 & 4.878 & 2.889 & 0.6527\,$\pm$.003 \\
+\bottomrule
+\end{tabular}
