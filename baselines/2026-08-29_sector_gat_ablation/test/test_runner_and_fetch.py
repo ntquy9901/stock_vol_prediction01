@@ -143,11 +143,13 @@ def test_run_training_emits_overfit_evidence(monkeypatch, tmp_path):
     (CLAUDE.md over/under-fit mandate 2026-08-29) so the result.json can PROVE generalisation."""
     D = _tiny_D()
 
+    # split-DISTINGUISHABLE errors (train < val < test) so the assertions below pin that each split's
+    # metrics are fed from the CORRECT split array -- a plain swap would flip the ordering and fail.
     def fake_train(Dd, cfg, seed, use_graph, adj, output_param="zscore_floor", return_splits=False):
-        off = 0.0 if not use_graph else (1e-4 if adj is Dd.adj_vol2pk else 2e-4)
-        test = Dd.y_te + off
+        goff = 0.0 if not use_graph else (1e-7 if adj is Dd.adj_vol2pk else 2e-7)  # tiny graph distinction
+        test = Dd.y_te + 1e-5 + goff
         if return_splits:
-            return {"test": test, "val": Dd.y_va + off, "train": Dd.y_tr + off,
+            return {"test": test, "val": Dd.y_va + 5e-6 + goff, "train": Dd.y_tr + 1e-6 + goff,
                     "train_curve": [1e-6, 5e-7], "val_curve": [1.1e-6, 6e-7], "best_epoch": 2}
         return test
 
@@ -167,8 +169,11 @@ def test_run_training_emits_overfit_evidence(monkeypatch, tmp_path):
         lc = res["learning_curves"][k]
         assert len(lc["train"]) == 2 and len(lc["val"]) == 2 and len(lc["best_epoch"]) == 2
         assert isinstance(lc["train"][0], list)  # per-epoch MSE list per seed
+        # stub error grows train<val<test, so a correctly-wired split feed yields this MSE ordering;
+        # this catches a train/val/test mislabel that the near-perfect-fit version could not.
+        assert res["train_metrics"][k]["mse"] < res["val_metrics"][k]["mse"] < res["metrics_ensemble"][k]["mse"]
     # verdict VALUES are the classifier's job (scripts/quality_gate/test_overfit_check.py); this test pins
-    # only that run_training PLUMBS a valid verdict (status in the allowed set, checked in the loop above).
+    # the split-wiring (ordering above) + evidence structure, not the verdict thresholds.
 
 
 def test_main_dry_branch(monkeypatch, capsys):
