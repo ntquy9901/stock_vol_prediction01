@@ -125,11 +125,13 @@ median of the square-root Parkinson variance) and a 20-day volume z-score.
 
 \textbf{Volatility estimators.} The primary target is the Parkinson variance; the ablation of
 Sec.~\ref{sec:abl} also uses the Rogers--Satchell and windowed Yang--Zhang estimators. From the daily open $O$,
-high $H$, low $L$ and close $C$ ($\ln$ is the natural logarithm), each is a daily variance estimator:
+high $H$, low $L$ and close $C$ ($\ln$ is the natural logarithm), each is a daily variance estimator: Parkinson
+uses only the high--low range, Rogers--Satchell is drift-independent, and Yang--Zhang is windowed over $n{=}20$
+days.
 \begin{align*}
-\sigma^2_{\mathrm{Park}} &= \tfrac{1}{4\ln 2}\,\ln(H/L)^2 && \text{(Parkinson: high--low range only),}\\
-\sigma^2_{\mathrm{RS}} &= \ln(H/C)\ln(H/O)+\ln(L/C)\ln(L/O) && \text{(Rogers--Satchell: drift-independent, one day),}\\
-\sigma^2_{\mathrm{YZ}} &= \sigma^2_{o}+k\,\sigma^2_{c}+(1-k)\,\overline{\sigma^2_{\mathrm{RS}}} && \text{(Yang--Zhang: windowed, $n{=}20$ days),}
+\sigma^2_{\mathrm{Park}} &= \tfrac{1}{4\ln 2}\,\ln(H/L)^2,\\
+\sigma^2_{\mathrm{RS}} &= \ln(H/C)\ln(H/O)+\ln(L/C)\ln(L/O),\\
+\sigma^2_{\mathrm{YZ}} &= \sigma^2_{o}+k\,\sigma^2_{c}+(1-k)\,\overline{\sigma^2_{\mathrm{RS}}},
 \end{align*}
 where for Yang--Zhang $\sigma^2_{o}$ and $\sigma^2_{c}$ are the $n$-day sample variances of the overnight return
 $\ln(O_t/C_{t-1})$ and the open-to-close return $\ln(C_t/O_t)$, $\overline{\sigma^2_{\mathrm{RS}}}$ is the
