@@ -193,6 +193,20 @@ Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<Y
 - No hidden global state / unbounded in-process caches (dùng bounded TTL/size cache; externalize shared state).
 - No secrets in code (secrets manager / env).
 - No hardcoded absolute local paths.
+- **Single-source-of-truth app config (ENFORCED, per root-cause 2026-08-31: `volume_zscore` dùng window=20
+  hardcode ở masked_rich trong khi project quy ước tháng=22 (har_monthly) → lệch âm thầm, sửa 1 chỗ không đủ):**
+  MỌI hằng số điều chỉnh được PHẢI sống trong **1 file config canonical DUY NHẤT** và được import từ đó —
+  hyperparameter (lr, dropout, epochs, min_epochs, batch, seeds, patience, hidden, heads, grad_clip,
+  weight_decay), window (lookback/SEQ, HAR 5/22, volume_zscore, walk-forward K/val/test_frac), threshold/floor
+  (qlike_floor, pred-floor 1e-2/1e-3/1e-12, edge top_k/min_overlap/min_pairs, min_train_rows/min_valid), và
+  horizons. **KHÔNG hardcode / rải magic-number** trong module pipeline. Code MỚI đụng train/eval/data-processing
+  mà thêm 1 hằng số điều chỉnh → **BẮT BUỘC đưa vào app config** (không literal rời rạc). Đổi giá trị = sửa
+  đúng 1 chỗ. **Enforce:** (1) `/code-review` PHẢI có lăng kính "config-hardcode" — bắt mọi window/threshold/
+  floor/hyperparameter hardcode ngoài config (mặc định MAJOR nếu ở pipeline train/eval/data); (2) pre-push gate
+  chạy check heuristic flag candidate hardcode (vd `.rolling(<literal-int>)`, `top_k=<literal>`, float-floor
+  literal `1e-N`, window/threshold assignment) trong file pipeline ĐỔI (loại trừ config module + test + archive
+  + vendored) — WARN mặc định, BLOCK khi rõ ràng là tunable-constant. Ngoại lệ hợp lệ không tính: 0/1, index,
+  math const, test fixture, one-off literal có comment lý do.
 - No production logic chỉ sống trong notebook.
 - **No silent degradation (ENFORCED, per root-cause 2026-08-16):** data/feature code KHÔNG được âm
   thầm trả giá trị "trung tính" (zeros/NaN→0/fallback) khi input thiếu/sai config — phải **fail loud**
