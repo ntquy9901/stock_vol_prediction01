@@ -42,15 +42,15 @@ _ROOT = Path(__file__).resolve().parents[3]
 _SUB = _ROOT / "submission" / "soict_lstm_gat"
 sys.path.insert(0, str(_SUB)); sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import baselines as B  # noqa: E402
 import data_utils as du  # noqa: E402
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 from snapshots import _load_panel  # noqa: E402
 
-HORIZONS = [1, 5, 10, 22]
-FIRST_VALID = 21
-VOL_WIN = 22       # causal rolling window for the log-volume shock (monthly)
-VOV_WIN = 22       # causal rolling window for vol-of-vol (rolling std of pk)
-_EPS = 1e-12
+HORIZONS = list(pc.HORIZONS)
+FIRST_VALID = pc.FIRST_VALID
+VOL_WIN = pc.VOLUME_ZSCORE_WINDOW   # causal rolling window for the log-volume shock (monthly; same knob as masked_rich)
+VOV_WIN = pc.VOL_OF_VOL_WINDOW      # causal rolling window for vol-of-vol (rolling std of pk)
+_EPS = 1e-12       # module-local numerical guard (distinct from the prediction positivity floor); kept local  # config-ok
 
 # Raw OHLCV directory candidates per dataset (first that has files wins).
 RAW_DIRS = {
@@ -147,7 +147,7 @@ def _build_node_features(pk: np.ndarray, vol: np.ndarray, close: np.ndarray, vsh
     }
 
 
-def _vshock_adjacency(vshock_tr: np.ndarray, top_k: int = 5) -> np.ndarray:
+def _vshock_adjacency(vshock_tr: np.ndarray, top_k: int = pc.EDGE_TOP_K) -> np.ndarray:
     """Signed Top-K node adjacency from the TRAIN vshock correlation matrix (self excluded)."""
     N = vshock_tr.shape[1]
     x = np.nan_to_num(vshock_tr)
@@ -217,11 +217,10 @@ def screen(files, dataset, raw_root, min_common=300, seed=0):
             return {"val_incr_R2": 1 - mva / mse_va_base, "test_incr_R2": 1 - mte / mse_te_base}
 
         # ---- S5 volume-shock graph ----
-        adj = _vshock_adjacency(vshock_f[a_tr], top_k=5)
+        adj = _vshock_adjacency(vshock_f[a_tr], top_k=pc.EDGE_TOP_K)
         perm = rng.permutation(N)
         adj_shuf = adj[perm][:, perm]                  # density/degree-preserving placebo
         deg = np.maximum((adj != 0).sum(1), 1)
-        deg_shuf = np.maximum((adj_shuf != 0).sum(1), 1)
 
         def v_weighted(A, t_idx):
             return vshock_f[t_idx] @ A.T               # [len, N] sum_j A_ij vshock[j,t]

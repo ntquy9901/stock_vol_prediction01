@@ -244,6 +244,23 @@ else
   echo "[pre-push]   (GPU venv or baseline test dirs absent — skipped)"
 fi
 
+# --- Single-source-of-truth config: flag NEW hardcoded tunable constants in changed pipeline files ---
+# Enforces CLAUDE.md "Single-source-of-truth app config (ENFORCED)". Heuristic, low-FP: scans only the
+# ADDED lines of the push diff; BLOCKs a clear tunable (.rolling(<int>), top_k=<int>, window/floor/
+# hyperparameter NAME=<literal>); WARNs a bare 1e-N. The scanner excludes the config module itself,
+# tests, archive/, vendored. Bypass with QG_SKIP=1 (justify) if a flagged literal is a genuine one-off.
+echo "[pre-push] 6/6 config-hardcode scan (single-source-of-truth)"
+if command -v python >/dev/null 2>&1 && [ -f "$MAINROOT/scripts/quality_gate/check_config_hardcode.py" ] && [ -n "$CHANGED" ]; then
+  CHOUT="$(python "$MAINROOT/scripts/quality_gate/check_config_hardcode.py" --base "$PUSH_BASE" $CHANGED 2>&1)"; CHRC=$?
+  echo "$CHOUT" | tail -8
+  echo "$CHOUT" | _logsec "6/6 config-hardcode scan"
+  if [ "$CHRC" -ne 0 ]; then
+    echo "[pre-push] BLOCK: new hardcoded tunable constant(s) in changed pipeline files — move to the canonical pipeline_config (or justify with # config-ok / QG_SKIP)." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push]   (no changed .py or scanner absent — skipped)"
+fi
+
 # --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 GATE_DIR="$MAINROOT/scripts/task_dashboard/gate_results"

@@ -25,6 +25,7 @@ sys.path.insert(0, str(_SUB)); sys.path.insert(0, str(HERE))
 
 import baselines as B  # noqa: E402
 import metrics as M  # noqa: E402
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 from config import Config, SMOKE  # noqa: E402
 
 import experts  # noqa: E402
@@ -71,7 +72,7 @@ def _metrics(y, p, har_p, floor):
             "bias": float(np.mean(p - y)), "n": len(y)}
 
 
-def run(dataset, files, lookback, horizon, cfg, out_dir, min_common=300):
+def run(dataset, files, lookback, horizon, cfg, out_dir, min_common=pc.MIN_COMMON_DATES):
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     D = experts.build_data(files, lookback, horizon, cfg, min_common=min_common)

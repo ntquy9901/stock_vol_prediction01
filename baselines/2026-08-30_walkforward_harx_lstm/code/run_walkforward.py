@@ -32,6 +32,7 @@ for _p in (REPO / "submission" / "soict_lstm_gat",
 
 import baselines as B          # noqa: E402  (har_fit / har_predict, read-only)
 import run_masked_rich as RMR  # noqa: E402  (MaskedRichNet + train_masked_rich + metric/DM helpers)
+import pipeline_config as pc   # noqa: E402  (single source of truth for tunable constants)
 from config import Config      # noqa: E402
 
 from wf_folds import assert_no_leakage, make_folds  # noqa: E402
@@ -44,11 +45,11 @@ OUT_PATH = REPO / "results" / "walkforward_harx_lstm" / "walkforward_vn100_h1.js
 
 @dataclass(frozen=True)
 class WFConfig:
-    lookback: int = 10
-    horizon: int = 1
-    K: int = 66
-    val: int = 66
-    test_frac: float = 0.90
+    lookback: int = pc.LOOKBACK
+    horizon: int = pc.WF_HORIZON
+    K: int = pc.WF_RETRAIN_K
+    val: int = pc.WF_VAL_TAIL
+    test_frac: float = pc.WF_TEST_FRAC
     test_start: int | None = None
 
 

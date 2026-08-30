@@ -4,10 +4,12 @@ Extends ``masked_snapshots.build_masked`` (union-of-dates panel, node/target mas
 scalers, purge, min-train-rows node drop) with the two ingredients the deliverable used that the
 3-feature binary-mask masked baseline dropped:
 
-  1. **5 node features** ``[pk(t), har_weekly, har_monthly, market_pk(t), volume_zscore_20(t)]``
+  1. **5 node features** ``[pk(t), har_weekly, har_monthly, market_pk(t), volume_zscore(t)]``
      (the deliverable's node vector). ``market_pk`` = cross-sectional MEDIAN of ``sqrt(pk)`` over the
-     VALID nodes at day t (causal). ``volume_zscore_20`` = trailing 20-day z-score of ``log1p(volume)``
-     per ticker (causal), from raw OHLCV joined to the Parkinson dates.
+     VALID nodes at day t (causal). ``volume_zscore`` = trailing ``pc.VOLUME_ZSCORE_WINDOW``-day z-score
+     of ``log1p(volume)`` per ticker (causal), from raw OHLCV joined to the Parkinson dates. The window
+     is CANONICAL 22 (monthly convention); the delivered paper results used 20 (historical -- see
+     pipeline_config.VOLUME_ZSCORE_WINDOW).
   2. A **directed volume->PK lead-lag edge** (``A[j,i] = corr(vshock_i(t), sqrt(PK)_j(t+1))`` Top-K
      sources per target, TRAIN dates only, frozen — replicating deliverable ``edges.py``), returned
      ALONGSIDE the symmetric correlation Top-K edge (the existing comparator).
@@ -28,20 +30,23 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "submission" / "soict_lstm_gat"))
 import data_utils as du  # noqa: E402  (reuse har_features)
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 
-FIRST_VALID = 21
-N_FEAT = 5
-_VOL_WIN = 20
-# Edge-construction thresholds (single source of truth, recorded in each result's edge_config -- external
-# review M-05). The two edges intentionally use DIFFERENT minimum-overlap thresholds: the SYMMETRIC
-# correlation edge needs many overlapping days for a stable Pearson r (EDGE_MIN_OVERLAP), while the DIRECTED
-# lead-lag volume->PK edge is a shifted pairwise correlation with fewer usable pairs, so it uses a smaller
-# minimum (_MIN_PAIRS).
-_MIN_PAIRS = 30            # directed volume->PK edge: min overlapping (t, t+1) pairs
-EDGE_MIN_OVERLAP = 100    # symmetric correlation edge: min overlapping days for corr()
-EDGE_TOP_K = 5            # Top-K neighbours per node (both edges)
-_MIN_VOL_COVERAGE = 0.5    # warn if a present ohlcv file covers < this fraction of a ticker's own dates
-_EMPTY_VOL_COVERAGE = 0.05  # <= this fraction == present-but-empty == semantically missing (fail-loud cap)
+FIRST_VALID = pc.FIRST_VALID
+N_FEAT = pc.N_NODE_FEATURES
+# volume_zscore trailing window. CANONICAL = 22 (monthly convention, matches har_monthly); the delivered
+# paper result JSONs used 20 (see pipeline_config.VOLUME_ZSCORE_WINDOW note -- reproduce with 20).
+_VOL_WIN = pc.VOLUME_ZSCORE_WINDOW
+# Edge-construction thresholds (single source of truth = pipeline_config, recorded in each result's
+# edge_config -- external review M-05). The two edges intentionally use DIFFERENT minimum-overlap
+# thresholds: the SYMMETRIC correlation edge needs many overlapping days for a stable Pearson r
+# (EDGE_MIN_OVERLAP), while the DIRECTED lead-lag volume->PK edge is a shifted pairwise correlation with
+# fewer usable pairs, so it uses a smaller minimum (_MIN_PAIRS).
+_MIN_PAIRS = pc.EDGE_MIN_PAIRS_DIRECTED   # directed volume->PK edge: min overlapping (t, t+1) pairs
+EDGE_MIN_OVERLAP = pc.EDGE_MIN_OVERLAP    # symmetric correlation edge: min overlapping days for corr()
+EDGE_TOP_K = pc.EDGE_TOP_K                # Top-K neighbours per node (both edges)
+_MIN_VOL_COVERAGE = pc.MIN_VOL_COVERAGE   # warn if a present ohlcv file covers < this fraction of a ticker's dates
+_EMPTY_VOL_COVERAGE = pc.EMPTY_VOL_COVERAGE  # <= this fraction == present-but-empty == semantically missing
 
 
 @dataclass
@@ -159,8 +164,9 @@ def _directed_vol2pk(vshock: np.ndarray, sqrt_pk: np.ndarray, last_row: int,
     return A
 
 
-def build_masked_rich(files, price_dir, lookback, horizon, train_frac=0.8, val_frac=0.1,
-                      min_valid=8, edge_min_overlap=EDGE_MIN_OVERLAP, top_k=EDGE_TOP_K, min_train_rows=252):
+def build_masked_rich(files, price_dir, lookback, horizon, train_frac=pc.TRAIN_FRAC, val_frac=pc.VAL_FRAC,
+                      min_valid=pc.MIN_VALID_NODES, edge_min_overlap=EDGE_MIN_OVERLAP, top_k=EDGE_TOP_K,
+                      min_train_rows=pc.MIN_TRAIN_ROWS):
     wide = _load_wide(files)
     tickers = list(wide.columns)
     dates = wide.index
@@ -212,11 +218,11 @@ def build_masked_rich(files, price_dir, lookback, horizon, train_frac=0.8, val_f
     y_tr_full = np.stack([pk[t + horizon] for t in tr_anchor])
     tok_tr = node_ok[sl_tr]
     t_mean = np.array([np.nanmean(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 0.0 for j in range(N)])
-    t_std = np.array([np.nanstd(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 1.0 for j in range(N)]) + 1e-8
+    t_std = np.array([np.nanstd(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 1.0 for j in range(N)]) + pc.SCALER_EPS
     # per-node feature scaler (5-dim) on TRAIN valid anchor rows
     f_tr = np.stack([feats[t] for t in tr_anchor])                      # [ntr,N,5]
     f_mean = np.array([np.nanmean(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.zeros(N_FEAT) for j in range(N)])
-    f_std = np.array([np.nanstd(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.ones(N_FEAT) for j in range(N)]) + 1e-8
+    f_std = np.array([np.nanstd(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.ones(N_FEAT) for j in range(N)]) + pc.SCALER_EPS
 
     last_tr_row = int(tr_anchor[-1]) + horizon if len(tr_anchor) else int(anchors[i_tr - 1])
 

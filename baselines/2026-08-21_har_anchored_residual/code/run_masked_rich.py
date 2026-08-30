@@ -32,6 +32,7 @@ import metrics as M  # noqa: E402
 import stats as ST  # noqa: E402
 import overfit_check as OF  # noqa: E402
 from config import Config, SMOKE  # noqa: E402
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 import masked_rich as MR  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[3]
@@ -166,7 +167,7 @@ def train_masked_rich(D, cfg, seed, use_graph, adj, output_param="zscore_floor",
         pn = np.concatenate(outs)
         if output_param == "ratio_exp":             # exp(pn)*mean: positive by construction, machine-eps only
             return np.maximum(np.exp(np.minimum(pn, 15.0)) * D.t_mean, tiny)
-        return np.maximum(pn * D.t_std + D.t_mean, 1e-2 * D.t_mean + 1e-12)
+        return np.maximum(pn * D.t_std + D.t_mean, pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS)
 
     best = np.inf; best_state = None; wait = 0; best_ep = 0
     train_curve = []; val_curve = []                         # per-epoch masked MSE -> learning curve (overfit evidence)
@@ -281,14 +282,14 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     mtr = D.tmask_tr.astype(bool)
     coef = B.har_fit(D.har_tr[mtr], D.y_tr[mtr])
     hp = B.har_predict(D.har_te.reshape(-1, 3), coef, floor=cfg.qlike_floor).reshape(D.y_te.shape)
-    hp = np.maximum(hp, 1e-2 * D.t_mean + 1e-12)   # M1: shared per-node positivity floor (1e-2*mean; the value that removes the QLIKE tail-collapse -- HIGHER than the earlier 1e-3, i.e. clamps more). Under output_param='ratio_exp' the DEEP model is positive-by-construction (machine-eps only) while HAR/HAR-X keep this relative floor; QLIKE compares all models at the shared cfg.qlike_floor.
+    hp = np.maximum(hp, pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS)   # M1: shared per-node positivity floor (POS_FLOOR_FRAC*mean; the value that removes the QLIKE tail-collapse -- HIGHER than PRED_FLOOR_FRAC, i.e. clamps more). Under output_param='ratio_exp' the DEEP model is positive-by-construction (machine-eps only) while HAR/HAR-X keep this relative floor; QLIKE compares all models at the shared cfg.qlike_floor.
     HAR = _pred_dict(hp, D.y_te, D.tmask_te, D.d_te, N)
     # HAR-X: 5-feature LINEAR OLS — the fair baseline isolating the extra-feature contribution (so a deep
     # or graph win over HAR is not just the 2 extra node features market_pk/volume_zscore).
     _xtr = np.column_stack([np.ones(int(mtr.sum())), D.har5_tr[mtr]])
     _cx = np.linalg.lstsq(_xtr, D.y_tr[mtr], rcond=None)[0]
     _hx = (np.column_stack([np.ones(len(D.har5_te.reshape(-1, 5))), D.har5_te.reshape(-1, 5)]) @ _cx).reshape(D.y_te.shape)
-    HARX = _pred_dict(np.maximum(_hx, 1e-2 * D.t_mean + 1e-12), D.y_te, D.tmask_te, D.d_te, N)
+    HARX = _pred_dict(np.maximum(_hx, pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS), D.y_te, D.tmask_te, D.d_te, N)
     # keep the per-seed prediction dicts so we can report the MEAN (+-std) of seed-level metrics, not just
     # the metric of the seed-averaged (ensemble) prediction (which is generally lower -- see seed_metric_stats)
     lstm_out = [train_masked_rich(D, cfg, s, False, D.adj_vol2pk, output_param, return_splits=True) for s in cfg.seeds]
@@ -315,7 +316,7 @@ def run(dataset, files, price_dir, horizon, cfg, lookback=10, with_corr=True, ou
     # learning curves, so the result.json can PROVE (not just assert) generalisation. The gate
     # (scripts/quality_gate/check_overfit_evidence.py) blocks a pushed result.json that lacks this or is
     # over/under-fit. HAR/HAR-X train/val use the same OLS coefficients on the train/val feature blocks.
-    fl = cfg.qlike_floor; nfloor = 1e-2 * D.t_mean + 1e-12
+    fl = cfg.qlike_floor; nfloor = pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS
     hp_tr = np.maximum(B.har_predict(D.har_tr.reshape(-1, 3), coef, floor=fl).reshape(D.y_tr.shape), nfloor)
     hp_va = np.maximum(B.har_predict(D.har_va.reshape(-1, 3), coef, floor=fl).reshape(D.y_va.shape), nfloor)
     hx_tr = np.maximum((np.column_stack([np.ones(len(D.har5_tr.reshape(-1, 5))), D.har5_tr.reshape(-1, 5)]) @ _cx).reshape(D.y_tr.shape), nfloor)

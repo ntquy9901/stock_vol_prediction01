@@ -18,8 +18,9 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "submission" / "soict_lstm_gat"))
 import data_utils as du  # noqa: E402  (reuse har_features)
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 
-FIRST_VALID = 21
+FIRST_VALID = pc.FIRST_VALID
 
 
 @dataclass
@@ -49,8 +50,9 @@ def _load_wide(files):
     return wide
 
 
-def build_masked(files, lookback, horizon, train_frac=0.8, val_frac=0.1,
-                 min_valid=8, edge_min_overlap=100, top_k=5, min_train_rows=252):
+def build_masked(files, lookback, horizon, train_frac=pc.TRAIN_FRAC, val_frac=pc.VAL_FRAC,
+                 min_valid=pc.MIN_VALID_NODES, edge_min_overlap=pc.EDGE_MIN_OVERLAP, top_k=pc.EDGE_TOP_K,
+                 min_train_rows=pc.MIN_TRAIN_ROWS):
     wide = _load_wide(files)
     tickers = list(wide.columns)
     dates = wide.index
@@ -95,11 +97,11 @@ def build_masked(files, lookback, horizon, train_frac=0.8, val_frac=0.1,
     y_tr_full = np.stack([pk[t + horizon] for t in tr_anchor])           # [ntr,N] nan where invalid
     tok_tr = node_ok[sl_tr]
     t_mean = np.array([np.nanmean(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 0.0 for j in range(N)])
-    t_std = np.array([np.nanstd(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 1.0 for j in range(N)]) + 1e-8
+    t_std = np.array([np.nanstd(y_tr_full[tok_tr[:, j], j]) if tok_tr[:, j].any() else 1.0 for j in range(N)]) + pc.SCALER_EPS
     # per-node feature scaler on TRAIN valid windows (use feats at anchor t as a proxy row)
     f_tr = np.stack([feats[t] for t in tr_anchor])                      # [ntr,N,3]
     f_mean = np.array([np.nanmean(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.zeros(3) for j in range(N)])
-    f_std = np.array([np.nanstd(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.ones(3) for j in range(N)]) + 1e-8
+    f_std = np.array([np.nanstd(f_tr[tok_tr[:, j], j], 0) if tok_tr[:, j].any() else np.ones(3) for j in range(N)]) + pc.SCALER_EPS
 
     # train-only pairwise-complete correlation Top-K signed edge (rows up to last train target date)
     last_tr_row = int(tr_anchor[-1]) + horizon if len(tr_anchor) else int(anchors[i_tr - 1])

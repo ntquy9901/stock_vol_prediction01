@@ -17,16 +17,18 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# --- rolling-window / drop thresholds (documented, mirror the reference runner) ---
-FIRST_VALID = 21   # monthly HAR feature (22-obs rolling) is first valid at index 21
-WEEKLY_WIN = 5     # weekly HAR rolling window
-MONTHLY_WIN = 22   # monthly HAR rolling window
-MIN_ROWS = 200     # drop a ticker with fewer than this many rows
-MIN_ANCHORS = 60   # drop a ticker with fewer than this many valid anchors
-MIN_TRAIN = 30     # drop if TRAIN split smaller than this
-MIN_VAL = 5        # drop if VAL split smaller than this
-MIN_TEST = 5       # drop if TEST split smaller than this
-_EPS = 1e-8        # scaler std floor (avoid divide-by-zero)
+import pipeline_config as pc
+
+# --- rolling-window / drop thresholds (single source of truth = pipeline_config) ---
+FIRST_VALID = pc.FIRST_VALID          # monthly HAR feature (22-obs rolling) is first valid at index 21
+WEEKLY_WIN = pc.HAR_WEEKLY_WINDOW     # weekly HAR rolling window
+MONTHLY_WIN = pc.HAR_MONTHLY_WINDOW   # monthly HAR rolling window
+MIN_ROWS = pc.MIN_ROWS                # drop a ticker with fewer than this many rows
+MIN_ANCHORS = pc.MIN_ANCHORS          # drop a ticker with fewer than this many valid anchors
+MIN_TRAIN = pc.MIN_TRAIN              # drop if TRAIN split smaller than this
+MIN_VAL = pc.MIN_VAL                  # drop if VAL split smaller than this
+MIN_TEST = pc.MIN_TEST                # drop if TEST split smaller than this
+_EPS = pc.SCALER_EPS                  # scaler std floor (avoid divide-by-zero)
 
 
 def har_features(pk: np.ndarray) -> np.ndarray:
@@ -58,7 +60,7 @@ def make_windows(pk: np.ndarray, lookback: int, horizon: int) -> np.ndarray:
 
 
 def per_stock_split(
-    anchors: np.ndarray, train_frac: float = 0.8, val_frac: float = 0.1
+    anchors: np.ndarray, train_frac: float = pc.TRAIN_FRAC, val_frac: float = pc.VAL_FRAC
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Chronological, contiguous, non-overlapping split (train before val before test)."""
     anchors = np.asarray(anchors)
@@ -118,8 +120,8 @@ def build_pooled(
     files: list[str],
     lookback: int,
     horizon: int,
-    train_frac: float = 0.8,
-    val_frac: float = 0.1,
+    train_frac: float = pc.TRAIN_FRAC,
+    val_frac: float = pc.VAL_FRAC,
 ) -> dict:
     """Build a pooled dataset across tickers with per-ticker TRAIN-fit scalers.
 

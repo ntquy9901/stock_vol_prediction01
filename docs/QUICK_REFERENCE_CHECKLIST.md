@@ -8,6 +8,14 @@
 
 ## 🔴 CRITICAL (Must Pass)
 
+### Config single-source-of-truth (config-hardcode lens — CLAUDE.md ENFORCED)
+- [ ] **No NEW scattered hardcoded tunable constant** — windows (`.rolling(<int>)`, lookback/SEQ),
+      horizons, thresholds/floors (`1e-N`), edge params (`top_k=<int>`/min_overlap/min_pairs),
+      hyperparameters (lr/dropout/epochs/patience/hidden/heads/batch/weight_decay/grad_clip),
+      min_train/min_valid must be IMPORTED from the canonical `pipeline_config`, not re-hardcoded.
+      MAJOR if in train/eval/data code. Exceptions: 0/1, indices, math constants, `# config-ok` one-offs.
+      Enforced automatically by `scripts/quality_gate/check_config_hardcode.py` (pre-push step 6/6).
+
 ### Data Pipeline
 - [ ] **No pre-created tensors in datasets** - Must create on-the-fly in `__getitem__`
 - [ ] **GPU training uses `pin_memory=True`** - Required for async data transfer

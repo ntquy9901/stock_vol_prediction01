@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import baselines as B  # noqa: E402
 import edges as EG  # noqa: E402
 import metrics as M  # noqa: E402
+import pipeline_config as pc  # noqa: E402  (single source of truth for tunable constants)
 from snapshots import build_snapshots  # noqa: E402
 
 import models as md  # noqa: E402
@@ -57,7 +58,8 @@ def _crossfit_har_pooled(har_tr, y_tr, n_folds, floor):
     return oos                                          # NaN on first block
 
 
-def build_data(files, lookback, horizon, cfg, n_cvfolds=5, eps=1e-8, min_common=300):
+def build_data(files, lookback, horizon, cfg, n_cvfolds=pc.CROSSFIT_FOLDS, eps=pc.RESIDUAL_EPS,
+               min_common=pc.MIN_COMMON_DATES):
     snap = _purge_snapshots(build_snapshots(files, lookback, horizon,
                                             cfg.train_frac, cfg.val_frac, min_common=min_common), horizon)
     N = snap.num_nodes
@@ -80,17 +82,17 @@ def build_data(files, lookback, horizon, cfg, n_cvfolds=5, eps=1e-8, min_common=
     mask = np.isfinite(oos).all(1)                      # keep dates where every node has an OOS pred
     r_add = y_tr - oos                                  # additive residual [n,N]
     r_mul = np.log((y_tr + eps)) - np.log((oos + eps))  # log residual
-    add_scale = np.nanstd(r_add[mask], axis=0) + 1e-8   # per-node [N]
-    mul_scale = np.nanstd(r_mul[mask], axis=0) + 1e-8
+    add_scale = np.nanstd(r_add[mask], axis=0) + pc.SCALER_EPS   # per-node [N]
+    mul_scale = np.nanstd(r_mul[mask], axis=0) + pc.SCALER_EPS
 
     # full-target per-node standardization (from train targets)
-    t_mean = y_tr.mean(0); t_std = y_tr.std(0) + 1e-8
+    t_mean = y_tr.mean(0); t_std = y_tr.std(0) + pc.SCALER_EPS
     # train-derived POSITIVE output floor (plan section 10): the additive residual can drive a prediction
     # below zero; clipping to 0 then makes QLIKE (y/pred) blow up through the metric floor. Flooring the
     # reconstruction at a small fraction of each node's mean train variance is a positive output mapping
     # bounded from training data only; it is far below any normal HAR-scale prediction (so it changes
     # nothing on panels where predictions stay sane) and only bounds pathological near-zero corrections.
-    pred_floor = np.maximum(1e-3 * t_mean, cfg.qlike_floor)
+    pred_floor = np.maximum(pc.PRED_FLOOR_FRAC * t_mean, cfg.qlike_floor)
 
     return {
         "N": N, "adj": adj_t, "horizon": horizon, "eps": eps, "pred_floor": pred_floor,
