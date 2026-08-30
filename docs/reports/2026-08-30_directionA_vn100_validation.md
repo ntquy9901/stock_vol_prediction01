@@ -60,3 +60,25 @@ graph, by contrast, significantly beats the no-graph LSTM (p=1.8e-9), reconfirmi
 second edge family. Across both markets the heterogeneous separation is never beneficial: neutral on
 HNX (both null), harmful on VN100. Recommendation: keep the graph edges combined; do not pursue the
 heterogeneous separation as a VolGA improvement.
+
+## Correction: fair vol→PK vs corr+lift comparison (same harness)
+
+A reviewer flagged that the earlier "vol→PK (0.55) beats corr+lift (0.62)" was a CROSS-RUN comparison
+with different configs (vol→PK: 5 seeds + train-to-convergence, no-graph QLIKE 0.6229; corr+lift: 3
+seeds / 10 epochs, no-graph QLIKE 0.6448 — the *identical* no-graph model differs by 0.022 across the
+two runs). That claim was confounded and is retracted.
+
+Re-run in ONE harness (VN100 h1, 3 seeds, 10 epochs, same no-graph baseline 0.6448), QLIKE + DM:
+
+| model | QLIKE | DM vs no-graph LSTM |
+|---|---|---|
+| no_graph_LSTM | 0.6448 | — |
+| stat GAT vol→PK (shipped VolGA edge) | 0.5413 | p = 5.6e-08 |
+| corr+lift GAT | 0.5514 | p = 4.1e-07 |
+| **vol→PK vs corr+lift** | | **p = 0.065 (not significant — a tie)** |
+
+**Corrected conclusion:** on VN100 h1 the two edge families are statistically **indistinguishable**
+(DM p=0.065); both significantly beat the no-graph LSTM (p≈1e-7). The robust effect is the graph
+itself (~0.09 QLIKE vs no-graph), not the specific edge construction. Combined with the heterogeneous
+result (separating the two relations is *worse* than combining them, p=3.2e-7), the practical guidance
+is: use a single combined graph; the shipped vol→PK edge and the corr+lift edge are equivalent choices.
