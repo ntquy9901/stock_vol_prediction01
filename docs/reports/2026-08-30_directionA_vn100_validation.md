@@ -42,3 +42,21 @@ that the earlier null was HNX-specific — the single market with the weakest cr
 Repeat the same DM comparison on **SP500** (498 liquid nodes) and confirm whether the short-horizon
 graph gain holds on the largest liquid universe; and re-run VN100 with the *densified heterogeneous*
 variant to see if separating linear/non-linear edges adds beyond the shipped vol→PK edge.
+
+## Follow-up: densified heterogeneous variant on VN100 (does separating linear/non-linear edges help?)
+
+Ran the densified heterogeneous 2-relation model on VN100 h1 (3 seeds, corr+lift graph: 2984 linear
+ρ>0.25 edges avg-deg 58 + 179 non-linear lift>1.2 edges). Date-clustered DM (QLIKE), seed-ensembled:
+
+| comparison | DM p (QLIKE) | favours |
+|---|---|---|
+| squashed corr+lift vs no-graph LSTM | **1.8e-09** | squashed (graph helps) |
+| heterogeneous (separated) vs squashed | **3.2e-07** | **squashed** |
+| heterogeneous vs no-graph LSTM | 0.062 | heterogeneous (n.s.) |
+
+**Conclusion:** separating the linear and non-linear relations does **not** improve on simply combining
+them — it is **significantly worse** than the squashed graph on QLIKE (p=3.2e-7). The combined corr+lift
+graph, by contrast, significantly beats the no-graph LSTM (p=1.8e-9), reconfirming Direction A with a
+second edge family. Across both markets the heterogeneous separation is never beneficial: neutral on
+HNX (both null), harmful on VN100. Recommendation: keep the graph edges combined; do not pursue the
+heterogeneous separation as a VolGA improvement.
