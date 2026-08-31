@@ -40,7 +40,15 @@ from run_walkforward import _har_ols_preds, training_config, wait_for_gpu  # noq
 from wf_folds import assert_no_leakage, make_folds  # noqa: E402
 from wf_enriched_panel import build_enriched_panel, frozen_universe, pack_fold  # noqa: E402
 
-ENRICHED_GLOB = str(REPO / "data" / "processed_enriched" / "vn100" / "*.csv")
+MARKETS = ("vn30", "vn100", "hose", "hnx", "sp500")
+
+
+def enriched_glob(market: str) -> str:
+    """Glob for a market's enriched processed CSVs (same schema across markets; reader is column-name based)."""
+    return str(REPO / "data" / "processed_enriched" / market / "*.csv")
+
+
+ENRICHED_GLOB = enriched_glob("vn100")   # default universe; --market overrides
 _MODELS = ("HAR", "HAR-X", "LSTM", "LSTM_wGAT_vol2pk")   # LSTM_wGAT_vol2pk == VolGA (name matches OF.LEARNED)
 
 
@@ -54,9 +62,9 @@ class VolgaWFConfig:
     test_start: int | None = None
 
 
-def default_out_path(horizon: int) -> Path:
-    """Horizon-encoded output path (fixes the delivered bug where OUT was hardcoded to _h1)."""
-    return REPO / "results" / "walkforward_volga" / f"walkforward_volga_vn100_h{horizon}.json"
+def default_out_path(horizon: int, market: str = "vn100") -> Path:
+    """Market+horizon-encoded output path (fixes the delivered bug where OUT was hardcoded to vn100 _h1)."""
+    return REPO / "results" / "walkforward_volga" / f"walkforward_volga_{market}_h{horizon}.json"
 
 
 def _agg_metrics(y, p, floor):
@@ -106,7 +114,7 @@ def run_fold(panel, fold, wf: VolgaWFConfig, cfg):
     return upd, flats, evidence
 
 
-def run_walkforward(files, wf: VolgaWFConfig, cfg, keep_tickers, out_path=None):
+def run_walkforward(files, wf: VolgaWFConfig, cfg, keep_tickers, out_path=None, market="vn100"):
     """Walk-forward over the OOS region; pool forecasts; compare VolGA vs LSTM (and HAR-X) with DM."""
     t0 = time.time()
     panel = build_enriched_panel(files, wf.lookback, wf.horizon, keep_tickers)
@@ -164,9 +172,9 @@ def run_walkforward(files, wf: VolgaWFConfig, cfg, keep_tickers, out_path=None):
           "HARX_vs_HAR": RMR._dm_all(pooled["HAR-X"], pooled["HAR"], wf.horizon, fl)}
     n_dates = len({k[1] for k in pooled["HAR"]})
     res = {
-        "dataset": "vn100", "horizon": wf.horizon,
+        "dataset": market, "horizon": wf.horizon,
         "design": "expanding-window walk-forward VolGA (masked enriched panel, periodic retrain)",
-        "data_source": "data/processed_enriched/vn100", "num_nodes": panel.N,
+        "data_source": f"data/processed_enriched/{market}", "num_nodes": panel.N,
         "n_test_obs": metrics["HAR"]["n"], "n_oos_dates": n_dates, "n_folds": len(folds),
         "retrain_cadence_K": K, "folds_target": wf.folds_target, "val_tail": wf.val,
         "lookback": wf.lookback, "test_start_anchor": test_start, "n_anchors": n, "seeds": list(cfg.seeds),
@@ -201,6 +209,7 @@ def _resolve_files(pattern):  # pragma: no cover - trivial glob wrapper exercise
 
 def main():  # pragma: no cover - entry driver (multi-hour GPU run); logic covered via run_walkforward/tests
     ap = argparse.ArgumentParser(description="VolGA multi-horizon walk-forward (HAR-X / LSTM / VolGA, VN100).")
+    ap.add_argument("--market", choices=MARKETS, default="vn100", help="enriched universe to run on")
     ap.add_argument("--horizon", type=int, default=1, choices=[1, 5, 10, 22])
     ap.add_argument("--lookback", type=int, default=22)
     ap.add_argument("--epochs", type=int, default=16)
@@ -210,9 +219,9 @@ def main():  # pragma: no cover - entry driver (multi-hour GPU run); logic cover
     ap.add_argument("--no-gpu-wait", action="store_true", help="skip nvidia-smi politeness poll")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    files = _resolve_files(ENRICHED_GLOB)
+    files = _resolve_files(enriched_glob(a.market))
     if len(files) < 2:
-        raise SystemExit(f"no enriched files under {ENRICHED_GLOB}")
+        raise SystemExit(f"no enriched files under {enriched_glob(a.market)}")
     universe = frozen_universe(files, a.lookback, a.horizon)
     if a.smoke:
         wf = VolgaWFConfig(lookback=a.lookback, horizon=a.horizon, folds_target=1)
@@ -221,12 +230,12 @@ def main():  # pragma: no cover - entry driver (multi-hour GPU run); logic cover
     else:
         wf = VolgaWFConfig(lookback=a.lookback, horizon=a.horizon, folds_target=a.folds_target)
         cfg = training_config(epochs=a.epochs, batch=a.batch)
-    out = a.out if a.out is not None else str(default_out_path(a.horizon))
+    out = a.out if a.out is not None else str(default_out_path(a.horizon, a.market))
     if not a.no_gpu_wait:
         print("[gpu] polling nvidia-smi for a free GPU (util<15, VRAM<1200MiB) ...", flush=True)
         wait_for_gpu()
         print("[gpu] free -> starting VolGA walk-forward", flush=True)
-    res = run_walkforward(files, wf, cfg, universe, out_path=out)
+    res = run_walkforward(files, wf, cfg, universe, out_path=out, market=a.market)
     m = res["metrics"]
     q = res["dm_date_clustered"]["VolGA_vs_LSTM"].get("qlike", {})
     print(f"[volga] nodes={res['num_nodes']} folds={res['n_folds']} oos_dates={res['n_oos_dates']} "

@@ -15,6 +15,14 @@ def test_default_out_path_encodes_horizon():
     assert str(WF.default_out_path(1)).endswith("walkforward_volga_vn100_h1.json")
 
 
+def test_market_glob_and_out_path():
+    """--market wiring: glob + out path carry the market; MARKETS lists the 5 universes."""
+    g = WF.enriched_glob("vn30")
+    assert "processed_enriched" in g and "vn30" in g and g.endswith("*.csv")
+    assert str(WF.default_out_path(10, "vn30")).endswith("walkforward_volga_vn30_h10.json")
+    assert set(WF.MARKETS) >= {"vn30", "vn100", "hose", "hnx", "sp500"}
+
+
 def test_horizon_shifts_target(synth_files):
     files, tickers = synth_files
     p1 = EP.build_enriched_panel(files, LB, 1, tickers)
