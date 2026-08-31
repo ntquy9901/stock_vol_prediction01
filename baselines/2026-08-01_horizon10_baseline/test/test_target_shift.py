@@ -31,13 +31,13 @@ SEQ_LENGTH = 10
 
 
 def _make_har_df(seed: int) -> pd.DataFrame:
-    """parkinson_volatility is a KNOWN, distinct sequence (0, 1, 2, ..., 59) so the exact target
+    """parkinson_variance is a KNOWN, distinct sequence (0, 1, 2, ..., 59) so the exact target
     value at any index can be checked by hand, not just "some plausible float"."""
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=N_DAYS, freq="D")
     return pd.DataFrame({
         "date": dates.astype(str),
-        "parkinson_volatility": np.arange(N_DAYS, dtype=np.float64),  # 0.0, 1.0, 2.0, ...
+        "parkinson_variance": np.arange(N_DAYS, dtype=np.float64),  # 0.0, 1.0, 2.0, ...
         HAR_COLS[0]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[1]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[2]: rng.uniform(0.001, 0.05, N_DAYS),
@@ -60,7 +60,7 @@ class TestTargetShift10Day:
         ds = _build_ds(forecast_horizon=10)
         _x_har, _adj, _x_news, y = ds[0]
         expected_target_idx = 0 + SEQ_LENGTH + 10 - 1  # = 19
-        # parkinson_volatility is np.arange(N_DAYS), so value at index 19 is exactly 19.0
+        # parkinson_variance is np.arange(N_DAYS), so value at index 19 is exactly 19.0
         assert y[0].item() == pytest.approx(19.0)
         assert y[1].item() == pytest.approx(19.0)  # same for both tickers (same synthetic series)
 

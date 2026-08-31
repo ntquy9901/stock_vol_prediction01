@@ -150,7 +150,7 @@ def _write_ticker(raw_dir: Path, proc_dir: Path, tk: str, close, high, low, opn,
     raw.to_csv(raw_dir / f"{tk}_ohlcv.csv", index=False)
     pk = E.parkinson_variance(raw)
     pk = np.where(np.isfinite(pk), pk, 0.0)
-    pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(
+    pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(
         proc_dir / f"{tk}_processed.csv", index=False)
 
 

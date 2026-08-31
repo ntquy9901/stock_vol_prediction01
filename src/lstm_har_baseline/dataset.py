@@ -91,12 +91,12 @@ class HARVolatilityDataset(Dataset):
             file_path = os.path.join(self.data_dir, csv_file)
             df = pd.read_csv(file_path)
 
-            if 'parkinson_volatility' not in df.columns:
-                print(f"Warning: {csv_file} missing parkinson_volatility column")
+            if 'parkinson_variance' not in df.columns:
+                print(f"Warning: {csv_file} missing parkinson_variance column")
                 continue
 
             # Extract parkinson volatility
-            parkinson = df['parkinson_volatility'].values
+            parkinson = df['parkinson_variance'].values
 
             # Remove NaN values
             valid_mask = ~np.isnan(parkinson)

@@ -3,7 +3,7 @@
 Schemas reflect the ACTUAL inspected columns (2026-08-08):
 
 - data/processed/*.csv  (per-ticker): most files carry only ``date`` +
-  ``parkinson_volatility``; two (VPB, VRE) additionally carry OHLCV.
+  ``parkinson_variance``; two (VPB, VRE) additionally carry OHLCV.
   ``processing_summary.csv`` is metadata (``ticker`` + ``num_records``) and is
   skipped. OHLCV checks are applied only when those columns are present.
 - data/features/dual_group_news_panel.parquet: ``ticker`` + ``date`` +
@@ -44,7 +44,7 @@ _SKIP_PROCESSED = {"processing_summary.csv"}
 
 _processed_base = {
     "date": Column(str, nullable=False, required=True),
-    "parkinson_volatility": Column(
+    "parkinson_variance": Column(
         float, Check.ge(0), nullable=False, required=True
     ),
 }

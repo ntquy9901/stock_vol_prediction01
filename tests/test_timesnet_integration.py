@@ -214,7 +214,7 @@ class TestVolatilityTimesNetDataset:
         })
 
         # Calculate parkinson volatility
-        df['parkinson_volatility'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
+        df['parkinson_variance'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
 
         return df
 
@@ -324,7 +324,7 @@ class TestTimesNetDataLoaders:
         })
 
         # Calculate parkinson volatility
-        df['parkinson_volatility'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
+        df['parkinson_variance'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
 
         csv_path = tmp_path / 'test_volatility.csv'
         df.to_csv(csv_path, index=False)
@@ -399,7 +399,7 @@ class TestTimesNetTrainingPipeline:
         })
 
         # Calculate parkinson volatility
-        df['parkinson_volatility'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
+        df['parkinson_variance'] = (np.log(df['high'] / df['low']) ** 2) / (4 * np.log(2))
 
         csv_path = tmp_path / 'test_volatility.csv'
         df.to_csv(csv_path, index=False)

@@ -74,7 +74,7 @@ def _load_wide(files):
     for f in files:
         df = pd.read_csv(f, parse_dates=["date"]).sort_values("date")
         tk = Path(f).name.replace("_processed.csv", "")
-        series[tk] = df.set_index("date")["parkinson_volatility"]
+        series[tk] = df.set_index("date")["parkinson_variance"]
     return pd.DataFrame(series).sort_index()
 
 

@@ -5,7 +5,7 @@ Executes the experiment plan in
 
 Target semantics (explicit, per plan section 3):
 - ``pk_var`` = Parkinson VARIANCE (the project's target, matches
-  ``data/processed/*_processed.csv`` ``parkinson_volatility`` column).
+  ``data/processed/*_processed.csv`` ``parkinson_variance`` column).
 - ``pk_vol`` = sqrt(pk_var) = Parkinson VOLATILITY (the plan's default ``pk_vol``).
 Both are retained; every output states which is used.
 """

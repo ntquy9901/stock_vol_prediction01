@@ -4,7 +4,7 @@ parsimonious linear HAR-X baseline on multi-horizon Parkinson-variance forecasti
 Scope: DEEP (LSTM, 5 node features, no graph) vs LINEAR (HAR-X, 5-feature OLS) across the three
 chronological splits produced by the delivered ``masked_rich`` pipeline. Read-only: it re-uses
 ``masked_rich.build_masked_rich`` and ``run_masked_rich.train_masked_rich(..., return_splits=True)``
-(the delivered runners) and never edits any live-training-path file. The ``parkinson_volatility``
+(the delivered runners) and never edits any live-training-path file. The ``parkinson_variance``
 column is a VARIANCE (sigma^2), the QLIKE positivity floor is identical across compared models, and
 every scaler / OLS coefficient is fit on TRAIN rows only (no leakage).
 
@@ -307,7 +307,7 @@ def target_persistence(files, max_lag=22):  # pragma: no cover - reads the raw p
     import pandas as pd
     acs = []
     for f in files:
-        s = pd.read_csv(f, parse_dates=["date"]).sort_values("date")["parkinson_volatility"]
+        s = pd.read_csv(f, parse_dates=["date"]).sort_values("date")["parkinson_variance"]
         s = s.dropna().to_numpy(dtype=float)
         if s.size > max_lag + 5 and np.var(s) > 0:
             acs.append(autocorr(s, max_lag))

@@ -11,7 +11,7 @@ def _write(tmp, name, n=500):
     rng = np.random.default_rng(abs(hash(name)) % 2**32)
     pk = np.abs(rng.normal(3e-4, 1e-4, n)) + 1e-6
     p = tmp / f"{name}_processed.csv"
-    pd.DataFrame({"date": d, "parkinson_volatility": pk}).to_csv(p, index=False)
+    pd.DataFrame({"date": d, "parkinson_variance": pk}).to_csv(p, index=False)
     return str(p)
 
 

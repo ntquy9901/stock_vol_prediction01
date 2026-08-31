@@ -138,11 +138,11 @@ def screen_files(files, min_rows=250, max_zero_frac=0.5, max_nan_frac=0.5, repor
         except Exception as exc:                       # unreadable/corrupt CSV -> record, do not silently skip
             excluded[f] = f"parse-error: {type(exc).__name__}"
             continue
-        if "parkinson_volatility" not in df.columns:
-            excluded[f] = "missing-column: parkinson_volatility"
+        if "parkinson_variance" not in df.columns:
+            excluded[f] = "missing-column: parkinson_variance"
             continue
         # R-06: coerce non-numeric cells to NaN (recorded) instead of letting to_numpy(float) raise and abort
-        raw_col = df["parkinson_volatility"]
+        raw_col = df["parkinson_variance"]
         v = pd.to_numeric(raw_col, errors="coerce").to_numpy(float)
         nonnum_frac = float(np.mean(raw_col.notna().to_numpy() & ~np.isfinite(v))) if len(v) else 0.0
         nan_frac = float(np.mean(~np.isfinite(v))) if len(v) else 1.0

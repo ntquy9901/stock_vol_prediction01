@@ -6,7 +6,7 @@ make_windows / per-ticker scaling / chronological split), generalized to:
   - an 80/10/10 chronological split (was 70/15/15),
   - a caller-supplied list of processed CSV files (data_root is chosen by the caller).
 
-Processed CSV schema (one file per ticker): columns ``date, parkinson_volatility``.
+Processed CSV schema (one file per ticker): columns ``date, parkinson_variance``.
 The target is Parkinson VARIANCE at ``t + horizon`` (point forecast). No leakage: windows stay
 within their split and per-ticker scalers are fit on TRAIN rows only.
 """
@@ -101,7 +101,7 @@ class TickerScaler:
 def _load_ticker(path: str) -> tuple[str, np.ndarray, np.ndarray, np.ndarray] | None:
     """Return (ticker, pk[N], feats[N,3] raw HAR, dates[N] as 'YYYY-MM-DD') or None if too short."""
     df = pd.read_csv(path, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
-    pk = df["parkinson_volatility"].to_numpy(dtype=np.float64)
+    pk = df["parkinson_variance"].to_numpy(dtype=np.float64)
     if len(pk) < MIN_ROWS:
         return None
     feats = har_features(pk)

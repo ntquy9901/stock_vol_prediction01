@@ -26,7 +26,7 @@ def test_screen_files_liquidity_and_history(tmp_path):
         v = np.abs(np.random.default_rng(0).normal(2e-4, 5e-5, n))
         v[: int(n * zero_frac)] = 0.0
         f = tmp_path / f"{name}_processed.csv"
-        pd.DataFrame({"date": range(n), "parkinson_volatility": v}).to_csv(f, index=False)
+        pd.DataFrame({"date": range(n), "parkinson_variance": v}).to_csv(f, index=False)
         return str(f)
     keep = _mk("KEEP", 300, 0.10)      # long + liquid -> kept
     short = _mk("SHORT", 100, 0.10)    # < 250 rows -> dropped
@@ -39,7 +39,7 @@ def test_screen_files_reports_reasons_and_nan_and_missing_column(tmp_path):
     # External review M-07: exclusions are recorded with an explicit reason (not silently swallowed),
     # a NaN-heavy file is dropped, a missing-column / unreadable file is reported (not a blanket skip).
     import pandas as pd
-    def _mk(name, n, zero_frac=0.0, nan_frac=0.0, col="parkinson_volatility"):
+    def _mk(name, n, zero_frac=0.0, nan_frac=0.0, col="parkinson_variance"):
         v = np.abs(np.random.default_rng(1).normal(2e-4, 5e-5, n))
         v[: int(n * zero_frac)] = 0.0
         v[int(n * (1 - nan_frac)):] = np.nan
@@ -75,10 +75,10 @@ def test_screen_files_nonnumeric_values_reported_not_raised(tmp_path):
     import pandas as pd
     good = tmp_path / "GOOD_processed.csv"
     pd.DataFrame({"date": range(300),
-                  "parkinson_volatility": np.abs(np.random.default_rng(2).normal(2e-4, 5e-5, 300))}
+                  "parkinson_variance": np.abs(np.random.default_rng(2).normal(2e-4, 5e-5, 300))}
                  ).to_csv(good, index=False)
     bad = tmp_path / "BAD_processed.csv"
-    pd.DataFrame({"date": range(300), "parkinson_volatility": ["oops"] * 300}).to_csv(bad, index=False)
+    pd.DataFrame({"date": range(300), "parkinson_variance": ["oops"] * 300}).to_csv(bad, index=False)
     rep = {}
     out = F.screen_files([str(bad), str(good)], report=rep)
     assert out == [str(good)]                                   # good file still processed after the bad one

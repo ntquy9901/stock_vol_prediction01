@@ -5,7 +5,7 @@ Enhanced V2 training with comprehensive edge case handling, learning curves,
 and honest performance documentation.
 
 Root cause fixes implemented:
-- HAR features generated from parkinson_volatility (not assumed)
+- HAR features generated from parkinson_variance (not assumed)
 - ReLU output ensures non-negative predictions
 - Edge cases handled (NaN, exploding gradients, empty data)
 - Learning curves plotted every 10 epochs (ML/DS rule)
@@ -121,8 +121,8 @@ class CryptoMambaEnhancedTrainer:
         # CRITICAL: Generate HAR features if missing
         required_har_cols = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']
         if not all(col in df.columns for col in required_har_cols):
-            print("   [!]  HAR features missing, generating from parkinson_volatility...")
-            df = generate_har_features(df, volatility_col='parkinson_volatility')
+            print("   [!]  HAR features missing, generating from parkinson_variance...")
+            df = generate_har_features(df, volatility_col='parkinson_variance')
 
         # Validate HAR features
         validate_har_features(df)
@@ -197,7 +197,7 @@ class CryptoMambaEnhancedTrainer:
         sequences = []
         targets = []
 
-        volatility = df['parkinson_volatility'].values
+        volatility = df['parkinson_variance'].values
 
         for i in range(len(df) - seq_length - forecast_horizon):
             # Extract features
@@ -599,7 +599,7 @@ def main():
     print("="*70)
     print("\n[!]  Performance Target: 50-52% Dir Acc (HYPOTHESIS - requires validation)")
     print("[LIST] Root Cause Fixes Applied:")
-    print("   [OK] HAR features generated from parkinson_volatility")
+    print("   [OK] HAR features generated from parkinson_variance")
     print("   [OK] ReLU output ensures non-negative predictions")
     print("   [OK] Edge cases handled (NaN, exploding gradients, empty data)")
     print("   [OK] Learning curves plotted every 10 epochs")

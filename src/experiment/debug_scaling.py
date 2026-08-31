@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 
 # Load sample data
 df = pd.read_csv('data/processed/ACB_processed.csv')
-volatility = df['parkinson_volatility'].values[:100]
+volatility = df['parkinson_variance'].values[:100]
 
 print("Original volatility range:")
 print(f"  Min: {volatility.min():.6f}")

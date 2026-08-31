@@ -57,7 +57,7 @@ def screened_tickers(panel):
 
 def _write_estimator_processed(panel, estimator, out_dir, keep_tickers=None):
     """For every ticker with both a processed CSV and a raw OHLCV file, write a processed CSV whose
-    'parkinson_volatility' column is the chosen estimator computed from raw OHLCV (aligned on date).
+    'parkinson_variance' column is the chosen estimator computed from raw OHLCV (aligned on date).
     ``keep_tickers`` (if given) restricts to the canonical screened universe."""
     price_dir = VE.PRICE[panel]
     written = []
@@ -82,8 +82,8 @@ def _write_estimator_processed(panel, estimator, out_dir, keep_tickers=None):
         # fragment the panel differently per estimator and confound the QLIKE). Floor non-positive/zero
         # values at a tiny epsilon so the only difference across estimators is the value on each day.
         v = np.where(np.isfinite(v), np.maximum(v, 1e-10), np.nan)
-        df = pd.DataFrame({"date": pd.to_datetime(raw["date"]), "parkinson_volatility": v})
-        df = df.dropna(subset=["parkinson_volatility"])   # drops only invalid-price / first-overnight rows
+        df = pd.DataFrame({"date": pd.to_datetime(raw["date"]), "parkinson_variance": v})
+        df = df.dropna(subset=["parkinson_variance"])   # drops only invalid-price / first-overnight rows
         if len(df) < 260:
             continue
         df.to_csv(Path(out_dir) / f"{tk}_processed.csv", index=False)

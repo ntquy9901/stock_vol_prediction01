@@ -55,7 +55,7 @@ def build_perobs(files, lookback, horizon, cfg):
     tickers = []
     for f in sorted(files):
         df = du.pd.read_csv(f, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
-        pk = df["parkinson_volatility"].to_numpy(float)
+        pk = df["parkinson_variance"].to_numpy(float)
         if len(pk) < 200 or not np.isfinite(pk).all():   # skip tickers with too little / non-finite data
             continue
         feats = du.har_features(pk)

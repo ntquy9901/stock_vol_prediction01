@@ -79,6 +79,6 @@ print("  Hypothesized Dir Acc: 50-52% (vs 47.78% in V2, requires validation)")
 
 print("\n[!] CRITICAL FIXES APPLIED:")
 print("  [+] Model includes ReLU output (ensures non-negative predictions)")
-print("  [+] HAR features will be generated from parkinson_volatility")
+print("  [+] HAR features will be generated from parkinson_variance")
 print("  [+] Performance claims are hypotheses (not guarantees)")
 print("  [+] Integration tests will validate actual behavior")

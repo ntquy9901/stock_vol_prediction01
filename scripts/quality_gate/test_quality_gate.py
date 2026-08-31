@@ -33,7 +33,7 @@ def test_processed_schema_passes_valid(tmp_path: Path) -> None:
     df = pd.DataFrame(
         {
             "date": ["2020-01-01", "2020-01-02", "2020-01-03"],
-            "parkinson_volatility": [0.01, 0.02, 0.015],
+            "parkinson_variance": [0.01, 0.02, 0.015],
         }
     )
     csv = tmp_path / "AAA_processed.csv"
@@ -46,7 +46,7 @@ def test_processed_schema_fails_negative_volatility(tmp_path: Path) -> None:
     df = pd.DataFrame(
         {
             "date": ["2020-01-01", "2020-01-02"],
-            "parkinson_volatility": [0.01, -0.5],
+            "parkinson_variance": [0.01, -0.5],
         }
     )
     csv = tmp_path / "BAD_processed.csv"
@@ -64,7 +64,7 @@ def test_processed_schema_fails_high_lt_low(tmp_path: Path) -> None:
             "low": [10.0, 10.0],
             "close": [9.5, 10.5],
             "volume": [100, 200],
-            "parkinson_volatility": [0.01, 0.02],
+            "parkinson_variance": [0.01, 0.02],
         }
     )
     csv = tmp_path / "OHLC_processed.csv"
@@ -78,7 +78,7 @@ def test_processed_schema_fails_nonmonotonic_dates(tmp_path: Path) -> None:
     df = pd.DataFrame(
         {
             "date": ["2020-01-03", "2020-01-01"],
-            "parkinson_volatility": [0.01, 0.02],
+            "parkinson_variance": [0.01, 0.02],
         }
     )
     csv = tmp_path / "ORDER_processed.csv"
@@ -96,7 +96,7 @@ def test_validate_data_on_tiny_fixtures(tmp_path: Path) -> None:
         pd.DataFrame(
             {
                 "date": ["2020-01-01", "2020-01-02"],
-                "parkinson_volatility": [0.01, 0.02],
+                "parkinson_variance": [0.01, 0.02],
             }
         ),
     )
@@ -123,7 +123,7 @@ def test_validate_data_flags_bad_news_norm(tmp_path: Path) -> None:
     _write_processed(
         proc / "AAA_processed.csv",
         pd.DataFrame(
-            {"date": ["2020-01-01"], "parkinson_volatility": [0.01]}
+            {"date": ["2020-01-01"], "parkinson_variance": [0.01]}
         ),
     )
     panel = tmp_path / "panel.parquet"
@@ -150,7 +150,7 @@ def test_processed_read_failure_is_invalid(tmp_path: Path) -> None:
 
 def test_processed_schema_fails_unparseable_dates(tmp_path: Path) -> None:
     df = pd.DataFrame(
-        {"date": ["not-a-date", "also-bad"], "parkinson_volatility": [0.01, 0.02]}
+        {"date": ["not-a-date", "also-bad"], "parkinson_variance": [0.01, 0.02]}
     )
     csv = tmp_path / "BADDATE_processed.csv"
     _write_processed(csv, df)
@@ -161,7 +161,7 @@ def test_processed_schema_fails_unparseable_dates(tmp_path: Path) -> None:
 
 def test_processed_schema_fails_duplicate_dates(tmp_path: Path) -> None:
     df = pd.DataFrame(
-        {"date": ["2020-01-01", "2020-01-01"], "parkinson_volatility": [0.01, 0.02]}
+        {"date": ["2020-01-01", "2020-01-01"], "parkinson_variance": [0.01, 0.02]}
     )
     csv = tmp_path / "DUP_processed.csv"
     _write_processed(csv, df)
@@ -174,7 +174,7 @@ def test_processed_schema_fails_all_nan_column(tmp_path: Path) -> None:
     df = pd.DataFrame(
         {
             "date": ["2020-01-01", "2020-01-02"],
-            "parkinson_volatility": [0.01, 0.02],
+            "parkinson_variance": [0.01, 0.02],
             "extra": [float("nan"), float("nan")],  # all-NaN column
         }
     )
@@ -658,7 +658,7 @@ def test_check_drift_skips_when_too_few_rows(
 ) -> None:
     proc = tmp_path / "processed"
     proc.mkdir()
-    pd.DataFrame({"parkinson_volatility": [0.01, 0.02, 0.03]}).to_csv(
+    pd.DataFrame({"parkinson_variance": [0.01, 0.02, 0.03]}).to_csv(
         proc / "AAA.csv", index=False
     )
     monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
@@ -677,7 +677,7 @@ def test_check_drift_real_run_writes_html(
     rng = np.random.default_rng(0)
     pd.DataFrame(
         {
-            "parkinson_volatility": rng.uniform(0.01, 0.05, n),
+            "parkinson_variance": rng.uniform(0.01, 0.05, n),
             "close": rng.uniform(10, 20, n),
         }
     ).to_csv(proc / "AAA.csv", index=False)
@@ -694,7 +694,7 @@ def test_check_drift_report_failure_is_skipped(
     proc = tmp_path / "processed"
     proc.mkdir()
     pd.DataFrame(
-        {"parkinson_volatility": [0.01] * 60, "close": [10.0] * 60}
+        {"parkinson_variance": [0.01] * 60, "close": [10.0] * 60}
     ).to_csv(proc / "AAA.csv", index=False)
     monkeypatch.setattr(rqg, "PROCESSED_DIR", proc)
 
@@ -735,7 +735,7 @@ def test_check_drift_truncates_to_max_rows(
     rng = np.random.default_rng(1)
     pd.DataFrame(
         {
-            "parkinson_volatility": rng.uniform(0.01, 0.05, n),
+            "parkinson_variance": rng.uniform(0.01, 0.05, n),
             "close": rng.uniform(10, 20, n),
         }
     ).to_csv(proc / "AAA.csv", index=False)

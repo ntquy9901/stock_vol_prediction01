@@ -804,7 +804,7 @@ def _write_json(ev: dict, verdict: dict, rec_cfg: dict) -> None:
         "confidence": verdict["confidence"],
         "conclusion": verdict["conclusion"],
         "graph_type": verdict["graph_type"],
-        "primary_relationship": "parkinson_volatility",
+        "primary_relationship": "parkinson_variance",
         # Strongest-evidenced GNN config to build next and test vs HAR under Diebold-Mariano.
         # Produced regardless of the yes/no verdict; expected lift is honest (may be <=0).
         "recommended_config": {

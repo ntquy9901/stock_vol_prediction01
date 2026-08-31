@@ -125,7 +125,7 @@ def test_train_vol_panel_is_train_only(tmp_path):
     aligns columns to the requested node order."""
     dates = pd.date_range("2020-01-01", periods=10, freq="D")
     for tk, base in (("AAA", 1.0), ("BBB", 2.0)):
-        pd.DataFrame({"date": dates, "parkinson_volatility": base + np.arange(10) * 1e-4}).to_csv(
+        pd.DataFrame({"date": dates, "parkinson_variance": base + np.arange(10) * 1e-4}).to_csv(
             tmp_path / f"{tk}_processed.csv", index=False)
     files = [str(tmp_path / "AAA_processed.csv"), str(tmp_path / "BBB_processed.csv")]
     val_start = "2020-01-06"

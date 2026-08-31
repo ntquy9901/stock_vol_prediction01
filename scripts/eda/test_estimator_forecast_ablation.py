@@ -17,7 +17,7 @@ def _synth(tmp_path, tickers=("AA", "BB", "CC", "DD", "EE", "FF", "GG", "HH", "I
     for tk in tickers:
         c = 20.0 + np.cumsum(rng.normal(0, 0.2, n))
         span = np.abs(rng.normal(0, 0.3, n))
-        pd.DataFrame({"date": dates, "parkinson_volatility": (span / c) ** 2 + 1e-6}).to_csv(
+        pd.DataFrame({"date": dates, "parkinson_variance": (span / c) ** 2 + 1e-6}).to_csv(
             proc / f"{tk}_processed.csv", index=False)
         pd.DataFrame({"date": dates, "open": c, "high": c + span, "low": c - span,
                       "close": c, "volume": rng.integers(1e5, 1e6, n)}).to_csv(
@@ -38,7 +38,7 @@ def test_write_estimator_processed_same_grid_floored(tmp_path, monkeypatch):
     # FAIR grid: flooring (not dropping) keeps the SAME row count across estimators (bar the 1 overnight NaN)
     assert abs(n_park - n_rs) <= 1
     # all written targets are strictly positive (floored)
-    assert (pd.read_csv(files_r[0])["parkinson_volatility"] > 0).all()
+    assert (pd.read_csv(files_r[0])["parkinson_variance"] > 0).all()
 
 
 def test_write_estimator_processed_is_date_sorted_and_deduped(tmp_path, monkeypatch):
@@ -62,7 +62,7 @@ def test_write_estimator_processed_is_date_sorted_and_deduped(tmp_path, monkeypa
     assert got["date"].is_monotonic_increasing                 # sorted
     assert not got["date"].duplicated().any()                  # deduped
     # the kept row for the duplicated date is the LAST-appearing one (wider high -> its own-day Parkinson)
-    kept = got.loc[got["date"] == pd.to_datetime(dup_date), "parkinson_volatility"].iloc[0]
+    kept = got.loc[got["date"] == pd.to_datetime(dup_date), "parkinson_variance"].iloc[0]
     park_last = np.log(last_dup["high"].iloc[0] / clean.loc[100, "low"]) ** 2 / (4 * np.log(2))
     assert abs(kept - park_last) < 1e-9
 

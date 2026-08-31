@@ -36,8 +36,8 @@ for csv_file in sorted(csv_files):
 
     df = pd.read_csv(os.path.join(data_dir, csv_file))
 
-    if 'parkinson_volatility' in df.columns:
-        volatility = df['parkinson_volatility'].dropna().values[:500]  # First 500 days
+    if 'parkinson_variance' in df.columns:
+        volatility = df['parkinson_variance'].dropna().values[:500]  # First 500 days
         volatility_list.append(volatility)
 
 # Pad sequences

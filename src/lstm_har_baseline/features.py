@@ -16,7 +16,7 @@ Date: 2026-06-18
 import pandas as pd
 
 
-def create_har_features(parkinson_volatility: pd.Series,
+def create_har_features(parkinson_variance: pd.Series,
                        windows: dict = None) -> pd.DataFrame:
     """
     Create HAR features from Parkinson volatility time series.
@@ -25,7 +25,7 @@ def create_har_features(parkinson_volatility: pd.Series,
     temporal patterns using different rolling windows.
 
     Args:
-        parkinson_volatility: Parkinson volatility time series
+        parkinson_variance: Parkinson volatility time series
         windows: Dictionary of window sizes (default: daily=1, weekly=5, monthly=22)
 
     Returns:
@@ -48,7 +48,7 @@ def create_har_features(parkinson_volatility: pd.Series,
     # Create HAR features using rolling windows
     for name, window in windows.items():
         feature_name = f'har_{name}_vol'
-        features[feature_name] = parkinson_volatility.rolling(window=window).mean()
+        features[feature_name] = parkinson_variance.rolling(window=window).mean()
 
     # Remove NaN values created by rolling windows
     features = features.dropna()

@@ -8,7 +8,7 @@ Two families are exposed:
   coefficients and floors the output so a volatility forecast is never negative.
 
 * **GARCH(1,1)** via the ``arch`` package. The forecast target here is the Parkinson
-  **VARIANCE** series (the processed ``parkinson_volatility`` column is a variance, not a
+  **VARIANCE** series (the processed ``parkinson_variance`` column is a variance, not a
   standard deviation). GARCH models the conditional variance of a *return-like* series, so we
   build pseudo returns ``r_t = sign_t * sqrt(var_t)`` (random +/-1 sign, zero mean, variance
   ``var_t``) and scale them x100 for numerical conditioning exactly as the project's classical

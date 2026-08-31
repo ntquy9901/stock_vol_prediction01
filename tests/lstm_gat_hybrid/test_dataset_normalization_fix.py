@@ -43,7 +43,7 @@ def _make_har_df(vol):
         "har_daily_vol": vol,
         "har_weekly_vol": vol * 1.1,
         "har_monthly_vol": vol * 0.9,
-        "parkinson_volatility": vol,
+        "parkinson_variance": vol,
     })
 
 
@@ -139,7 +139,7 @@ def _write_synthetic_csvs(tmp_path, n_rows=200, n_tickers=3):
         # Distinct positive volatility level per ticker + mild random walk.
         base = 0.005 * (t + 1)
         vol = np.abs(base + 0.001 * np.cumsum(rng.normal(0, 1, n_rows)) * 0.01 + 1e-4)
-        df = pd.DataFrame({"date": dates, "parkinson_volatility": vol})
+        df = pd.DataFrame({"date": dates, "parkinson_variance": vol})
         df.to_csv(tmp_path / f"TICK{t}_processed.csv", index=False)
 
 

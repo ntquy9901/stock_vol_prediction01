@@ -20,7 +20,7 @@ CAL = (("2020-01-01", "2020-12-31"), ("2021-01-01", "2021-12-31"), ("2022-01-01"
 def _frame(start, periods):
     dates = pd.bdate_range(start, periods=periods)
     return pd.DataFrame({"date": dates.astype(str),
-                         "parkinson_volatility": [0.01] * periods})
+                         "parkinson_variance": [0.01] * periods})
 
 
 def test_calendar_split_partitions_by_date():

@@ -36,11 +36,11 @@ def _sample(ticker_id, ticker, target_date, obs_date, y):
 def _store_two_tickers():
     dates = [f"2020-01-{d:02d}" for d in range(1, 31)]
     frame0 = pd.DataFrame({"date": dates,
-                           "parkinson_volatility": np.linspace(0.01, 0.02, 30)})
+                           "parkinson_variance": np.linspace(0.01, 0.02, 30)})
     frame1 = pd.DataFrame({"date": dates,
-                           "parkinson_volatility": np.linspace(0.03, 0.05, 30)})
-    pp0 = TickerPreprocessor.fit(frame0, ["parkinson_volatility"], "parkinson_volatility")
-    pp1 = TickerPreprocessor.fit(frame1, ["parkinson_volatility"], "parkinson_volatility")
+                           "parkinson_variance": np.linspace(0.03, 0.05, 30)})
+    pp0 = TickerPreprocessor.fit(frame0, ["parkinson_variance"], "parkinson_variance")
+    pp1 = TickerPreprocessor.fit(frame1, ["parkinson_variance"], "parkinson_variance")
     return PreprocessorStore({0: pp0, 1: pp1})
 
 

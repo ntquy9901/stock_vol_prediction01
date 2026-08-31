@@ -80,7 +80,7 @@ def test_ohlc_sanity_all_zero_volume_counts_all_leading():
 
 
 def _proc(dates, vals):
-    return pd.DataFrame({"date": dates, "parkinson_volatility": vals})
+    return pd.DataFrame({"date": dates, "parkinson_variance": vals})
 
 
 def test_data_stats_for_ticker_kept_and_excluded_paths():
@@ -281,7 +281,7 @@ def _make_synth_panel(tmp: Path, n_tickers=10, n_rows=700, seed=0):
         pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "open": open_, "high": high,
                       "low": low, "close": close, "volume": vol}).to_csv(
             price_dir / f"{tk}_ohlcv.csv", index=False)
-        pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "parkinson_volatility": pk}).to_csv(
+        pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "parkinson_variance": pk}).to_csv(
             proc_dir / f"{tk}_processed.csv", index=False)
     return proc_dir, price_dir
 

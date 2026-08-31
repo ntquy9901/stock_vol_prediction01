@@ -29,7 +29,7 @@ def _make_panel(tmp_path, n_days=400, tickers=("AAA", "BBB", "CCC")):
         v[0] = 1e-4 * (k + 1)
         for t in range(1, n_days):
             v[t] = 5e-5 * (k + 1) + 0.85 * v[t - 1] + 1e-5 * abs(rng.standard_normal())
-        pd.DataFrame({"date": dates, "parkinson_volatility": v}).to_csv(
+        pd.DataFrame({"date": dates, "parkinson_variance": v}).to_csv(
             proc_dir / f"{tk}_processed.csv", index=False)
         close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
         span = np.sqrt(np.maximum(v, 1e-8)) * close

@@ -20,7 +20,7 @@ pytest.importorskip(
 )
 from src.data_processing import (
     validate_ohlc_data,
-    calculate_parkinson_volatility,
+    calculate_parkinson_variance,
     calculate_garman_klass_volatility,
     handle_missing_data,
     detect_outliers,
@@ -86,9 +86,9 @@ class TestOHLCVValidation:
 class TestParkinsonVolatility:
     """Test suite for Parkinson volatility estimator."""
 
-    def test_parkinson_volatility_formula_correctness(self, sample_ohlc_data):
+    def test_parkinson_variance_formula_correctness(self, sample_ohlc_data):
         """Test Parkinson formula: σ² = (log(H/L)²) / (4*log(2))."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
 
         # Manual calculation for first row
         high = sample_ohlc_data['High'].iloc[0]
@@ -97,21 +97,21 @@ class TestParkinsonVolatility:
 
         assert abs(parkinson_vol.iloc[0] - expected) < 1e-10
 
-    def test_parkinson_volatility_range(self, sample_ohlc_data):
+    def test_parkinson_variance_range(self, sample_ohlc_data):
         """Test Parkinson volatility values are in expected range (0.0001 to 0.05)."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
 
         assert parkinson_vol.min() >= 0.0001
         assert parkinson_vol.max() <= 0.05
 
-    def test_parkinson_volatility_returns_series(self, sample_ohlc_data):
+    def test_parkinson_variance_returns_series(self, sample_ohlc_data):
         """Test Parkinson calculation returns pandas Series."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
 
         assert isinstance(parkinson_vol, pd.Series)
         assert len(parkinson_vol) == len(sample_ohlc_data)
 
-    def test_parkinson_volatility_handles_nan_input(self, sample_ohlc_data):
+    def test_parkinson_variance_handles_nan_input(self, sample_ohlc_data):
         """Test Parkinson calculation raises error for NaN input when cleaning disabled."""
         # Create DataFrame with NaN but all required columns
         data = sample_ohlc_data.iloc[:2].copy()
@@ -119,13 +119,13 @@ class TestParkinsonVolatility:
 
         # Test with cleaning disabled - should raise error
         with pytest.raises(ValueError, match="contains NaN"):
-            calculate_parkinson_volatility(data, clean=False)
+            calculate_parkinson_variance(data, clean=False)
 
-    def test_parkinson_volatility_validates_before_calculation(self, sample_ohlc_data_invalid):
+    def test_parkinson_variance_validates_before_calculation(self, sample_ohlc_data_invalid):
         """Test Parkinson validates OHLCV before calculation when cleaning disabled."""
         # Test with cleaning disabled - should raise error
         with pytest.raises(ValueError):
-            calculate_parkinson_volatility(sample_ohlc_data_invalid, clean=False)
+            calculate_parkinson_variance(sample_ohlc_data_invalid, clean=False)
 
 
 # ============================================================================
@@ -175,7 +175,7 @@ class TestOutlierDetection:
 
     def test_detect_outliers_3x_iqr_threshold(self, sample_ohlc_data_extreme_values):
         """Test outlier detection uses 3×IQR threshold."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data_extreme_values)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data_extreme_values)
         outliers = detect_outliers(parkinson_vol)
 
         # The extreme value at index 10 should be flagged
@@ -185,7 +185,7 @@ class TestOutlierDetection:
 
     def test_detect_outliers_returns_boolean_series(self, sample_ohlc_data):
         """Test outlier detection returns boolean Series."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
         outliers = detect_outliers(parkinson_vol)
 
         assert isinstance(outliers, pd.Series)
@@ -193,7 +193,7 @@ class TestOutlierDetection:
 
     def test_detect_outliers_logs_results(self, sample_ohlc_data, caplog):
         """Test outlier detection logs results."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
 
         with caplog.at_level(logging.INFO):
             detect_outliers(parkinson_vol)
@@ -245,7 +245,7 @@ class TestVolatilityBoundsValidation:
 
     def test_validate_volatility_bounds_in_range(self, sample_ohlc_data):
         """Test validation passes for volatility in range (0.0001 to 0.05)."""
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
 
         # Should not raise any warnings or errors
         validate_volatility_bounds(parkinson_vol)
@@ -281,7 +281,7 @@ class TestPerformance:
 
         results = {}
         for stock_id, data in sample_multi_stock_data.items():
-            parkinson_vol = calculate_parkinson_volatility(data)
+            parkinson_vol = calculate_parkinson_variance(data)
             results[stock_id] = parkinson_vol
 
         elapsed_time = time.time() - start_time
@@ -306,7 +306,7 @@ class TestIntegration:
         clean_data = handle_missing_data(sample_ohlc_data)
 
         # Step 3: Calculate Parkinson volatility
-        parkinson_vol = calculate_parkinson_volatility(clean_data)
+        parkinson_vol = calculate_parkinson_variance(clean_data)
 
         # Step 4: Detect outliers
         outliers = detect_outliers(parkinson_vol)
@@ -327,14 +327,14 @@ class TestIntegration:
         validate_ohlc_data(clean_data)
 
         # Step 3: Calculate Parkinson volatility
-        parkinson_vol = calculate_parkinson_volatility(clean_data)
+        parkinson_vol = calculate_parkinson_variance(clean_data)
 
         assert len(parkinson_vol) == len(clean_data)
 
     def test_fallback_to_garman_klass_on_parkinson_failure(self, sample_ohlc_data):
         """Test fallback to Garman-Klass when Parkinson fails."""
         # This tests the fallback mechanism
-        parkinson_vol = calculate_parkinson_volatility(sample_ohlc_data)
+        parkinson_vol = calculate_parkinson_variance(sample_ohlc_data)
         gk_vol = calculate_garman_klass_volatility(sample_ohlc_data)
 
         # Both should produce Series of same length

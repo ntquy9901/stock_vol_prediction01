@@ -19,7 +19,7 @@ from typing import Tuple
 _OHLC_GEOMETRY_RTOL = 1e-6
 
 
-def calculate_parkinson_volatility(df: pd.DataFrame) -> pd.Series:
+def calculate_parkinson_variance(df: pd.DataFrame) -> pd.Series:
     """
     Calculate Parkinson volatility estimator from OHLCV data.
 
@@ -123,7 +123,7 @@ def process_single_stock(raw_file: str, output_dir: str) -> Tuple[str, int]:
         validate_ohlc_data(df)
 
         # Calculate Parkinson volatility
-        parkinson_vol = calculate_parkinson_volatility(df)
+        parkinson_vol = calculate_parkinson_variance(df)
 
         # Normalize date to plain YYYY-MM-DD: most raw sources already store this, but
         # VPB/VRE store "YYYY-MM-DD HH:MM:SS+07:00" (mixed format across raw sources) —
@@ -134,7 +134,7 @@ def process_single_stock(raw_file: str, output_dir: str) -> Tuple[str, int]:
         # Create processed DataFrame
         processed_df = pd.DataFrame({
             'date': date_str,
-            'parkinson_volatility': parkinson_vol
+            'parkinson_variance': parkinson_vol
         })
 
         # Remove NaN and infinite values
@@ -142,7 +142,7 @@ def process_single_stock(raw_file: str, output_dir: str) -> Tuple[str, int]:
         processed_df = processed_df.dropna()
 
         # Clip extreme values (Parkinson vol should typically be < 0.1)
-        processed_df['parkinson_volatility'] = processed_df['parkinson_volatility'].clip(upper=0.1)
+        processed_df['parkinson_variance'] = processed_df['parkinson_variance'].clip(upper=0.1)
 
         # Save to processed directory
         output_file = os.path.join(output_dir, f'{ticker}_processed.csv')

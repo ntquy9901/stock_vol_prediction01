@@ -22,7 +22,7 @@ def _make_files(tmp, n_tickers=10, n_days=420, seed=0):
     for k in range(n_tickers):
         pk = np.abs(rng.normal(0.02, 0.008, n_days)) + 1e-4          # positive variance-like series
         f = d / f"T{k:02d}_processed.csv"
-        pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(f, index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(f, index=False)
         files.append(str(f))
     return files
 

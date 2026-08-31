@@ -78,7 +78,7 @@ def _synth_panel_files(tmp_path, n_tickers=12, n_days=1000, seed=0, sparse=False
         if sparse:                                    # drop ~5% of days, a DIFFERENT set per ticker
             holes = rng.choice(np.arange(30, n_days), size=int(0.05 * n_days), replace=False)
             vv[holes] = np.nan
-        pd.DataFrame({"date": dates, "parkinson_volatility": vv}).to_csv(proc / f"{tk}_processed.csv", index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": vv}).to_csv(proc / f"{tk}_processed.csv", index=False)
         close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
         span = np.sqrt(v) * close
         pd.DataFrame({"date": dates, "open": close, "high": close + span, "low": close - span,

@@ -42,7 +42,7 @@ def _train_panels(augmented_frames) -> tuple[pd.DataFrame, pd.DataFrame]:
         train = augmented_frames.frames[ticker]["train"]
         index = pd.DatetimeIndex(pd.to_datetime(train["date"]))
         pk_vol[ticker] = pd.Series(
-            np.sqrt(train["parkinson_volatility"].to_numpy(dtype=float)), index=index
+            np.sqrt(train["parkinson_variance"].to_numpy(dtype=float)), index=index
         )
         vshock[ticker] = pd.Series(train[VOLUME_ZSCORE_COLUMN].to_numpy(dtype=float), index=index)
     return pd.DataFrame(vshock).sort_index(), pd.DataFrame(pk_vol).sort_index()

@@ -57,11 +57,11 @@ PROCESSED_DIR = _ROOT / "data" / "processed"
 
 
 def load_market_volatility(processed_dir: Path) -> pd.DataFrame:
-    """[date, ticker, parkinson_volatility] long frame from every `{TICKER}_processed.csv`."""
+    """[date, ticker, parkinson_variance] long frame from every `{TICKER}_processed.csv`."""
     frames = []
     for path in sorted(processed_dir.glob("*_processed.csv")):
         ticker = path.stem.replace("_processed", "")
-        df = pd.read_csv(path, usecols=["date", "parkinson_volatility"])
+        df = pd.read_csv(path, usecols=["date", "parkinson_variance"])
         parsed = pd.to_datetime(df["date"])
         if parsed.dt.tz is not None:
             # VPB/VRE processed CSVs carry a +07:00 offset unlike the other 30 tickers (tz-naive)
@@ -71,13 +71,13 @@ def load_market_volatility(processed_dir: Path) -> pd.DataFrame:
         df["ticker"] = ticker
         frames.append(df)
     if not frames:
-        return pd.DataFrame(columns=["date", "ticker", "parkinson_volatility"])
+        return pd.DataFrame(columns=["date", "ticker", "parkinson_variance"])
     return pd.concat(frames, ignore_index=True)
 
 
 def market_avg_change(vol_long: pd.DataFrame) -> pd.Series:
     """Cross-sectional mean of each ticker's day-over-day volatility change, indexed by date."""
-    wide = vol_long.pivot(index="date", columns="ticker", values="parkinson_volatility").sort_index()
+    wide = vol_long.pivot(index="date", columns="ticker", values="parkinson_variance").sort_index()
     change = wide.diff()
     return change.mean(axis=1, skipna=True)
 

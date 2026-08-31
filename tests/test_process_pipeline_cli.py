@@ -29,8 +29,8 @@ def test_cli_processes_arbitrary_universe_dir(tmp_path):
     assert rc == 0
     for tk in ("ABC", "XYZ"):
         proc = pd.read_csv(out / f"{tk}_processed.csv")
-        assert list(proc.columns) == ["date", "parkinson_volatility"]
-        assert (proc["parkinson_volatility"] >= 0).all()
+        assert list(proc.columns) == ["date", "parkinson_variance"]
+        assert (proc["parkinson_variance"] >= 0).all()
         assert len(proc) == 2
 
 

@@ -47,10 +47,10 @@ def remove_outliers(df: pd.DataFrame, n_std: float = 3.0) -> pd.DataFrame:
     alignment step (per-ticker date gaps unrelated to outliers, e.g. trading
     halts) that this alone doesn't cover.
     """
-    if len(df) == 0 or 'parkinson_volatility' not in df.columns:
+    if len(df) == 0 or 'parkinson_variance' not in df.columns:
         return df
 
-    volatility_values = df['parkinson_volatility'].values
+    volatility_values = df['parkinson_variance'].values
 
     if np.std(volatility_values) == 0:
         return df
@@ -64,7 +64,7 @@ def remove_outliers(df: pd.DataFrame, n_std: float = 3.0) -> pd.DataFrame:
         std = volatility_values.std()
         lower, upper = mean - n_std * std, mean + n_std * std
         df = df.copy()
-        df.loc[outlier_mask, 'parkinson_volatility'] = np.clip(
+        df.loc[outlier_mask, 'parkinson_variance'] = np.clip(
             volatility_values[outlier_mask], lower, upper)
         print(f"    [Outlier Winsorize] Clipped {outlier_count} outliers "
               f"({outlier_count/len(df)*100:.2f}%) to [{lower:.6f}, {upper:.6f}]")
@@ -156,7 +156,7 @@ def _load_raw_stock_data(
         stock_name = csv_file.stem.replace('_processed', '')
         df = pd.read_csv(csv_file)
 
-        if 'date' not in df.columns or 'parkinson_volatility' not in df.columns:
+        if 'date' not in df.columns or 'parkinson_variance' not in df.columns:
             print(f"[Warning] Skipping {stock_name}: missing required columns")
             continue
 
@@ -165,7 +165,7 @@ def _load_raw_stock_data(
             continue
 
         # Calculate returns
-        df['returns'] = df['parkinson_volatility'].pct_change()
+        df['returns'] = df['parkinson_variance'].pct_change()
         df['returns'] = df['returns'].fillna(0)
 
         # Apply outlier winsorization (call the module-level function). This clips
@@ -294,16 +294,16 @@ def _generate_har_for_split(
 
         try:
             df_har = generate_har_features(df_copy)
-            df_har['parkinson_volatility'] = df_copy['parkinson_volatility'].values
+            df_har['parkinson_variance'] = df_copy['parkinson_variance'].values
             split_with_har[stock_name] = df_har
         except ValueError as e:
             # Handle edge case: constant volatility (zero variance)
             if 'all zeros' in str(e) or 'all NaN' in str(e):
                 print(f"  [Warning] {stock_name} in {split_name}: constant volatility, using raw features")
                 # Use raw volatility as fallback
-                df_copy['har_daily_vol'] = df_copy['parkinson_volatility'].values
-                df_copy['har_weekly_vol'] = df_copy['parkinson_volatility'].values
-                df_copy['har_monthly_vol'] = df_copy['parkinson_volatility'].values
+                df_copy['har_daily_vol'] = df_copy['parkinson_variance'].values
+                df_copy['har_weekly_vol'] = df_copy['parkinson_variance'].values
+                df_copy['har_monthly_vol'] = df_copy['parkinson_variance'].values
                 split_with_har[stock_name] = df_copy
             else:
                 raise e

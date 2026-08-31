@@ -22,15 +22,15 @@ def test_parkinson_formula_known_values():
 
 
 def test_parkinson_var_is_variance_matches_processed():
-    # data/processed parkinson_volatility is stored as VARIANCE (sigma^2); confirm.
+    # data/processed parkinson_variance is stored as VARIANCE (sigma^2); confirm.
     raw = load_ticker("data/raw/prices/ACB_ohlcv.csv")
     proc = pd.read_csv("data/processed/ACB_processed.csv", parse_dates=["date"])
     raw = raw.assign(pk_var=parkinson.parkinson_var(raw["high"], raw["low"]))
     merged = raw.merge(proc, on="date", how="inner").dropna(
-        subset=["pk_var", "parkinson_volatility"]
+        subset=["pk_var", "parkinson_variance"]
     )
     assert len(merged) > 1000
-    diff = (merged["pk_var"] - merged["parkinson_volatility"]).abs()
+    diff = (merged["pk_var"] - merged["parkinson_variance"]).abs()
     assert diff.median() < 1e-6  # variance formula reproduces processed column
 
 

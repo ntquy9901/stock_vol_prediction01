@@ -586,8 +586,8 @@ if __name__ == "__main__":
         df = pd.read_csv(os.path.join(data_dir, csv_file))
 
         # Extract volatility (this is our main data)
-        if 'parkinson_volatility' in df.columns:
-            volatility = df['parkinson_volatility'].dropna().values
+        if 'parkinson_variance' in df.columns:
+            volatility = df['parkinson_variance'].dropna().values
             volatility_list.append(volatility[:500])  # Use first 500 days
 
             # Calculate returns from volatility as proxy for correlation

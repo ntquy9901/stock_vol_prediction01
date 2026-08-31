@@ -59,7 +59,7 @@ def test_temporal_split_fails_loud_on_nat_and_duplicate_dates():
         TS.temporal_split_dataframe(dup)
 
 
-# --- Lesson: the `parkinson_volatility` target is VARIANCE (sigma^2), not sigma (memory: parkinson_target_is_variance) ---
+# --- Lesson: the `parkinson_variance` target is VARIANCE (sigma^2), not sigma (memory: parkinson_target_is_variance) ---
 def test_parkinson_target_is_variance_not_stddev():
     import volatility_estimators as VE
     # H/L = e  ->  ln(H/L) = 1  ->  Parkinson VARIANCE = 1/(4 ln2) ~ 0.36067 (NOT sqrt of it ~ 0.6006)

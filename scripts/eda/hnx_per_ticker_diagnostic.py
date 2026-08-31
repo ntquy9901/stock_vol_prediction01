@@ -131,7 +131,7 @@ def data_stats_for_ticker(ticker: str, proc: pd.DataFrame, raw: pd.DataFrame,
                           screen_reason: str) -> dict:
     """Assemble the Part-A per-ticker row (pure): validity, coverage, zero fraction, sigma^2
     distribution, OHLC sanity, and screen decision. ``screen_reason`` is None/'' when kept."""
-    v_all = pd.to_numeric(proc["parkinson_volatility"], errors="coerce")
+    v_all = pd.to_numeric(proc["parkinson_variance"], errors="coerce")
     valid = proc.loc[v_all.notna() & np.isfinite(v_all)]
     n_valid = int(len(valid))
     dts = pd.to_datetime(valid["date"], errors="coerce").dropna().sort_values()
@@ -143,9 +143,9 @@ def data_stats_for_ticker(ticker: str, proc: pd.DataFrame, raw: pd.DataFrame,
     else:
         first = last = pd.NaT
         cal_days, coverage = 0, float("nan")
-    vv = valid["parkinson_volatility"].to_numpy(float) if n_valid else np.array([])
+    vv = valid["parkinson_variance"].to_numpy(float) if n_valid else np.array([])
     zero_frac = float(np.mean(vv == 0.0)) if n_valid else float("nan")
-    dist = parkinson_dist(proc["parkinson_volatility"])
+    dist = parkinson_dist(proc["parkinson_variance"])
     ohlc = ohlc_sanity(raw)
     kept = not screen_reason
     return {
@@ -414,7 +414,7 @@ def render_md(rows: list, summary: dict, meta: dict) -> str:
     lines += block("Highest floor-activation", summary["worst_floor_activation"], "{:.3f}")
     lines += block("Highest per-ticker QLIKE (max of 3 models)", summary["worst_qlike"], "{:.3f}")
     lines += ["## Scope note", "",
-              "- The delivered target ``parkinson_volatility`` is computed from the intraday range only "
+              "- The delivered target ``parkinson_variance`` is computed from the intraday range only "
               "(high/low), so an open/close-outside-[low,high] bar does NOT corrupt the Parkinson target "
               "directly; it corrupts the overnight-augmented estimators (Garman-Klass / Rogers-Satchell / "
               "Yang-Zhang) that read open/close. It is still flagged as a raw-data-geometry defect.",

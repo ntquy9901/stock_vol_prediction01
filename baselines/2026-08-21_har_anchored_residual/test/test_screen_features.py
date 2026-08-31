@@ -24,7 +24,7 @@ def test_screen_features_runs_and_reports(tmp_path, monkeypatch):
         close = 100 + np.cumsum(rng.normal(0, 1, 600))
         vol = np.abs(rng.normal(1e6, 3e5, 600)) + 1.0
         f = proc / f"T{k:02d}_processed.csv"
-        pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(f, index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(f, index=False)
         pd.DataFrame({"date": dates, "open": close, "high": close + 1,
                       "low": close - 1, "close": close, "volume": vol}).to_csv(
             raw / f"T{k:02d}_ohlcv.csv", index=False)

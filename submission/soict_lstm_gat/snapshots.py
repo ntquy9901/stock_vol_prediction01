@@ -48,7 +48,7 @@ def _load_panel(files: list[str], min_common: int = 300, min_nodes: int = 8) -> 
     for f in files:
         df = pd.read_csv(f, parse_dates=["date"]).sort_values("date")
         tk = f.replace("\\", "/").split("/")[-1].replace("_processed.csv", "")
-        series[tk] = df.set_index("date")["parkinson_volatility"]
+        series[tk] = df.set_index("date")["parkinson_variance"]
     wide = pd.DataFrame(series)                                    # outer join (NaNs before listing)
     # order tickers by first-valid date; latest IPOs first (they limit the intersection most)
     first_valid = {tk: wide[tk].first_valid_index() for tk in wide.columns}

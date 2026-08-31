@@ -25,7 +25,7 @@ def _make_files(tmp, n=12, base_days=520, seed=0):
         dts = all_dates[start:]
         pk = np.abs(rng.normal(0.02, 0.006, len(dts))) + 1e-4
         f = d / f"T{k:02d}_processed.csv"
-        pd.DataFrame({"date": dts, "parkinson_volatility": pk}).to_csv(f, index=False)
+        pd.DataFrame({"date": dts, "parkinson_variance": pk}).to_csv(f, index=False)
         files.append(str(f))
     return files
 

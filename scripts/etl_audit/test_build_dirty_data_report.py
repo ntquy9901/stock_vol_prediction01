@@ -50,7 +50,7 @@ def test_clip_evidence_detects_upper_clip():
     # raw Parkinson on 2020-01-01 is huge (H=100,L=1) -> > 0.1; processed value pinned at 0.1 -> clipped.
     raw = _frame([("2020-01-01", 10, 100, 1, 10, 100), ("2020-01-02", 10, 10.2, 9.8, 10, 100)])
     proc = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2020-01-02"]),
-                         "parkinson_volatility": [0.1, 0.0]})
+                         "parkinson_variance": [0.1, 0.0]})
     ce = B.clip_evidence(raw, proc)
     assert ce["has_processed"] is True
     assert ce["n_at_cap"] == 1
@@ -75,7 +75,7 @@ def test_aggregate_frames_totals_and_worst():
 def test_aggregate_frames_with_processed_pools_clip():
     raw = _frame([("2020-01-01", 10, 100, 1, 10, 100), ("2020-01-02", 10, 10.2, 9.8, 10, 100)])
     proc = pd.DataFrame({"date": pd.to_datetime(["2020-01-01", "2020-01-02"]),
-                         "parkinson_volatility": [0.1, 0.02]})
+                         "parkinson_variance": [0.1, 0.02]})
     s = B.aggregate_frames([("T", raw, proc)])
     assert s["clip"]["has_processed"] is True
     assert s["clip"]["n_clipped_from_raw"] == 1
@@ -96,7 +96,7 @@ def test_build_executive_table_has_all_classes_and_flags():
 
 def test_clip_evidence_missing_date_column_returns_no_processed():
     raw = _clean_frame()
-    proc = pd.DataFrame({"parkinson_volatility": [0.1, 0.02]})   # has target col but NO date column
+    proc = pd.DataFrame({"parkinson_variance": [0.1, 0.02]})   # has target col but NO date column
     assert B.clip_evidence(raw, proc)["has_processed"] is False
 
 

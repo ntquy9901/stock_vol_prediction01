@@ -1,7 +1,7 @@
 """Data-quality audit for processed Parkinson volatility series.
 
 Scope: ``data/processed/<TICKER>_processed.csv`` (33 VN30 tickers, columns
-``date,parkinson_volatility``). Values are Parkinson VARIANCE (sigma^2),
+``date,parkinson_variance``). Values are Parkinson VARIANCE (sigma^2),
 produced by ``src/common/parkinson_utils.py`` (formula (ln(H/L)^2)/(4 ln2),
 then dropna, then clip upper 0.1).
 
@@ -34,7 +34,7 @@ REPORT_PATH = (
     / "2026-08-16_processed_data_quality_audit_report.md"
 )
 
-EXPECTED_COLUMNS = ["date", "parkinson_volatility"]
+EXPECTED_COLUMNS = ["date", "parkinson_variance"]
 CLIP_CEILING = 0.1  # upper clip applied in parkinson_utils.process_single_stock
 EXPECTED_LAST_DATE = "2026-08-14"  # coverage expectation (diagnostic only)
 
@@ -69,7 +69,7 @@ def _load(ticker: str) -> pd.DataFrame:
 def _compute_stats(ticker: str) -> dict:
     """Compute per-ticker diagnostics (checks 4-6) for the summary report."""
     df = _load(ticker)
-    vol = df["parkinson_volatility"].to_numpy(dtype=float)
+    vol = df["parkinson_variance"].to_numpy(dtype=float)
     is_zero = vol == 0.0
 
     # Leading run of exactly-zero rows from the start of the series.
@@ -119,15 +119,15 @@ def test_data_dir_and_tickers_present():
 
 @pytest.mark.parametrize("ticker", TICKERS)
 def test_schema_columns(ticker: str):
-    """Exactly two columns ``date,parkinson_volatility`` in order; parseable."""
+    """Exactly two columns ``date,parkinson_variance`` in order; parseable."""
     df = pd.read_csv(DATA_DIR / f"{ticker}_processed.csv")
     assert list(df.columns) == EXPECTED_COLUMNS, (
         f"{ticker}: columns {list(df.columns)} != {EXPECTED_COLUMNS}"
     )
     assert len(df) > 0, f"{ticker}: empty file"
-    # parkinson_volatility must be a numeric dtype after read.
-    assert pd.api.types.is_numeric_dtype(df["parkinson_volatility"]), (
-        f"{ticker}: parkinson_volatility is not numeric"
+    # parkinson_variance must be a numeric dtype after read.
+    assert pd.api.types.is_numeric_dtype(df["parkinson_variance"]), (
+        f"{ticker}: parkinson_variance is not numeric"
     )
 
 
@@ -162,8 +162,8 @@ def test_dates_valid(ticker: str):
 
 @pytest.mark.parametrize("ticker", TICKERS)
 def test_values_valid(ticker: str):
-    """parkinson_volatility finite, >= 0, and <= 0.1 (the clip ceiling)."""
-    vol = _load(ticker)["parkinson_volatility"].to_numpy(dtype=float)
+    """parkinson_variance finite, >= 0, and <= 0.1 (the clip ceiling)."""
+    vol = _load(ticker)["parkinson_variance"].to_numpy(dtype=float)
 
     assert np.isfinite(vol).all(), f"{ticker}: contains NaN/inf"
     assert (vol >= 0.0).all(), f"{ticker}: negative volatility (min={vol.min()})"

@@ -43,7 +43,7 @@ def _make_har_df(seed: int) -> pd.DataFrame:
     dates = pd.date_range("2024-01-01", periods=N_DAYS, freq="D")
     return pd.DataFrame({
         "date": dates.astype(str),
-        "parkinson_volatility": rng.uniform(0.001, 0.05, N_DAYS),
+        "parkinson_variance": rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[0]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[1]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[2]: rng.uniform(0.001, 0.05, N_DAYS),
@@ -117,8 +117,8 @@ class TestRealDataSliceWindowCount:
         from src.common.feature_engineering import create_har_features
 
         raw = pd.read_csv(self.REAL_PRICE_FILE).head(120)
-        har = create_har_features(raw["parkinson_volatility"])
-        combined = pd.concat([raw[["date", "parkinson_volatility"]], har], axis=1).dropna()
+        har = create_har_features(raw["parkinson_variance"])
+        combined = pd.concat([raw[["date", "parkinson_variance"]], har], axis=1).dropna()
         combined = combined.rename(columns={
             "har_daily_vol": HAR_COLS[0], "har_weekly_vol": HAR_COLS[1], "har_monthly_vol": HAR_COLS[2],
         }).reset_index(drop=True)

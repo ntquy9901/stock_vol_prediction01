@@ -58,7 +58,7 @@ _SPLITS = ("train", "val", "test")
 def build_basis(stamp: Path):
     """Seed-independent basis: 5-feature + news manifest, directed vol->PK Top-5 masked graph.
 
-    Node features (nested order): parkinson_volatility, har_weekly, har_monthly, market_pk,
+    Node features (nested order): parkinson_variance, har_weekly, har_monthly, market_pk,
     volume_zscore_20. Per-ticker train-only scalers (fixes prior review H1). News attached with a
     per-ticker causal cutoff. Edge = directed volume->PK Top-5, estimated on train rows and frozen.
     """

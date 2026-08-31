@@ -4,7 +4,7 @@ Targets:
   * RAW: ``data/raw/prices/sp500/<TICKER>_ohlcv.csv`` (~500 US tickers, columns
     ``date,open,high,low,close,volume``; Yahoo Finance sourced, ``auto_adjust``).
   * PROCESSED: ``data/processed/sp500/<TICKER>_processed.csv`` (columns
-    ``date,parkinson_volatility``; Parkinson variance = (ln(H/L)^2)/(4 ln2),
+    ``date,parkinson_variance``; Parkinson variance = (ln(H/L)^2)/(4 ln2),
     dropna, upper-clipped at 0.1, per ``src/common/parkinson_utils.py``).
 
 Read-only on the data; this module never writes to the CSV files (only the
@@ -31,7 +31,7 @@ Check taxonomy mirrors ``tests/test_raw_prices_quality.py`` /
         THRESHOLD`` rows) flagged in the report.
 
   PROCESSED hard assertions:
-    P1. Schema -- exactly ``date,parkinson_volatility``, numeric values.
+    P1. Schema -- exactly ``date,parkinson_variance``, numeric values.
     P2. Dates  -- parseable, strictly increasing, unique, weekday-only.
     P3. Values -- finite, >= 0, and <= clip ceiling (0.1).
 
@@ -58,7 +58,7 @@ REPORT_PATH = (
 )
 
 EXPECTED_RAW_COLUMNS = ["date", "open", "high", "low", "close", "volume"]
-EXPECTED_PROCESSED_COLUMNS = ["date", "parkinson_volatility"]
+EXPECTED_PROCESSED_COLUMNS = ["date", "parkinson_variance"]
 PRICE_COLS = ["open", "high", "low", "close"]
 NUMERIC_COLS = ["open", "high", "low", "close", "volume"]
 
@@ -214,7 +214,7 @@ def compute_raw_diag(ticker: str) -> RawDiag:
 
 def compute_proc_diag(ticker: str) -> ProcDiag:
     df = load_processed(ticker)
-    vol = df["parkinson_volatility"].to_numpy(dtype=float)
+    vol = df["parkinson_variance"].to_numpy(dtype=float)
     is_zero = vol == 0.0
 
     leading = _leading_true_run(is_zero)
@@ -381,14 +381,14 @@ def test_raw_leading_synthetic_backfill(ticker):
 
 @pytest.mark.parametrize("ticker", PROCESSED_TICKERS)
 def test_processed_schema(ticker):
-    """P1: exactly two columns ``date,parkinson_volatility``; numeric values."""
+    """P1: exactly two columns ``date,parkinson_variance``; numeric values."""
     df = pd.read_csv(PROCESSED_DIR / f"{ticker}_processed.csv")
     assert list(df.columns) == EXPECTED_PROCESSED_COLUMNS, (
         f"{ticker}: columns {list(df.columns)} != {EXPECTED_PROCESSED_COLUMNS}"
     )
     assert len(df) > 0, f"{ticker}: empty file"
-    assert pd.api.types.is_numeric_dtype(df["parkinson_volatility"]), (
-        f"{ticker}: parkinson_volatility is not numeric"
+    assert pd.api.types.is_numeric_dtype(df["parkinson_variance"]), (
+        f"{ticker}: parkinson_variance is not numeric"
     )
 
 
@@ -409,8 +409,8 @@ def test_processed_dates_valid(ticker):
 
 @pytest.mark.parametrize("ticker", PROCESSED_TICKERS)
 def test_processed_values_valid(ticker):
-    """P3: parkinson_volatility finite, >= 0, and <= clip ceiling (0.1)."""
-    vol = load_processed(ticker)["parkinson_volatility"].to_numpy(dtype=float)
+    """P3: parkinson_variance finite, >= 0, and <= clip ceiling (0.1)."""
+    vol = load_processed(ticker)["parkinson_variance"].to_numpy(dtype=float)
     assert np.isfinite(vol).all(), f"{ticker}: contains NaN/inf"
     assert (vol >= 0.0).all(), f"{ticker}: negative volatility (min={vol.min()})"
     assert (vol <= CLIP_CEILING + 1e-12).all(), (

@@ -1,7 +1,7 @@
 """Raw-review + ETL (raw -> Parkinson-variance processed) for HOSE/HNX crawls.
 
 CPU/pandas only. Reuses the Parkinson-variance formula from
-``src.common.parkinson_utils.calculate_parkinson_volatility`` (does NOT
+``src.common.parkinson_utils.calculate_parkinson_variance`` (does NOT
 re-derive the math). Cleans raw OHLCV per the project CLAUDE.md rules
 (fix non-positive/invalid OHLC via per-row max/min over positive prices,
 trim leading backfill to the first real trading day, drop duplicate dates,
@@ -28,7 +28,7 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.common.parkinson_utils import calculate_parkinson_volatility  # noqa: E402
+from src.common.parkinson_utils import calculate_parkinson_variance  # noqa: E402
 
 PRICE_COLS = ["open", "high", "low", "close"]
 NUMERIC_COLS = ["open", "high", "low", "close", "volume"]
@@ -127,7 +127,7 @@ def scan_ticker(path: Path) -> dict:
 # --------------------------------------------------------------------------- #
 
 def clean_and_process(path: Path) -> tuple[pd.DataFrame, dict]:
-    """Return (processed_df[date,parkinson_volatility], corrections)."""
+    """Return (processed_df[date,parkinson_variance], corrections)."""
     df = _load_raw(path)
     ticker = _ticker_of(path)
     n0 = len(df)
@@ -203,16 +203,16 @@ def clean_and_process(path: Path) -> tuple[pd.DataFrame, dict]:
         corr["leading_backfill_trimmed"] = 0
 
     # compute Parkinson variance (reuse repo formula)
-    park = calculate_parkinson_volatility(df.rename(columns={"high": "high", "low": "low"}))
+    park = calculate_parkinson_variance(df.rename(columns={"high": "high", "low": "low"}))
     out = pd.DataFrame({
         "date": df["date"].dt.strftime("%Y-%m-%d"),
-        "parkinson_volatility": park.to_numpy(dtype=float),
+        "parkinson_variance": park.to_numpy(dtype=float),
     })
     before = len(out)
     out = out.replace([np.inf, -np.inf], np.nan).dropna()
     corr["dropped_nan_inf_parkinson"] = before - len(out)
-    corr["clip_hits"] = int((out["parkinson_volatility"] > CLIP_CEILING).sum())
-    out["parkinson_volatility"] = out["parkinson_volatility"].clip(upper=CLIP_CEILING)
+    corr["clip_hits"] = int((out["parkinson_variance"] > CLIP_CEILING).sum())
+    out["parkinson_variance"] = out["parkinson_variance"].clip(upper=CLIP_CEILING)
     corr["out_rows"] = len(out)
     return out, corr
 

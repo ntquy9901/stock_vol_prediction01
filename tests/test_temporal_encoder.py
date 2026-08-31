@@ -35,8 +35,8 @@ for csv_file in sorted(csv_files):
 
     df = pd.read_csv(os.path.join(data_dir, csv_file))
 
-    if 'parkinson_volatility' in df.columns:
-        parkinson = df['parkinson_volatility'].dropna().values
+    if 'parkinson_variance' in df.columns:
+        parkinson = df['parkinson_variance'].dropna().values
 
         # Create HAR features
         har_weekly = pd.Series(parkinson).rolling(5).mean().values

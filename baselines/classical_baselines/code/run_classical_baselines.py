@@ -92,7 +92,7 @@ def main(ts: str, horizon: int = 5) -> None:
         "HARQ": ("HARQ uses a DAILY range-based realized-quarticity proxy RQ_d = sigma_d^2 because "
                  "the dataset is daily OHLCV (no intraday returns); the canonical BPQ-2016 5-min RQ "
                  "is not identified. This is an approximation, not the canonical HARQ."),
-        "target_units": ("The processed `parkinson_volatility` column is numerically the Parkinson "
+        "target_units": ("The processed `parkinson_variance` column is numerically the Parkinson "
                          "VARIANCE estimator sigma^2 = (ln(H/L))^2 / (4 ln 2) (verified corr=1.0 vs "
                          "raw OHLCV, median ~1.3e-4). Every baseline forecasts this daily realized-"
                          "variance quantity; EWMA smooths it directly and GARCH forecasts the "

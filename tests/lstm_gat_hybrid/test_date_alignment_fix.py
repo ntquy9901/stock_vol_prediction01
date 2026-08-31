@@ -39,7 +39,7 @@ def _make_ticker_df(dates, seed=0):
     rng = np.random.default_rng(seed)
     return pd.DataFrame({
         "date": dates,
-        "parkinson_volatility": np.abs(rng.normal(0.01, 0.002, size=len(dates))),
+        "parkinson_variance": np.abs(rng.normal(0.01, 0.002, size=len(dates))),
     })
 
 
@@ -47,7 +47,7 @@ class TestRemoveOutliersWinsorizes:
     def test_keeps_row_count_unchanged(self):
         dates = pd.date_range("2024-01-01", periods=200, freq="B").strftime("%Y-%m-%d")
         df = _make_ticker_df(dates, seed=1)
-        df.loc[5, "parkinson_volatility"] = 10.0  # inject an extreme outlier
+        df.loc[5, "parkinson_variance"] = 10.0  # inject an extreme outlier
         out = remove_outliers(df, n_std=3.0)
         assert len(out) == len(df), "winsorize must never drop rows"
         assert set(out["date"]) == set(df["date"])
@@ -55,10 +55,10 @@ class TestRemoveOutliersWinsorizes:
     def test_clips_extreme_value_within_bounds(self):
         dates = pd.date_range("2024-01-01", periods=200, freq="B").strftime("%Y-%m-%d")
         df = _make_ticker_df(dates, seed=2)
-        df.loc[5, "parkinson_volatility"] = 10.0
+        df.loc[5, "parkinson_variance"] = 10.0
         out = remove_outliers(df, n_std=3.0)
-        assert out.loc[5, "parkinson_volatility"] < 10.0
-        assert out.loc[5, "parkinson_volatility"] > 0
+        assert out.loc[5, "parkinson_variance"] < 10.0
+        assert out.loc[5, "parkinson_variance"] > 0
 
     def test_no_outliers_is_a_noop(self):
         # Fixed, tightly-clustered values (not sampled) so no z-score can exceed
@@ -66,9 +66,9 @@ class TestRemoveOutliersWinsorizes:
         # a borderline outlier by chance, which isn't what this test is for.
         dates = pd.date_range("2024-01-01", periods=20, freq="B").strftime("%Y-%m-%d")
         values = 0.01 + np.array([0.0001 * (i % 5) for i in range(20)])
-        df = pd.DataFrame({"date": dates, "parkinson_volatility": values})
+        df = pd.DataFrame({"date": dates, "parkinson_variance": values})
         out = remove_outliers(df, n_std=3.0)
-        pd.testing.assert_series_equal(out["parkinson_volatility"], df["parkinson_volatility"])
+        pd.testing.assert_series_equal(out["parkinson_variance"], df["parkinson_variance"])
 
 
 class TestReindexToCommonDates:

@@ -57,7 +57,7 @@ class MultiStockDatasetWithSpilloverNews(MultiStockDatasetWithPreSplitData):
 
         all_volatility_list = []
         for stock in self.stock_names:
-            vol = self.stock_data_with_har[stock]['parkinson_volatility'].values[:min_length]
+            vol = self.stock_data_with_har[stock]['parkinson_variance'].values[:min_length]
             all_volatility_list.append(vol)
         all_volatility = np.stack(all_volatility_list, axis=1)
 
@@ -104,7 +104,7 @@ class MultiStockDatasetWithSpilloverNews(MultiStockDatasetWithPreSplitData):
                 x_news_all.append(np.stack(day_feats))
 
                 target_idx = i + self.seq_length + self.forecast_horizon - 1
-                y_all.append(stock_feats['parkinson_volatility'].iloc[target_idx])
+                y_all.append(stock_feats['parkinson_variance'].iloc[target_idx])
 
             x_har = np.stack(x_har_all, axis=1).astype(np.float32)
             x_news = np.stack(x_news_all, axis=1).astype(np.float32)

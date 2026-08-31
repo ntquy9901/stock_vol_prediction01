@@ -352,8 +352,8 @@ if __name__ == "__main__":
         stock_names.append(ticker)
 
         df = pd.read_csv(os.path.join(data_dir, csv_file))
-        if 'parkinson_volatility' in df.columns:
-            volatility = df['parkinson_volatility'].dropna().values
+        if 'parkinson_variance' in df.columns:
+            volatility = df['parkinson_variance'].dropna().values
             # Calculate returns as proxy
             returns = pd.Series(volatility).pct_change().dropna().values
             volatility_list.append(returns)

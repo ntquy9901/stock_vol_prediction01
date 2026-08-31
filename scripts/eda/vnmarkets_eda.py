@@ -4,7 +4,7 @@ processed SEQUENTIALLY (one fully, discard its frames, then the next) to keep RA
 
 Data (READ-ONLY):
   * raw OHLCV  -> ``volatility_estimators.PRICE[panel]`` (``*_ohlcv.csv``: date,open,high,low,close,volume).
-  * processed  -> the Parkinson-VARIANCE target the delivered runners read (``parkinson_volatility`` column;
+  * processed  -> the Parkinson-VARIANCE target the delivered runners read (``parkinson_variance`` column;
     NOTE it is sigma^2, a VARIANCE, not sigma). HOSE/HNX processed values are ETL upper-clipped at 0.1;
     vn30/vn100 processed are not clipped.
   * screened universe -> ``floor_sensitivity.screen_files`` (>=250 rows, zero-Parkinson frac <=0.5,
@@ -486,8 +486,8 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
         pf = proc_dir / f"{ticker}_processed.csv"
         if pf.exists():
             proc = pd.read_csv(pf)
-            if "parkinson_volatility" in proc.columns:
-                pk = pd.to_numeric(proc["parkinson_volatility"], errors="coerce").to_numpy(float)
+            if "parkinson_variance" in proc.columns:
+                pk = pd.to_numeric(proc["parkinson_variance"], errors="coerce").to_numpy(float)
                 pdates = pd.to_datetime(proc["date"], errors="coerce") if "date" in proc.columns else None
                 keep_ticker = (screen is None or ticker in screen)
                 fin = pk[np.isfinite(pk)]

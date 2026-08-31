@@ -7,7 +7,7 @@ import snapshots as S
 def _write(tmp, name, start, n):
     dates = pd.bdate_range(start, periods=n)
     pk = np.abs(np.random.default_rng(abs(hash(name)) % 2**32).normal(1e-3, 3e-4, n)) + 1e-5
-    pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(
+    pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(
         tmp / f"{name}_processed.csv", index=False)
     return str(tmp / f"{name}_processed.csv")
 

@@ -87,9 +87,9 @@ def test_validate_still_rejects_material_violation_above_tolerance():
 
 def test_geometry_check_does_not_break_finite_variance_path():
     # Sanity: a valid frame still yields a finite Parkinson variance downstream.
-    from src.common.parkinson_utils import calculate_parkinson_volatility
+    from src.common.parkinson_utils import calculate_parkinson_variance
 
     df = _frame(open_=10.0, high=12.0, low=9.0, close=11.0)
     validate_ohlc_data(df)
-    v = calculate_parkinson_volatility(df)
+    v = calculate_parkinson_variance(df)
     assert np.isfinite(v.iloc[0])

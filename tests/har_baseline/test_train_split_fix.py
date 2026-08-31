@@ -37,7 +37,7 @@ def _write_synthetic_ticker(directory, ticker, n_rows, seed):
     start = f"20{10 + seed:02d}-01-01"
     dates = pd.date_range(start=start, periods=n_rows, freq="D")
     vol = np.abs(rng.normal(0.02, 0.005, n_rows)) + 1e-4
-    df = pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "parkinson_volatility": vol})
+    df = pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "parkinson_variance": vol})
     df.to_csv(os.path.join(directory, f"{ticker}_processed.csv"), index=False)
 
 

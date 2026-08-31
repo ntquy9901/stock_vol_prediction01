@@ -166,7 +166,7 @@ def _synth_panel(tmp_path, n_days=400, tickers=("AAA", "BBB", "CCC")):
         v = np.empty(n_days); v[0] = 1e-4 * (k + 1)
         for t in range(1, n_days):
             v[t] = 5e-5 * (k + 1) + 0.85 * v[t - 1] + 1e-5 * abs(rng.standard_normal())
-        pd.DataFrame({"date": dates, "parkinson_volatility": v}).to_csv(proc / f"{tk}_processed.csv", index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": v}).to_csv(proc / f"{tk}_processed.csv", index=False)
         close = 20.0 + np.cumsum(rng.normal(0, 0.2, n_days))
         span = np.sqrt(v) * close
         pd.DataFrame({"date": dates, "open": close, "high": close + span, "low": close - span,
@@ -185,7 +185,7 @@ def test_train_only_invariance_no_leakage(tmp_path):
     # blow up the last 15% of dates (val+test region) in every processed + raw file
     for f in files:
         df = pd.read_csv(f); cut = int(len(df) * 0.85)
-        df.loc[cut:, "parkinson_volatility"] *= 37.0
+        df.loc[cut:, "parkinson_variance"] *= 37.0
         df.to_csv(f, index=False)
         rf = Path(price) / (Path(f).name.replace("_processed.csv", "_ohlcv.csv"))
         rdf = pd.read_csv(rf); c2 = int(len(rdf) * 0.85)
@@ -250,7 +250,7 @@ def test_volume_zscore_warns_on_low_coverage(tmp_path):
     rf = Path(price) / "AAA_ohlcv.csv"
     df = pd.read_csv(rf)
     df.iloc[: int(len(df) * 0.30)].to_csv(rf, index=False)
-    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_volatility"]
+    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_variance"]
                       .rename(Path(f).name.replace("_processed.csv", "")) for f in files], axis=1)
     with pytest.warns(UserWarning, match="volume coverage"):
         MR._volume_zscore_wide(wide, price)
@@ -268,7 +268,7 @@ def test_volume_zscore_fails_loud_on_present_but_empty_files(tmp_path):
         df = pd.read_csv(rf)
         df["date"] = pd.bdate_range("1990-01-01", periods=len(df)).astype(str)   # non-intersecting dates
         df.to_csv(rf, index=False)
-    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_volatility"]
+    wide = pd.concat([pd.read_csv(f, parse_dates=["date"]).set_index("date")["parkinson_variance"]
                       .rename(Path(f).name.replace("_processed.csv", "")) for f in files], axis=1)
     with pytest.raises(ValueError, match="no usable volume"):
         MR._volume_zscore_wide(wide, price)

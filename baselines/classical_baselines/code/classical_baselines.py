@@ -54,7 +54,7 @@ class TickerSeries:
 
     ticker: str
     dates: list[str]
-    vol: np.ndarray  # NOTE: the processed "parkinson_volatility" column is the Parkinson VARIANCE
+    vol: np.ndarray  # NOTE: the processed "parkinson_variance" column is the Parkinson VARIANCE
     sigma_d: np.ndarray
     sigma_w: np.ndarray
     sigma_m: np.ndarray
@@ -70,7 +70,7 @@ def load_ticker_series(ticker: str) -> TickerSeries:
     proc = pd.read_csv(data_root() / "processed" / f"{ticker}_processed.csv")
     proc["date"] = proc["date"].astype(str)
     proc = proc.sort_values("date").reset_index(drop=True)
-    vol = proc["parkinson_volatility"].to_numpy(dtype=float)
+    vol = proc["parkinson_variance"].to_numpy(dtype=float)
     dates = proc["date"].tolist()
     series = pd.Series(vol)
     sigma_w = series.rolling(5).mean().to_numpy()

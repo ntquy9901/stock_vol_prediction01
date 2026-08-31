@@ -35,10 +35,10 @@ class TestHARFeaturesGeneration:
     """Test HAR feature generation from Parkinson volatility."""
 
     def test_generate_har_features_creates_columns(self):
-        """Given parkinson_volatility exists, when generate_har_features called, then HAR columns created."""
-        # Create sample data with parkinson_volatility
+        """Given parkinson_variance exists, when generate_har_features called, then HAR columns created."""
+        # Create sample data with parkinson_variance
         df = pd.DataFrame({
-            'parkinson_volatility': np.random.rand(100) * 0.1 + 0.01
+            'parkinson_variance': np.random.rand(100) * 0.1 + 0.01
         })
 
         # Generate HAR features
@@ -52,7 +52,7 @@ class TestHARFeaturesGeneration:
     def test_har_features_have_valid_values(self):
         """Given HAR features generated, when values checked, then no NaN or all zeros."""
         df = pd.DataFrame({
-            'parkinson_volatility': np.random.rand(100) * 0.1 + 0.01
+            'parkinson_variance': np.random.rand(100) * 0.1 + 0.01
         })
 
         result_df = generate_har_features(df)
@@ -70,7 +70,7 @@ class TestHARFeaturesGeneration:
     def test_har_features_validation_passes(self):
         """Given valid HAR features, when validate_har_features called, then returns True."""
         df = pd.DataFrame({
-            'parkinson_volatility': np.random.rand(100) * 0.1 + 0.01
+            'parkinson_variance': np.random.rand(100) * 0.1 + 0.01
         })
 
         result_df = generate_har_features(df)
@@ -82,7 +82,7 @@ class TestHARFeaturesGeneration:
     def test_har_features_missing_columns_raises_error(self):
         """Given HAR features missing, when validate called, then raises ValueError."""
         df = pd.DataFrame({
-            'parkinson_volatility': np.random.rand(100) * 0.1 + 0.01
+            'parkinson_variance': np.random.rand(100) * 0.1 + 0.01
         })
 
         # Remove HAR columns
@@ -202,7 +202,7 @@ class TestTrainingPipeline:
         dates = pd.date_range('2010-01-01', periods=500, freq='D')
         df = pd.DataFrame({
             'date': dates,
-            'parkinson_volatility': np.random.rand(500) * 0.1 + 0.01
+            'parkinson_variance': np.random.rand(500) * 0.1 + 0.01
         })
 
         # Save to temp file
@@ -231,7 +231,7 @@ class TestTrainingPipeline:
 
         # Create very small dataset
         df = pd.DataFrame({
-            'parkinson_volatility': [0.01] * 10  # Only 10 rows
+            'parkinson_variance': [0.01] * 10  # Only 10 rows
         })
 
         temp_path = Path("temp_test.csv")
@@ -367,7 +367,7 @@ class TestEdgeCases:
         """Given empty dataset, when load called, then raises error."""
         from src.cryptomamba_baseline.train_enhanced import CryptoMambaEnhancedTrainer
 
-        df = pd.DataFrame({'parkinson_volatility': []})
+        df = pd.DataFrame({'parkinson_variance': []})
 
         temp_path = Path("temp_empty.csv")
         df.to_csv(temp_path, index=False)
@@ -387,7 +387,7 @@ class TestEdgeCases:
 
         # Create data with NaN in HAR features
         df = pd.DataFrame({
-            'parkinson_volatility': [0.01] * 100,
+            'parkinson_variance': [0.01] * 100,
             'har_daily_vol': [0.01] * 50 + [np.nan] * 50,
             'har_weekly_vol': [0.01] * 100,
             'har_monthly_vol': [0.01] * 100

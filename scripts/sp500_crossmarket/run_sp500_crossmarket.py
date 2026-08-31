@@ -54,7 +54,7 @@ def qlike(target: np.ndarray, prediction: np.ndarray) -> np.ndarray:
 def build_ticker_features(path: str) -> tuple[str, np.ndarray, np.ndarray] | None:
     """Return (ticker, feats[N,3] raw HAR, pk[N]) with monthly-valid rows only."""
     df = pd.read_csv(path, parse_dates=["date"]).sort_values("date").reset_index(drop=True)
-    pk = df["parkinson_volatility"].to_numpy(dtype=np.float64)
+    pk = df["parkinson_variance"].to_numpy(dtype=np.float64)
     if len(pk) < 200:
         return None
     s = pd.Series(pk)

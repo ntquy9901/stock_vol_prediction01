@@ -81,7 +81,7 @@ class MultiStockDatasetWithPreSplitData(Dataset):
         # Prepare volatility data for per-sequence graph construction
         all_volatility_list = []
         for stock in self.stock_names:
-            vol_data = self.stock_data_with_har[stock]['parkinson_volatility'].values
+            vol_data = self.stock_data_with_har[stock]['parkinson_variance'].values
             vol_data_truncated = vol_data[:min_length]
             all_volatility_list.append(vol_data_truncated)
 
@@ -126,7 +126,7 @@ class MultiStockDatasetWithPreSplitData(Dataset):
                 x_all_stocks.append(x_seq)
 
                 target_idx = i + self.seq_length + self.forecast_horizon - 1
-                y_target = stock_feats['parkinson_volatility'].iloc[target_idx]
+                y_target = stock_feats['parkinson_variance'].iloc[target_idx]
                 y_all_stocks.append(y_target)
 
             x = np.stack(x_all_stocks, axis=1)

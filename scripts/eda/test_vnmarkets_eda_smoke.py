@@ -43,7 +43,7 @@ def _build_screened_panel(tmp: Path, monkeypatch):
     aa = _ohlcv(a)
     aa.loc[200:205, "high"] = aa.loc[200:205, "low"]   # zero-range days
     aa.to_csv(raw / "AAA_ohlcv.csv", index=False)
-    pd.DataFrame({"date": _dates(), "parkinson_volatility": np.abs(rng.normal(scale=1e-3, size=_N))}
+    pd.DataFrame({"date": _dates(), "parkinson_variance": np.abs(rng.normal(scale=1e-3, size=_N))}
                  ).to_csv(proc / "AAA_processed.csv", index=False)
 
     # BBB: correlated with AAA, NO volume column (screened-in) -> covers missing-volume branches
@@ -51,12 +51,12 @@ def _build_screened_panel(tmp: Path, monkeypatch):
     bb.to_csv(raw / "BBB_ohlcv.csv", index=False)
     b_pk = np.abs(rng.normal(scale=1e-3, size=_N))
     b_pk[:50] = 0.0                            # some zero-Parkinson days
-    pd.DataFrame({"date": _dates(), "parkinson_volatility": b_pk}
+    pd.DataFrame({"date": _dates(), "parkinson_variance": b_pk}
                  ).to_csv(proc / "BBB_processed.csv", index=False)
 
     # EXC: full data but EXCLUDED by the screen -> keep_ticker False path
     _ohlcv(base * 0.9).to_csv(raw / "EXC_ohlcv.csv", index=False)
-    pd.DataFrame({"date": _dates(), "parkinson_volatility": np.abs(rng.normal(scale=1e-3, size=_N))}
+    pd.DataFrame({"date": _dates(), "parkinson_variance": np.abs(rng.normal(scale=1e-3, size=_N))}
                  ).to_csv(proc / "EXC_processed.csv", index=False)
 
     # NOPKCOL: screened-in raw, processed file WITHOUT the parkinson column

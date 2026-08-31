@@ -85,12 +85,12 @@ class PooledVolatilityDataset(Dataset):
             file_path = os.path.join(self.data_dir, csv_file)
             df = pd.read_csv(file_path)
 
-            if 'parkinson_volatility' not in df.columns:
-                print(f"Warning: {csv_file} missing parkinson_volatility column")
+            if 'parkinson_variance' not in df.columns:
+                print(f"Warning: {csv_file} missing parkinson_variance column")
                 continue
 
             # Extract parkinson volatility
-            parkinson = df['parkinson_volatility'].values
+            parkinson = df['parkinson_variance'].values
 
             # Remove NaN values
             valid_mask = ~np.isnan(parkinson)
@@ -106,7 +106,7 @@ class PooledVolatilityDataset(Dataset):
                 # Input sequence: past 22 days
                 X_seq = parkinson[i:i + self.seq_length]
 
-                # Target: parkinson_volatility at t + 5
+                # Target: parkinson_variance at t + 5
                 y_target = parkinson[i + self.seq_length + self.forecast_horizon - 1]
 
                 # Skip if target is NaN or zero

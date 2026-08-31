@@ -101,10 +101,10 @@ class HybridVolatilityDataset(Dataset):
 
             df = pd.read_csv(os.path.join(data_dir, csv_file))
 
-            if 'parkinson_volatility' not in df.columns:
+            if 'parkinson_variance' not in df.columns:
                 continue
 
-            parkinson = df['parkinson_volatility'].dropna().values
+            parkinson = df['parkinson_variance'].dropna().values
 
             # Create HAR features
             har_weekly = pd.Series(parkinson).rolling(5).mean().values
@@ -485,8 +485,8 @@ def train_hybrid_model(
     for ticker in stock_names:
         csv_file = os.path.join(data_dir, f'{ticker}_processed.csv')
         df = pd.read_csv(csv_file)
-        if 'parkinson_volatility' in df.columns:
-            volatility = df['parkinson_volatility'].dropna().values[:500]
+        if 'parkinson_variance' in df.columns:
+            volatility = df['parkinson_variance'].dropna().values[:500]
             volatility_list.append(volatility)
 
     max_len = max(len(v) for v in volatility_list)

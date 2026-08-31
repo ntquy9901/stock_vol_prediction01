@@ -81,7 +81,7 @@ def load_har_train_test_split(data_dir: str, train_ratio: float = 0.8):
         # Sort chronologically (per-ticker) before any feature/target creation.
         df = df.sort_values('date').reset_index(drop=True)
 
-        vol = df['parkinson_volatility']
+        vol = df['parkinson_variance']
         har_features = create_har_features(vol)
         df = pd.concat([df, har_features], axis=1)
         df['target_5d'] = create_5day_target(vol)
@@ -115,7 +115,7 @@ def train_har_baseline(data_dir: str, output_dir: str = None):
     Train HAR-R baseline on pooled dataset using Parkinson volatility.
 
     Args:
-        data_dir: Directory containing processed CSV files with parkinson_volatility
+        data_dir: Directory containing processed CSV files with parkinson_variance
         output_dir: Output directory (default: results/har_baseline_YYYY-MM-DD_HHMMSS)
     """
     if output_dir is None:

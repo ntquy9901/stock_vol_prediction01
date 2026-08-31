@@ -3,7 +3,7 @@
   "confidence": "high",
   "conclusion": "C",
   "graph_type": "none",
-  "primary_relationship": "parkinson_volatility",
+  "primary_relationship": "parkinson_variance",
   "recommended_config": {
     "node_features": [
       "pk_daily",

@@ -46,8 +46,8 @@ def check_data_quality(data_dir: str):
         file_path = os.path.join(data_dir, f"{ticker}_processed.csv")
         if os.path.exists(file_path):
             df = pd.read_csv(file_path)
-            if 'parkinson_volatility' in df.columns:
-                parkinson = df['parkinson_volatility'].values
+            if 'parkinson_variance' in df.columns:
+                parkinson = df['parkinson_variance'].values
                 target_idx = seq_idx + 22 + 5 - 1
                 if target_idx < len(parkinson):
                     targets_original.append(parkinson[target_idx])

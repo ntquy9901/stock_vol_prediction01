@@ -286,7 +286,7 @@ def test_real_data_sample_persistence_smoke():
     if not files:
         pytest.skip("VN100 processed panel absent; smoke skipped")  # pragma: no cover
     import pandas as pd
-    s = pd.read_csv(files[0], parse_dates=["date"]).sort_values("date")["parkinson_volatility"]
+    s = pd.read_csv(files[0], parse_dates=["date"]).sort_values("date")["parkinson_variance"]
     s = s.dropna().to_numpy(dtype=float)
     if s.size < 40 or np.var(s) == 0.0:
         pytest.skip("first VN100 series too short/degenerate for smoke")  # pragma: no cover

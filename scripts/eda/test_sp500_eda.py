@@ -117,7 +117,7 @@ def _write_ticker(raw_dir: Path, proc_dir: Path, tk: str, n=150, seed=0, jump=Fa
                         "close": close, "volume": vol})
     raw.to_csv(raw_dir / f"{tk}_ohlcv.csv", index=False)
     pk = np.log(high / low) ** 2 / (4 * np.log(2.0))
-    pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(
+    pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(
         proc_dir / f"{tk}_processed.csv", index=False)
 
 
@@ -285,7 +285,7 @@ def test_scan_panel_corr_marketpk_edge(tmp_path, monkeypatch):
         raw / "EMP_ohlcv.csv", index=False)          # missing open/high/low -> 'empty' for the OHLC scan
     pd.DataFrame({"date": ["2021-01-01"], "open": [1.0], "high": [1.1], "low": [0.9], "close": [1.0],
                   "volume": [10]}).to_csv(raw / "ONE_ohlcv.csv", index=False)     # 1 row -> corr <2 skip
-    pd.DataFrame({"date": [], "parkinson_volatility": []}).to_csv(proc / "ZR_processed.csv", index=False)
+    pd.DataFrame({"date": [], "parkinson_variance": []}).to_csv(proc / "ZR_processed.csv", index=False)
     monkeypatch.setitem(S.PROC, "edge", proc)
     monkeypatch.setitem(S.RAW, "edge", raw)
     out = S.scan_panel("edge")

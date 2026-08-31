@@ -120,7 +120,7 @@ class VolatilityTimesNetDataset(Dataset):
 
     def _validate_data(self):
         """Validate that required columns exist"""
-        required_cols = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol', 'parkinson_volatility']
+        required_cols = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol', 'parkinson_variance']
 
         for col in required_cols:
             if col not in self.df.columns:
@@ -139,8 +139,8 @@ class VolatilityTimesNetDataset(Dataset):
         self.feature_normalizer = VolatilityNormalizer()
         self.feature_normalizer.fit(har_features)
 
-        # Target (parkinson_volatility)
-        target = self.df['parkinson_volatility'].values
+        # Target (parkinson_variance)
+        target = self.df['parkinson_variance'].values
         self.target_normalizer = VolatilityNormalizer()
         self.target_normalizer.fit(target)
 
@@ -162,8 +162,8 @@ class VolatilityTimesNetDataset(Dataset):
             df[['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']] = (
                 self.feature_normalizer.transform(df[['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']].values)
             )
-            df['parkinson_volatility'] = (
-                self.target_normalizer.transform(df['parkinson_volatility'].values.reshape(-1, 1)).flatten()
+            df['parkinson_variance'] = (
+                self.target_normalizer.transform(df['parkinson_variance'].values.reshape(-1, 1)).flatten()
             )
 
         # Create sequences
@@ -176,7 +176,7 @@ class VolatilityTimesNetDataset(Dataset):
 
             # Target: scalar (5-day ahead volatility)
             target_idx = i + self.seq_length + self.forecast_horizon - 1
-            y = df['parkinson_volatility'].iloc[target_idx]
+            y = df['parkinson_variance'].iloc[target_idx]
 
             sequences.append((x_har, x_temporal, y))
 

@@ -27,7 +27,7 @@ from torch.utils.data import Dataset
 from typing import List, Tuple, Optional
 
 from src.common.temporal_split import temporal_split_dataframe
-from src.common.parkinson_utils import calculate_parkinson_volatility
+from src.common.parkinson_utils import calculate_parkinson_variance
 
 logger = logging.getLogger(__name__)
 
@@ -399,7 +399,7 @@ def create_volatility_datasets(
 
     # Step 1: Calculate Parkinson volatility (returns pd.Series)
     logger.info("Step 1: Calculating Parkinson volatility...")
-    parkinson_series = calculate_parkinson_volatility(ohlcv_data).values.astype(np.float32)
+    parkinson_series = calculate_parkinson_variance(ohlcv_data).values.astype(np.float32)
 
     # Step 2: Create DataFrame for temporal_split with actual dates from OHLCV data
     logger.info("Step 2: Creating DataFrame with actual dates from OHLCV data...")
@@ -418,7 +418,7 @@ def create_volatility_datasets(
 
     parkinson_df = pd.DataFrame({
         'date': dates,
-        'parkinson_volatility': parkinson_series
+        'parkinson_variance': parkinson_series
     })
 
     # Step 3: Apply temporal split (chronological 70/15/15)
@@ -434,9 +434,9 @@ def create_volatility_datasets(
     logger.info("Step 3.5: Validating temporal integrity...")
     validate_temporal_integrity(train_data, val_data, test_data, date_column='date')
 
-    train_series = train_data['parkinson_volatility'].values.astype(np.float32)
-    val_series = val_data['parkinson_volatility'].values.astype(np.float32)
-    test_series = test_data['parkinson_volatility'].values.astype(np.float32)
+    train_series = train_data['parkinson_variance'].values.astype(np.float32)
+    val_series = val_data['parkinson_variance'].values.astype(np.float32)
+    test_series = test_data['parkinson_variance'].values.astype(np.float32)
 
     logger.info(
         f"Temporal split complete: "
@@ -526,7 +526,7 @@ def create_multi_stock_volatility_datasets(
         logger.info(f"Processing stock {stock_id}...")
 
         # Calculate Parkinson volatility (returns pd.Series)
-        parkinson_series = calculate_parkinson_volatility(ohlcv_data).values.astype(np.float32)
+        parkinson_series = calculate_parkinson_variance(ohlcv_data).values.astype(np.float32)
 
         # Create DataFrame for temporal_split with date column
         # Use dates from original data if available, otherwise create range
@@ -544,7 +544,7 @@ def create_multi_stock_volatility_datasets(
 
         parkinson_df = pd.DataFrame({
             'date': dates[:len(parkinson_series)],  # Ensure lengths match
-            'parkinson_volatility': parkinson_series
+            'parkinson_variance': parkinson_series
         })
 
         # Apply temporal split
@@ -556,9 +556,9 @@ def create_multi_stock_volatility_datasets(
         )
 
         # Collect series
-        all_train_series.append(train_data['parkinson_volatility'].values.astype(np.float32))
-        all_val_series.append(val_data['parkinson_volatility'].values.astype(np.float32))
-        all_test_series.append(test_data['parkinson_volatility'].values.astype(np.float32))
+        all_train_series.append(train_data['parkinson_variance'].values.astype(np.float32))
+        all_val_series.append(val_data['parkinson_variance'].values.astype(np.float32))
+        all_test_series.append(test_data['parkinson_variance'].values.astype(np.float32))
 
     logger.info(
         f"Processed {len(all_train_series)} stocks: "

@@ -21,7 +21,7 @@ CRAWL_DATA_ROOT = PROJECT_ROOT.parent / "crawl_data" / "data"
 # Copied PhoBERT article-embedding cache (Story 1.1) — NOT data_eda's own data/features/.
 FEATURES_DIR = PROJECT_ROOT / "data" / "external_news_embeddings" / "raw_cache"
 
-# This project's existing per-ticker processed price files (date + parkinson_volatility),
+# This project's existing per-ticker processed price files (date + parkinson_variance),
 # used as the trading calendar (data_eda used its own OHLCV dir for the same purpose).
 PRICE_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 

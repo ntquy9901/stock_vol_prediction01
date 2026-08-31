@@ -51,7 +51,7 @@ class CachedDataManager:
             file_path = os.path.join(self.data_dir, csv_file)
             df = pd.read_csv(file_path)
             ticker = csv_file.replace('_processed.csv', '')
-            self._cache[ticker] = df['parkinson_volatility'].values
+            self._cache[ticker] = df['parkinson_variance'].values
 
         print(f"Cached {len(self._cache)} stocks ({sum(len(v) for v in self._cache.values()):,} total rows)")
 

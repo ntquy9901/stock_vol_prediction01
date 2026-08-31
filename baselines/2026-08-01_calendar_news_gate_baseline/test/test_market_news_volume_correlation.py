@@ -35,7 +35,7 @@ def test_market_avg_change_known_values(tmp_path):
     long_df = pd.DataFrame({
         "date": pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-03"] * 2),
         "ticker": ["A"] * 3 + ["B"] * 3,
-        "parkinson_volatility": [0.01, 0.02, 0.015, 0.03, 0.033, 0.028],
+        "parkinson_variance": [0.01, 0.02, 0.015, 0.03, 0.033, 0.028],
     })
     result = market_avg_change(long_df)
     # day1: NaN (no prior day). day2: mean(0.02-0.01, 0.033-0.03) = mean(0.01, 0.003) = 0.0065

@@ -994,7 +994,7 @@ def _fit_graph_preprocessors(full_frames: Mapping[str, Any]) -> PreprocessorStor
     train_end = common_dates[int(len(common_dates) * 0.7) - 1]
     return PreprocessorStore({
         ticker_id: TickerPreprocessor.fit(
-            frame.loc[frame["date"].astype(str) <= train_end], ["parkinson_volatility"], "parkinson_volatility",
+            frame.loc[frame["date"].astype(str) <= train_end], ["parkinson_variance"], "parkinson_variance",
         )
         for ticker_id, (_, frame) in enumerate(sorted(full_frames.items()))
     })
@@ -1022,7 +1022,7 @@ def build_screening_inputs(
         splits = limit_smoke_rows(splits, _SMOKE_ROWS_PER_SPLIT)
     preprocessors = {
         ticker_id: TickerPreprocessor.fit(
-            splits.frames[ticker]["train"], ["parkinson_volatility"], "parkinson_volatility"
+            splits.frames[ticker]["train"], ["parkinson_variance"], "parkinson_variance"
         )
         for ticker, ticker_id in splits.ticker_to_id.items()
     }

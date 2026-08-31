@@ -93,10 +93,10 @@ def clip_evidence(raw_df: pd.DataFrame, proc_df: pd.DataFrame | None, cap: float
     """Measure (no assumption) whether the processed Parkinson target is upper-clipped at ``cap``: align the
     processed value to the raw Parkinson by date and count rows where processed is at the cap while raw
     Parkinson exceeded it. Returns processed max + clip counts. Empty dict when no processed frame."""
-    if proc_df is None or "parkinson_volatility" not in proc_df.columns \
+    if proc_df is None or "parkinson_variance" not in proc_df.columns \
             or "date" not in proc_df.columns or "date" not in raw_df.columns:
         return {"has_processed": False}
-    pv = pd.to_numeric(proc_df["parkinson_volatility"], errors="coerce")
+    pv = pd.to_numeric(proc_df["parkinson_variance"], errors="coerce")
     proc = pd.DataFrame({"date": pd.to_datetime(proc_df["date"], errors="coerce"), "proc": pv}).dropna()
     raw = pd.DataFrame({"date": pd.to_datetime(raw_df["date"], errors="coerce"),
                         "raw_pk": raw_parkinson(raw_df)}).dropna()

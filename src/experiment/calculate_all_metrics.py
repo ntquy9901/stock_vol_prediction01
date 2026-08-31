@@ -118,7 +118,7 @@ def evaluate_har_baseline(data_dir='data/processed'):
         df = df.sort_values('date').reset_index(drop=True)
 
         # Extract parkinson volatility
-        vol = df['parkinson_volatility']
+        vol = df['parkinson_variance']
 
         # Create HAR features
         har_features = create_har_features(vol)

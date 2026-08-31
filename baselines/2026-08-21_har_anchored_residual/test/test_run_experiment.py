@@ -23,7 +23,7 @@ def _make_files(tmp, n_tickers=12, n_days=440, seed=0):
         base = np.abs(rng.normal(0.02, 0.006, n_days))
         pk = base + 0.3 * np.roll(base, 1) + 1e-4       # mild persistence so HAR is meaningful
         f = d / f"T{k:02d}_processed.csv"
-        pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(f, index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(f, index=False)
         files.append(str(f))
     return files
 

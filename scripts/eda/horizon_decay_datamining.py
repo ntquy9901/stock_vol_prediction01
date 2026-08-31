@@ -459,7 +459,7 @@ def render_md(vn: dict, contrasts: dict) -> str:
         "# VN100 graph horizon-decay data-mining (why the cross-sectional advantage lives at h1)",
         "",
         "Pure data-mining (pandas/numpy) on the delivered VN100 Parkinson-variance panel "
-        f"(N={vn['N']} tickers, T={vn['T']} days). No model training, no GPU. The `parkinson_volatility` "
+        f"(N={vn['N']} tickers, T={vn['T']} days). No model training, no GPU. The `parkinson_variance` "
         "column is a VARIANCE (sigma^2). Target = pk[t+h] (matches `masked_rich.build_masked_rich`). "
         "TRAIN-only fits (target date strictly before the 80% boundary); OOS on the held-out tail.",
         "",

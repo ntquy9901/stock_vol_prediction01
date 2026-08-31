@@ -22,7 +22,7 @@ from typing import Union
 
 def generate_har_features(
     data: Union[pd.DataFrame, str],
-    volatility_col: str = 'parkinson_volatility',
+    volatility_col: str = 'parkinson_variance',
     daily_window: int = 1,
     weekly_window: int = 5,
     monthly_window: int = 22
@@ -32,7 +32,7 @@ def generate_har_features(
 
     Args:
         data: DataFrame containing volatility data OR path to CSV file
-        volatility_col: Name of volatility column (default: 'parkinson_volatility')
+        volatility_col: Name of volatility column (default: 'parkinson_variance')
         daily_window: Window for daily HAR feature (default: 1)
         weekly_window: Window for weekly HAR feature (default: 5)
         monthly_window: Window for monthly HAR feature (default: 22)

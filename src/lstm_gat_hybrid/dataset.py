@@ -34,17 +34,17 @@ def remove_outliers(df: pd.DataFrame, n_std: float = 3.0) -> pd.DataFrame:
     Remove outliers using z-score method
 
     Args:
-        df: DataFrame with 'parkinson_volatility' column
+        df: DataFrame with 'parkinson_variance' column
         n_std: Number of standard deviations for outlier threshold
 
     Returns:
         Cleaned DataFrame with outliers removed
     """
-    if len(df) == 0 or 'parkinson_volatility' not in df.columns:
+    if len(df) == 0 or 'parkinson_variance' not in df.columns:
         return df
 
     # Calculate z-scores for volatility
-    volatility_values = df['parkinson_volatility'].values
+    volatility_values = df['parkinson_variance'].values
 
     # Handle cases where all values are the same (std = 0)
     if np.std(volatility_values) == 0:
@@ -228,7 +228,7 @@ class MultiStockDataset(Dataset):
             df = pd.read_csv(csv_file)
 
             # Ensure required columns exist
-            if 'date' not in df.columns or 'parkinson_volatility' not in df.columns:
+            if 'date' not in df.columns or 'parkinson_variance' not in df.columns:
                 print(f"[Warning] Skipping {stock_name}: missing required columns")
                 continue
 
@@ -237,8 +237,8 @@ class MultiStockDataset(Dataset):
                 print(f"[Warning] Skipping {stock_name}: insufficient data ({len(df)} rows)")
                 continue
 
-            # Calculate returns from parkinson_volatility (percentage change)
-            df['returns'] = df['parkinson_volatility'].pct_change()
+            # Calculate returns from parkinson_variance (percentage change)
+            df['returns'] = df['parkinson_variance'].pct_change()
 
             # Fill NaN returns (first row)
             df['returns'] = df['returns'].fillna(0)
@@ -282,7 +282,7 @@ class MultiStockDataset(Dataset):
             df_har = generate_har_features(df_copy)
 
             # Combine raw volatility with HAR features
-            df_har['parkinson_volatility'] = df_copy['parkinson_volatility'].values
+            df_har['parkinson_variance'] = df_copy['parkinson_variance'].values
 
             stock_features[stock_name] = df_har
 
@@ -292,7 +292,7 @@ class MultiStockDataset(Dataset):
         """Initialize normalizers for each stock"""
         for stock_name in self.stock_names:
             features = self.stock_data_with_har[stock_name][['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']].values
-            targets = self.stock_data_with_har[stock_name]['parkinson_volatility'].values
+            targets = self.stock_data_with_har[stock_name]['parkinson_variance'].values
 
             self.feature_normalizers[stock_name] = VolatilityNormalizer()
             self.target_normalizers[stock_name] = VolatilityNormalizer()
@@ -332,12 +332,12 @@ class MultiStockDataset(Dataset):
 
                 # Target: scalar
                 target_idx = i + self.seq_length + self.forecast_horizon - 1
-                y_target = stock_feats['parkinson_volatility'].iloc[target_idx]
+                y_target = stock_feats['parkinson_variance'].iloc[target_idx]
                 y_all_stocks.append(y_target)
 
                 # Additional data for graph construction
                 returns_all_stocks.append(stock_feats['har_daily_vol'].iloc[i:i+self.seq_length].values)
-                volatility_all_stocks.append(stock_feats['parkinson_volatility'].iloc[i:i+self.seq_length].values)
+                volatility_all_stocks.append(stock_feats['parkinson_variance'].iloc[i:i+self.seq_length].values)
 
             # Stack arrays: convert lists to [num_stocks, ...]
             x = np.stack(x_all_stocks, axis=1)  # [seq_len, num_stocks, num_features]

@@ -21,7 +21,7 @@ def test_screen_runs_and_reports_all_signals(tmp_path):
     for k in range(12):
         pk = np.abs(rng.normal(0.02, 0.006, 600)) + 1e-4
         f = d / f"T{k:02d}_processed.csv"
-        pd.DataFrame({"date": dates, "parkinson_volatility": pk}).to_csv(f, index=False)
+        pd.DataFrame({"date": dates, "parkinson_variance": pk}).to_csv(f, index=False)
         files.append(str(f))
     res = SG.screen(files, "vn30", min_common=300)
     assert res["num_nodes"] >= 8

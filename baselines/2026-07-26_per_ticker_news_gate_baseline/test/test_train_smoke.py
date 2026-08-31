@@ -38,7 +38,7 @@ def _make_har_df(seed: int) -> pd.DataFrame:
     dates = pd.date_range("2024-01-01", periods=N_DAYS, freq="D")
     return pd.DataFrame({
         "date": dates.astype(str),
-        "parkinson_volatility": rng.uniform(0.001, 0.05, N_DAYS),
+        "parkinson_variance": rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[0]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[1]: rng.uniform(0.001, 0.05, N_DAYS),
         HAR_COLS[2]: rng.uniform(0.001, 0.05, N_DAYS),

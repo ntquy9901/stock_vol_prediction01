@@ -26,7 +26,7 @@ from src.timesfm_baseline.volatility_dataset import (
     create_multi_stock_volatility_datasets,
 )
 from src.timesfm_baseline.timesfm_lora_finetuning import TimesFMLoRAFineTuner
-from src.common.parkinson_utils import calculate_parkinson_volatility
+from src.common.parkinson_utils import calculate_parkinson_variance
 from src.common.evaluation import evaluate_predictions
 
 
@@ -56,7 +56,7 @@ def sample_ohlcv_data():
 @pytest.fixture
 def sample_parkinson_data(sample_ohlcv_data):
     """Create sample Parkinson volatility data."""
-    return calculate_parkinson_volatility(sample_ohlcv_data)
+    return calculate_parkinson_variance(sample_ohlcv_data)
 
 
 @pytest.fixture

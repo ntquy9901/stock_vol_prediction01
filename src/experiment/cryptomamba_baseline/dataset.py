@@ -67,7 +67,7 @@ class CryptoMambaDataset(Dataset):
         print(f"Loaded {len(self.data)} total rows from {len(csv_files)} files")
 
         # Check required columns (adapted for current processed data)
-        required_cols = ['parkinson_volatility']
+        required_cols = ['parkinson_variance']
         missing_cols = [col for col in required_cols if col not in self.data.columns]
         if missing_cols:
             raise ValueError(f"Missing required columns: {missing_cols}")
@@ -96,7 +96,7 @@ class CryptoMambaDataset(Dataset):
         # This is similar to Simple LSTM approach (1 feature)
         # But we create multiple windowed features for SSM
 
-        vol = self.data['parkinson_volatility']
+        vol = self.data['parkinson_variance']
 
         # Create features using rolling windows (HAR-style)
         self.data['har_daily_vol'] = vol  # Daily (same as raw)
@@ -104,7 +104,7 @@ class CryptoMambaDataset(Dataset):
         self.data['har_monthly_vol'] = vol.rolling(22).mean().fillna(method='bfill').fillna(0)
 
         # Forward fill target
-        self.data['target_5d'] = self.data['parkinson_volatility'].shift(-self.forecast_horizon).fillna(method='bfill').fillna(0)
+        self.data['target_5d'] = self.data['parkinson_variance'].shift(-self.forecast_horizon).fillna(method='bfill').fillna(0)
 
         # Select features
         base_features = ['har_daily_vol', 'har_weekly_vol', 'har_monthly_vol']

@@ -403,10 +403,10 @@ def build_ticker_samples(
 
     if seq_length <= 0 or horizon <= 0:
         raise ValueError("seq_length and horizon must be positive")
-    if "date" not in frame or "parkinson_volatility" not in frame:
-        raise ValueError("frame must contain date and parkinson_volatility")
+    if "date" not in frame or "parkinson_variance" not in frame:
+        raise ValueError("frame must contain date and parkinson_variance")
     if feature_order is None:
-        feature_columns = ["parkinson_volatility"]
+        feature_columns = ["parkinson_variance"]
     else:
         feature_columns = [f"feature_{name}" for name in feature_order]
         stale_columns = [
@@ -423,8 +423,8 @@ def build_ticker_samples(
         raise ValueError("invalid transformed feature dimension")
     if not np.isfinite(feature_values).all():
         raise ValueError("transformed feature values must be finite")
-    model_targets = frame.get("y_model_raw", frame["parkinson_volatility"])
-    eval_targets = frame.get("y_eval_raw", frame["parkinson_volatility"])
+    model_targets = frame.get("y_model_raw", frame["parkinson_variance"])
+    eval_targets = frame.get("y_eval_raw", frame["parkinson_variance"])
     valid_count = len(frame) - seq_length - horizon + 1
     samples: list[PooledSample] = []
     for start in range(max(0, valid_count)):
@@ -763,10 +763,10 @@ def _transform_full_frames(
     for ticker in ordered_tickers:
         frame = price_frames[ticker].copy()
         _validated_dates(frame)
-        if "parkinson_volatility" not in frame:
-            raise ValueError("graph price frames require parkinson_volatility")
+        if "parkinson_variance" not in frame:
+            raise ValueError("graph price frames require parkinson_variance")
         frame["date"] = pd.to_datetime(frame["date"], errors="raise").dt.strftime("%Y-%m-%d")
-        if not np.isfinite(frame["parkinson_volatility"].to_numpy(dtype=float)).all():
+        if not np.isfinite(frame["parkinson_variance"].to_numpy(dtype=float)).all():
             raise ValueError("graph price values must be finite")
         ticker_id = ordered_tickers.index(ticker)
         transformed = preprocessors.get(ticker_id).transform_frame(frame)

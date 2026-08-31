@@ -50,7 +50,7 @@ def test_make_windows_shrinks_with_horizon():
 def test_build_ticker_features(tmp_path):
     n = 260
     dates = pd.date_range("2020-01-01", periods=n, freq="D")
-    df = pd.DataFrame({"date": dates, "parkinson_volatility": np.linspace(0.1, 0.2, n)})
+    df = pd.DataFrame({"date": dates, "parkinson_variance": np.linspace(0.1, 0.2, n)})
     p = tmp_path / "AAA_processed.csv"
     df.to_csv(p, index=False)
     tk, feats, pk = rc.build_ticker_features(str(p))
@@ -63,7 +63,7 @@ def test_build_ticker_features(tmp_path):
 
 def test_build_ticker_features_too_short_returns_none(tmp_path):
     df = pd.DataFrame({"date": pd.date_range("2020-01-01", periods=150),
-                       "parkinson_volatility": np.ones(150)})
+                       "parkinson_variance": np.ones(150)})
     p = tmp_path / "SHORT_processed.csv"
     df.to_csv(p, index=False)
     assert rc.build_ticker_features(str(p)) is None   # < 200 rows

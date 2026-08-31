@@ -4,7 +4,7 @@ Complements the per-ticker diagnostic table: this is the CROSS-SECTIONAL / TEMPO
 (distributions, outliers, correlation structure, illiquidity over time, data-source seams) rather than a
 per-stock issue list.
 
-Target column semantics (units trap, per CLAUDE.md): ``parkinson_volatility`` is Parkinson VARIANCE
+Target column semantics (units trap, per CLAUDE.md): ``parkinson_variance`` is Parkinson VARIANCE
 sigma^2 = ln(H/L)^2 / (4 ln 2), NOT sigma. Every "Parkinson" number below is a variance.
 
 Derived node features replicate the delivered runner (``masked_rich``): HAR weekly/monthly = trailing
@@ -201,7 +201,7 @@ def load_panel(raw_dir: Path = HNX_RAW, proc_dir: Path = HNX_PROC) -> Panel:
         df = _read_raw(raw_files[tk])
         raw[tk] = df
         proc = pd.read_csv(proc_files[tk], parse_dates=["date"]).sort_values("date")
-        pk_series[tk] = proc.set_index("date")["parkinson_volatility"]
+        pk_series[tk] = proc.set_index("date")["parkinson_variance"]
         ret_series[tk] = pd.Series(log_returns(df["close"].to_numpy()), index=df["date"])
     pk_wide = pd.DataFrame(pk_series).sort_index()
     ret_wide = pd.DataFrame(ret_series).sort_index()
@@ -497,7 +497,7 @@ def _render_html(stats, pt, seam, charts, med_abs_corr, frac_high) -> str:
          "<h1>HNX panel — exploratory data analysis &amp; dirty-data audit</h1>",
          f"<p class='note'>Universe: {s['n_tickers']} HNX tickers with both raw OHLCV and processed "
          f"Parkinson-variance files, {s['date_min']} .. {s['date_max']}. "
-         "The <code>parkinson_volatility</code> column is VARIANCE sigma^2, not sigma.</p>",
+         "The <code>parkinson_variance</code> column is VARIANCE sigma^2, not sigma.</p>",
          "<h2>Executive summary</h2>",
          kpi("Tickers (raw&cap;proc)", s["n_tickers"]),
          kpi("Pass liquidity screen", s["n_screened"]),
@@ -580,7 +580,7 @@ def _render_md(stats, pt, seam) -> str:
         "",
         f"Universe: **{s['n_tickers']}** HNX tickers (raw OHLCV ∩ processed Parkinson), "
         f"{s['date_min']} .. {s['date_max']}, {s['total_ticker_days']:,} ticker-days. "
-        "`parkinson_volatility` is VARIANCE σ², not σ.",
+        "`parkinson_variance` is VARIANCE σ², not σ.",
         "",
         "## Headline dirty-data figures",
         f"- **Zero-Parkinson (H=L illiquid) days: {100*s['zero_pk_frac']:.1f}%** of all ticker-days "

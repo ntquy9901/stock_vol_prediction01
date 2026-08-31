@@ -3,9 +3,9 @@
 Adds two features to the pilot's HAR(3) node features, in the nested order the ablation ladder
 slices by:
 
-    (parkinson_volatility, har_weekly, har_monthly, market_pk, volume_zscore_20)
+    (parkinson_variance, har_weekly, har_monthly, market_pk, volume_zscore_20)
 
-* ``market_pk`` -- cross-sectional MEDIAN of ``sqrt(parkinson_volatility)`` over all present tickers
+* ``market_pk`` -- cross-sectional MEDIAN of ``sqrt(parkinson_variance)`` over all present tickers
   at date ``t`` (the market factor itself). Contemporaneous (uses only column ``t``) -> leakage-safe.
 * ``volume_zscore_20`` -- trailing rolling z-score ``(log1p(volume) - roll20.mean) / roll20.std``.
   Trailing window only -> causal/leakage-safe. Tickers without an OHLCV volume series (e.g. LPB) get
@@ -34,7 +34,7 @@ from scaling import ArrayStandardizer, PreprocessorStore, _har_features
 MARKET_PK_COLUMN = "market_pk"
 VOLUME_ZSCORE_COLUMN = "volume_zscore_20"
 EXTRA_FEATURE_COLUMNS = (MARKET_PK_COLUMN, VOLUME_ZSCORE_COLUMN)
-_BASE_HAR_ORDER = ("parkinson_volatility", "har_weekly", "har_monthly")
+_BASE_HAR_ORDER = ("parkinson_variance", "har_weekly", "har_monthly")
 _VOLUME_WINDOW = 20
 
 
@@ -90,12 +90,12 @@ def volume_zscore_series(dates: pd.Series, price_dir: Path | str, ticker: str) -
 
 
 def market_pk_series(split_frames: SplitFrames) -> pd.Series:
-    """Cross-sectional median of ``sqrt(parkinson_volatility)`` across tickers, indexed by date."""
+    """Cross-sectional median of ``sqrt(parkinson_variance)`` across tickers, indexed by date."""
 
     columns: dict[str, pd.Series] = {}
     for ticker in split_frames.frames:
         full = _full_series(split_frames, ticker)
-        pk = np.sqrt(full["parkinson_volatility"].to_numpy(dtype=float))
+        pk = np.sqrt(full["parkinson_variance"].to_numpy(dtype=float))
         columns[ticker] = pd.Series(pk, index=pd.DatetimeIndex(full["date"]))
     wide = pd.DataFrame(columns)
     median = wide.median(axis=1, skipna=True)
@@ -168,7 +168,7 @@ class ExtendedTickerPreprocessor:
 
     @classmethod
     def fit(cls, train_frame: pd.DataFrame, extra_columns: tuple[str, ...]) -> "ExtendedTickerPreprocessor":
-        target = "parkinson_volatility"
+        target = "parkinson_variance"
         if target not in train_frame:
             raise ValueError(f"missing target column: {target}")
         for column in extra_columns:

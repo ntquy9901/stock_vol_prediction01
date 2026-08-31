@@ -57,7 +57,7 @@ def train_vol_panel(files: list[str], tickers: list[str], val_start_date: str) -
     for f in files:
         df = pd.read_csv(f, parse_dates=["date"]).sort_values("date")
         tk = Path(f).name.replace("_processed.csv", "")
-        series[tk] = df.set_index("date")["parkinson_volatility"]
+        series[tk] = df.set_index("date")["parkinson_variance"]
     wide = pd.DataFrame(series).sort_index()
     wide = wide.reindex(columns=list(tickers))          # align to node order (drops extras)
     cutoff = pd.Timestamp(val_start_date)
