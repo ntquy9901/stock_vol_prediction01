@@ -1,5 +1,11 @@
 {
   "schema_version": "enriched-1.1",
+  "market": "vn100",
+  "mode": "full",
+  "n_tickers": 104,
+  "build_timestamp": "2026-09-01T04:49:27",
+  "git_sha": "85dccf2",
+  "last_build_date": null,
   "columns": [
     "date",
     "open",
@@ -23,8 +29,5 @@
     "cleaning_applied",
     "zero_range_flag",
     "zero_volume_flag"
-  ],
-  "market": "vn100",
-  "n_tickers": 104,
-  "n_empty_tickers": 0
+  ]
 }
