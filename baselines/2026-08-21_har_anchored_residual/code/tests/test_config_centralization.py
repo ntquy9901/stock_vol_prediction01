@@ -22,8 +22,7 @@ _CODE = _HERE.parents[1]
 _REPO = _HERE.parents[4]
 _SUB = _REPO / "submission" / "soict_lstm_gat"
 for _p in (str(_CODE), str(_SUB)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+    sys.path.insert(0, _p)
 
 import pipeline_config as pc  # noqa: E402
 import data_utils as du  # noqa: E402

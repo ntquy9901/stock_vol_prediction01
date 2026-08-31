@@ -11,8 +11,7 @@ import sys
 from pathlib import Path
 
 _SUB = Path(__file__).resolve().parents[1]
-if str(_SUB) not in sys.path:
-    sys.path.insert(0, str(_SUB))
+sys.path.insert(0, str(_SUB))
 
 import pipeline_config as pc  # noqa: E402
 import config  # noqa: E402

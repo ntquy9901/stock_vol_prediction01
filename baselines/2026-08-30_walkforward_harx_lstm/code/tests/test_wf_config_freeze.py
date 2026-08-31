@@ -10,8 +10,7 @@ _REPO = _HERE.parents[4]
 for _p in (str(_CODE), str(_REPO / "submission" / "soict_lstm_gat"),
            str(_REPO / "baselines" / "2026-08-21_har_anchored_residual" / "code"),
            str(_REPO / "scripts" / "quality_gate")):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
+    sys.path.insert(0, _p)
 
 import pipeline_config as pc  # noqa: E402
 import run_walkforward as WF  # noqa: E402
