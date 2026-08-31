@@ -8,6 +8,10 @@ Reuses the already-tested building blocks (does NOT re-derive any formula):
 Output = ``data/processed_enriched/<market>/<ticker>.csv`` with the causal columns listed in
 ``ENRICHED_COLUMNS``. Every per-row column depends solely on dates <= t (schema-spec leakage rule);
 no train/val/test-boundary statistic, scaler, adjacency, or future/centered window is baked in.
+
+The ``open``/``high``/``low``/``close``/``volume`` columns are the POST-ETL CLEANED OHLC used to
+compute the estimators (== raw except on flagged dirty bars; the raw pre-clean values live in
+``data/raw/prices/...``), so each row is self-verifiable next to its derived estimators.
 """
 from __future__ import annotations
 
@@ -37,10 +41,11 @@ _SPLIT = etl.SPLIT_THRESH             # |1-day return| split-jump threshold (0.5
 # change; the CANONICAL window is pc.VOLUME_ZSCORE_WINDOW (22). config-ok: documented back-compat variant.
 _VZ20 = 20                            # config-ok: back-compat volume window (delivered results used 20)
 
-SCHEMA_VERSION = "enriched-1.0"
+SCHEMA_VERSION = "enriched-1.1"
 
 ENRICHED_COLUMNS = [
-    "date", "parkinson_variance", "garman_klass_variance", "rogers_satchell_variance", "yang_zhang_n20",
+    "date", "open", "high", "low", "close", "volume",
+    "parkinson_variance", "garman_klass_variance", "rogers_satchell_variance", "yang_zhang_n20",
     "log_range", "daily_return", "har_daily", "har_weekly", "har_monthly", "market_pk",
     "volume_zscore_22", "volume_zscore_20", "dirty_flag", "cleaning_applied",
     "zero_range_flag", "zero_volume_flag",
@@ -189,7 +194,8 @@ def build_ticker(raw: pd.DataFrame) -> tuple:
     clean, cleaning_applied, rej = clean_ohlcv(raw)
     est = estimators_from_ohlcv(clean)
 
-    h, lo, c = (_numeric(clean, k) for k in ("high", "low", "close"))
+    o, h, lo, c = (_numeric(clean, k) for k in ("open", "high", "low", "close"))
+    vol = _numeric(clean, "volume")
     with np.errstate(divide="ignore", invalid="ignore"):
         log_range = np.log(h / lo)
         prev_c = np.concatenate([[np.nan], c[:-1]])
@@ -203,6 +209,12 @@ def build_ticker(raw: pd.DataFrame) -> tuple:
     dirty_col = clean["date"].map(dirty_by_date).fillna(False).to_numpy(bool)
     out = pd.DataFrame({
         "date": clean["date"].dt.strftime("%Y-%m-%d"),
+        # POST-ETL CLEANED OHLCV the estimators were computed from (self-verifiable row).
+        "open": o,
+        "high": h,
+        "low": lo,
+        "close": c,
+        "volume": vol,
         "parkinson_variance": park,
         "garman_klass_variance": est["garman_klass"].to_numpy(float),
         "rogers_satchell_variance": est["rogers_satchell"].to_numpy(float),

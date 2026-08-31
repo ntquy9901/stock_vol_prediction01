@@ -1,7 +1,12 @@
 {
-  "schema_version": "enriched-1.0",
+  "schema_version": "enriched-1.1",
   "columns": [
     "date",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
     "parkinson_variance",
     "garman_klass_variance",
     "rogers_satchell_variance",

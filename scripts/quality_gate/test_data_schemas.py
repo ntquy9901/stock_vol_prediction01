@@ -24,6 +24,11 @@ def _good_frame(n: int = 8) -> pd.DataFrame:
     dates = pd.bdate_range("2020-01-01", periods=n)
     return pd.DataFrame({
         "date": dates.strftime("%Y-%m-%d"),
+        "open": np.linspace(100.0, 110.0, n),
+        "high": np.linspace(101.0, 112.0, n),
+        "low": np.linspace(99.0, 108.0, n),
+        "close": np.linspace(100.5, 111.0, n),
+        "volume": np.linspace(1e5, 2e5, n),
         "parkinson_variance": np.linspace(0.001, 0.02, n),
         "garman_klass_variance": np.linspace(0.001, 0.02, n),
         "rogers_satchell_variance": np.linspace(0.001, 0.02, n),
@@ -72,6 +77,39 @@ def test_negative_estimator_fails_schema(tmp_path):
     p = _write(tmp_path, "vn30", "NEG", df)
     _, status, detail = _check_enriched_file(p)
     assert status == INVALID and "schema" in detail
+
+
+def test_valid_enriched_file_has_ohlcv(tmp_path):
+    df = _good_frame()
+    for col in ("open", "high", "low", "close", "volume"):
+        assert col in df.columns
+    p = _write(tmp_path, "vn30", "OHLCV", df)
+    _, status, _ = _check_enriched_file(p)
+    assert status == VALID
+
+
+def test_nonpositive_price_fails_schema(tmp_path):
+    df = _good_frame()
+    df.loc[2, "close"] = 0.0        # cleaned OHLC must be strictly positive
+    p = _write(tmp_path, "vn30", "ZERO", df)
+    _, status, detail = _check_enriched_file(p)
+    assert status == INVALID and "schema" in detail
+
+
+def test_high_lt_low_geometry_fails(tmp_path):
+    df = _good_frame()
+    df.loc[3, "high"] = df.loc[3, "low"] - 1.0     # violate high >= low
+    p = _write(tmp_path, "vn30", "GEO", df)
+    _, status, detail = _check_enriched_file(p)
+    assert status == INVALID and "high < low" in detail
+
+
+def test_enriched_without_ohlc_skips_geometry_check(tmp_path):
+    # OHLC columns are optional; a frame lacking them must still validate (geometry check skipped).
+    df = _good_frame().drop(columns=["open", "high", "low", "close", "volume"])
+    p = _write(tmp_path, "vn30", "NOOHLC", df)
+    _, status, _ = _check_enriched_file(p)
+    assert status == VALID
 
 
 def test_unparseable_date(tmp_path):

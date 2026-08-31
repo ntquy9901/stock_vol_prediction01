@@ -136,7 +136,8 @@ def test_recompute_tail_equals_full_rebuild():
     tail = rp._recompute_tail(enrich._prepare_raw(raw), last_date, rp.INCREMENTAL_LOOKBACK)
     full_tail = full.loc[pd.to_datetime(full["date"]) > last_date].reset_index(drop=True)
     assert len(tail) == len(full_tail) == 20
-    for c in ("parkinson_variance", "garman_klass_variance", "rogers_satchell_variance",
+    for c in ("open", "high", "low", "close", "volume",
+              "parkinson_variance", "garman_klass_variance", "rogers_satchell_variance",
               "yang_zhang_n20", "har_weekly", "har_monthly", "volume_zscore_22", "volume_zscore_20",
               "daily_return", "log_range"):
         pd.testing.assert_series_equal(tail[c].reset_index(drop=True),

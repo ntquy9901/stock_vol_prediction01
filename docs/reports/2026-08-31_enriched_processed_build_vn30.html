@@ -1,0 +1,18 @@
+<html><head><meta charset='utf-8'><title>Enriched processed build</title>
+<style>body{font-family:system-ui,Arial,sans-serif;margin:24px;max-width:1050px}table{border-collapse:collapse;font-size:13px;margin:10px 0}td,th{border:1px solid #ccc;padding:4px 9px;text-align:right}th{background:#f2f2f2;text-align:center}td.l{text-align:left}h2{border-bottom:2px solid #ddd;margin-top:28px}.note{color:#555;font-size:13px}</style></head><body>
+<h1>Enriched processed-data build report</h1>
+<p class='note'>ETL-cleaned + causal-enriched per-ticker files (<code>data/processed_enriched/&lt;market&gt;/</code>). All columns are backward-looking; no train/val/test-boundary statistic is baked in.</p>
+<h2>Rows in / out and dirty bars</h2>
+<table><tr><th>market</th><th>tickers</th><th>rows_in</th><th>rows_out</th><th>dropped</th><th>dirty_bars</th></tr><tr><td class='l'>vn30</td><td>33</td><td>106,648</td><td>106,634</td><td>14</td><td>1,844</td></tr></table>
+<h2>Dirty bars by class (raw-bar detectors)</h2>
+<table><tr><th>market</th><th>high_lt_low</th><th>open_close_outside</th><th>nonpositive</th><th>zero_range</th><th>split_jump</th><th>naninf</th></tr><tr><td class='l'>vn30</td><td>0</td><td>0</td><td>0</td><td>1,858</td><td>0</td><td>0</td></tr></table>
+<h2>cleaning_applied breakdown</h2>
+<table><tr><th>market</th><th>none</th></tr><tr><td class='l'>vn30</td><td>106,634</td></tr></table>
+<h2>Estimator means (valid bars) — Parkinson vs GK / RS / YZ agreement</h2>
+<table><tr><th>market</th><th>parkinson_variance</th><th>garman_klass_variance</th><th>rogers_satchell_variance</th><th>yang_zhang_n20</th></tr><tr><td class='l'>vn30</td><td>0.000385203</td><td>0.000370307</td><td>0.000399778</td><td>0.000560783</td></tr></table>
+<h2>market_pk sanity (cross-sectional mean of parkinson_variance)</h2>
+<table><tr><th>market</th><th>n_days</th><th>min</th><th>mean</th><th>max</th></tr><tr><td class='l'>vn30</td><td>5,028</td><td>0</td><td>0.000402207</td><td>0.0797503</td></tr></table>
+<h2>Clean-bar regression vs existing data/processed (VN30)</h2>
+<p class='note'>Enriched parkinson_variance vs the delivered value on NON-dirty, non-capped bars. The 0.1 cap is a downstream modeling floor, not the causal estimator, so capped bars are excluded (and preserved uncapped in the enriched file).</p>
+<table><tr><th>worst_noncapped_diff</th><th>n_capped(excluded)</th><th>n_compared</th></tr><tr><td class='l'>1e-16</td><td>1</td><td>104,789</td></tr></table>
+</body></html>

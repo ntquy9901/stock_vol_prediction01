@@ -109,6 +109,11 @@ _ENRICHED_NONNEG = [
     "log_range", "har_daily", "har_weekly", "har_monthly", "market_pk",
 ]
 
+# Cleaned OHLC prices carried alongside the estimators (self-verifiable rows): strictly positive
+# on surviving bars. Volume is non-negative (dtype-agnostic: int64 or float). Nullable so any
+# documented dropped/edge bar is tolerated (checks apply only to non-null values).
+_ENRICHED_OHLC = ["open", "high", "low", "close"]
+
 ENRICHED_SCHEMA = DataFrameSchema(
     {
         "date": Column(str, nullable=False, required=True),
@@ -116,6 +121,9 @@ ENRICHED_SCHEMA = DataFrameSchema(
         "parkinson_variance": Column(float, Check.ge(0), nullable=True, required=True),
         **{c: Column(float, Check.ge(0), nullable=True, required=False)
            for c in _ENRICHED_NONNEG if c != "parkinson_variance"},
+        # cleaned OHLC prices: positive on surviving bars.
+        **{c: Column(float, Check.gt(0), nullable=True, required=False) for c in _ENRICHED_OHLC},
+        "volume": Column(None, Check.ge(0), nullable=True, required=False),
         # signed / dimensionless columns: finite-or-NaN, no sign constraint.
         "daily_return": Column(float, nullable=True, required=False),
         "volume_zscore_22": Column(float, nullable=True, required=False),
@@ -136,6 +144,13 @@ def _check_enriched_file(path: Path) -> tuple[str, str, str]:
         ENRICHED_SCHEMA.validate(df, lazy=True)
     except pa.errors.SchemaErrors as exc:
         return (name, INVALID, f"schema violations: {exc.failure_cases.shape[0]}")
+
+    # Cleaned OHLC geometry where present: high >= low on non-null bars.
+    if {"high", "low"}.issubset(df.columns):
+        both = df["high"].notna() & df["low"].notna()
+        bad = int((df.loc[both, "high"] < df.loc[both, "low"]).sum())
+        if bad:
+            return (name, INVALID, f"{bad} rows with high < low")
 
     dates = pd.to_datetime(df["date"], errors="coerce")
     if dates.isna().any():
