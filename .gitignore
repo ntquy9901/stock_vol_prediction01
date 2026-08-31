@@ -144,3 +144,10 @@ submission/soict_lstm_gat/data/sp500/
 submission/soict_lstm_gat/logs/
 
 results/soict_perobs/
+
+# Enriched processed data (baseline 2026-08-31_enriched_processed): commit only vn30 + vn100 (the tracked
+# source markets); hose/hnx/sp500 enriched are local-only (large; sp500 redistribution-restricted like
+# data/processed/sp500).
+data/processed_enriched/hose/
+data/processed_enriched/hnx/
+data/processed_enriched/sp500/

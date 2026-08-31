@@ -97,6 +97,79 @@ def _check_processed_file(path: Path) -> tuple[str, str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Enriched processed schema (baseline 2026-08-31_enriched_processed)
+# ---------------------------------------------------------------------------
+
+ENRICHED_DIR = PROJECT_ROOT / "data" / "processed_enriched"
+
+# Estimator / HAR / factor columns: variances (>= 0), NaN allowed only on the documented leading windows
+# and invalid-geometry bars, so they are nullable with a >= 0 check on the non-null values.
+_ENRICHED_NONNEG = [
+    "parkinson_variance", "garman_klass_variance", "rogers_satchell_variance", "yang_zhang_n20",
+    "log_range", "har_daily", "har_weekly", "har_monthly", "market_pk",
+]
+
+ENRICHED_SCHEMA = DataFrameSchema(
+    {
+        "date": Column(str, nullable=False, required=True),
+        # parkinson_variance MUST be present (the delivered key, preserved as a variance).
+        "parkinson_variance": Column(float, Check.ge(0), nullable=True, required=True),
+        **{c: Column(float, Check.ge(0), nullable=True, required=False)
+           for c in _ENRICHED_NONNEG if c != "parkinson_variance"},
+        # signed / dimensionless columns: finite-or-NaN, no sign constraint.
+        "daily_return": Column(float, nullable=True, required=False),
+        "volume_zscore_22": Column(float, nullable=True, required=False),
+        "volume_zscore_20": Column(float, nullable=True, required=False),
+    },
+    strict=False,
+)
+
+
+def _check_enriched_file(path: Path) -> tuple[str, str, str]:
+    name = f"enriched:{path.parent.name}/{path.name}"
+    try:
+        df = pd.read_csv(path)
+    except Exception as exc:  # noqa: BLE001 - report any read failure as invalid
+        return (name, INVALID, f"read failed: {exc}")
+
+    try:
+        ENRICHED_SCHEMA.validate(df, lazy=True)
+    except pa.errors.SchemaErrors as exc:
+        return (name, INVALID, f"schema violations: {exc.failure_cases.shape[0]}")
+
+    dates = pd.to_datetime(df["date"], errors="coerce")
+    if dates.isna().any():
+        return (name, INVALID, f"{int(dates.isna().sum())} unparseable dates")
+    if not dates.is_monotonic_increasing:
+        return (name, INVALID, "dates not monotonic increasing")
+    if dates.duplicated().any():
+        return (name, INVALID, f"{int(dates.duplicated().sum())} duplicate dates")
+    if bool((dates.dt.weekday >= 5).any()):
+        return (name, INVALID, "non-weekday dates present")
+
+    return (name, VALID, f"{len(df)} rows, {df.shape[1]} cols")
+
+
+def validate_enriched(enriched_dir: Path = ENRICHED_DIR) -> list[tuple[str, str, str]]:
+    """Validate the enriched per-ticker files under ``data/processed_enriched/<market>/``.
+
+    A missing dir or a market with no enriched CSVs yields ``MISSING`` (SKIP) rather than a fake pass.
+    Sidecar (``_schema_version.json``) and ``*_rejections.csv`` files are not price series and are skipped.
+    """
+    results: list[tuple[str, str, str]] = []
+    if not enriched_dir.exists():
+        return [("enriched_dir", MISSING, f"missing dir: {enriched_dir}")]
+    csvs = sorted(
+        p for p in enriched_dir.glob("*/*.csv") if not p.name.endswith("_rejections.csv")
+    )
+    if not csvs:
+        return [("enriched_dir", MISSING, "no enriched CSVs found")]
+    for path in csvs:
+        results.append(_check_enriched_file(path))
+    return results
+
+
+# ---------------------------------------------------------------------------
 # News panel schema
 # ---------------------------------------------------------------------------
 

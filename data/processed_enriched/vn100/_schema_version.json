@@ -1,0 +1,25 @@
+{
+  "schema_version": "enriched-1.0",
+  "columns": [
+    "date",
+    "parkinson_variance",
+    "garman_klass_variance",
+    "rogers_satchell_variance",
+    "yang_zhang_n20",
+    "log_range",
+    "daily_return",
+    "har_daily",
+    "har_weekly",
+    "har_monthly",
+    "market_pk",
+    "volume_zscore_22",
+    "volume_zscore_20",
+    "dirty_flag",
+    "cleaning_applied",
+    "zero_range_flag",
+    "zero_volume_flag"
+  ],
+  "market": "vn100",
+  "n_tickers": 104,
+  "n_empty_tickers": 0
+}
