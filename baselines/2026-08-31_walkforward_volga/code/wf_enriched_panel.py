@@ -91,6 +91,17 @@ def build_enriched_panel(files, lookback: int, horizon: int, keep_tickers) -> En
                 raise ValueError(f"{tk}: enriched file missing columns {missing}")
             frames[tk] = df[cols]
     tickers = [t for t in keep_tickers if t in frames]
+    # Screen thin-history tickers: har_weekly/har_monthly are per-ticker rolling means (min_periods 5/22),
+    # so all-NaN in a ticker's own frame means it has fewer valid days than the window -- an inadequate-
+    # history node, not a data bug (e.g. a just-listed HOSE ticker). Drop + record them rather than raising;
+    # the fail-loud _check_feature_coverage below still guards the remaining adequate-history tickers.
+    _hw, _hm = _feature_cols()[1], _feature_cols()[2]
+    thin = [t for t in tickers if frames[t][_hw].isna().all() or frames[t][_hm].isna().all()]
+    if thin:
+        print(f"[panel] dropping {len(thin)} thin-history ticker(s) (har_weekly/har_monthly all-NaN): "
+              f"{', '.join(thin[:20])}{' ...' if len(thin) > 20 else ''}", flush=True)
+        _thin = set(thin)
+        tickers = [t for t in tickers if t not in _thin]
     if len(tickers) < 2:
         raise ValueError(f"build_enriched_panel: {len(tickers)} tickers match keep_tickers (<2)")
 
