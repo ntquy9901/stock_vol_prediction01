@@ -180,7 +180,7 @@ for t in tests/test_raw_prices_quality.py tests/test_processed_data_quality.py t
 done
 if [ -n "$DQ" ]; then
   echo "[pre-push]   data-quality (raw+processed) + lessons-learned regression tests"
-  DQOUT="$(python -m pytest $DQ -q 2>&1)"; DQRC=$?
+  DQOUT="$("$COVPY" -m pytest $DQ -q 2>&1)"; DQRC=$?
   echo "$DQOUT" | tail -2
   echo "$DQOUT" | _logsec "4/4 data-quality + lessons-regression"
   if [ "$DQRC" -eq 0 ]; then LESSONS_OK="pass"; else LESSONS_OK="fail"; echo "[pre-push] BLOCK: data-quality/lessons tests failed." >&2; FAIL=1; fi
