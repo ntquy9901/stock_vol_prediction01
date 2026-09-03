@@ -151,3 +151,6 @@ results/soict_perobs/
 data/processed_enriched/hose/
 data/processed_enriched/hnx/
 data/processed_enriched/sp500/
+
+# reference paper PDFs (open-access; kept local, indexed by docs/papers/README.md)
+docs/papers/*.pdf
