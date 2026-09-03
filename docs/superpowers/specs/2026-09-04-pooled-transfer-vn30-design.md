@@ -106,14 +106,16 @@ machinery. New code only:
   - **Real-data smoke:** a small ticker/fold/epoch slice runs without exception and returns sane
     pooled metrics.
 
-## 8. Compute & execution (queued)
+## 8. Compute & execution (run now)
 
-- GPU; **queued after the sp500/hose walk-forward runs finish** (GPU-contention rule). Launch
-  detached to escape the harness reaper; poll result JSONs.
-- Estimate: Arm 1 ≈ one VN100 run (~4 h/horizon), Arm 0 ≈ one VN30 run (~1.2 h/horizon) → both
-  arms × 4 horizons ≈ ~21 h at 5 seeds.
+- **sp500 walk-forward was stopped (2026-09-04) to free the GPU for this ablation** — the ~2.5 h of
+  sp500 h1 progress was lost (no within-horizon checkpoint); sp500/hose will be re-run later.
+- Implementation (code + tests) is CPU-only and does not need the GPU.
 - **Go/no-go:** run **h1 first** (Arm 0 + Arm 1, ~5 h) and inspect the headline DM; extend to
-  h5/h10/h22 if a clear signal (either sign) warrants, else stop with the h1 conclusion.
+  h5/h10/h22 only if a clear signal (either sign) warrants, else stop with the h1 conclusion.
+- Estimate: Arm 1 ≈ one VN100 run (~4 h/horizon), Arm 0 ≈ one VN30 run (~1.2 h/horizon) → both
+  arms × 4 horizons ≈ ~21 h at 5 seeds. Launch detached to escape the harness reaper; poll result
+  JSONs.
 
 ## 9. Deliverables
 
