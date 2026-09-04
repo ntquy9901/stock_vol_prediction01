@@ -175,6 +175,29 @@ See: `archive/data_leakage_scripts/README.md`
 
 ---
 
+## 🧪 PatchTST-GAT baseline (negative control) — archived 2026-09-04
+
+**Location:** `archive/baselines/2026-09-04_patchtst_gat/` (moved from `baselines/` via `git mv`, history preserved; 12 tracked files).
+
+**What it is:** a baseline that swaps the LSTM temporal backbone of VolGA for a from-scratch PatchTST
+(patch transformer) encoder feeding the same vol→PK GAT. Two variants (no-graph / +GAT).
+
+**Why archived (not deleted):**
+- The GPU walk-forward sweep was abandoned: PatchTST ran ~50× slower than the LSTM (one fold ≈ 1.5 h;
+  a full vn100+vn30 × 4-horizon sweep ≈ 11 days), infeasible on the RTX 4060.
+- The wiring smoke (not a result) showed it is not competitive with HAR (PatchTST QLIKE 0.514 vs
+  HAR 0.467; +GAT overfits to 1.216) — consistent with the standing finding that HAR is hard to beat
+  and non-LSTM backbones (CryptoMamba, TimesNet) did not help.
+- Its tests pass from the baseline `code/` dir (14/14) but **segfault** (MKL/OpenMP einsum access
+  violation) under the pre-push gate's repo-root `pytest` invocation (a sibling baseline imports
+  torch multi-threaded first, so the baseline's thread-pin applies too late). This blocked pushes.
+
+**Scope:** kept as a reference implementation of a transformer backbone + GAT; NOT part of the paper
+(cited only as an abandoned negative-control probe). Out of scope for all audits/reviews per the
+banner above. No file outside the baseline imports it (verified by grep before the move).
+
+---
+
 ## ✅ Safe to Use (Not Archived)
 
 These files are CORRECT and use proper temporal split:
