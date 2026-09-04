@@ -1,0 +1,83 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{placeins}
+\title{Bảng kết quả --- Dự báo biến động đa tầm nhìn (VolGA)}
+\author{}\date{2026-09-04}
+\begin{document}\maketitle
+Mục tiêu: phương sai Parkinson ($\sigma^2$) tại $t{+}h$. Walk-forward 22 fold, 5 seeds, lookback 22.
+QLIKE là hàm mất mát chính. Nguồn: \texttt{results/walkforward\_volga} và \texttt{results/pooled\_transfer\_vn30}.
+\FloatBarrier
+
+\begin{table}[h]\centering
+\caption{QLIKE --- thị trường VN30 (thấp hơn = tốt hơn). In đậm = tốt nhất mỗi cột.}
+\begin{tabular}{lcccc}
+\toprule
+Mô hình & $h{=}1$ & $h{=}5$ & $h{=}10$ & $h{=}22$ \\
+\midrule
+HAR & \textbf{0.4952} & 0.5944 & 0.6412 & 0.7012 \\
+HAR-X & 0.4967 & \textbf{0.5937} & 0.6394 & \textbf{0.6987} \\
+LSTM & 0.5219 & 0.6327 & \textbf{0.6336} & 0.7056 \\
+VolGA & 0.5146 & 0.6150 & 0.6485 & 0.7053 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{QLIKE --- thị trường VN100 (thấp hơn = tốt hơn).}
+\begin{tabular}{lcccc}
+\toprule
+Mô hình & $h{=}1$ & $h{=}5$ & $h{=}10$ & $h{=}22$ \\
+\midrule
+HAR & 0.4983 & 0.5671 & 0.6005 & 0.6392 \\
+HAR-X & 0.5004 & \textbf{0.5610} & \textbf{0.6001} & \textbf{0.6388} \\
+LSTM & 0.5025 & 0.5763 & 0.6096 & 0.6479 \\
+VolGA & \textbf{0.4916} & 0.5705 & 0.6149 & 0.6434 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Kiểm định Diebold--Mariano (p, phân cụm theo ngày) --- VN100. $^*=p<0.05$.}
+\begin{tabular}{lcccc}
+\toprule
+Cặp so sánh & $h{=}1$ & $h{=}5$ & $h{=}10$ & $h{=}22$ \\
+\midrule
+VolGA vs LSTM (đóng góp đồ thị) & 0.008* & 0.011* & 0.229 & 0.107 \\
+VolGA vs HAR-X & 0.177 & 0.585 & 0.520 & 0.842 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Kiểm định Diebold--Mariano (p) --- VN30.}
+\begin{tabular}{lcccc}
+\toprule
+Cặp so sánh & $h{=}1$ & $h{=}5$ & $h{=}10$ & $h{=}22$ \\
+\midrule
+VolGA vs LSTM (đóng góp đồ thị) & 0.179 & 0.112 & 0.265 & 0.928 \\
+VolGA vs HAR-X & 0.157 & 0.397 & 0.717 & 0.788 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]\centering
+\caption{Ablation pooled VN30: Arm~0 (huấn luyện 31 mã VN30) so với Arm~1 (huấn luyện 102 mã VN100), cùng chấm điểm 31 mã VN30. QLIKE và DM ghép cặp (p; A = pooling tốt hơn). Arm~0 dùng lưới VN100 nên khác bản VN30 độc lập --- chỉ so Arm~0 với Arm~1. [đang cập nhật, h22 chạy sau]}
+\begin{tabular}{lccccc}
+\toprule
+$h$ & QLIKE Arm0 & QLIKE Arm1 & DM QLIKE & DM SE & DM AE \\
+\midrule
+1 & 0.4690 & 0.4789 & 0.147 (B) & 0.172 (A) & 0.000* (A) \\
+5 & 0.5779 & 0.5809 & 0.666 (B) & 0.306 (A) & 0.000* (A) \\
+10 & 0.6231 & 0.6308 & 0.405 (B) & 0.506 (A) & 0.001* (A) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+\noindent\footnotesize Ghi chú: không mô hình học sâu nào vượt HAR/HAR-X trên QLIKE ở mọi tầm nhìn (DM VolGA vs HAR-X không có ý nghĩa thống kê). Đồ thị (VolGA vs LSTM) chỉ có ý nghĩa trên VN100 ở $h{=}1,5$. Giá cổ phiếu VN chưa điều chỉnh chia tách; mục tiêu là phương sai, không phải độ lệch chuẩn.
+\end{document}

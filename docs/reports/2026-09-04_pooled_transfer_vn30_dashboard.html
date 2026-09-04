@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Pooled VN30 ablation dashboard</title>
+<style>body{font-family:system-ui,Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #ddd;padding:6px 8px;text-align:center}
+th{background:#f4f6f8}td.l{text-align:left}.sig{color:#3F9E5A;font-weight:600}.box{background:#fafbfc;border:1px solid #ddd;border-radius:8px;padding:10px 14px;margin:10px 0}</style></head><body>
+<h1>Pooled/transfer VN30 ablation — 2-arm dashboard (VolGA)</h1>
+<p>ONE VN100 panel; Arm 0 huấn luyện 31 mã VN30, Arm 1 huấn luyện 102 mã VN100; cả hai chấm điểm trên đúng 31 mã VN30 (điểm OOS giống hệt). Headline = DM ghép cặp Arm1 vs Arm0. * = p&lt;0.05; (A)=pooling tốt hơn, (B)=baseline tốt hơn.</p>
+<table><tr><th>h</th><th>QLIKE Arm0</th><th>QLIKE Arm1</th><th>DM QLIKE</th><th>DM SE</th><th>DM AE</th></tr>
+<tr><td>1</td><td>0.4690</td><td>0.4789</td><td>0.147(B)</td><td>0.172(A)</td><td class="sig">0.000*(A)</td></tr>
+<tr><td>5</td><td>0.5779</td><td>0.5809</td><td>0.666(B)</td><td>0.306(A)</td><td class="sig">0.000*(A)</td></tr>
+<tr><td>10</td><td>0.6231</td><td>0.6308</td><td>0.405(B)</td><td>0.506(A)</td><td class="sig">0.001*(A)</td></tr>
+<tr><td>22</td><td>0.6942</td><td>0.6722</td><td>0.263(A)</td><td class="sig">0.021*(A)</td><td>0.117(A)</td></tr>
+</table>
+<div class="box"><b>Verdict (4 horizon):</b><ul><li><b>QLIKE (loss chính):</b> pooling KHÔNG cải thiện có ý nghĩa — VolGA n.s. mọi horizon (LSTM sig chỉ h10). H0 giữ, khớp tiền lệ Track B A1.</li><li><b>Absolute error:</b> pooling giúp SIGNIFICANT ở h1/h5/h10 (cả VolGA+LSTM), phai ở h22.</li><li><b>Kết luận:</b> lợi ích pooling là loss- và horizon-dependent — giảm sai số điểm ở h≤10, không chuyển thành lợi ích QLIKE.</li><li><b>Caveat:</b> Arm0 dùng lưới VN100 + market_pk VN100 → KHÁC bản VN30 standalone; chỉ so Arm0 vs Arm1.</li></ul></div>
+</body></html>

@@ -16,7 +16,7 @@ from __future__ import annotations
 import math
 
 _REQUIRED_METRIC_KEYS = ("qlike", "r2")
-LEARNED = ("LSTM", "LSTM_wGAT_vol2pk")   # learned models that must carry over/under-fit evidence
+LEARNED = ("LSTM", "LSTM_wGAT_vol2pk", "PatchTST", "PatchTST_wGAT_vol2pk")   # learned models that must carry over/under-fit evidence
 
 
 def classify_fit(train: dict, val: dict, test: dict, *,

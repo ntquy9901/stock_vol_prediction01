@@ -28,7 +28,7 @@ Paths are repo-relative. Read in place. `archive/` is out of scope.
 ### Reused read-only by VolGA (also in scope — the actual model + trainer)
 | Path | Purpose |
 |---|---|
-| `submission/soict_lstm_gat/masked_rich.py` | `MaskedRichNet` (parallel per-node LSTM + GAT over vol→PK graph), `_directed_vol2pk`, `MaskedRichData` |
+| `baselines/2026-08-21_har_anchored_residual/code/masked_rich.py` | `MaskedRichNet` (parallel per-node LSTM + GAT over vol→PK graph), `_directed_vol2pk`, `MaskedRichData`. NOTE: the readers add both `submission/soict_lstm_gat` and this dir to `sys.path`; `masked_rich.py` exists ONLY here, so `import masked_rich` resolves to this file (there is no `submission/soict_lstm_gat/masked_rich.py`). |
 | `baselines/2026-08-21_har_anchored_residual/code/run_masked_rich.py` | `train_masked_rich` (batched GPU trainer), `_pred_dict/_ens/_metrics/seed_metric_stats/_dm_all` |
 | `baselines/2026-08-30_walkforward_harx_lstm/code/run_walkforward.py` | `_har_ols_preds` (HAR 3-feat + HAR-X 5-feat OLS, refit per fold), `training_config` |
 | `baselines/2026-08-30_walkforward_harx_lstm/code/wf_folds.py` | `make_folds`, `assert_no_leakage` |

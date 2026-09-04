@@ -30,16 +30,23 @@ Best model per row in **bold**. DM = date-clustered Diebold–Mariano p-value.
   reaches significance on SE/AE at short horizons on VN30 even where QLIKE says n.s. — so the
   marginal-value verdict is reported on all three bases, not QLIKE alone.
 
-## Pooled/transfer VN30 ablation (h1 only so far — rest running)
+## Pooled/transfer VN30 ablation (COMPLETE — all 4 horizons)
 Single VN100 panel; Arm 0 trains 31 VN30, Arm 1 trains 102; both score the identical 31 VN30 OOS
-points (14,074 obs). Headline = paired DM Arm1-vs-Arm0.
-| Deep | QLIKE Arm0 | QLIKE Arm1 | DM QLIKE | DM SE | DM AE |
+points. Headline = paired DM Arm1-vs-Arm0 (A = pooling better; * = p<0.05). VolGA row:
+| h | QLIKE Arm0 | QLIKE Arm1 | DM QLIKE | DM SE | DM AE |
 |--|--|--|--|--|--|
-| LSTM | 0.4712 | 0.4810 | 0.136 (baseline, n.s.) | 0.592 (pooled) | **0.000 (pooled, sig)** |
-| VolGA | 0.4690 | 0.4789 | 0.147 (baseline, n.s.) | 0.172 (pooled) | **0.000 (pooled, sig)** |
-- Preliminary: widening the training universe does **not** help VN30 on QLIKE (n.s., matches the
-  prior Track B A1 null) but **significantly reduces absolute error** — loss-dependent. h5/h10/h22
-  pending for the full verdict.
+| 1 | 0.4690 | 0.4789 | 0.147 (B) | 0.172 (A) | **0.000* (A)** |
+| 5 | 0.5779 | 0.5809 | 0.666 (B) | 0.306 (A) | **0.000* (A)** |
+| 10 | 0.6231 | 0.6308 | 0.405 (B) | 0.506 (A) | **0.001* (A)** |
+| 22 | 0.6942 | 0.6722 | 0.263 (A) | **0.021* (A)** | 0.117 (A) |
+- Full 4-horizon verdict: widening the training universe does **not** significantly improve VN30
+  QLIKE (VolGA n.s. at every horizon; LSTM significant only at h10) — the QLIKE ceiling holds,
+  matching the prior Track B A1 null. It **significantly reduces absolute error at h1/h5/h10** (both
+  deep models), fading by h22 (where SE becomes significant instead). Net: the benefit of pooling is
+  **loss- and horizon-dependent** — a point-error gain at short-to-medium horizons that does not
+  translate into a QLIKE gain. Verified against `results/pooled_transfer_vn30/pooled_vn30_h{1,5,10,22}.json`.
+  Caveat: Arm 0 uses the VN100 grid + VN100 market factor, so it is NOT the standalone-VN30 run; only
+  Arm0-vs-Arm1 is a valid comparison. Dashboard: `docs/reports/2026-09-04_pooled_transfer_vn30_dashboard.html`.
 - **Caveat:** Arm 0 ≠ the standalone-VN30 run above (Arm 0 uses the VN100 grid + VN100 `market_pk`).
   Only Arm 0 vs Arm 1 is a valid comparison; do not cross-compare to the standalone tables.
 
