@@ -134,8 +134,17 @@ def run_walkforward(files, wf: VolgaWFConfig, cfg, keep_tickers, out_path=None, 
     flat_va = {k: [] for k in ("y",) + _MODELS}
     lc = {gm: {"train": [], "val": [], "best_epoch": []} for gm in ("LSTM", "LSTM_wGAT_vol2pk")}
     per_fold = []
-    for fold in folds:
+    nfolds = len(folds)
+    print(f"[{market} h{wf.horizon}] {nfolds} folds, K={K}, {len(keep_tickers)} nodes, "
+          f"{len(cfg.seeds)} seeds -> starting walk-forward", flush=True)
+    for fi, fold in enumerate(folds):
+        ft0 = time.time()
         upd, flats, ev = run_fold(panel, fold, wf, cfg)
+        el = time.time() - t0
+        per_fold_s = time.time() - ft0
+        eta = per_fold_s * (nfolds - fi - 1)
+        print(f"[{market} h{wf.horizon}] fold {fi + 1}/{nfolds} done in {per_fold_s:.0f}s "
+              f"(elapsed {el / 3600:.2f}h, eta ~{eta / 3600:.2f}h)", flush=True)
         pooled["HAR"].update(upd["HAR"])
         pooled["HAR-X"].update(upd["HAR-X"])
         for si, d in enumerate(upd["LSTM_seeds"]):
@@ -178,6 +187,7 @@ def run_walkforward(files, wf: VolgaWFConfig, cfg, keep_tickers, out_path=None, 
         "n_test_obs": metrics["HAR"]["n"], "n_oos_dates": n_dates, "n_folds": len(folds),
         "retrain_cadence_K": K, "folds_target": wf.folds_target, "val_tail": wf.val,
         "lookback": wf.lookback, "test_start_anchor": test_start, "n_anchors": n, "seeds": list(cfg.seeds),
+        "volume_zscore_window": pc.VOLUME_ZSCORE_WINDOW,
         "config": {"epochs": cfg.epochs, "patience": cfg.patience, "min_epochs": cfg.min_epochs,
                    "batch_size": cfg.batch_size, "qlike_floor": fl},
         "metrics": metrics, "metrics_per_seed": per_seed, "dm_date_clustered": dm,

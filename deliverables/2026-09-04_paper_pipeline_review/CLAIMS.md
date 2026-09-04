@@ -29,12 +29,15 @@ overstates a non-significant difference.
    `docs/reports/2026-08-23_1600_volatility_estimator_research.md`;
    `docs/reports/appendix/2026-09-03_overnight_tail_appendix.md`.
 
-## Ablation claim (in progress)
+## Ablation claim (COMPLETE — all 4 horizons)
 6. **Widening the deep model's training universe (VN30→VN100) does not overcome the QLIKE ceiling on
-   VN30, but reduces absolute error.** Preliminary (h1): paired DM Arm1-vs-Arm0 n.s. on QLIKE
-   (p≈0.14) but significant on AE (p≈0) — loss-dependent; consistent with the prior Track B A1 null
-   on QLIKE. Full multi-horizon verdict pending (h5–h22 running). Evidence:
-   `results/pooled_transfer_vn30/pooled_vn30_h*.json`; `docs/reports/2026-09-04_pooled_transfer_vn30_report.md`.
+   VN30, but reduces absolute error at short-to-medium horizons.** Paired DM Arm1-vs-Arm0: QLIKE not
+   significant for VolGA at any horizon (LSTM significant only at h10), so the QLIKE ceiling holds
+   (matches the prior Track B A1 null); absolute error is significantly lower under the wider universe
+   at h1/h5/h10 for both deep models, fading by h22. The benefit of pooling is therefore loss- and
+   horizon-dependent. Evidence: `results/pooled_transfer_vn30/pooled_vn30_h{1,5,10,22}.json`;
+   `docs/reports/2026-09-04_pooled_transfer_vn30_report.md`; dashboard
+   `docs/reports/2026-09-04_pooled_transfer_vn30_dashboard.html`.
 
 ## Baseline definition (must be cited)
 7. **HAR-X is a published baseline**, not an ad-hoc construction: HAR (Corsi, 2009) + exogenous

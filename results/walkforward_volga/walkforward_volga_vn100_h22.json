@@ -6867,5 +6867,7 @@
       }
     }
   ],
-  "seconds": 5484.8
+  "seconds": 5484.8,
+  "volume_zscore_window": 22,
+  "volume_zscore_window_provenance": "git-verified: VOLUME_ZSCORE_WINDOW=22 (commit fef4899, 2026-08-30) predates all these runs; reader selects volume_zscore_22"
 }

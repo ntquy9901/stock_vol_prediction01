@@ -608,5 +608,7 @@
       "gap_arm1": 0.012883309418059263,
       "delta_gap": -0.026474449278898415
     }
-  }
+  },
+  "volume_zscore_window": 22,
+  "volume_zscore_window_provenance": "git-verified: VOLUME_ZSCORE_WINDOW=22 (commit fef4899, 2026-08-30) predates all these runs; reader selects volume_zscore_22"
 }

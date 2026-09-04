@@ -24,6 +24,7 @@ sys.path.insert(0, str(HERE))
 
 import pooled_panel as pp  # noqa: E402
 import run_pooled_arm as ra  # noqa: E402
+import pipeline_config as pc  # noqa: E402  (record the volume z-score window in the result JSON)
 import run_masked_rich as RMR  # noqa: E402
 from run_volga_walkforward import VolgaWFConfig, enriched_glob  # noqa: E402
 from run_walkforward import training_config  # noqa: E402
@@ -84,7 +85,9 @@ def run_ablation(horizon: int, folds_target: int = 22, epochs: int = 16, lookbac
         "meta": {"panel_nodes": int(panel.N), "vn30_scored": int(len(score_idx)),
                  "n_folds": len(folds), "seeds": list(cfg.seeds), "lookback": wf.lookback,
                  "folds_target": folds_target, "epochs": epochs, "seconds": time.time() - t0,
+                 "volume_zscore_window": pc.VOLUME_ZSCORE_WINDOW,
                  "design": "single VN100 panel; Arm0 train=VN30, Arm1 train=VN100; score=VN30"},
+        "volume_zscore_window": pc.VOLUME_ZSCORE_WINDOW,
         "arm0": {"metrics": arm0["metrics"], "seed_stats": arm0["seed_stats"], "per_fold": arm0["per_fold"]},
         "arm1": {"metrics": arm1["metrics"], "seed_stats": arm1["seed_stats"], "per_fold": arm1["per_fold"]},
         "paired_dm": paired_dm,          # favors "A" => Arm1 (pooled) better

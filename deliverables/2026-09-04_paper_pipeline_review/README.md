@@ -8,8 +8,8 @@ Scope (chosen 2026-09-04): the entire paper pipeline —
 1. **Data**: ETL clean + enrich → `data/processed_enriched/{vn30,vn100}/` (causal, leakage-safe).
 2. **VolGA walk-forward** (headline results): HAR / HAR-X / LSTM / VolGA on VN30 + VN100, multi-horizon
    {1,5,10,22}, 5 seeds, date-clustered Diebold–Mariano on 3 loss bases.
-3. **Pooled/transfer VN30 ablation**: does widening the training universe (31→102) help VN30 (in
-   progress — h1 done, h5–h22 running as of writing).
+3. **Pooled/transfer VN30 ablation**: does widening the training universe (31→102) help VN30
+   (COMPLETE — all 4 horizons h1/h5/h10/h22).
 
 Review focus (all four): **leakage & correctness · reproducibility · paper-readiness · code + test
 quality.** See `REVIEW_GUIDE.md`.
@@ -32,8 +32,10 @@ here so the reviewer has the numbers without rerunning.
 ## Status at packaging time (2026-09-04)
 
 - VolGA walk-forward VN30 + VN100: **complete** (all 4 horizons, pushed).
-- Pooled ablation: **h1 complete, h5–h22 running** (per-horizon JSONs are partial-safe).
-- SP500 6-fold: queued/running (exploratory, not required for the core paper).
+- Pooled ablation: **COMPLETE — all 4 horizons** (`results/pooled_transfer_vn30/pooled_vn30_h{1,5,10,22}.json`).
+- SP500 6-fold: running (exploratory, not required for the core paper).
+- PatchTST-GAT backbone: baseline delivered as a negative control; the full GPU sweep was abandoned
+  (~50× slower than the LSTM; a full sweep ≈ 11 days). Wiring evidence shows it is not competitive.
 - All code pushed through commit `74a6441`+; results/reports for in-progress runs land under
   `results/…` and `docs/reports/…` as they finish.
 
