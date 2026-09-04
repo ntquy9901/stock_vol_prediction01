@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="utf-8">
+<title>VN30 pooled ablation — data organization (Arm0/Arm1 vs standalone VN30/VN100)</title>
+<style>
+ body{font-family:system-ui,Segoe UI,Arial,sans-serif;max-width:1080px;margin:24px auto;padding:0 18px;color:#1a1a1a;line-height:1.5}
+ h1{font-size:22px} h2{font-size:18px;margin-top:30px;border-bottom:2px solid #eee;padding-bottom:4px}
+ table{border-collapse:collapse;width:100%;font-size:13px;margin:10px 0}
+ th,td{border:1px solid #ddd;padding:6px 8px;text-align:center} th{background:#f4f6f8}
+ td.l,th.l{text-align:left}
+ .vn30{color:#2C7FB8;font-weight:600}.pool{color:#3F9E5A;font-weight:600}
+ .box{border:1px solid #ddd;border-radius:8px;padding:12px 14px;margin:10px 0;background:#fafbfc}
+ .warn{background:#fff8e6;border:1px solid #f0c675}
+ .grid{display:flex;gap:22px;flex-wrap:wrap;margin:8px 0}
+ .card{border:1px solid #e2e2e2;border-radius:8px;padding:10px;width:240px}
+ .card h3{margin:2px 0 8px;font-size:14px}
+ .dots{display:grid;grid-template-columns:repeat(17,1fr);gap:3px;margin:6px 0}
+ .d{width:11px;height:11px;border-radius:50%}
+ .train30{background:#2C7FB8}.train100{background:#3F9E5A}.ctx{background:#e4e4e4;border:1px solid #cfcfcf}
+ .score{box-shadow:0 0 0 2px #d64545}
+ .legend{font-size:12px;color:#555;margin:6px 0}
+ .legend span{display:inline-block;margin-right:14px}
+ .sw{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-right:4px}
+ svg{max-width:100%;height:auto}
+ .cap{font-size:12px;color:#666}
+ code{background:#eef;padding:1px 4px;border-radius:3px}
+</style></head><body>
+
+<h1>VN30 pooled/transfer ablation — cách tổ chức dữ liệu</h1>
+<p class="cap">So sánh 4 cấu hình ở horizon h1: 2 bản standalone đã chạy trước (VN30, VN100) và 2 arm của
+ablation (Arm0, Arm1). Số liệu trích từ các <code>result.json</code> thực tế.</p>
+
+<h2>1. Bốn cấu hình khác nhau ở đâu</h2>
+<table>
+<tr><th class="l">Cấu hình</th><th>Panel đọc</th><th>Node TRAIN</th><th>Node SCORE</th>
+    <th>market_pk</th><th>Grid (anchors)</th><th>K retrain</th><th>OOS dates</th><th>Test obs (VN30)</th></tr>
+<tr><td class="l">OLD <span class="vn30">VN30</span> standalone</td><td>vn30/ (31)</td>
+    <td class="vn30">31 VN30</td><td class="vn30">31 VN30</td><td>VN30 factor</td>
+    <td>3502</td><td>16</td><td>351</td><td>10,881</td></tr>
+<tr><td class="l">OLD <span class="pool">VN100</span> standalone</td><td>vn100/ (102)</td>
+    <td class="pool">102</td><td class="pool">102</td><td>VN100 factor</td>
+    <td>4533</td><td>21</td><td>454</td><td>46,308 (cả 102)</td></tr>
+<tr style="background:#eef6ff"><td class="l"><b>Arm 0</b> (baseline)</td><td>vn100/ (102)</td>
+    <td class="vn30">31 VN30</td><td class="vn30">31 VN30</td><td>VN100 factor</td>
+    <td>4533</td><td>21</td><td>454</td><td>14,074</td></tr>
+<tr style="background:#eefbf1"><td class="l"><b>Arm 1</b> (pooled)</td><td>vn100/ (102)</td>
+    <td class="pool">102</td><td class="vn30">31 VN30</td><td>VN100 factor</td>
+    <td>4533</td><td>21</td><td>454</td><td>14,074</td></tr>
+</table>
+
+<div class="box"><b>Hai quan hệ then chốt:</b>
+<ul>
+<li><b>Arm 1 ≈ OLD VN100</b> về <i>train</i> (cùng panel VN100, cùng grid, fold0 train = 297,240 rows —
+    khớp hệt) nhưng <b>chỉ chấm điểm 31 mã VN30</b> (không chấm cả 102). ⇒ Arm1 = "model VN100, đánh giá
+    riêng trên VN30".</li>
+<li><b>Arm 0 ≠ OLD VN30</b> dù cùng train 31 mã VN30: Arm0 sống trên <b>grid VN100</b> (K=21, 454 OOS
+    dates, 14,074 obs) và dùng <b>market_pk của VN100</b>; OLD VN30 sống trên grid VN30 (K=16, 351 dates,
+    10,881 obs) + market_pk VN30. ⇒ số tuyệt đối KHÔNG so trực tiếp được.</li>
+<li><b>Arm 0 vs Arm 1</b>: <i>giống hệt</i> panel/grid/market_pk/điểm-OOS (cùng 14,074 điểm VN30) — chỉ
+    khác <b>TẬP NODE TRAIN</b> (31 vs 102). Đây là phép so 1-biến hợp lệ duy nhất.</li>
+</ul></div>
+
+<h2>2. Tập node: train (tô đặc) vs score (viền đỏ)</h2>
+<p class="legend">
+<span><span class="sw train30"></span>VN30 train</span>
+<span><span class="sw train100"></span>non-VN30 train</span>
+<span><span class="sw ctx"></span>non-VN30 (không train)</span>
+<span><span class="sw" style="box-shadow:0 0 0 2px #d64545;background:#fff"></span>viền đỏ = được chấm điểm (score)</span>
+&nbsp;— mỗi chấm = 1 cổ phiếu; 31 xanh dương (VN30) + 71 xám = 102 (VN100).</p>
+<div class="grid" id="cards"></div>
+
+<h2>3. Walk-forward split (train / validation / forecast) — cùng luật, khác grid</h2>
+<p class="cap">Cả 4: expanding-window, test bắt đầu ở 90% anchors, validation = 66 hàng cuối trước mỗi khối
+forecast, lookback=22, 22 fold. Khác nhau ở ĐỘ DÀI GRID và K (nhịp retrain). Sơ đồ 4 fold đầu:</p>
+<svg viewBox="0 0 900 250" xmlns="http://www.w3.org/2000/svg" font-size="12">
+ <!-- axis -->
+ <text x="0" y="14" font-weight="600">Grid VN30 (n=3502, K=16)  — dùng bởi OLD VN30</text>
+ <!-- VN30 rows: train blue, val orange, forecast green; scaled: 3502 -> 780px -->
+ <!-- fold i: train [0, ts+i*K - 66], val 66, forecast K ; ts=3151, K=16 -->
+ <g transform="translate(0,22)">
+  <rect x="0" y="0" width="702" height="12" fill="#4C9BD5"/><rect x="702" y="0" width="15" height="12" fill="#F0A030"/><rect x="717" y="0" width="4" height="12" fill="#3F9E5A"/>
+  <rect x="0" y="16" width="705" height="12" fill="#4C9BD5"/><rect x="705" y="16" width="15" height="12" fill="#F0A030"/><rect x="720" y="16" width="4" height="12" fill="#3F9E5A"/>
+  <rect x="0" y="32" width="708" height="12" fill="#4C9BD5"/><rect x="708" y="32" width="15" height="12" fill="#F0A030"/><rect x="723" y="32" width="4" height="12" fill="#3F9E5A"/>
+  <text x="740" y="26">… 22 fold, forecast 16 ngày/fold ×31 mã = 496 obs/fold; tổng 10,881</text>
+ </g>
+ <text x="0" y="100" font-weight="600">Grid VN100 (n=4533, K=21) — dùng bởi OLD VN100, Arm0, Arm1</text>
+ <g transform="translate(0,108)">
+  <rect x="0" y="0" width="880" height="12" fill="#4C9BD5"/><rect x="880" y="0" width="13" height="12" fill="#F0A030"/><rect x="893" y="0" width="5" height="12" fill="#3F9E5A"/>
+  <rect x="0" y="16" width="884" height="12" fill="#4C9BD5"/><rect x="884" y="16" width="12" height="12" fill="#F0A030"/><rect x="896" y="16" width="4" height="12" fill="#3F9E5A"/>
+  <rect x="0" y="32" width="888" height="12" fill="#4C9BD5"/><rect x="888" y="32" width="9" height="12" fill="#F0A030"/><rect x="897" y="32" width="3" height="12" fill="#3F9E5A"/>
+  <text x="0" y="64" class="cap">forecast 21 ngày/fold; OLD VN100 chấm ×102=2,142 obs/fold; Arm0/Arm1 chấm ×31=651 obs/fold</text>
+ </g>
+ <g transform="translate(0,190)">
+  <rect x="0" y="0" width="16" height="12" fill="#4C9BD5"/><text x="22" y="10">train (mở rộng)</text>
+  <rect x="150" y="0" width="16" height="12" fill="#F0A030"/><text x="172" y="10">validation (66 hàng cuối)</text>
+  <rect x="330" y="0" width="16" height="12" fill="#3F9E5A"/><text x="352" y="10">forecast (OOS, K ngày)</text>
+ </g>
+</svg>
+
+<h2>4. Ví dụ cụ thể — fold 0, h1</h2>
+<table>
+<tr><th class="l">Cấu hình</th><th>Train rows (fold0)</th><th>Val rows (fold0)</th><th>Forecast rows (fold0)</th><th>Ý nghĩa</th></tr>
+<tr><td class="l">OLD VN30</td><td>61,943</td><td>2,046</td><td>496</td><td class="l">31 mã × (train anchors / 66 val / 16 forecast)</td></tr>
+<tr><td class="l">OLD VN100</td><td>297,240</td><td>6,732</td><td>2,142</td><td class="l">102 mã × (… / 66 / 21)</td></tr>
+<tr style="background:#eef6ff"><td class="l">Arm 0</td><td>85,497</td><td>≈2,046</td><td>651</td><td class="l">CHỈ 31 VN30 train (mask), nhưng trên grid VN100 ⇒ nhiều anchor hơn OLD VN30 (85k > 62k); chấm 31×21=651</td></tr>
+<tr style="background:#eefbf1"><td class="l">Arm 1</td><td>297,240</td><td>6,732</td><td>651</td><td class="l">Train cả 102 (= OLD VN100), nhưng chỉ chấm 31 VN30 ⇒ forecast 651 (không phải 2,142)</td></tr>
+</table>
+<p class="cap">Chú ý: Arm0 &amp; Arm1 có <b>cùng 651 điểm forecast VN30 ở fold0</b> (và cùng 14,074 tổng) — bằng
+chứng OOS align 1-1; chúng chỉ khác số <i>train rows</i> (85,497 vs 297,240 = biến ablation).</p>
+
+<div class="box warn"><b>Caveat cho paper:</b> Arm0 KHÔNG phải bản VN30 standalone đã báo trước (khác grid +
+market_pk + nhiều train rows hơn), Arm1 KHÔNG phải bản VN100 standalone (chỉ chấm VN30). Vì vậy chỉ
+được so <b>Arm0 ↔ Arm1</b> (paired DM), KHÔNG so chéo với 2 bản standalone. Ranking khác bản cũ là do
+đổi grid, không phải phát hiện mới về VN30.</div>
+
+<script>
+const N=102, VN30=31;
+const cfgs=[
+ {t:"OLD VN30 (31)", train:"vn30", nodes:31},
+ {t:"OLD VN100 (102)", train:"all", nodes:102},
+ {t:"Arm 0 (baseline)", train:"vn30", nodes:102},
+ {t:"Arm 1 (pooled)", train:"all", nodes:102},
+];
+const wrap=document.getElementById("cards");
+cfgs.forEach(c=>{
+ const card=document.createElement("div"); card.className="card";
+ const h=document.createElement("h3"); h.textContent=c.t; card.appendChild(h);
+ const g=document.createElement("div"); g.className="dots";
+ for(let i=0;i<c.nodes;i++){
+   const d=document.createElement("div"); d.className="d";
+   const isVN30=i<VN30;
+   if(isVN30){ d.className+=(c.train==="vn30"||c.train==="all")?" train30":" ctx"; d.className+=" score"; }
+   else { d.className+=(c.train==="all")?" train100":" ctx"; }
+   g.appendChild(d);
+ }
+ card.appendChild(g);
+ const cap=document.createElement("div"); cap.className="cap";
+ cap.textContent = (c.train==="all"?"train 102":"train 31 VN30") + " · score 31 VN30";
+ card.appendChild(cap);
+ wrap.appendChild(card);
+});
+</script>
+</body></html>
