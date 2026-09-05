@@ -72,6 +72,16 @@ def test_progress_line_format():
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
 
 
+def test_agg_split_metrics_means_and_total_n():
+    d1 = {"mse": 1.0, "qlike": 0.4, "r2": 0.5, "n": 10}
+    d2 = {"mse": 3.0, "qlike": 0.6, "r2": 0.1, "n": 30}
+    agg = EH._agg_split_metrics([d1, d2])
+    assert agg["mse"] == 2.0 and agg["qlike"] == 0.5 and abs(agg["r2"] - 0.3) < 1e-9
+    assert agg["n"] == 40                       # n is summed, metrics are averaged
+    # classify_fit consumes qlike+r2 -> the agg dict is a valid fit-verdict input
+    assert set(("mse", "qlike", "r2", "n")) <= set(agg)
+
+
 def test_edge_density_range():
     A = np.eye(5, dtype=np.float32); A[0, 1] = 0.5; A[2, 3] = -0.4
     assert 0.0 <= EH._edge_density(A) <= 1.0

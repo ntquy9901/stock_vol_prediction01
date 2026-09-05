@@ -117,6 +117,15 @@ def _progress(body: str, elapsed_min: float) -> str:
     return f"[edgehm] {body} ({elapsed_min:.1f} min)"
 
 
+def _agg_split_metrics(dicts):
+    """Mean of mse/qlike/r2 across per-fold split-metric dicts; n = total obs. Aggregates the per-fold
+    train (or val) fit metrics of a walk-forward run into one dict for the overfit verdict."""
+    keys = ("mse", "qlike", "r2")
+    agg = {k: float(np.mean([d[k] for d in dicts])) for k in keys}
+    agg["n"] = int(sum(d["n"] for d in dicts))
+    return agg
+
+
 def _pool(o, D):
     return RMR._pred_dict(o, D.y_te, D.tmask_te, D.d_te, D.N)
 
@@ -139,6 +148,8 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
     pooled = {m: {} for m in _MODELS}
     lstm = [{} for _ in cfg.seeds]; volga = [{} for _ in cfg.seeds]; volga_hm = [{} for _ in cfg.seeds]
     dens_fix, dens_hm = [], []
+    _NN = ("LSTM", "VolGA", "VolGA_hm")                       # NN models get over/under-fit evidence
+    tr_acc = {m: [] for m in _NN}; va_acc = {m: [] for m in _NN}; curves = {m: [] for m in _NN}
     print(f"[edgehm] {market} h{horizon}: {panel.N} nodes, {len(folds)} folds, {len(cfg.seeds)} seeds", flush=True)
     for fi, fold in enumerate(folds):
         D = pack_fold(panel, fold, wf.lookback, wf.horizon)
@@ -154,16 +165,30 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
         print(_progress(f"fold {fi + 1}/{len(folds)} start: N={D.N} train={len(D.X_tr)} val={len(D.X_va)} "
                         f"test={len(D.y_te)} anchors, edge dens fix={dens_fix[-1]:.3f} hm={dens_hm[-1]:.3f} - "
                         f"training {len(cfg.seeds)} seeds x 3 models", (time.time() - t0) / 60), flush=True)
+        fold_out = {m: [] for m in _NN}                      # full per-seed returns (train/val/test + curves)
         for si, s in enumerate(cfg.seeds):
-            lstm[si].update(_pool(RMR.train_masked_rich(D, cfg, s, False, eye, return_splits=True)["test"], D))
-            volga[si].update(_pool(RMR.train_masked_rich(D, cfg, s, True, adj_fix, return_splits=True)["test"], D))
-            volga_hm[si].update(_pool(RMR.train_masked_rich(D, cfg, s, True, adj_hm, return_splits=True)["test"], D))
+            o_l = RMR.train_masked_rich(D, cfg, s, False, eye, return_splits=True)
+            o_v = RMR.train_masked_rich(D, cfg, s, True, adj_fix, return_splits=True)
+            o_h = RMR.train_masked_rich(D, cfg, s, True, adj_hm, return_splits=True)
+            lstm[si].update(_pool(o_l["test"], D)); volga[si].update(_pool(o_v["test"], D))
+            volga_hm[si].update(_pool(o_h["test"], D))
+            fold_out["LSTM"].append(o_l); fold_out["VolGA"].append(o_v); fold_out["VolGA_hm"].append(o_h)
             print(_progress(f"  fold {fi + 1}/{len(folds)} seed {si + 1}/{len(cfg.seeds)} done "
                             f"(LSTM+VolGA+VolGA_hm)", (time.time() - t0) / 60), flush=True)
+        for m in _NN:                                        # per-fold seed-ensembled train/val fit metrics + curves
+            etr = RMR._ens_split(fold_out[m], "train"); eva = RMR._ens_split(fold_out[m], "val")
+            tr_acc[m].append(RMR._split_metrics(etr, D.y_tr, D.tmask_tr, fl))
+            va_acc[m].append(RMR._split_metrics(eva, D.y_va, D.tmask_va, fl))
+            curves[m].append({"fold": fi, "train": [o["train_curve"] for o in fold_out[m]],
+                              "val": [o["val_curve"] for o in fold_out[m]],
+                              "best_epoch": [o["best_epoch"] for o in fold_out[m]]})
         print(f"[edgehm] fold {fi + 1}/{len(folds)} done, edge density fix={dens_fix[-1]:.3f} "
               f"hm={dens_hm[-1]:.3f} ({(time.time() - t0) / 60:.1f} min)", flush=True)
     pooled["LSTM"] = RMR._ens(lstm); pooled["VolGA"] = RMR._ens(volga); pooled["VolGA_hm"] = RMR._ens(volga_hm)
     metrics = {m: RMR._metrics(pooled[m], fl) for m in _MODELS}
+    train_metrics = {m: _agg_split_metrics(tr_acc[m]) for m in _NN}   # over/under-fit evidence (walk-forward mean)
+    val_metrics = {m: _agg_split_metrics(va_acc[m]) for m in _NN}
+    fit_diagnostics = {m: RMR.OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in _NN}
     dm = {"VolGAhm_vs_VolGA": RMR._dm_all(pooled["VolGA_hm"], pooled["VolGA"], horizon, fl),
           "VolGAhm_vs_LSTM": RMR._dm_all(pooled["VolGA_hm"], pooled["LSTM"], horizon, fl),
           "VolGA_vs_LSTM": RMR._dm_all(pooled["VolGA"], pooled["LSTM"], horizon, fl)}
@@ -171,8 +196,10 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
               "num_nodes": int(panel.N), "n_folds": len(folds), "seeds": list(cfg.seeds), "smoke": smoke,
               "edge_sig_alpha": EDGE_SIG_ALPHA, "edge_density_fix_mean": float(np.mean(dens_fix)),
               "edge_density_hm_mean": float(np.mean(dens_hm)), "seconds": time.time() - t0,
-              "metrics": metrics, "dm_date_clustered": dm}
+              "metrics": metrics, "train_metrics": train_metrics, "val_metrics": val_metrics,
+              "fit_diagnostics": fit_diagnostics, "learning_curves": curves, "dm_date_clustered": dm}
     print(f"[edgehm] QLIKE h{horizon}: " + ", ".join(f"{m}={metrics[m]['qlike']:.4f}" for m in _MODELS), flush=True)
+    print("[edgehm] fit (train->val->test): " + ", ".join(f"{m}={fit_diagnostics[m]['status']}" for m in _NN), flush=True)
     print(f"[edgehm] edge density: fix(lag1)={np.mean(dens_fix):.3f} hm(h={horizon})={np.mean(dens_hm):.3f}", flush=True)
     a = dm["VolGAhm_vs_VolGA"]["qlike"]; b = dm["VolGAhm_vs_LSTM"]["qlike"]
     print(f"[edgehm] DM VolGAhm-vs-VolGA qlike p={a['p_value']:.3f} ({a['favors']}); "
