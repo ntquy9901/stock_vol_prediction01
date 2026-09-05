@@ -102,7 +102,9 @@ else
   PILOT="baselines/2026-08-08_pooled_news_gnn_ablation_baseline"
   if [ -d "$PILOT/test" ]; then TESTDIR="$PILOT/test"; COVSRC="$PILOT/code"; else TESTDIR="scripts/quality_gate"; COVSRC="scripts/quality_gate"; fi
   echo "[pre-push]   (no changed source/tests — pilot smoke suite $TESTDIR)"
-  S1OUT="$(python -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
+  # use the GPU venv python ($COVPY), not bare `python` (system python lacks pytest -> false-block on
+  # docs/notebook/config-only pushes). Fixed 2026-09-05.
+  S1OUT="$(PYTHONIOENCODING=utf-8 "$COVPY" -m pytest "$TESTDIR" --cov="$COVSRC" --cov-branch --cov-report=xml:.qg_coverage.xml -q 2>&1)"; S1RC=$?
 fi
 echo "$S1OUT" | tail -3
 echo "$S1OUT" | _logsec "1/4 changed-scope tests"
