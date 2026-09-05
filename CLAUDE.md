@@ -180,6 +180,10 @@ Gate 3 tầng, nặng dần theo vòng đời (edit → commit → push):
    lớp tự-động-nhắc, không thay thế `/code-review` 3-lớp đầy đủ).
 3. **pre-push (mỗi push) — `scripts/git_hooks/pre-push`:** bộ đầy đủ (pytest + diff-cover C0/C1 + data-quality
    Pandera/Evidently + delivered-baseline + config-hardcode + overfit-evidence). Đây vẫn là gate cứng cuối cùng.
+   **Step 7/7 FINAL — checklist evidence:** ghi `scripts/task_dashboard/gate_results/<sha>_checklist.md` (1 dòng/
+   check + kết quả) rồi `gate_checklist.py::verify_checklist` **BLOCK** nếu evidence thiếu (check nào không được
+   ghi nhận) hoặc mâu thuẫn (overall=pass nhưng có check fail) — chứng minh gate đã kiểm đủ, không bỏ sót âm thầm.
+   `core.hooksPath=scripts/git_hooks` nên sửa hook có hiệu lực ngay.
 
 **Lưu ý gate:** commit chỉ đụng file KHÔNG-`.py` (docs/notebook/config) làm pre-push step 1 fallback chạy pilot
 smoke bằng **system python (thiếu pytest)** → false-block; và commit mà mọi dòng `.py` đổi đều `# pragma: no cover`

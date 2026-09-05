@@ -305,6 +305,19 @@ payload = {
 print(f"[pre-push] wrote gate result {gate_dir / (payload['commit'] + '.json')}")
 PY
 
+# --- 7/7 FINAL: verify the gate checklist evidence is complete (blocks if a check went unrecorded or an
+# overall-pass hides a failed check) -- proves the gate actually checked everything, per user 2026-09-05 ---
+echo "[pre-push] 7/7 gate-checklist completeness"
+CKPY="$MAINROOT/scripts/quality_gate/gate_checklist.py"
+if [ -f "$CKPY" ] && command -v python >/dev/null 2>&1; then
+  CKOUT="$(python "$CKPY" "$GATE_DIR/$SHORT_SHA.json" 2>&1)"; CKRC=$?
+  echo "$CKOUT"
+  echo "$CKOUT" | _logsec "7/7 gate-checklist completeness"
+  if [ "$CKRC" -ne 0 ]; then echo "[pre-push] BLOCK: gate checklist evidence incomplete/inconsistent." >&2; FAIL=1; fi
+else
+  echo "[pre-push]   (gate_checklist.py or python absent -- skipped)"
+fi
+
 # append the final verdict to the evidence log, then keep it (do NOT delete -- it is the audit artifact)
 { echo "=== VERDICT ==="; echo "overall: $([ "$FAIL" -ne 0 ] && echo FAIL || echo PASS)"; \
   echo "test_count=$TEST_COUNT C0=$DIFF_PCT C1=$BRANCH_PCT ruff=$RUFF_STATUS lessons=$LESSONS_OK"; } >> "$GATE_LOG"
