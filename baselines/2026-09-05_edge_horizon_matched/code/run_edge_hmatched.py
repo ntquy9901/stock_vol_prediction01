@@ -112,6 +112,11 @@ def _edge_density(A):
     return float(np.count_nonzero(off)) / (n * (n - 1))
 
 
+def _progress(body: str, elapsed_min: float) -> str:
+    """Format an edgehm progress line: ``[edgehm] <body> (<elapsed> min)`` (testable; run() prints it)."""
+    return f"[edgehm] {body} ({elapsed_min:.1f} min)"
+
+
 def _pool(o, D):
     return RMR._pred_dict(o, D.y_te, D.tmask_te, D.d_te, D.N)
 
@@ -146,15 +151,15 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
         nfloor = pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS
         har, harx = _har_ols_preds(D, fl, nfloor)
         pooled["HAR"].update(_pool(har["te"], D)); pooled["HAR-X"].update(_pool(harx["te"], D))
-        print(f"[edgehm] fold {fi + 1}/{len(folds)} start: N={D.N} train={len(D.X_tr)} val={len(D.X_va)} "
-              f"test={len(D.y_te)} anchors, edge dens fix={dens_fix[-1]:.3f} hm={dens_hm[-1]:.3f} "
-              f"({(time.time() - t0) / 60:.1f} min) - training {len(cfg.seeds)} seeds x 3 models", flush=True)
+        print(_progress(f"fold {fi + 1}/{len(folds)} start: N={D.N} train={len(D.X_tr)} val={len(D.X_va)} "
+                        f"test={len(D.y_te)} anchors, edge dens fix={dens_fix[-1]:.3f} hm={dens_hm[-1]:.3f} - "
+                        f"training {len(cfg.seeds)} seeds x 3 models", (time.time() - t0) / 60), flush=True)
         for si, s in enumerate(cfg.seeds):
             lstm[si].update(_pool(RMR.train_masked_rich(D, cfg, s, False, eye, return_splits=True)["test"], D))
             volga[si].update(_pool(RMR.train_masked_rich(D, cfg, s, True, adj_fix, return_splits=True)["test"], D))
             volga_hm[si].update(_pool(RMR.train_masked_rich(D, cfg, s, True, adj_hm, return_splits=True)["test"], D))
-            print(f"[edgehm]   fold {fi + 1}/{len(folds)} seed {si + 1}/{len(cfg.seeds)} done "
-                  f"(LSTM+VolGA+VolGA_hm) ({(time.time() - t0) / 60:.1f} min)", flush=True)
+            print(_progress(f"  fold {fi + 1}/{len(folds)} seed {si + 1}/{len(cfg.seeds)} done "
+                            f"(LSTM+VolGA+VolGA_hm)", (time.time() - t0) / 60), flush=True)
         print(f"[edgehm] fold {fi + 1}/{len(folds)} done, edge density fix={dens_fix[-1]:.3f} "
               f"hm={dens_hm[-1]:.3f} ({(time.time() - t0) / 60:.1f} min)", flush=True)
     pooled["LSTM"] = RMR._ens(lstm); pooled["VolGA"] = RMR._ens(volga); pooled["VolGA_hm"] = RMR._ens(volga_hm)

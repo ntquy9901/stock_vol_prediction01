@@ -67,6 +67,11 @@ def test_selfloop_always_one():
     assert np.allclose(np.diag(A), 1.0)
 
 
+def test_progress_line_format():
+    assert EH._progress("fold 1/7 start", 2.5) == "[edgehm] fold 1/7 start (2.5 min)"
+    assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
+
+
 def test_edge_density_range():
     A = np.eye(5, dtype=np.float32); A[0, 1] = 0.5; A[2, 3] = -0.4
     assert 0.0 <= EH._edge_density(A) <= 1.0
