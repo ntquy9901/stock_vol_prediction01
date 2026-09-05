@@ -2,7 +2,7 @@
 
 Prereqs (already set up on this machine): rclone installed + an authenticated remote named ``gdrive``
 (``rclone listremotes`` shows ``gdrive:``). The bundle is DATA-ONLY (see make_colab_bundle.py); the Colab
-notebook reads it from ``MyDrive/luanvan/data/`` and mounts the SAME Google account this remote points to.
+notebook reads it from ``MyDrive/luanvan_data/`` and mounts the SAME Google account this remote points to.
 
 Typical use after refreshing the enriched data:
     # rebuild the bundle from current data, then upload it to Drive
@@ -22,7 +22,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 
-DEFAULT_REMOTE = "gdrive:luanvan/data/"
+DEFAULT_REMOTE = "gdrive:luanvan_data/"
 
 
 def rclone_copy_cmd(bundle: Path, remote: str) -> list[str]:
