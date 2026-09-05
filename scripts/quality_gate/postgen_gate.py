@@ -88,10 +88,15 @@ def _run_hardcode(rel: str) -> str | None:  # pragma: no cover - subprocess/impo
     return "\n".join(f"    {rel}:{f.lineno}: {f.reason.strip()}" for f in blocks)
 
 
-def _file_from_stdin() -> str | None:  # pragma: no cover - hook stdin glue (no jq dependency)
+def file_from_hook_json(stream=None) -> str | None:
+    """Extract the edited file path from a PostToolUse hook JSON payload (read from ``stream``/stdin).
+
+    Returns ``tool_input.file_path`` (preferred) or ``tool_response.filePath``, or None if the payload is
+    absent/malformed. Parsing here (not jq) keeps the hook command dependency-free."""
     import json
+    stream = sys.stdin if stream is None else stream
     try:
-        data = json.load(sys.stdin)
+        data = json.load(stream)
     except (json.JSONDecodeError, ValueError, OSError):
         return None
     ti = data.get("tool_input") or {}
@@ -101,7 +106,7 @@ def _file_from_stdin() -> str | None:  # pragma: no cover - hook stdin glue (no 
 
 def main(argv=None) -> int:  # pragma: no cover - entry driver; pure logic tested via rel_in_scope/build_decision
     argv = sys.argv[1:] if argv is None else argv
-    path = argv[0] if argv else _file_from_stdin()   # CLI arg (tests) or PostToolUse hook stdin JSON
+    path = argv[0] if argv else file_from_hook_json()   # CLI arg (tests) or PostToolUse hook stdin JSON
     if not path:
         return 0
     rel = rel_in_scope(path)

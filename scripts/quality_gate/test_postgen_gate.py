@@ -61,3 +61,21 @@ def test_build_decision_combines_both():
     d = pg.build_decision("x/run.py", "F811 redef", "    x/run.py:5: top_k=5 hardcoded")
     assert d["decision"] == "block"
     assert "ruff pyflakes" in d["reason"] and "config-hardcode" in d["reason"]
+
+
+def test_file_from_hook_json_tool_input():
+    import io
+    s = io.StringIO('{"tool_name":"Edit","tool_input":{"file_path":"/a/b.py"}}')
+    assert pg.file_from_hook_json(s) == "/a/b.py"
+
+
+def test_file_from_hook_json_tool_response_fallback():
+    import io
+    s = io.StringIO('{"tool_response":{"filePath":"/c/d.py"}}')
+    assert pg.file_from_hook_json(s) == "/c/d.py"
+
+
+def test_file_from_hook_json_malformed_returns_none():
+    import io
+    assert pg.file_from_hook_json(io.StringIO("not json")) is None
+    assert pg.file_from_hook_json(io.StringIO('{"tool_input":{}}')) is None
