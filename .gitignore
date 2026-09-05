@@ -151,6 +151,8 @@ results/soict_perobs/
 data/processed_enriched/hose/
 data/processed_enriched/hnx/
 data/processed_enriched/sp500/
+# archived 2026-09-05: superseded by sp500_clean (pre-vintage-screen enriched, 544 tickers), kept local-only
+archive/data_processed_enriched/sp500/
 
 # reference paper PDFs (open-access; kept local, indexed by docs/papers/README.md)
 docs/papers/*.pdf

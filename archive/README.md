@@ -198,6 +198,32 @@ banner above. No file outside the baseline imports it (verified by grep before t
 
 ---
 
+## 🗃️ Non-clean S&P 500 enriched — archived 2026-09-05
+
+**Location:** `archive/data_processed_enriched/sp500/` (moved from `data/processed_enriched/sp500/`;
+gitignored data folder, `mv` not `git mv` — 0 tracked files, no history to preserve; 544 tickers).
+
+**What it is:** the earlier enriched S&P 500 output, built before the vintage/liquidity screen. Superseded
+by `data/processed_enriched/sp500_clean/` (504 tickers), the canonical dataset produced by
+`scripts/etl_audit/clean_sp500_vintage.py` (vintage cut rows < 2000-01-01 + ≤50% zero-range liquidity
+screen + <252-row history screen + P3 ETL row-clean).
+
+**Why archived (not deleted):**
+- No active code reads it — `grep -rn "processed_enriched/sp500"` over `src/ scripts/ baselines/` hits only
+  `sp500_clean` (in `clean_sp500_vintage.py` and `sp500_dirtiness_html.py`); nothing imports/loads the
+  non-clean folder.
+- Not an input to the clean pipeline: `clean_sp500_vintage.py` derives `sp500_clean` from **raw**
+  (`data/raw/prices/sp500`), not from this enriched folder — so archiving it cannot break regeneration.
+- The SP500 Colab/A100 training bundle uses `sp500_clean`, confirming clean is the live dataset.
+
+**Scope:** kept local-only (large; SP500 redistribution-restricted) — `.gitignore` updated to ignore the
+new path. Out of scope for all audits/reviews per the banner above.
+
+**Deliberately NOT moved:** `data/processed_enriched/sp500_clean/` (the live canonical dataset),
+`data/raw/prices/sp500` and `data/raw/prices/sp500_clean` (raw sources), and `data/processed/sp500`.
+
+---
+
 ## ✅ Safe to Use (Not Archived)
 
 These files are CORRECT and use proper temporal split:
