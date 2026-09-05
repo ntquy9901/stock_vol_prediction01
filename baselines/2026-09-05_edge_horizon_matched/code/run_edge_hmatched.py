@@ -61,36 +61,46 @@ def directed_vol2pk_hmatched(vshock, sqrt_pk, last_row, horizon, top_k,
     only if |corr| clears a Bonferroni significance floor over the (n-1) candidate sources per target
     (threshold z_bonf/sqrt(n_pairs), z_bonf = Phi^-1(1 - alpha/(2(n-1)))); Top-K per target; self-loop=1.
     ``alpha=None`` disables the floor. A target with no surviving source keeps only its self-loop ->
-    local no-graph fallback (expected at long h where the lead-lag signal is at noise level)."""
+    local no-graph fallback (expected at long h where the lead-lag signal is at noise level).
+
+    Vectorised: the pairwise-complete Pearson correlation of every (source i, target j) pair is computed
+    with BLAS matmuls over NaN-masked [T, N] matrices instead of an O(N^2) Python np.corrcoef loop, so it
+    scales to large universes (S&P 500, N~500). ``R[i, j] = corr(src_i, tgt_j)`` over the rows where both
+    are finite; count/sum matrices give the exact per-pair r = (n*Sab - Sa*Sb) / (sqrt(n*Saa - Sa^2) *
+    sqrt(n*Sbb - Sb^2)); den==0 (zero variance) and n<min_pairs collapse to NaN and are dropped."""
     v = vshock[:last_row + 1]
     p = sqrt_pk[:last_row + 1]
-    src = v[:-horizon]                 # source volume at t
-    tgt = p[horizon:]                  # target sqrt_pk at t+h  (horizon-matched)
+    src = v[:-horizon]                 # source volume at t          [T, N]
+    tgt = p[horizon:]                  # target sqrt_pk at t+h       [T, N]  (horizon-matched)
     n = v.shape[1]
-    A = np.zeros((n, n), dtype=np.float32)
     z_bonf = NormalDist().inv_cdf(1.0 - alpha / (2.0 * max(n - 1, 1))) if alpha else 0.0
-    for j in range(n):
-        fj = tgt[:, j]
-        corrs = np.full(n, np.nan)
-        thr = np.full(n, np.inf)
-        for i in range(n):
-            if i == j:
-                continue
-            si = src[:, i]
-            m = np.isfinite(si) & np.isfinite(fj)
-            mm = int(m.sum())
-            if mm < min_pairs:
-                continue
-            a, b = si[m], fj[m]
-            if a.std() == 0.0 or b.std() == 0.0:
-                continue
-            corrs[i] = float(np.corrcoef(a, b)[0, 1])
-            thr[i] = (z_bonf / math.sqrt(mm)) if alpha else 0.0   # Bonferroni floor (0 = disabled)
-        sig = np.isfinite(corrs) & (np.abs(corrs) > thr)
-        valid = np.flatnonzero(sig)
-        if valid.size:
-            k = valid[np.argsort(-np.abs(corrs[valid]))[:top_k]]
-            A[j, k] = corrs[k]
+
+    Sf = np.isfinite(src); Ff = np.isfinite(tgt)                    # finite masks
+    S = np.where(Sf, src, 0.0).astype(np.float64)                  # NaN -> 0 so masked sums drop them
+    F = np.where(Ff, tgt, 0.0).astype(np.float64)
+    Sm = Sf.astype(np.float64); Fm = Ff.astype(np.float64)
+    npair = Sm.T @ Fm                                              # [i,j] jointly-finite row count
+    sa = S.T @ Fm                                                  # sum src_i over rows where tgt_j finite
+    sb = Sm.T @ F                                                  # sum tgt_j over rows where src_i finite
+    saa = (S * S).T @ Fm; sbb = Sm.T @ (F * F); sab = S.T @ F
+    with np.errstate(invalid="ignore", divide="ignore"):
+        num = npair * sab - sa * sb
+        den = np.sqrt(npair * saa - sa * sa) * np.sqrt(npair * sbb - sb * sb)
+        R = num / den                                             # [source i, target j] Pearson r
+    R[~np.isfinite(R)] = np.nan                                    # den==0 (zero variance) -> drop
+    R[npair < min_pairs] = np.nan                                 # too few overlapping pairs -> drop
+    np.fill_diagonal(R, np.nan)                                    # i==j: no self edge from correlation
+    with np.errstate(invalid="ignore", divide="ignore"):
+        thr = (z_bonf / np.sqrt(npair)) if alpha else 0.0         # per-pair Bonferroni floor (0 = disabled)
+    sig = np.isfinite(R) & (np.abs(R) > thr)                       # [source, target]
+    A = np.zeros((n, n), dtype=np.float32)
+    scores = np.where(sig, np.abs(R), -np.inf)                     # rank valid sources per target column
+    topk = np.argsort(-scores, axis=0)[:top_k]                     # [top_k, N_targets]
+    tgts = np.arange(n)
+    for rank in range(topk.shape[0]):
+        srcs = topk[rank]
+        keep = sig[srcs, tgts]
+        A[tgts[keep], srcs[keep]] = R[srcs[keep], tgts[keep]].astype(np.float32)   # A[j,i] = corr(src_i, tgt_j)
     np.fill_diagonal(A, 1.0)
     return A
 
@@ -107,7 +117,7 @@ def _pool(o, D):
 
 
 def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100",
-        lookback=pc.LOOKBACK):  # pragma: no cover
+        lookback=pc.LOOKBACK, batch=None):  # pragma: no cover
     t0 = time.time()
     files = _glob.glob(enriched_glob(market))
     keep = frozen_universe(files, lookback, horizon)
@@ -117,8 +127,9 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
     K = max(1, math.ceil((n - ts) / wf.folds_target))
     folds = make_folds(n, ts, K, wf.val, wf.horizon)
     assert_no_leakage(folds, panel.target_dates, wf.horizon)
+    tc_kw = {"batch": batch} if batch else {}   # None -> training_config's own default batch; larger = faster on big GPUs
     cfg = training_config(epochs=(8 if smoke else epochs),
-                          seeds=((42, 123, 2026) if smoke else (42, 123, 2026, 7, 2024)[:n_seeds]))
+                          seeds=((42, 123, 2026) if smoke else (42, 123, 2026, 7, 2024)[:n_seeds]), **tc_kw)
     fl = cfg.qlike_floor
     pooled = {m: {} for m in _MODELS}
     lstm = [{} for _ in cfg.seeds]; volga = [{} for _ in cfg.seeds]; volga_hm = [{} for _ in cfg.seeds]
@@ -171,11 +182,12 @@ def main():  # pragma: no cover
     ap.add_argument("--epochs", type=int, default=16)
     ap.add_argument("--n-seeds", type=int, default=3)
     ap.add_argument("--lookback", type=int, default=22)   # experiment value (matches delivered VolGA edge); library default = pc.LOOKBACK
+    ap.add_argument("--batch", type=int, default=None)     # None -> training_config default; raise (e.g. 1024) to use a big GPU (A100) better
     ap.add_argument("--market", default="vn100", choices=["vn100", "vn30", "hose", "hnx", "sp500", "sp500_clean"])
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback)
+    run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback, a.batch)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -112,5 +112,50 @@ def test_pool_delegates_to_pred_dict(monkeypatch):
     assert seen["args"] == ("OBJ", "Y", "TM", "D", 9)
 
 
+def _bruteforce_hmatched(vshock, sqrt_pk, last_row, horizon, top_k, alpha, min_pairs):
+    """Independent O(N^2) reference (per-pair np.corrcoef with NaN masking) for the vectorised builder."""
+    import math
+    from statistics import NormalDist
+    v = vshock[:last_row + 1]; p = sqrt_pk[:last_row + 1]
+    src = v[:-horizon]; tgt = p[horizon:]
+    n = v.shape[1]
+    A = np.zeros((n, n), dtype=np.float32)
+    z = NormalDist().inv_cdf(1.0 - alpha / (2.0 * max(n - 1, 1))) if alpha else 0.0
+    for j in range(n):
+        fj = tgt[:, j]; corrs = np.full(n, np.nan); thr = np.full(n, np.inf)
+        for i in range(n):
+            if i == j:
+                continue
+            m = np.isfinite(src[:, i]) & np.isfinite(fj); mm = int(m.sum())
+            if mm < min_pairs:
+                continue
+            a, b = src[:, i][m], fj[m]
+            if a.std() == 0.0 or b.std() == 0.0:
+                continue
+            corrs[i] = float(np.corrcoef(a, b)[0, 1])
+            thr[i] = (z / math.sqrt(mm)) if alpha else 0.0
+        sig = np.isfinite(corrs) & (np.abs(corrs) > thr); valid = np.flatnonzero(sig)
+        if valid.size:
+            k = valid[np.argsort(-np.abs(corrs[valid]))[:top_k]]
+            A[j, k] = corrs[k]
+    np.fill_diagonal(A, 1.0)
+    return A
+
+
+def test_vectorised_matches_bruteforce_with_nans():
+    """The vectorised builder must equal an independent per-pair np.corrcoef loop, including NaN masking
+    (pairwise-complete) and the Bonferroni floor -- proves the O(N^2)->BLAS rewrite preserves semantics."""
+    rng = np.random.default_rng(7)
+    n, T = 12, 260
+    vshock = rng.standard_normal((T, n))
+    sqrt_pk = np.abs(rng.standard_normal((T, n))) + 0.1
+    vshock[rng.random((T, n)) < 0.05] = np.nan          # sprinkle missing values
+    sqrt_pk[rng.random((T, n)) < 0.05] = np.nan
+    for alpha in (None, 0.05):
+        A_vec = EH.directed_vol2pk_hmatched(vshock, sqrt_pk, T - 1, horizon=3, top_k=4, alpha=alpha)
+        A_ref = _bruteforce_hmatched(vshock, sqrt_pk, T - 1, 3, 4, alpha, MR._MIN_PAIRS)
+        assert np.allclose(A_vec, A_ref, atol=1e-6, equal_nan=True)
+
+
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(pytest.main([__file__, "-v"]))
