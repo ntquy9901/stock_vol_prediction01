@@ -302,9 +302,13 @@ evidence** để CHỨNG MINH (không chỉ khẳng định) model không overfi
   `run_masked_rich.train_masked_rich(return_splits=True)` + `run()` đã sinh sẵn; logic verdict ở
   `scripts/quality_gate/overfit_check.py::classify_fit` (overfit = val→test QLIKE xấu đi >25% hoặc train→test
   R² drop >0.20; underfit = train_r2 & test_r2 đều < floor).
-- **Gate chặn (pre-push):** `scripts/quality_gate/check_overfit_evidence.py` chạy trên mọi `result.json`
-  masked_rich trong push diff — thiếu evidence hoặc model overfit/underfit → **BLOCK**. Test:
-  `test_overfit_check.py`, `test_check_overfit_evidence.py` (chạy mỗi push).
+- **Gate chặn (pre-push) — MỌI training result JSON (broadened 2026-09-06):** `check_overfit_evidence.py`
+  chạy trên **mọi** JSON trong push diff dưới `results/**` hoặc `baselines/**` (không chỉ `*result.json`
+  masked_rich) — thiếu evidence hoặc model overfit/underfit → **BLOCK**. Learned model tự nhận diện theo tên
+  (`overfit_check.looks_learned`: lstm/volga/gat/gnn/timesfm/…); baseline det. (HAR/HAR-X/GARCH) miễn. masked_rich
+  (design/per-seed) vẫn buộc đủ bộ `LEARNED` cố định (F-04). Non-training JSON tự bị skip. Test:
+  `test_overfit_check.py`, `test_check_overfit_evidence.py`. **Lưu ý:** driver `contemp_edge` + `market_disp`
+  hiện CHƯA ghi evidence → result JSON của chúng sẽ bị gate chặn khi push (phải thêm evidence như edge_hmatched).
 - Các delivered result.json cũ (test-only, trước mandate) không nằm trong push diff nên không bị retro-check;
   nhưng mọi lần train/commit result.json MỚI từ nay phải kèm evidence.
 

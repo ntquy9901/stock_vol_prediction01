@@ -78,3 +78,18 @@ def test_check_result_evidence_passes_clean_and_flags_overfit():
     bad["metrics"]["LSTM"] = {"qlike": 1.10, "r2": 0.05}   # test QLIKE 57% worse than val -> overfit
     ok2, probs2 = OC.check_result_evidence(bad)
     assert ok2 is False and any("LSTM: overfit" in p for p in probs2)
+
+
+def test_looks_learned_patterns():
+    assert OC.looks_learned("LSTM") and OC.looks_learned("VolGA_hm") and OC.looks_learned("LSTM_wGAT_vol2pk")
+    assert OC.looks_learned("LSTM5") and OC.looks_learned("TimesFM") and OC.looks_learned("PatchTST_GAT")
+    assert not OC.looks_learned("HAR") and not OC.looks_learned("HAR-X") and not OC.looks_learned("GARCH")
+
+
+def test_learned_models_autodetect_and_fallback():
+    # auto-detect the learned models from a result's metrics keys (edge-style)
+    res = {"metrics": {"HAR": {}, "VolGA": {}, "VolGA_hm": {}, "LSTM": {}}}
+    assert set(OC.learned_models(res)) == {"VolGA", "VolGA_hm", "LSTM"}
+    # no learned model / no metrics -> fall back to the masked_rich default (so partial artifacts still fail)
+    assert OC.learned_models({"metrics": {"HAR": {}}}) == OC.LEARNED
+    assert OC.learned_models({}) == OC.LEARNED

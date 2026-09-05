@@ -198,10 +198,12 @@ if [ -n "$DQ" ]; then
 else
   echo "[pre-push]   data-quality tests not found on this branch (skipped)"
 fi
-# Over/under-fit evidence gate (user mandate 2026-08-29): any masked-rich result.json in THIS push must
-# carry train/val/test metrics + a per-model 'ok' fit verdict (no over/under-fit). Only checks result.json
-# actually being pushed; pre-existing (test-only) results are not in the diff and are not retro-checked.
-RESULTS_CHG=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*result.json' 2>/dev/null | grep -E 'masked_rich' || true)
+# Over/under-fit evidence gate (user mandate 2026-08-29; broadened 2026-09-06 to ALL training result JSONs):
+# any training result JSON in THIS push (results/** or baselines/**, any name) must carry train/val/test
+# metrics + a per-model 'ok' fit verdict (no over/under-fit). check_overfit_evidence self-skips non-training
+# JSONs (no learned model in metrics). Only checks files in the diff; pre-existing results are not retro-checked.
+RESULTS_CHG=$(git diff --name-only "$PUSH_BASE"..HEAD -- '*.json' 2>/dev/null \
+  | grep -E '^(results|baselines)/' | grep -vE '^(archive|data)/|/gate_results/|/task_dashboard/' || true)
 if [ -n "$RESULTS_CHG" ]; then
   echo "[pre-push]   over/under-fit evidence gate on $(echo "$RESULTS_CHG" | wc -l | tr -d ' ') changed result.json"
   RCHG_ABS=""; for r in $RESULTS_CHG; do RCHG_ABS="$RCHG_ABS $MAINROOT/$r"; done

@@ -16,7 +16,25 @@ from __future__ import annotations
 import math
 
 _REQUIRED_METRIC_KEYS = ("qlike", "r2")
-LEARNED = ("LSTM", "LSTM_wGAT_vol2pk")   # learned models that must carry over/under-fit evidence
+LEARNED = ("LSTM", "LSTM_wGAT_vol2pk")   # default learned models (masked_rich); other drivers auto-detected by name
+# Name fragments that mark a LEARNED (capacity-to-overfit) model in any driver's metrics keys. Deterministic
+# baselines (HAR / HAR-X / GARCH / RW / EWMA) do not match and are exempt from the fit-evidence requirement.
+_LEARNED_PATTERNS = ("lstm", "volga", "gat", "gnn", "timesfm", "timesnet", "transformer", "patchtst", "mamba")
+
+
+def looks_learned(name: str) -> bool:
+    """True if a metrics key names a learned model (any driver) that must carry over/under-fit evidence."""
+    n = name.lower()
+    return any(p in n for p in _LEARNED_PATTERNS)
+
+
+def learned_models(res: dict) -> tuple:
+    """The learned models a result must carry evidence for: those in its ``metrics`` whose name looks learned
+    (works across drivers: LSTM/VolGA/VolGA_hm, LSTM/LSTM_wGAT_vol2pk, LSTM5/VolGA6, ...). Falls back to the
+    masked_rich default so a partial artifact that dropped its learned block still fails rather than passes."""
+    te = res.get("metrics") if isinstance(res, dict) else None
+    found = tuple(m for m in te if looks_learned(m)) if isinstance(te, dict) else ()
+    return found or LEARNED
 
 
 def classify_fit(train: dict, val: dict, test: dict, *,
@@ -56,14 +74,17 @@ def classify_fit(train: dict, val: dict, test: dict, *,
             "reasons": reasons}
 
 
-def check_result_evidence(res: dict, *, learned=LEARNED, **thresholds) -> tuple[bool, list]:
+def check_result_evidence(res: dict, *, learned=None, **thresholds) -> tuple[bool, list]:
     """Validate a result.json dict CARRIES the over/under-fit evidence and every learned model is 'ok'.
 
     Returns ``(passed, problems)``. A result is acceptable iff it has ``train_metrics`` + ``val_metrics`` +
     ``metrics`` (test) for each learned model AND each model's recomputed verdict is ``ok``. Deterministic
     models (HAR/HAR-X/GARCH) are exempt (no capacity to overfit in the variance sense) unless present in
-    ``train_metrics``.
+    ``train_metrics``. When ``learned`` is not given it is auto-detected from the result's metrics keys
+    (``learned_models``), so the check works for any driver (masked_rich, edge_hmatched, contemp, ...).
     """
+    if learned is None:
+        learned = learned_models(res)
     problems = []
     tr, va, te = res.get("train_metrics"), res.get("val_metrics"), res.get("metrics")
     if not isinstance(tr, dict) or not isinstance(va, dict) or not isinstance(te, dict):

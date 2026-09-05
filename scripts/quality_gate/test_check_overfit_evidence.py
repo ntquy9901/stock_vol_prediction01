@@ -57,6 +57,31 @@ def test_gate_blocks_partial_masked_rich_missing_a_learned_model(tmp_path):
 def test_masked_rich_detector_recognises_design_and_per_seed():
     assert CO._is_masked_rich_result({"design": "masked-union-panel", "metrics": {}}) is True
     assert CO._is_masked_rich_result({"metrics_per_seed": {"LSTM": {}}}) is True
+
+
+def _edge_good():
+    # edge_hmatched-style result: learned models VolGA/VolGA_hm (no LSTM_wGAT_vol2pk, no 'masked' design)
+    return {
+        "experiment": "edge_horizon_matched",
+        "metrics":       {"HAR": {"qlike": 0.5, "r2": 0.3}, "LSTM": {"qlike": 0.52, "r2": 0.24},
+                          "VolGA": {"qlike": 0.51, "r2": 0.25}, "VolGA_hm": {"qlike": 0.53, "r2": 0.23}},
+        "train_metrics": {"LSTM": {"qlike": 0.50, "r2": 0.30}, "VolGA": {"qlike": 0.49, "r2": 0.31},
+                          "VolGA_hm": {"qlike": 0.50, "r2": 0.30}},
+        "val_metrics":   {"LSTM": {"qlike": 0.51, "r2": 0.25}, "VolGA": {"qlike": 0.50, "r2": 0.26},
+                          "VolGA_hm": {"qlike": 0.52, "r2": 0.24}},
+    }
+
+
+def test_gate_covers_edge_style_result_pass_and_fail(tmp_path):
+    # generalisation: a non-masked_rich training result (VolGA/VolGA_hm) is detected + checked
+    p = tmp_path / "edgehm_sp500_clean_h1.json"; p.write_text(json.dumps(_edge_good()), encoding="utf-8")
+    assert CO.check_files([str(p)]) == {}                     # has evidence for all learned -> pass
+    r = _edge_good(); del r["val_metrics"]                    # drop evidence -> must FAIL
+    p2 = tmp_path / "edgehm_bad.json"; p2.write_text(json.dumps(r), encoding="utf-8")
+    assert str(p2) in CO.check_files([str(p2)])
+    r2 = _edge_good(); r2["metrics"]["VolGA_hm"] = {"qlike": 1.2, "r2": 0.02}  # overfit -> FAIL
+    p3 = tmp_path / "edgehm_of.json"; p3.write_text(json.dumps(r2), encoding="utf-8")
+    assert any("VolGA_hm" in x for x in CO.check_files([str(p3)])[str(p3)])
     assert CO._is_masked_rich_result({"metrics": {"LSTM_wGAT_vol2pk": {"qlike": 0.6}}}) is True
     assert CO._is_masked_rich_result({"metrics": {"HAR-X": {"qlike": 0.5}}}) is False   # deterministic-only
     assert CO._is_masked_rich_result("not-a-dict") is False                              # non-dict guard

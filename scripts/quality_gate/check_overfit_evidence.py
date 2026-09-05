@@ -1,6 +1,8 @@
-"""Pre-push gate: BLOCK a committed masked-rich result.json that lacks over/under-fit evidence or whose
-learned models are over/under-fit. Invoked by scripts/git_hooks/pre-push on the result.json files in the
-push diff. A file that is not a masked-rich training result (no learned-model test metrics) is skipped.
+"""Pre-push gate: BLOCK a committed TRAINING result JSON (any driver) that lacks over/under-fit evidence or
+whose learned models are over/under-fit. Invoked by scripts/git_hooks/pre-push on the result JSONs in the push
+diff (results/** and baselines/**). Learned models are auto-detected by name (overfit_check.looks_learned), so
+edge_hmatched (VolGA/VolGA_hm), masked_rich (LSTM/LSTM_wGAT_vol2pk), etc. are all covered. A file that is not a
+training result (no learned-model test metrics) is skipped.
 
 Usage: python check_overfit_evidence.py <result.json> [<result.json> ...]   (exit 1 if any fails)
 """
@@ -25,8 +27,8 @@ def _is_masked_rich_result(res: dict) -> bool:
     if "metrics_per_seed" in res:                               # only training results carry per-seed stats
         return True
     metrics = res.get("metrics", {})
-    if isinstance(metrics, dict) and any(m in metrics for m in OF.LEARNED):
-        return True                                             # any learned model present -> training result
+    if isinstance(metrics, dict) and any(OF.looks_learned(m) for m in metrics):
+        return True                                             # any learned model (any driver) -> training result
     return False
 
 
@@ -41,7 +43,10 @@ def check_files(paths):
             continue
         if not _is_masked_rich_result(res):
             continue                                            # genuinely not a training result -> skip
-        ok, probs = OF.check_result_evidence(res)
+        # masked_rich (identified by design/per-seed) must carry the FULL expected learned set, so a partial
+        # artifact that dropped a model still FAILS (F-04). Other drivers auto-detect learned from metrics keys.
+        is_masked_rich = "masked" in str(res.get("design", "")) or "metrics_per_seed" in res
+        ok, probs = OF.check_result_evidence(res, learned=(OF.LEARNED if is_masked_rich else None))
         if not ok:
             problems[p] = probs
     return problems
