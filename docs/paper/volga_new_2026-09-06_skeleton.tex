@@ -106,11 +106,18 @@ the one-day horizon, and there without significance; the parsimonious HAR-X is t
 the weekly and monthly horizons.
 
 \subsection{VN30}
-% PLACEHOLDER: fill from edgehm_vn30_h*.json (run in progress). Table \input{tables/vn30_tables.tex}.
+On the smaller 33-stock VN30 panel the graph branch improves squared-error and absolute-error accuracy but
+not QLIKE. VolGA attains the lowest MSE, MAE, and R\textsuperscript{2} at the daily and weekly horizons, while
+the linear models attain the lowest QLIKE at every horizon: HAR-X's QLIKE is lower than VolGA's at $h1$ and the
+gap reaches significance (Diebold--Mariano $p=0.009$). At the monthly horizon HAR-X is strongest on every
+metric.
+% Table: see tables/vn30_tables.tex
+\textit{Takeaway.} On the small VN30 panel VolGA lowers squared and absolute error at the short horizons, yet
+the parsimonious HAR-X remains the QLIKE leader throughout.
 
 \section{Generalization: over/under-fit evidence}\label{sec:overfit}
 Every learned model generalizes: the fit verdict is \emph{ok} for both LSTM and VolGA at all four horizons on
-VN100 [VN30 and S\&P 500 pending], from the train-to-test QLIKE and R\textsuperscript{2} gaps that
+VN100 and VN30 [S\&P 500 pending], from the train-to-test QLIKE and R\textsuperscript{2} gaps that
 \texttt{classify\_fit} recomputes. The verdict flags overfit when the validation-to-test QLIKE degrades beyond
 25\% or the train-to-test R\textsuperscript{2} drops beyond 0.20, and underfit when train and test
 R\textsuperscript{2} both fall below the floor; neither fires here. Learning curves (train and validation MSE
@@ -119,12 +126,27 @@ curve without divergence.
 % Fit verdicts + learning curves: results/edge_hmatched/edgehm_<market>_h*.json (fit_diagnostics, learning_curves).
 
 \section{Discussion}\label{sec:disc}
-% PLACEHOLDER. Where the graph helps (market x horizon) and where the linear HAR-X is strongest.
+The graph branch helps at the daily horizon and on continuous-error metrics, and its benefit fades with the
+horizon. On both Vietnamese panels VolGA lowers MSE, MAE, and R\textsuperscript{2} at the daily and weekly
+horizons, which points to a volume-to-volatility lead-lag that carries magnitude information over one to five
+days. The advantage does not extend to QLIKE, where the parsimonious HAR-X is strongest at the weekly and
+longer horizons and, on the small VN30 panel, at the daily horizon as well. A short-lived spillover signal and
+QLIKE's sensitivity to small-variance days together explain why the graph improves squared error without
+improving QLIKE. [S\&P 500, the primary market, extends this comparison to a larger panel; results pending.]
 
 \section{Limitations}
-% PLACEHOLDER. Target is variance not sigma; VN not split-adjusted; per-market screens; single edge family.
+The target is the Parkinson high--low variance ($\sigma^2$), not the volatility ($\sigma$), so the reported
+errors live on the variance scale. The Vietnamese prices are not split-adjusted, which can inflate a few daily
+ranges. Each market applies a liquidity and history screen, so the panel differs across markets. The graph uses
+a single edge family, a directed volume-to-volatility spillover; other cross-sectional relations may carry
+complementary signal. QLIKE depends on a positivity floor, and low-range days make it floor-sensitive; we hold
+the floor identical across models so no model gains from a looser one.
 
 \section{Conclusion}
-% PLACEHOLDER: one paragraph, from final results.
+VolGA pairs a per-stock LSTM with a graph-attention layer over a horizon-matched volume-to-volatility edge.
+Across the VN100 and VN30 panels the graph lowers squared and absolute error at the daily horizon, while the
+linear HAR-X remains the strongest QLIKE model at the longer horizons; every learned model generalizes without
+over- or under-fitting. [The S\&P 500 primary-market results and the final cross-market synthesis are pending
+the large-panel run.]
 
 \end{document}
