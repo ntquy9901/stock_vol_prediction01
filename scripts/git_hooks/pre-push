@@ -129,18 +129,25 @@ elif [ -z "$COVARGS" ]; then
   DIFF_PCT="na"; BRANCH_PCT="na"
 elif command -v diff-cover >/dev/null 2>&1 && [ -f .qg_coverage.xml ]; then
   DCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --include $ALLPY --fail-under="$MIN_COVER" 2>&1)"; DCRC=$?
-  echo "$DCOUT" | grep -E 'Missing lines|Coverage:|Total:' | tail -12
+  echo "$DCOUT" | grep -E 'Missing lines|Coverage:|Total:|No lines' | tail -12
   echo "$DCOUT" | _logsec "2/4 C0 line diff-coverage"
-  DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
-  if [ "$DCRC" -ne 0 ]; then
-    echo "[pre-push] BLOCK: C0 line diff-coverage below ${MIN_COVER}% (add tests or a justified # pragma: no cover)." >&2; FAIL=1
-  fi
-  BCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --branch-coverage --include $ALLPY --fail-under="$MIN_BRANCH" 2>&1)"; BCRC=$?
-  BRANCH_PCT="$(echo "$BCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
-  echo "[pre-push]   C1 branch: ${BRANCH_PCT:-n/a}%"
-  echo "$BCOUT" | _logsec "2/4 C1 branch diff-coverage"
-  if [ "$BCRC" -ne 0 ]; then
-    echo "[pre-push] BLOCK: C1 branch diff-coverage below ${MIN_BRANCH}%." >&2; FAIL=1
+  if echo "$DCOUT" | grep -q "No lines with coverage information"; then
+    # all changed .py lines are non-coverable (only # pragma: no cover / comments) -> nothing to gate. Not a
+    # silent pass: any coverable-but-uncovered changed line would make diff-cover report <100%, not "no lines".
+    echo "[pre-push]   diff-coverage: N/A (changed .py lines are all non-coverable, e.g. # pragma: no cover)"
+    DIFF_PCT="na"; BRANCH_PCT="na"
+  else
+    DIFF_PCT="$(echo "$DCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
+    if [ "$DCRC" -ne 0 ]; then
+      echo "[pre-push] BLOCK: C0 line diff-coverage below ${MIN_COVER}% (add tests or a justified # pragma: no cover)." >&2; FAIL=1
+    fi
+    BCOUT="$(diff-cover .qg_coverage.xml --compare-branch="$PUSH_BASE" --branch-coverage --include $ALLPY --fail-under="$MIN_BRANCH" 2>&1)"; BCRC=$?
+    BRANCH_PCT="$(echo "$BCOUT" | grep -oE 'Coverage: [0-9.]+%' | grep -oE '[0-9.]+' | head -1)"
+    echo "[pre-push]   C1 branch: ${BRANCH_PCT:-n/a}%"
+    echo "$BCOUT" | _logsec "2/4 C1 branch diff-coverage"
+    if [ "$BCRC" -ne 0 ]; then
+      echo "[pre-push] BLOCK: C1 branch diff-coverage below ${MIN_BRANCH}%." >&2; FAIL=1
+    fi
   fi
 else
   # F-02: SOURCE changed but coverage could not be produced -> FAIL CLOSED (do not silently pass unverified).
