@@ -1,0 +1,71 @@
+% vn30 Diebold-Mariano (date-clustered) QLIKE:
+% h1: VolGA_vs_LSTM: p=0.122 (B); VolGA_vs_HAR-X: p=0.009 (B)
+% h5: VolGA_vs_LSTM: p=0.124 (B); VolGA_vs_HAR-X: p=0.235 (B)
+% h10: VolGA_vs_LSTM: p=0.351 (B); VolGA_vs_HAR-X: p=0.787 (B)
+% h22: VolGA_vs_LSTM: p=0.774 (A); VolGA_vs_HAR-X: p=0.537 (B)
+
+% vn30 fit verdicts (train->val->test):
+% h1: LSTM=ok, VolGA=ok
+% h5: LSTM=ok, VolGA=ok
+% h10: LSTM=ok, VolGA=ok
+% h22: LSTM=ok, VolGA=ok
+
+% vn30: MSE by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
+HAR-X & 0.0000 & 0.0000 & 0.0000 & \textbf{0.0000} \\
+LSTM & 0.0000 & 0.0000 & \textbf{0.0000} & 0.0000 \\
+VolGA & \textbf{0.0000} & \textbf{0.0000} & 0.0000 & 0.0000 \\
+\bottomrule
+\end{tabular}
+
+% vn30: RMSE by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.0004 & 0.0005 & 0.0005 & 0.0005 \\
+HAR-X & 0.0004 & 0.0005 & 0.0005 & \textbf{0.0005} \\
+LSTM & 0.0004 & 0.0005 & \textbf{0.0005} & 0.0005 \\
+VolGA & \textbf{0.0004} & \textbf{0.0005} & 0.0005 & 0.0005 \\
+\bottomrule
+\end{tabular}
+
+% vn30: MAE by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.0002 & 0.0003 & 0.0003 & 0.0003 \\
+HAR-X & 0.0002 & 0.0003 & 0.0003 & \textbf{0.0003} \\
+LSTM & 0.0002 & 0.0003 & 0.0003 & 0.0003 \\
+VolGA & \textbf{0.0002} & \textbf{0.0003} & \textbf{0.0003} & 0.0003 \\
+\bottomrule
+\end{tabular}
+
+% vn30: QLIKE by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & \textbf{0.4954} & 0.5938 & 0.6405 & 0.7001 \\
+HAR-X & 0.4967 & \textbf{0.5929} & 0.6385 & \textbf{0.6976} \\
+LSTM & 0.5260 & 0.6127 & \textbf{0.6371} & 0.7121 \\
+VolGA & 0.5363 & 0.6526 & 0.6441 & 0.7106 \\
+\bottomrule
+\end{tabular}
+
+% vn30: R2 by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.2272 & 0.1455 & 0.1067 & 0.0687 \\
+HAR-X & 0.2310 & 0.1514 & 0.1084 & \textbf{0.0704} \\
+LSTM & 0.2451 & 0.1547 & \textbf{0.1158} & 0.0440 \\
+VolGA & \textbf{0.2463} & \textbf{0.1618} & 0.1154 & 0.0503 \\
+\bottomrule
+\end{tabular}
