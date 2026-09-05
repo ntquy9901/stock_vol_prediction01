@@ -84,7 +84,9 @@ for f in $ALLPY; do
       case "$SEEN_DIRS" in *" $d "*) : ;; *) SEEN_DIRS="$SEEN_DIRS$d "; [ -d "$d" ] && COVARGS="$COVARGS --cov=$d" ;; esac
       # sibling test_<module>.py + a tests/ or test/ subdir -- NOT a broad test_*.py glob (which would drag in
       # unrelated / pre-existing-broken sibling tests and false-block the push).
-      for tp in "$d/test_$b.py" "$d/tests" "$d/test"; do [ -e "$tp" ] && TESTPATHS="$TESTPATHS $tp"; done ;;
+      # also the sibling test/ of a code/ dir -- the baseline §3.F layout is <baseline>/code + <baseline>/test.
+      for tp in "$d/test_$b.py" "$d/tests" "$d/test" "$(dirname "$d")/test" "$(dirname "$d")/tests"; do
+        [ -e "$tp" ] && TESTPATHS="$TESTPATHS $tp"; done ;;
   esac
 done
 
