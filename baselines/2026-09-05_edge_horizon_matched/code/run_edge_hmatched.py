@@ -51,7 +51,6 @@ from wf_folds import assert_no_leakage, make_folds  # noqa: E402
 from wf_enriched_panel import build_enriched_panel, frozen_universe, pack_fold  # noqa: E402
 from run_volga_walkforward import VolgaWFConfig, enriched_glob  # noqa: E402
 
-_MODELS = ("HAR", "HAR-X", "LSTM", "VolGA", "VolGA_hm")
 EDGE_SIG_ALPHA = 0.05   # Bonferroni family-wise level over the (n-1) candidate sources per target
 
 
@@ -126,13 +125,40 @@ def _agg_split_metrics(dicts):
     return agg
 
 
+def _select_models(spec):
+    """Parse a --models string into an ordered, deduped subset of the GPU models (validates names). The edge
+    fix is settled, so ``VolGA`` IS the graph model on the horizon-matched edge (the old fixed-lag VolGA is
+    retired); ``LSTM`` is the no-graph baseline. HAR/HAR-X (OLS) are always computed regardless."""
+    order = ("LSTM", "VolGA")
+    want = [x.strip() for x in spec.split(",") if x.strip()]
+    bad = [w for w in want if w not in order]
+    if bad:
+        raise SystemExit(f"unknown model(s) {bad}; choose from {order}")
+    sel = tuple(m for m in order if m in want)
+    if not sel:
+        raise SystemExit(f"--models selected nothing; choose from {order}")
+    return sel
+
+
+def _dm_plan(sel):
+    """Diebold-Mariano comparisons given selected GPU models: VolGA vs the no-graph LSTM (graph value) and
+    the primary model (VolGA if present) vs the HAR-X baseline (deep vs linear)."""
+    plan = []
+    if "VolGA" in sel and "LSTM" in sel:
+        plan.append(("VolGA_vs_LSTM", "VolGA", "LSTM"))
+    primary = "VolGA" if "VolGA" in sel else sel[-1]
+    plan.append((f"{primary}_vs_HAR-X", primary, "HAR-X"))
+    return plan
+
+
 def _pool(o, D):
     return RMR._pred_dict(o, D.y_te, D.tmask_te, D.d_te, D.N)
 
 
 def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100",
-        lookback=pc.LOOKBACK, batch=None):  # pragma: no cover
+        lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA")):  # pragma: no cover
     t0 = time.time()
+    sel = tuple(models)                                          # GPU models to train (subset); HAR/HAR-X always
     files = _glob.glob(enriched_glob(market))
     keep = frozen_universe(files, lookback, horizon)
     panel = build_enriched_panel(files, lookback, horizon, keep)
@@ -145,65 +171,65 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
     cfg = training_config(epochs=(8 if smoke else epochs),
                           seeds=((42, 123, 2026) if smoke else (42, 123, 2026, 7, 2024)[:n_seeds]), **tc_kw)
     fl = cfg.qlike_floor
-    pooled = {m: {} for m in _MODELS}
-    lstm = [{} for _ in cfg.seeds]; volga = [{} for _ in cfg.seeds]; volga_hm = [{} for _ in cfg.seeds]
-    dens_fix, dens_hm = [], []
-    _NN = ("LSTM", "VolGA", "VolGA_hm")                       # NN models get over/under-fit evidence
-    tr_acc = {m: [] for m in _NN}; va_acc = {m: [] for m in _NN}; curves = {m: [] for m in _NN}
-    print(f"[edgehm] {market} h{horizon}: {panel.N} nodes, {len(folds)} folds, {len(cfg.seeds)} seeds", flush=True)
+    pooled = {m: {} for m in ("HAR", "HAR-X")}
+    pooled_nn = {m: [{} for _ in cfg.seeds] for m in sel}
+    dens = []                                                   # VolGA (horizon-matched) edge density per fold
+    tr_acc = {m: [] for m in sel}; va_acc = {m: [] for m in sel}; curves = {m: [] for m in sel}
+    print(f"[edgehm] {market} h{horizon}: {panel.N} nodes, {len(folds)} folds, {len(cfg.seeds)} seeds, "
+          f"models={list(sel)}", flush=True)
     for fi, fold in enumerate(folds):
         D = pack_fold(panel, fold, wf.lookback, wf.horizon)
         eye = np.eye(D.N, dtype=np.float32)
         last_tr_row = int(panel.anchors[fold.train][-1]) + wf.horizon
-        adj_fix = D.adj_vol2pk                                   # delivered fixed lag-1 edge
-        adj_hm = directed_vol2pk_hmatched(panel.feats[:, :, 4], np.sqrt(panel.pk),
-                                          last_tr_row, wf.horizon, MR.EDGE_TOP_K)
-        dens_fix.append(_edge_density(adj_fix)); dens_hm.append(_edge_density(adj_hm))
+        spec = {"LSTM": (False, eye)}                            # VolGA edge (horizon-matched) built lazily (O(N^2))
+        if "VolGA" in sel:
+            adj = directed_vol2pk_hmatched(panel.feats[:, :, 4], np.sqrt(panel.pk),
+                                           last_tr_row, wf.horizon, MR.EDGE_TOP_K)
+            spec["VolGA"] = (True, adj); dens.append(_edge_density(adj))
         nfloor = pc.POS_FLOOR_FRAC * D.t_mean + pc.POS_FLOOR_EPS
         har, harx = _har_ols_preds(D, fl, nfloor)
         pooled["HAR"].update(_pool(har["te"], D)); pooled["HAR-X"].update(_pool(harx["te"], D))
         print(_progress(f"fold {fi + 1}/{len(folds)} start: N={D.N} train={len(D.X_tr)} val={len(D.X_va)} "
-                        f"test={len(D.y_te)} anchors, edge dens fix={dens_fix[-1]:.3f} hm={dens_hm[-1]:.3f} - "
-                        f"training {len(cfg.seeds)} seeds x 3 models", (time.time() - t0) / 60), flush=True)
-        fold_out = {m: [] for m in _NN}                      # full per-seed returns (train/val/test + curves)
+                        f"test={len(D.y_te)} anchors, VolGA edge dens={dens[-1] if dens else float('nan'):.3f} - "
+                        f"training {len(cfg.seeds)} seeds x {len(sel)} models {list(sel)}",
+                        (time.time() - t0) / 60), flush=True)
+        fold_out = {m: [] for m in sel}                      # full per-seed returns (train/val/test + curves)
         for si, s in enumerate(cfg.seeds):
-            o_l = RMR.train_masked_rich(D, cfg, s, False, eye, return_splits=True)
-            o_v = RMR.train_masked_rich(D, cfg, s, True, adj_fix, return_splits=True)
-            o_h = RMR.train_masked_rich(D, cfg, s, True, adj_hm, return_splits=True)
-            lstm[si].update(_pool(o_l["test"], D)); volga[si].update(_pool(o_v["test"], D))
-            volga_hm[si].update(_pool(o_h["test"], D))
-            fold_out["LSTM"].append(o_l); fold_out["VolGA"].append(o_v); fold_out["VolGA_hm"].append(o_h)
+            for m in sel:
+                use_graph, adj = spec[m]
+                o = RMR.train_masked_rich(D, cfg, s, use_graph, adj, return_splits=True)
+                pooled_nn[m][si].update(_pool(o["test"], D)); fold_out[m].append(o)
             print(_progress(f"  fold {fi + 1}/{len(folds)} seed {si + 1}/{len(cfg.seeds)} done "
-                            f"(LSTM+VolGA+VolGA_hm)", (time.time() - t0) / 60), flush=True)
-        for m in _NN:                                        # per-fold seed-ensembled train/val fit metrics + curves
+                            f"({'+'.join(sel)})", (time.time() - t0) / 60), flush=True)
+        for m in sel:                                        # per-fold seed-ensembled train/val fit metrics + curves
             etr = RMR._ens_split(fold_out[m], "train"); eva = RMR._ens_split(fold_out[m], "val")
             tr_acc[m].append(RMR._split_metrics(etr, D.y_tr, D.tmask_tr, fl))
             va_acc[m].append(RMR._split_metrics(eva, D.y_va, D.tmask_va, fl))
             curves[m].append({"fold": fi, "train": [o["train_curve"] for o in fold_out[m]],
                               "val": [o["val_curve"] for o in fold_out[m]],
                               "best_epoch": [o["best_epoch"] for o in fold_out[m]]})
-        print(f"[edgehm] fold {fi + 1}/{len(folds)} done, edge density fix={dens_fix[-1]:.3f} "
-              f"hm={dens_hm[-1]:.3f} ({(time.time() - t0) / 60:.1f} min)", flush=True)
-    pooled["LSTM"] = RMR._ens(lstm); pooled["VolGA"] = RMR._ens(volga); pooled["VolGA_hm"] = RMR._ens(volga_hm)
-    metrics = {m: RMR._metrics(pooled[m], fl) for m in _MODELS}
-    train_metrics = {m: _agg_split_metrics(tr_acc[m]) for m in _NN}   # over/under-fit evidence (walk-forward mean)
-    val_metrics = {m: _agg_split_metrics(va_acc[m]) for m in _NN}
-    fit_diagnostics = {m: RMR.OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in _NN}
-    dm = {"VolGAhm_vs_VolGA": RMR._dm_all(pooled["VolGA_hm"], pooled["VolGA"], horizon, fl),
-          "VolGAhm_vs_LSTM": RMR._dm_all(pooled["VolGA_hm"], pooled["LSTM"], horizon, fl),
-          "VolGA_vs_LSTM": RMR._dm_all(pooled["VolGA"], pooled["LSTM"], horizon, fl)}
+        print(f"[edgehm] fold {fi + 1}/{len(folds)} done ({(time.time() - t0) / 60:.1f} min)", flush=True)
+    for m in sel:
+        pooled[m] = RMR._ens(pooled_nn[m])
+    report_models = ("HAR", "HAR-X") + sel
+    metrics = {m: RMR._metrics(pooled[m], fl) for m in report_models}
+    train_metrics = {m: _agg_split_metrics(tr_acc[m]) for m in sel}   # over/under-fit evidence (walk-forward mean)
+    val_metrics = {m: _agg_split_metrics(va_acc[m]) for m in sel}
+    fit_diagnostics = {m: RMR.OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in sel}
+    dm = {name: RMR._dm_all(pooled[a], pooled[b], horizon, fl) for name, a, b in _dm_plan(sel)}
     result = {"experiment": "edge_horizon_matched", "horizon": horizon, "market": market,
               "num_nodes": int(panel.N), "n_folds": len(folds), "seeds": list(cfg.seeds), "smoke": smoke,
-              "edge_sig_alpha": EDGE_SIG_ALPHA, "edge_density_fix_mean": float(np.mean(dens_fix)),
-              "edge_density_hm_mean": float(np.mean(dens_hm)), "seconds": time.time() - t0,
+              "models": list(sel), "edge_sig_alpha": EDGE_SIG_ALPHA,
+              "edge_density_mean": float(np.mean(dens)) if dens else None, "seconds": time.time() - t0,
               "metrics": metrics, "train_metrics": train_metrics, "val_metrics": val_metrics,
               "fit_diagnostics": fit_diagnostics, "learning_curves": curves, "dm_date_clustered": dm}
-    print(f"[edgehm] QLIKE h{horizon}: " + ", ".join(f"{m}={metrics[m]['qlike']:.4f}" for m in _MODELS), flush=True)
-    print("[edgehm] fit (train->val->test): " + ", ".join(f"{m}={fit_diagnostics[m]['status']}" for m in _NN), flush=True)
-    print(f"[edgehm] edge density: fix(lag1)={np.mean(dens_fix):.3f} hm(h={horizon})={np.mean(dens_hm):.3f}", flush=True)
-    a = dm["VolGAhm_vs_VolGA"]["qlike"]; b = dm["VolGAhm_vs_LSTM"]["qlike"]
-    print(f"[edgehm] DM VolGAhm-vs-VolGA qlike p={a['p_value']:.3f} ({a['favors']}); "
-          f"VolGAhm-vs-LSTM qlike p={b['p_value']:.3f} ({b['favors']})", flush=True)
+    print(f"[edgehm] QLIKE h{horizon}: " + ", ".join(f"{m}={metrics[m]['qlike']:.4f}" for m in report_models), flush=True)
+    print("[edgehm] fit (train->val->test): " + ", ".join(f"{m}={fit_diagnostics[m]['status']}" for m in sel), flush=True)
+    if dens:
+        print(f"[edgehm] VolGA edge density (h={horizon})={np.mean(dens):.3f}", flush=True)
+    for name, dd in dm.items():
+        q = dd["qlike"]
+        print(f"[edgehm] DM {name} qlike p={q['p_value']:.3f} ({q['favors']})", flush=True)
     if not smoke:
         out = Path(out) if out else REPO / "results" / "edge_hmatched" / f"edgehm_{market}_h{horizon}.json"
         out.parent.mkdir(parents=True, exist_ok=True)
@@ -221,10 +247,13 @@ def main():  # pragma: no cover
     ap.add_argument("--lookback", type=int, default=22)   # experiment value (matches delivered VolGA edge); library default = pc.LOOKBACK
     ap.add_argument("--batch", type=int, default=None)     # None -> training_config default; raise (e.g. 1024) to use a big GPU (A100) better
     ap.add_argument("--market", default="vn100", choices=["vn100", "vn30", "hose", "hnx", "sp500", "sp500_clean"])
+    ap.add_argument("--models", default="LSTM,VolGA",   # VolGA = graph on the (fixed) horizon-matched edge
+                    help="comma-sep GPU models: subset of LSTM,VolGA (HAR/HAR-X always computed)")
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback, a.batch)
+    run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback, a.batch,
+        _select_models(a.models))
 
 
 if __name__ == "__main__":  # pragma: no cover

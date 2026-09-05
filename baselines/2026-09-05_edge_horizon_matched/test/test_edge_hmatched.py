@@ -67,6 +67,32 @@ def test_selfloop_always_one():
     assert np.allclose(np.diag(A), 1.0)
 
 
+def test_select_models_parses_and_orders():
+    assert EH._select_models("VolGA") == ("VolGA",)
+    assert EH._select_models("VolGA,LSTM") == ("LSTM", "VolGA")          # canonical order
+    assert EH._select_models("LSTM, VolGA ") == ("LSTM", "VolGA")
+
+
+def test_select_models_rejects_bad_and_empty():
+    import pytest
+    with pytest.raises(SystemExit):
+        EH._select_models("VolGA_hm")      # retired name -> not selectable
+    with pytest.raises(SystemExit):
+        EH._select_models("XGBoost")
+    with pytest.raises(SystemExit):
+        EH._select_models(" , ")
+
+
+def test_dm_plan_paper_set_and_subset():
+    # paper set: LSTM (no-graph) + VolGA (graph, fixed edge) -> graph-value + baseline contrasts
+    full = EH._dm_plan(("LSTM", "VolGA"))
+    assert [p[0] for p in full] == ["VolGA_vs_LSTM", "VolGA_vs_HAR-X"]
+    # VolGA only -> just the HAR-X baseline contrast
+    assert EH._dm_plan(("VolGA",)) == [("VolGA_vs_HAR-X", "VolGA", "HAR-X")]
+    # LSTM only -> LSTM vs HAR-X
+    assert EH._dm_plan(("LSTM",)) == [("LSTM_vs_HAR-X", "LSTM", "HAR-X")]
+
+
 def test_progress_line_format():
     assert EH._progress("fold 1/7 start", 2.5) == "[edgehm] fold 1/7 start (2.5 min)"
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
