@@ -88,11 +88,23 @@ def _run_hardcode(rel: str) -> str | None:  # pragma: no cover - subprocess/impo
     return "\n".join(f"    {rel}:{f.lineno}: {f.reason.strip()}" for f in blocks)
 
 
+def _file_from_stdin() -> str | None:  # pragma: no cover - hook stdin glue (no jq dependency)
+    import json
+    try:
+        data = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError, OSError):
+        return None
+    ti = data.get("tool_input") or {}
+    tr = data.get("tool_response") or {}
+    return ti.get("file_path") or tr.get("filePath")
+
+
 def main(argv=None) -> int:  # pragma: no cover - entry driver; pure logic tested via rel_in_scope/build_decision
     argv = sys.argv[1:] if argv is None else argv
-    if not argv:
+    path = argv[0] if argv else _file_from_stdin()   # CLI arg (tests) or PostToolUse hook stdin JSON
+    if not path:
         return 0
-    rel = rel_in_scope(argv[0])
+    rel = rel_in_scope(path)
     if rel is None:
         return 0
     decision = build_decision(rel, _run_ruff_f(rel), _run_hardcode(rel))
