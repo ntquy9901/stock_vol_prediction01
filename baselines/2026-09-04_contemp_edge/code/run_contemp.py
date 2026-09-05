@@ -15,7 +15,6 @@ import json
 import math
 import sys
 import time
-from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -66,9 +65,8 @@ def _fold_adj(panel, fold, wf, edge: str, D):
 
 
 def run(edge: str, horizon: int, folds_target: int, epochs: int, smoke: bool, out=None, n_seeds: int = 5,
-        market: str = "vn100"):  # pragma: no cover  (GPU training driver; covered by smoke run, not unit tests)
+        market: str = "vn100", lookback: int = pc.LOOKBACK):  # pragma: no cover  (GPU training driver; covered by smoke run, not unit tests)
     t0 = time.time()
-    lookback = 22
     files = _glob.glob(enriched_glob(market))
     keep = frozen_universe(files, lookback, horizon)   # full screened universe (graph needs all nodes)
     panel = build_enriched_panel(files, lookback, horizon, keep)
@@ -128,11 +126,12 @@ def main():  # pragma: no cover
     ap.add_argument("--folds-target", type=int, default=6)
     ap.add_argument("--epochs", type=int, default=16)
     ap.add_argument("--n-seeds", type=int, default=5)
+    ap.add_argument("--lookback", type=int, default=22)   # experiment value (matches delivered VolGA edge); library default = pc.LOOKBACK
     ap.add_argument("--market", default="vn100", choices=["vn100", "vn30", "hose", "hnx", "sp500"])
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
-    run(a.edge, a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market)
+    run(a.edge, a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback)
 
 
 if __name__ == "__main__":  # pragma: no cover

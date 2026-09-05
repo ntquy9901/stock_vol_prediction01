@@ -81,6 +81,8 @@ data/features/DEBUG_by_ticker/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
+# ...except the Colab training notebook (must be on git so Colab can `git clone` it)
+!notebooks/train_volga_colab_a100.ipynb
 
 # PyTorch
 *.pth
