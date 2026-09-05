@@ -163,6 +163,37 @@ rồi chạy 2 gate — **C0 line `diff-cover --fail-under=100`** và **C1 branc
 trên changed lines so với `@{upstream}`. Env knob `QG_MIN_COVER` / `QG_MIN_BRANCH`. Dòng entry-driver
 `main()` không unit-test được đánh `# pragma: no cover`; residual chỉ là các nhánh đó.
 
+## Three-tier quality gate — chạy gate NGAY SAU khi sinh code (ENFORCED, per user 2026-09-05)
+
+> Yêu cầu user: ngoài pre-push, **ngay sau khi sinh/sửa source code phải chạy qua quality gate tự động**.
+> Enforce bằng Claude Code hook trong `.claude/settings.json` (harness thực thi, không phải Claude tự nhớ) —
+> KHÔNG chỉ là rule văn bản. `.claude/` gitignore ở repo này nên settings là local-only (đúng ý: enforce cho
+> máy đang làm), commit-được nếu sau này bỏ `.claude/` khỏi gitignore.
+
+Gate 3 tầng, nặng dần theo vòng đời (edit → commit → push):
+1. **PostToolUse (mỗi Write/Edit `.py`) — `scripts/quality_gate/postgen_gate.py`:** chạy NGAY sau khi sinh code,
+   **BLOCK** trên `ruff --select F` (unused/undefined/redef) + **config-hardcode whole-file scan** (tunable
+   constant ngoài `pipeline_config`). Đọc file trên đĩa (works với file chưa commit), <1s. Hook đọc stdin JSON
+   trực tiếp (không cần `jq` — máy này không có jq).
+2. **Stop (cuối lượt) — agent code-review:** review adversarial các `.py` đã đổi mà CHƯA commit khi Claude kết
+   thúc lượt; **BLOCK** claim "done" nếu có finding critical/major (code review vẫn là DoD bắt buộc — đây là
+   lớp tự-động-nhắc, không thay thế `/code-review` 3-lớp đầy đủ).
+3. **pre-push (mỗi push) — `scripts/git_hooks/pre-push`:** bộ đầy đủ (pytest + diff-cover C0/C1 + data-quality
+   Pandera/Evidently + delivered-baseline + config-hardcode + overfit-evidence). Đây vẫn là gate cứng cuối cùng.
+
+**Lưu ý gate:** commit chỉ đụng file KHÔNG-`.py` (docs/notebook/config) làm pre-push step 1 fallback chạy pilot
+smoke bằng **system python (thiếu pytest)** → false-block; và commit mà mọi dòng `.py` đổi đều `# pragma: no cover`
+làm diff-cover "no lines" → block. Cách xử lý đúng: bundle chung 1 file `.py` có test/coverage thật (đừng
+QG_SKIP), hoặc làm phần logic testable (bỏ pragma + thêm test).
+
+## Gap tools (soft gate, cài 2026-09-05)
+`.pre-commit-config.yaml` (chạy `pre_commit install` để bật; không đụng pre-push hook): **nbstripout** (xoá
+output notebook cho diff sạch) + **ruff-F** + **interrogate** (docstring coverage, floor thấp `--fail-under=15`
+ratchet dần) **BLOCK**; **mypy** (`mypy.ini`, non-strict, ignore-missing-imports) **INFORMATIONAL** (không block).
+**MLflow** opt-in: `scripts/tracking/mlflow_helper.py::log_run(...)` — gọi từ run MỚI để log params/metrics/artifacts
+(`mlruns/` local, `mlflow ui` để xem); KHÔNG sửa code train hiện có. **jupytext** cài sẵn cho pairing notebook↔.py
+khi cần. Cài: mypy 2.3.1, interrogate 1.7.0, nbstripout 0.9.1, jupytext 1.19.5, mlflow 3.16.0 (trong `.venv_gpu_encode`).
+
 ## Summary report (per change)
 Khi done, sinh markdown summary ngắn, context-appropriate → `docs/reports/<YYYY-MM-DD_HHMM>_summaryOfUpdate_report.md`.
 - Fit THIS change: bỏ phần không relevant — **trừ code review, luôn required + tóm tắt.**

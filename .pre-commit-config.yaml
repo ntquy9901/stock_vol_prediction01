@@ -1,0 +1,36 @@
+# Soft quality gate at COMMIT time (per user 2026-09-05). Middle tier between the PostToolUse
+# post-generate gate (per-edit: ruff-F + config-hardcode) and the pre-push gate (full: pytest +
+# diff-cover + data-quality). Activate once (does not conflict with the existing pre-push hook):
+#     .venv_gpu_encode/Scripts/python.exe -m pip install pre-commit
+#     .venv_gpu_encode/Scripts/python.exe -m pre_commit install
+# nbstripout + ruff-F + interrogate BLOCK; mypy is INFORMATIONAL (never blocks) per the chosen policy.
+repos:
+  - repo: local
+    hooks:
+      - id: nbstripout
+        name: strip notebook outputs (clean diffs)
+        entry: .venv_gpu_encode/Scripts/python.exe -m nbstripout
+        language: system
+        files: \.ipynb$
+
+      - id: ruff-pyflakes
+        name: ruff pyflakes F (real bugs — block)
+        entry: .venv_gpu_encode/Scripts/python.exe -m ruff check --select F --ignore F541
+        language: system
+        types: [python]
+        exclude: ^(archive|data|_research|temp|_master_ref)/
+
+      - id: interrogate
+        name: docstring coverage (block at ratcheting floor)
+        entry: .venv_gpu_encode/Scripts/python.exe -m interrogate --fail-under=15 --ignore-init-method --ignore-magic --ignore-nested-functions --ignore-private
+        language: system
+        types: [python]
+        exclude: ^(archive|data|_research|temp|_master_ref)/|(^|/)tests?/|(^|/)test_
+        pass_filenames: true
+
+      - id: mypy-informational
+        name: mypy types (informational — never blocks)
+        entry: bash -c '.venv_gpu_encode/Scripts/python.exe -m mypy --config-file mypy.ini "$@" || true' --
+        language: system
+        types: [python]
+        exclude: ^(archive|data|_research|temp|_master_ref)/
