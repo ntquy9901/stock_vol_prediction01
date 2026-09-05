@@ -1,0 +1,107 @@
+% NEW VolGA paper skeleton (2026-09-06). SOICT / Springer LNCS.
+% Model set: HAR-X, LSTM (no-graph), VolGA (graph on the FIXED horizon-matched edge).
+% Markets: S&P 500 (primary), VN100 + VN30 (cross-market).
+% STATUS: Method drafted; Data/Experiments/Results/Overfit-evidence are PLACEHOLDERS to fill from
+%   results/edge_hmatched/edgehm_{sp500_clean,vn100,vn30}_h{1,5,10,22}.json after training.
+% Numbers MUST be read from those JSONs (metrics[model].{mse,rmse,mae,qlike,r2}, dm_date_clustered,
+%   fit_diagnostics, learning_curves) before any results prose is written.
+\documentclass{llncs}
+\usepackage{graphicx}
+\graphicspath{{diagrams/}}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{placeins}
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T5]{fontenc}
+
+\begin{document}
+
+\title{VolGA: Horizon-Matched Graph Attention for Multi-Market Stock Volatility Forecasting}
+\author{Nguyễn Thành Quy\inst{1} \and Lê Trung Hoàng\inst{1} \and Trần Duy Hoàng\inst{1}}
+\institute{University of Science, Vietnam National University Ho Chi Minh City, Vietnam \\ \email{lthoang@hcmus.edu.vn}}
+\maketitle
+
+\begin{abstract}
+% PLACEHOLDER: rewrite from scratch after results (introduction-twice). Promise exactly what the
+% evidence supports across S&P 500 (primary), VN100, and VN30, at h in {1,5,10,22}.
+[Abstract written last, from final results.]
+\keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
+\end{abstract}
+
+\section{Introduction}
+% DRAFT 0 (disposable scaffold; rewrite after evaluation).
+% Stakes: volatility forecasts drive risk limits, option pricing, and margining across equity markets.
+% Problem gap: graph models wire stocks with a cross-sectional edge whose lead-lag is fixed at one day,
+%   so the edge misaligns with the forecast horizon at h>1.
+% Key abstraction: the horizon-matched volume->volatility spillover edge.
+% Design intuition: align the edge's lead-lag with the forecast horizon h and keep only statistically-significant links.
+% Contributions: (1) horizon-matched edge; (2) VolGA vs HAR-X and no-graph LSTM on 3 markets x 4 horizons;
+%   (3) train/val/test fit evidence that the deep models generalize.
+% Results preview: [fill from results].
+
+\section{Related Work}
+% Category clustering -> per-category limitation -> positioning.
+% (i) HAR-family econometric models; (ii) deep sequence models (LSTM) for volatility; (iii) graph/GNN
+% spillover models. Positioning: prior graph edges fix the lead-lag independent of horizon; VolGA matches it.
+
+\section{Method}
+% DRAFTED. Move sequence: abstraction -> justification -> components -> key decision -> robustness.
+
+\subsection{Problem and target}
+We forecast the $h$-step-ahead daily variance of each stock in a market panel. The target is the Parkinson
+high--low variance $\sigma^2_{t+h}$, which uses the intraday range and needs only daily OHLC data. We report
+horizons $h \in \{1,5,10,22\}$ trading days.
+
+\subsection{Node features}
+Every model reads the same five per-stock daily features: Parkinson variance, its weekly (5-day) and monthly
+(22-day) HAR averages, a market-level Parkinson aggregate, and a 22-day volume z-score. Sharing the inputs
+isolates the modeling choice from the feature set.
+
+\subsection{Models}
+We compare three models on identical features and splits.
+\textbf{HAR-X} regresses $\sigma^2_{t+h}$ on the HAR terms plus the exogenous market and volume features by
+ordinary least squares; it is the linear benchmark. \textbf{LSTM} encodes each stock's feature sequence with
+a two-layer LSTM and predicts from the last hidden state, with no cross-stock link; it isolates the temporal
+branch. \textbf{VolGA} adds a graph-attention layer over the temporal features, so a stock's forecast draws on
+the recent dynamics of the stocks that lead it.
+
+\subsection{Horizon-matched spillover edge}
+VolGA's edge is the paper's key design decision. For target stock $j$ and source stock $i$, we correlate the
+source volume shock at day $t$ with the target volatility at day $t+h$ over the training window, so the edge
+encodes the same lead--lag the model forecasts. We keep a source only when its correlation clears a Bonferroni
+significance floor across the $n-1$ candidate sources, then keep the Top-$K$ survivors and a self-loop. A
+target with no surviving source keeps only its self-loop, so the graph falls back to the no-graph model where
+no spillover signal exists. We build the edge from training data only, per fold.
+
+\subsection{Training}
+We train the deep models with a masked mean-squared error over valid stock-days, early-stopping on a
+validation tail, and ensemble five seeds. All models share one QLIKE positivity floor, so no model gains from
+a looser floor.
+
+\section{Data}
+% PLACEHOLDER. S&P 500 (sp500_clean, ~480 stocks, vintage>=2000 + liquidity/history screen, corruption=0) as
+% the primary market; VN100 and VN30 as cross-market panels. Report panel size, date span, screen counts.
+
+\section{Experiments}
+% PLACEHOLDER. Leakage-free walk-forward (expanding folds, target 7), per-ticker temporal split, val tail,
+% 5 seeds, batch 64. Metrics: MSE, RMSE, MAE, QLIKE, R^2. Date-clustered Diebold--Mariano:
+% VolGA-vs-LSTM (graph value), VolGA-vs-HAR-X (deep vs linear).
+
+\section{Results}\label{sec:results}
+% PLACEHOLDER: fill per market (S&P 500 primary, then VN100, VN30) x horizon from the result JSONs.
+% One metrics table per market; DM p-values inline; end each market with a Takeaway paragraph.
+
+\section{Generalization: over/under-fit evidence}\label{sec:overfit}
+% PLACEHOLDER. Report per-model fit verdict (classify_fit: ok/overfit/underfit) from train/val/test metrics,
+% and show learning curves (train vs val MSE per epoch) demonstrating the deep models do not overfit.
+
+\section{Discussion}\label{sec:disc}
+% PLACEHOLDER. Where the graph helps (market x horizon) and where the linear HAR-X is strongest.
+
+\section{Limitations}
+% PLACEHOLDER. Target is variance not sigma; VN not split-adjusted; per-market screens; single edge family.
+
+\section{Conclusion}
+% PLACEHOLDER: one paragraph, from final results.
+
+\end{document}
