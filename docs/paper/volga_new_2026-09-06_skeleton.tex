@@ -88,12 +88,35 @@ a looser floor.
 % VolGA-vs-LSTM (graph value), VolGA-vs-HAR-X (deep vs linear).
 
 \section{Results}\label{sec:results}
-% PLACEHOLDER: fill per market (S&P 500 primary, then VN100, VN30) x horizon from the result JSONs.
-% One metrics table per market; DM p-values inline; end each market with a Takeaway paragraph.
+% Numbers read from results/edge_hmatched/edgehm_<market>_h*.json via scripts/paper/build_edgehm_tables.py.
+
+\subsection{S\&P 500 (primary)}
+% PLACEHOLDER: fill from edgehm_sp500_clean_h*.json after the Colab run. Table \input{tables/sp500_clean_tables.tex}.
+
+\subsection{VN100}
+The graph branch helps at the daily horizon and fades as the horizon lengthens. At $h1$, VolGA attains the
+lowest QLIKE (0.4911), MSE, RMSE, and R\textsuperscript{2} on VN100; its QLIKE edge over the no-graph LSTM is
+directional but not significant (Diebold--Mariano $p=0.16$), as is its edge over HAR-X ($p=0.14$). At $h5$,
+$h10$, and $h22$ the linear HAR-X attains the lowest QLIKE (0.561, 0.600, 0.639) and the lowest MSE, while
+VolGA retains the lowest MAE at every horizon beyond the first. No VolGA advantage clears significance at any
+horizon on VN100.
+% Table (metrics per horizon, best per column bold): see tables/vn100_tables.tex
+\textit{Takeaway.} On the VN100 panel the volume-to-volatility graph lowers squared-error and QLIKE only at
+the one-day horizon, and there without significance; the parsimonious HAR-X is the strongest QLIKE model at
+the weekly and monthly horizons.
+
+\subsection{VN30}
+% PLACEHOLDER: fill from edgehm_vn30_h*.json (run in progress). Table \input{tables/vn30_tables.tex}.
 
 \section{Generalization: over/under-fit evidence}\label{sec:overfit}
-% PLACEHOLDER. Report per-model fit verdict (classify_fit: ok/overfit/underfit) from train/val/test metrics,
-% and show learning curves (train vs val MSE per epoch) demonstrating the deep models do not overfit.
+Every learned model generalizes: the fit verdict is \emph{ok} for both LSTM and VolGA at all four horizons on
+VN100 [VN30 and S\&P 500 pending], from the train-to-test QLIKE and R\textsuperscript{2} gaps that
+\texttt{classify\_fit} recomputes. The verdict flags overfit when the validation-to-test QLIKE degrades beyond
+25\% or the train-to-test R\textsuperscript{2} drops beyond 0.20, and underfit when train and test
+R\textsuperscript{2} both fall below the floor; neither fires here. Learning curves (train and validation MSE
+per epoch, five seeds per fold) accompany each result and show the validation curve tracking the training
+curve without divergence.
+% Fit verdicts + learning curves: results/edge_hmatched/edgehm_<market>_h*.json (fit_diagnostics, learning_curves).
 
 \section{Discussion}\label{sec:disc}
 % PLACEHOLDER. Where the graph helps (market x horizon) and where the linear HAR-X is strongest.
