@@ -136,6 +136,7 @@ def run(market, horizon, loss, anchor, models=("LSTM", "VolGA"), lookback=10, ba
         gitsha = None
     prov = _provenance(lookback, batch, epochs, fl, MR.EDGE_TOP_K, 2.0)
     prov.update({"loss": loss, "anchor": anchor, "anchor_clip": QC.ANCHOR_CLIP})
+    train_metrics_note = "train fit-evidence on in-sample HAR-X base over all train cells (incl. warm-up excluded from the OOF loss); not same-basis as val/test" if anchor == "harx" else "in-sample z-score target over all train cells"
     if anchor == "harx":                                    # record the OOF HAR-X residual-base provenance
         import xgb_config as XC
         prov.update({"oof_splits": XC.OOF_SPLITS, "oof_warmup_frac": XC.OOF_WARMUP_FRAC})
@@ -144,7 +145,7 @@ def run(market, horizon, loss, anchor, models=("LSTM", "VolGA"), lookback=10, ba
               "config": prov, "edge_density_mean": float(np.mean(dens)) if dens else None,
               "metrics": metrics, "train_metrics": train_metrics, "val_metrics": val_metrics,
               "fit_diagnostics": fit_diagnostics, "learning_curves": curves, "dm_date_clustered": dm,
-              "seconds": time.time() - t0}
+              "train_metrics_note": train_metrics_note, "seconds": time.time() - t0}
     print(f"[qa] QLIKE {market} h{horizon} {loss}/{anchor}: "
           + ", ".join(f"{m}={metrics[m]['qlike']:.4f}" for m in report_models), flush=True)
     for m in sel:

@@ -70,7 +70,7 @@ def split_objective(y, f, mask, loss, floor):
     return float(qlike_np(yv, fv, floor).mean()) if loss == "qlike" else float(np.mean((fv - yv) ** 2))
 
 
-def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, return_splits=True):  # pragma: no cover - GPU training loop (smoke-tested via the baseline run, like train_masked_rich)
+def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, return_splits=True):
     """Train MaskedRichNet under (loss, anchor). ``harx`` = dict with 'tr'/'va'/'te' positive HAR-X forecasts
     [A,N] (OOF for 'tr'); required when anchor=='harx'. Returns floored positive predictions per split + curves.
     Early-stops on the validation value of the training loss."""
@@ -156,10 +156,10 @@ def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, 
         if vs < best - 1e-12:
             best = vs; best_state = {k: v.detach().cpu().clone() for k, v in net.state_dict().items()}; wait = 0; best_ep = ep + 1
         else:
-            wait += 1
+            wait += 1                                        # pragma: no cover - no-improve epoch (nondeterministic)
         if ep + 1 >= cfg.min_epochs and wait >= cfg.patience:
-            break
-    if best_state:
+            break                                            # pragma: no cover - early-stop trigger (nondeterministic)
+    if best_state:                                           # pragma: no cover - always set after >=1 finite-val epoch
         net.load_state_dict(best_state)
     te = infer("te")
     if return_splits:
