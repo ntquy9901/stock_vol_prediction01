@@ -22,22 +22,47 @@
 \maketitle
 
 \begin{abstract}
-% PLACEHOLDER: rewrite from scratch after results (introduction-twice). Promise exactly what the
-% evidence supports across S&P 500 (primary), VN100, and VN30, at h in {1,5,10,22}.
-[Abstract written last, from final results.]
+Cross-sectional graph models forecast stock volatility by wiring each stock to the stocks that lead it, but
+their spillover edge fixes the lead--lag at one day regardless of the forecast horizon. We propose VolGA, which
+matches the edge's lead--lag to the forecast horizon: for an $h$-step forecast the edge correlates a source's
+volume shock at day $t$ with a target's volatility at day $t+h$, keeping only links that clear a Bonferroni
+significance floor. VolGA feeds a per-stock LSTM's temporal features into a graph-attention layer over this
+edge, and we compare it against a linear HAR-X benchmark and a same-feature no-graph LSTM under a leakage-free
+walk-forward on the S\&P 500 (480 stocks), VN100, and VN30, at horizons 1, 5, 10, and 22 days. On the S\&P 500
+the graph significantly lowers QLIKE relative to the no-graph LSTM at three of four horizons (daily $p<0.001$),
+and VolGA leads mean absolute error at the short horizons on all three markets. The parsimonious HAR-X attains
+the lowest QLIKE across markets and horizons. Every learned model generalizes without over- or under-fitting,
+and the largest forecast errors trace to real market events (volatility spikes and market-wide limit-lock days)
+rather than to data quality.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
 \section{Introduction}
-% DRAFT 0 (disposable scaffold; rewrite after evaluation).
-% Stakes: volatility forecasts drive risk limits, option pricing, and margining across equity markets.
-% Problem gap: graph models wire stocks with a cross-sectional edge whose lead-lag is fixed at one day,
-%   so the edge misaligns with the forecast horizon at h>1.
-% Key abstraction: the horizon-matched volume->volatility spillover edge.
-% Design intuition: align the edge's lead-lag with the forecast horizon h and keep only statistically-significant links.
-% Contributions: (1) horizon-matched edge; (2) VolGA vs HAR-X and no-graph LSTM on 3 markets x 4 horizons;
-%   (3) train/val/test fit evidence that the deep models generalize.
-% Results preview: [fill from results].
+Volatility forecasts set risk limits, price options, and size margins, so a forecast that misses a volatility
+surge is costly to a risk manager and a trader alike. Realized volatility is persistent and clusters across
+related stocks, which motivates two model families: HAR-type econometric models that exploit the persistence,
+and graph neural networks that exploit the cross-sectional spillover between stocks.
+
+Graph volatility models share a structural limitation: the edge that links a source stock to a target encodes a
+fixed one-day lead--lag, independent of the horizon being forecast. A model that forecasts volatility $h$ days
+ahead then attends over a relation estimated for the next day, so the graph misaligns with the target at every
+horizon beyond the first.
+
+We introduce the \emph{horizon-matched spillover edge}: for an $h$-step forecast the edge correlates a source's
+volume shock at day $t$ with the target's volatility at day $t+h$, so it encodes the same lead--lag the model
+forecasts. A Bonferroni significance floor keeps only links that clear the noise level across the candidate
+sources, so a target with no genuine spillover falls back to a no-graph forecast.
+
+VolGA pairs this edge with a per-stock LSTM temporal branch and a graph-attention layer. We evaluate it against
+a linear HAR-X benchmark and a same-feature no-graph LSTM, which isolates the contribution of the graph, under a
+leakage-free walk-forward on the S\&P 500, VN100, and VN30 panels at four horizons.
+
+This paper makes three contributions. First, a horizon-matched, significance-screened volume-to-volatility edge
+that aligns the graph with the forecast horizon. Second, a multi-market evaluation showing the graph
+significantly improves the deep model over its no-graph counterpart on the large S\&P 500 panel (QLIKE, three of
+four horizons), while the linear HAR-X remains the strongest QLIKE model across markets. Third, train/val/test
+fit evidence that every learned model generalizes, and an error attribution showing the residual difficulty
+comes from real volatility shocks and limit-lock days, not data quality.
 
 \section{Related Work}
 % Category clustering -> per-category limitation -> positioning.
@@ -91,7 +116,15 @@ a looser floor.
 % Numbers read from results/edge_hmatched/edgehm_<market>_h*.json via scripts/paper/build_edgehm_tables.py.
 
 \subsection{S\&P 500 (primary)}
-% PLACEHOLDER: fill from edgehm_sp500_clean_h*.json after the Colab run. Table \input{tables/sp500_clean_tables.tex}.
+On the large 480-stock S\&P 500 panel the graph branch adds value over the no-graph LSTM, while the linear
+HAR-X remains the strongest QLIKE forecaster. VolGA attains a significantly lower QLIKE than the no-graph LSTM
+at $h1$ (0.549 vs 0.631, Diebold--Mariano $p<0.001$), $h10$ (0.640 vs 0.723, $p=0.001$), and $h22$ (0.632 vs
+0.676, $p=0.047$), and the lowest MAE at the daily and weekly horizons. The linear HAR and HAR-X attain the
+lowest QLIKE at every horizon (daily HAR 0.390), and HAR-X's QLIKE advantage over VolGA is significant
+throughout ($p\le0.001$). Both learned models are classified fit=ok at every horizon.
+% Table: see tables/sp500_clean_tables.tex
+\textit{Takeaway.} On the large liquid panel the spillover graph significantly improves the deep model over its
+no-graph counterpart at three of four horizons, yet the parsimonious HAR-X still leads on QLIKE.
 
 \subsection{VN100}
 The graph branch helps at the daily horizon and fades as the horizon lengthens. At $h1$, VolGA attains the
@@ -117,7 +150,7 @@ the parsimonious HAR-X remains the QLIKE leader throughout.
 
 \section{Generalization: over/under-fit evidence}\label{sec:overfit}
 Every learned model generalizes: the fit verdict is \emph{ok} for both LSTM and VolGA at all four horizons on
-VN100 and VN30 [S\&P 500 pending], from the train-to-test QLIKE and R\textsuperscript{2} gaps that
+all three markets (S\&P 500, VN100, VN30), from the train-to-test QLIKE and R\textsuperscript{2} gaps that
 \texttt{classify\_fit} recomputes. The verdict flags overfit when the validation-to-test QLIKE degrades beyond
 25\% or the train-to-test R\textsuperscript{2} drops beyond 0.20, and underfit when train and test
 R\textsuperscript{2} both fall below the floor; neither fires here. Learning curves (train and validation MSE
@@ -129,10 +162,12 @@ curve without divergence.
 The graph branch helps at the daily horizon and on continuous-error metrics, and its benefit fades with the
 horizon. On both Vietnamese panels VolGA lowers MSE, MAE, and R\textsuperscript{2} at the daily and weekly
 horizons, which points to a volume-to-volatility lead-lag that carries magnitude information over one to five
-days. The advantage does not extend to QLIKE, where the parsimonious HAR-X is strongest at the weekly and
-longer horizons and, on the small VN30 panel, at the daily horizon as well. A short-lived spillover signal and
-QLIKE's sensitivity to small-variance days together explain why the graph improves squared error without
-improving QLIKE. [S\&P 500, the primary market, extends this comparison to a larger panel; results pending.]
+days. The advantage does not extend to beating the linear HAR-X on QLIKE, where HAR-X is strongest across markets and
+horizons. Panel size shapes where the graph pays off: on the large S\&P 500 panel VolGA significantly beats the
+no-graph LSTM on QLIKE at three of four horizons, whereas on the thin VN100/VN30 panels the graph's QLIKE gain
+over LSTM is not significant. The graph thus contributes cross-sectional signal that is easiest to exploit on a
+broad, actively-traded universe, while a short-lived spillover and QLIKE's sensitivity to small-variance and
+limit-lock days keep the parsimonious HAR-X ahead on QLIKE everywhere.
 
 \section{Limitations}
 The target is the Parkinson high--low variance ($\sigma^2$), not the volatility ($\sigma$), so the reported
@@ -143,10 +178,11 @@ complementary signal. QLIKE depends on a positivity floor, and low-range days ma
 the floor identical across models so no model gains from a looser one.
 
 \section{Conclusion}
-VolGA pairs a per-stock LSTM with a graph-attention layer over a horizon-matched volume-to-volatility edge.
-Across the VN100 and VN30 panels the graph lowers squared and absolute error at the daily horizon, while the
-linear HAR-X remains the strongest QLIKE model at the longer horizons; every learned model generalizes without
-over- or under-fitting. [The S\&P 500 primary-market results and the final cross-market synthesis are pending
-the large-panel run.]
+VolGA pairs a per-stock LSTM with a graph-attention layer over a horizon-matched volume-to-volatility edge. On
+the large S\&P 500 panel the graph significantly lowers QLIKE relative to a no-graph LSTM at three of four
+horizons, and VolGA leads mean absolute error at the short horizons across the S\&P 500, VN100, and VN30. The
+parsimonious HAR-X remains the strongest QLIKE model across markets, and every learned model generalizes without
+over- or under-fitting. The residual difficulty concentrates on real volatility shocks and market-wide
+limit-lock days, which a robust QLIKE that excludes floored-target days keeps from dominating the comparison.
 
 \end{document}
