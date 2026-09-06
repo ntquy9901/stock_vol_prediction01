@@ -125,6 +125,22 @@ def _agg_split_metrics(dicts):
     return agg
 
 
+def _filter_limitlock(pooled, floor, mult):
+    """Drop limit-lock / zero-range test entries (target <= mult*floor). On such days Parkinson variance is a
+    floored ~0, so QLIKE's y/f ratio explodes and a handful of market-wide limit-lock days (e.g. VN30
+    2025-04-10) dominate the loss. Returns (kept_dict, n_dropped). ``pooled`` maps key -> (y_true, y_pred)."""
+    kept = {k: v for k, v in pooled.items() if v[0] > mult * floor}
+    return kept, len(pooled) - len(kept)
+
+
+def _robust_metrics(pooled, floor, mult):  # pragma: no cover - thin wrapper over RMR._metrics
+    """QLIKE recomputed after dropping limit-lock days -> a robust QLIKE not dominated by floored targets."""
+    kept, dropped = _filter_limitlock(pooled, floor, mult)
+    if not kept:
+        return {"qlike_robust": None, "n_robust": 0, "n_limitlock": dropped}
+    return {"qlike_robust": RMR._metrics(kept, floor)["qlike"], "n_robust": len(kept), "n_limitlock": dropped}
+
+
 def _select_models(spec):
     """Parse a --models string into an ordered, deduped subset of the GPU models (validates names). The edge
     fix is settled, so ``VolGA`` IS the graph model on the horizon-matched edge (the old fixed-lag VolGA is
@@ -156,7 +172,7 @@ def _pool(o, D):
 
 
 def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100",
-        lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA")):  # pragma: no cover
+        lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA"), limit_lock_mult=2.0):  # pragma: no cover
     t0 = time.time()
     sel = tuple(models)                                          # GPU models to train (subset); HAR/HAR-X always
     files = _glob.glob(enriched_glob(market))
@@ -212,7 +228,8 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
     for m in sel:
         pooled[m] = RMR._ens(pooled_nn[m])
     report_models = ("HAR", "HAR-X") + sel
-    metrics = {m: RMR._metrics(pooled[m], fl) for m in report_models}
+    metrics = {m: {**RMR._metrics(pooled[m], fl), **_robust_metrics(pooled[m], fl, limit_lock_mult)}
+               for m in report_models}
     train_metrics = {m: _agg_split_metrics(tr_acc[m]) for m in sel}   # over/under-fit evidence (walk-forward mean)
     val_metrics = {m: _agg_split_metrics(va_acc[m]) for m in sel}
     fit_diagnostics = {m: RMR.OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in sel}
@@ -224,6 +241,10 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
               "metrics": metrics, "train_metrics": train_metrics, "val_metrics": val_metrics,
               "fit_diagnostics": fit_diagnostics, "learning_curves": curves, "dm_date_clustered": dm}
     print(f"[edgehm] QLIKE h{horizon}: " + ", ".join(f"{m}={metrics[m]['qlike']:.4f}" for m in report_models), flush=True)
+    nll = metrics[report_models[0]]["n_limitlock"]
+    print(f"[edgehm] QLIKE-robust (drop {nll} limit-lock days) h{horizon}: "
+          + ", ".join(f"{m}={metrics[m]['qlike_robust']:.4f}" for m in report_models
+                      if metrics[m]['qlike_robust'] is not None), flush=True)
     print("[edgehm] fit (train->val->test): " + ", ".join(f"{m}={fit_diagnostics[m]['status']}" for m in sel), flush=True)
     if dens:
         print(f"[edgehm] VolGA edge density (h={horizon})={np.mean(dens):.3f}", flush=True)
@@ -249,11 +270,13 @@ def main():  # pragma: no cover
     ap.add_argument("--market", default="vn100", choices=["vn100", "vn30", "hose", "hnx", "sp500", "sp500_clean"])
     ap.add_argument("--models", default="LSTM,VolGA",   # VolGA = graph on the (fixed) horizon-matched edge
                     help="comma-sep GPU models: subset of LSTM,VolGA (HAR/HAR-X always computed)")
+    ap.add_argument("--limit-lock-mult", type=float, default=2.0,   # drop test days with target <= mult*floor from robust QLIKE
+                    help="robust QLIKE excludes limit-lock/zero-range days (target <= mult*qlike_floor)")
     ap.add_argument("--smoke", action="store_true")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback, a.batch,
-        _select_models(a.models))
+        _select_models(a.models), a.limit_lock_mult)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -98,6 +98,17 @@ def test_progress_line_format():
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
 
 
+def test_filter_limitlock_drops_floored_targets():
+    floor = 1e-8
+    pooled = {("A", "d1"): (1e-3, 1e-3),   # normal -> keep
+              ("A", "d2"): (1e-8, 5e-4),   # target at floor (limit-lock) -> drop
+              ("B", "d1"): (2e-8, 1e-3),   # target == 2*floor (not > threshold) -> drop
+              ("B", "d2"): (3e-8, 1e-3)}   # target > 2*floor -> keep
+    kept, dropped = EH._filter_limitlock(pooled, floor, 2.0)
+    assert dropped == 2
+    assert set(kept) == {("A", "d1"), ("B", "d2")}
+
+
 def test_agg_split_metrics_means_and_total_n():
     d1 = {"mse": 1.0, "qlike": 0.4, "r2": 0.5, "n": 10}
     d2 = {"mse": 3.0, "qlike": 0.6, "r2": 0.1, "n": 30}
