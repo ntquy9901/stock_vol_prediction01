@@ -59,6 +59,17 @@ def residual_target(y, harx, eps=1e-12):
     return np.log((np.maximum(np.asarray(y, dtype=float), 0.0) + eps) / (np.asarray(harx, dtype=float) + eps))
 
 
+def split_objective(y, f, mask, loss, floor):
+    """Masked value of the TRAINING objective on one split: mean QLIKE (loss='qlike') or mean MSE else,
+    over cells where ``mask`` is true. Used for early-stopping AND the learning curve so both reflect the
+    same objective and the same QLIKE floor as the final metric (fixes floor/curve inconsistencies)."""
+    m = np.asarray(mask).astype(bool)
+    if not m.any():
+        return float("nan")
+    yv = np.asarray(y)[m]; fv = np.asarray(f)[m]
+    return float(qlike_np(yv, fv, floor).mean()) if loss == "qlike" else float(np.mean((fv - yv) ** 2))
+
+
 def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, return_splits=True):  # pragma: no cover - GPU training loop (smoke-tested via the baseline run, like train_masked_rich)
     """Train MaskedRichNet under (loss, anchor). ``harx`` = dict with 'tr'/'va'/'te' positive HAR-X forecasts
     [A,N] (OOF for 'tr'); required when anchor=='harx'. Returns floored positive predictions per split + curves.
@@ -74,12 +85,22 @@ def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, 
     f32 = np.float32
     tmean = torch.from_numpy(D.t_mean.astype(f32)).to(dev); tstd = torch.from_numpy(D.t_std.astype(f32)).to(dev)
     floor_np = node_floor(D.t_mean); floor = torch.from_numpy(floor_np.astype(f32)).to(dev)
+    fl = cfg.qlike_floor                                    # shared QLIKE floor: train == early-stop == eval
+    assert D.tmask_va.astype(bool).any(), "empty validation mask (cannot early-stop)"   # fail loud
     Xtr = torch.from_numpy(D.X_tr).to(dev); nmtr = torch.from_numpy(D.nmask_tr).to(dev)
     tmtr = torch.from_numpy(D.tmask_tr).to(dev)
     ytr = torch.from_numpy(D.y_tr.astype(f32)).to(dev)
     ytr_z = (ytr - tmean) / tstd
-    hx = {k: torch.from_numpy(np.asarray(v).astype(f32)).to(dev) for k, v in harx.items()} if anchor == "harx" else None
-    ztr_true = torch.log((ytr.clamp(min=0) + 1e-12) / (hx["tr"] + 1e-12)) if anchor == "harx" else None
+    # anchor=harx: harx['tr']=OOF (NaN warm-up) is the leakage-safe residual base for TRAINING; warm-up cells
+    # (no OOF) are masked out of the loss so the residual target is never the in-sample fit. harx['tr_base']
+    # (in-sample, finite) is the forecast base for TRAIN inference/evidence only.
+    if anchor == "harx":
+        oof_np = np.asarray(harx["tr"], dtype=f32); oof_ok = np.isfinite(oof_np)
+        hx_tr = torch.from_numpy(np.where(oof_ok, oof_np, 1.0)).to(dev)          # NaN -> 1 (masked out anyway)
+        valid_tr = torch.from_numpy(oof_ok.astype(f32)).to(dev)
+        ztr_true = torch.log((ytr.clamp(min=0) + 1e-12) / (hx_tr + 1e-12))
+    else:
+        hx_tr = valid_tr = ztr_true = None
     opt = torch.optim.Adam(net.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay)
     sched = torch.optim.lr_scheduler.ReduceLROnPlateau(opt, factor=0.5, patience=2)
     bs = cfg.batch_size
@@ -94,7 +115,7 @@ def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, 
 
     def batch_loss(pn, yb, ybz, tmb, hxb, ztrue):
         if loss == "qlike":
-            f = fpos(pn, hxb); r = yb.clamp(min=1e-12) / f
+            f = fpos(pn, hxb); r = yb.clamp(min=fl) / f      # same QLIKE floor as early-stop + final metric
             per = r - torch.log(r) - 1.0
         elif anchor == "harx":
             per = (pn.clamp(-clip, clip) - ztrue) ** 2
@@ -111,27 +132,26 @@ def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, 
                 outs.append(net(xb, adj_batch(nmb)).cpu().numpy())
         pn = np.concatenate(outs)
         if anchor == "harx":
-            return anchor_forecast(pn, harx[sp], clip, floor_np)
+            base_hx = harx["tr_base"] if sp == "tr" else harx[sp]   # train base = in-sample HAR-X (evidence only)
+            return anchor_forecast(pn, base_hx, clip, floor_np)
         return zscore_forecast(pn, D.t_mean, D.t_std, floor_np)
 
-    def val_score(pva):                                 # early-stop metric matches the training loss
-        m = D.tmask_va.astype(bool)
-        if loss == "qlike":
-            return float(qlike_np(D.y_va[m], pva[m]).mean())
-        return float(np.mean((pva[m] - D.y_va[m]) ** 2))
+    def val_score(pva):                                 # early-stop == training objective, same QLIKE floor
+        return split_objective(D.y_va, pva, D.tmask_va, loss, fl)
 
     best = np.inf; best_state = None; wait = 0; best_ep = 0; train_curve = []; val_curve = []
     for ep in range(cfg.epochs):
         net.train()
         for idx in RMR._batches(len(Xtr), bs, True, seed + ep):
             pn = net(Xtr[idx], adj_batch(nmtr[idx]))
-            l = batch_loss(pn, ytr[idx], ytr_z[idx], tmtr[idx],
-                           hx["tr"][idx] if anchor == "harx" else None,
+            tmb = tmtr[idx] * valid_tr[idx] if anchor == "harx" else tmtr[idx]   # warm-up (no OOF) excluded
+            l = batch_loss(pn, ytr[idx], ytr_z[idx], tmb,
+                           hx_tr[idx] if anchor == "harx" else None,
                            ztr_true[idx] if anchor == "harx" else None)
             opt.zero_grad(); l.backward(); nn.utils.clip_grad_norm_(net.parameters(), cfg.grad_clip); opt.step()
         pva = infer("va"); vs = val_score(pva)
-        ptr = infer("tr"); mtr = D.tmask_tr.astype(bool)
-        train_curve.append(float(np.mean((ptr[mtr] - D.y_tr[mtr]) ** 2))); val_curve.append(float(np.mean((pva[D.tmask_va.astype(bool)] - D.y_va[D.tmask_va.astype(bool)]) ** 2)))
+        train_curve.append(split_objective(D.y_tr, infer("tr"), D.tmask_tr, loss, fl))   # curve == objective
+        val_curve.append(vs)
         sched.step(vs)
         if vs < best - 1e-12:
             best = vs; best_state = {k: v.detach().cpu().clone() for k, v in net.state_dict().items()}; wait = 0; best_ep = ep + 1

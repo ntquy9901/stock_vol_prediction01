@@ -41,3 +41,11 @@ def test_qlike_np_zero_at_equality_and_penalizes_under():
 def test_residual_target_log_ratio():
     y = np.array([2e-3]); harx = np.array([1e-3])
     assert abs(QT.residual_target(y, harx, eps=0.0)[0] - np.log(2.0)) < 1e-9
+
+
+def test_split_objective_matches_qlike_and_mse_and_empty():
+    y = np.array([[1e-3, 2e-3]]); f = np.array([[1e-3, 1e-3]]); mask = np.array([[True, True]])
+    assert abs(QT.split_objective(y, f, mask, "mse", 1e-8) - np.mean((f - y) ** 2)) < 1e-18
+    ql = QT.split_objective(y, f, mask, "qlike", 1e-8)
+    assert abs(ql - QT.qlike_np(y[mask], f[mask], 1e-8).mean()) < 1e-12   # same floor as final metric
+    assert np.isnan(QT.split_objective(y, f, np.array([[False, False]]), "mse", 1e-8))   # empty mask -> nan

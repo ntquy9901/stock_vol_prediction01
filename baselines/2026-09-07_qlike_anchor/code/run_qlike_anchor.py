@@ -88,8 +88,10 @@ def run(market, horizon, loss, anchor, models=("LSTM", "VolGA"), lookback=10, ba
         harx_dict = None
         if anchor == "harx":
             oof = oof_harx(D.har5_tr, D.y_tr, D.tmask_tr.astype(bool), fl, nfloor)   # [A_tr,N], NaN on warm-up
-            oof = np.where(np.isfinite(oof), oof, harx["tr"])                        # in-sample fallback on warm-up
-            harx_dict = {"tr": oof, "va": harx["va"], "te": harx["te"]}
+            # keep NaN warm-up: the trainer masks those cells OUT of the loss (no in-sample fallback -> the
+            # residual target is never the in-sample fit). tr_base (in-sample HAR-X) is used only as the
+            # forecast base for the TRAIN split's fit-evidence, never as a training target.
+            harx_dict = {"tr": oof, "va": harx["va"], "te": harx["te"], "tr_base": harx["tr"]}
         eye = np.eye(D.N, dtype=np.float32)
         adj_map = {"LSTM": eye}
         if "VolGA" in sel:
@@ -134,6 +136,9 @@ def run(market, horizon, loss, anchor, models=("LSTM", "VolGA"), lookback=10, ba
         gitsha = None
     prov = _provenance(lookback, batch, epochs, fl, MR.EDGE_TOP_K, 2.0)
     prov.update({"loss": loss, "anchor": anchor, "anchor_clip": QC.ANCHOR_CLIP})
+    if anchor == "harx":                                    # record the OOF HAR-X residual-base provenance
+        import xgb_config as XC
+        prov.update({"oof_splits": XC.OOF_SPLITS, "oof_warmup_frac": XC.OOF_WARMUP_FRAC})
     result = {"experiment": "qlike_anchor", "market": market, "horizon": horizon, "loss": loss, "anchor": anchor,
               "num_nodes": int(panel.N), "n_folds": len(folds), "seeds": list(cfg.seeds), "git_commit": gitsha,
               "config": prov, "edge_density_mean": float(np.mean(dens)) if dens else None,

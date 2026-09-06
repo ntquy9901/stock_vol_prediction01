@@ -3,7 +3,7 @@ literals). Training hyperparameters come from the delivered ``training_config``;
 the OOF-HAR-X split parameters are new here."""
 
 ANCHOR_CLIP: float = 0.5        # bound on the residual: yhat = HAR-X * exp(clip(z, -c, c)); |z|<=c
-OOF_SPLITS: int = 4            # chronological blocks for the leakage-safe OOF HAR-X (anchor training target)
-OOF_WARMUP_FRAC: float = 0.30  # first fraction of train anchors used only to warm the OOF fits
+# The anchor's OOF HAR-X (leakage-safe residual target) reuses xgb_oof, whose split/warmup/eps live in
+# xgb_config -- the single source of truth. Do NOT redeclare them here (avoids silent config drift).
 LOSSES = ("mse", "qlike")
 ANCHORS = ("none", "harx")

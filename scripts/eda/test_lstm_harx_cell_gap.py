@@ -61,3 +61,15 @@ def test_qlike_excluding_top_y_is_model_agnostic():
     full = G.qlike_excluding_top_y(y, f, 0.0)
     ex = G.qlike_excluding_top_y(y, f, 0.25)     # drop top 25% (the spike) -> only perfect cells remain
     assert full > ex and abs(ex) < 1e-9          # remaining cells are perfect -> ~0
+
+
+def test_assert_unique_cells_raises_on_duplicate():
+    import pandas as pd
+    import pytest
+    dup = pd.DataFrame({"model": ["HAR-X", "HAR-X"], "ticker": ["A", "A"], "date": ["d", "d"],
+                        "y_true": [1.0, 1.0], "y_pred": [1.0, 2.0]})
+    with pytest.raises(ValueError):
+        G.assert_unique_cells(dup)
+    ok = pd.DataFrame({"model": ["HAR-X", "LSTM"], "ticker": ["A", "A"], "date": ["d", "d"],
+                       "y_true": [1.0, 1.0], "y_pred": [1.0, 2.0]})
+    assert G.assert_unique_cells(ok) == 2

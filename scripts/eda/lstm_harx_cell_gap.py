@@ -80,10 +80,21 @@ def anchored_forecast(harx_f, z, clip=0.5):
     return np.asarray(harx_f, dtype=float) * np.exp(z)
 
 
+def assert_unique_cells(df):
+    """Fail loud if the cell log has duplicate (model, ticker, date) rows, so pivot's first-wins does not
+    silently drop records and distort the QLIKE analysis. Returns the number of rows checked."""
+    n = len(df)
+    if df.duplicated(subset=["model", "ticker", "date"]).any():
+        dup = int(df.duplicated(subset=["model", "ticker", "date"]).sum())
+        raise ValueError(f"cell log has {dup} duplicate (model,ticker,date) rows -- refusing to pivot silently")
+    return n
+
+
 def _load_test_cells(path):  # pragma: no cover - parquet I/O (large file); pure decomposition is tested
     import pyarrow.parquet as pq
     d = pq.read_table(path, columns=["model", "ticker", "date", "y_true", "y_pred"],
                       filters=[("split", "=", "test")]).to_pandas()
+    assert_unique_cells(d)                                  # no silent dedup (aggfunc='first' would hide dups)
     piv = d.pivot_table(index=["ticker", "date"], columns="model", values=["y_true", "y_pred"],
                         aggfunc="first").dropna()
     return (piv["y_true"]["HAR-X"].values, piv["y_pred"]["HAR-X"].values, piv["y_pred"]["LSTM"].values)
