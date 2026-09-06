@@ -162,3 +162,4 @@ docs/papers/*.pdf
 
 # per-ticker-per-day diagnostic cell logs (large, regenerable via --dump-cells)
 results/edge_hmatched/cells/
+!notebooks/train_qlike_anchor_sp500_colab.ipynb
