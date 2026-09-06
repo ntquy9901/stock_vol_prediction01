@@ -98,7 +98,7 @@ graph's contribution, across three markets and four horizons.
 \node[box] (feat) {5 node features\\$t{-}L..t$};
 \node[box, above right=3mm and 12mm of feat] (lstm) {LSTM\\(2-layer)};
 \node[box, below right=3mm and 12mm of feat] (gat) {GAT\\layer};
-\node[edgebox, below=8mm of gat] (edge) {Horizon-matched edge\\$\mathrm{corr}(\mathrm{vol}_i(t),\sigma^2_j(t{+}h))$\\Bonferroni + Top-$K$};
+\node[edgebox, below=8mm of gat] (edge) {Horizon-matched edge\\$\mathrm{corr}(\mathrm{vol}_i(t),\sigma_j(t{+}h))$\\Bonferroni + Top-$K$};
 \node[box, right=30mm of feat] (fuse) {concat\\+ MLP};
 \node[box, right=12mm of fuse] (out) {$\hat\sigma^2_{t+h}$};
 \draw[->] (feat) -- (lstm);
@@ -134,8 +134,8 @@ stock's forecast draws on the recent dynamics of the stocks that lead it.
 
 \subsection{Horizon-matched spillover edge}
 VolGA's edge is the paper's key design decision. For target stock $j$ and source stock $i$, we correlate the
-source volume shock at day $t$ with the target volatility at day $t+h$ over the training window, so the edge
-encodes the same lead--lag the model forecasts. We keep a source only when its correlation clears a Bonferroni
+source's z-scored volume shock at day $t$ with the target's volatility $\sigma_j$, the square root of Parkinson
+variance, at day $t+h$ over the training window, so the edge encodes the same lead--lag the model forecasts. We keep a source only when its correlation clears a Bonferroni
 significance floor across the $n-1$ candidate sources, then keep the Top-$K$ survivors and a self-loop. A
 target with no surviving source keeps only its self-loop, so the graph falls back to the no-graph model where
 no spillover signal exists. We build the edge from training data only, per fold.
@@ -148,8 +148,8 @@ a looser floor.
 \section{Data}
 We evaluate on three equity panels, all from daily OHLCV data. The S\&P 500 panel is the primary market: 480
 US stocks after a vintage cut (bars before 2000 dropped) and a liquidity and history screen. VN100 (104 tickers,
-102 after screening) and VN30 (33 tickers) are Vietnamese panels from the Ho Chi Minh exchange, screened the
-same way; both carry more distinct tickers than their nominal index size because index membership changes over
+102 after screening) and VN30 (33 tickers, 31 after screening) are Vietnamese panels from the Ho Chi Minh
+exchange, screened the same way; both carry more distinct tickers than their nominal index size because index membership changes over
 the sample. Structural corruption is zero on every panel: no bar has high below low, a non-positive price, or an
 open or close outside its range. All features and targets are causal, computed only from data up to day $t$.
 
@@ -165,7 +165,8 @@ under-forecasting variance more than over-forecasting it), and $R^2$. All models
 floor, so no model gains from a looser floor; QLIKE is robust to the noise in a range-based variance
 proxy~\cite{patton2011proxies}. We test accuracy differences with a Diebold--Mariano test~\cite{dm1995}
 clustered by date, which accounts for the cross-sectional dependence of the panel, and report two contrasts:
-VolGA versus the no-graph LSTM (the value of the graph) and VolGA versus HAR-X (deep versus linear).
+VolGA versus the no-graph LSTM (the value of the graph) and VolGA versus HAR-X (deep versus linear). We read
+borderline p-values under the multiplicity of the tested markets and horizons.
 
 \section{Results}\label{sec:results}
 % Numbers read from results/edge_hmatched/edgehm_<market>_h*.json via scripts/paper/build_edgehm_tables.py.
@@ -173,8 +174,9 @@ VolGA versus the no-graph LSTM (the value of the graph) and VolGA versus HAR-X (
 \subsection{S\&P 500 (primary)}
 On the large 480-stock S\&P 500 panel the graph branch adds value over the no-graph LSTM, while the linear
 HAR-X remains the strongest QLIKE forecaster. VolGA attains a significantly lower QLIKE than the no-graph LSTM
-at $h1$ (0.549 vs 0.631, Diebold--Mariano $p<0.001$), $h10$ (0.640 vs 0.723, $p=0.001$), and $h22$ (0.632 vs
-0.676, $p=0.047$), and the lowest MAE at the daily and weekly horizons. The linear HAR and HAR-X attain the
+at $h1$ (0.549 vs 0.631, Diebold--Mariano $p<0.001$) and $h10$ (0.640 vs 0.723, $p=0.001$), and the lowest MAE
+at the daily and weekly horizons. At $h22$ VolGA is also lower (0.632 vs 0.676), but at a nominal $p=0.047$ that
+does not survive a Bonferroni correction across the four horizons. The linear HAR and HAR-X attain the
 lowest QLIKE at every horizon (daily HAR 0.390), and HAR-X's QLIKE advantage over VolGA is significant
 throughout ($p\le0.001$). Both learned models are classified fit=ok at every horizon.
 \input{tables/sp500_clean_qlike.tex}
