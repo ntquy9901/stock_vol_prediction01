@@ -43,9 +43,12 @@ def check_files(paths):
             continue
         if not _is_masked_rich_result(res):
             continue                                            # genuinely not a training result -> skip
-        # masked_rich (identified by design/per-seed) must carry the FULL expected learned set, so a partial
-        # artifact that dropped a model still FAILS (F-04). Other drivers auto-detect learned from metrics keys.
-        is_masked_rich = "masked" in str(res.get("design", "")) or "metrics_per_seed" in res
+        # The masked_rich runner (design string contains "masked") must carry the FULL fixed learned set, so a
+        # partial artifact that kept only SOME learned models still FAILS (F-04). Every OTHER driver (edge_hmatched,
+        # MASTER, walkforward_volga, ... which also carry metrics_per_seed) auto-detects its learned models from the
+        # metrics keys -- keying the fixed-set enforcement on metrics_per_seed wrongly demanded LSTM_wGAT_vol2pk of
+        # them. A fully-stripped artifact still fails via the `found or LEARNED` fallback in _named_learned.
+        is_masked_rich = "masked" in str(res.get("design", ""))
         ok, probs = OF.check_result_evidence(res, learned=(OF.LEARNED if is_masked_rich else None))
         if not ok:
             problems[p] = probs

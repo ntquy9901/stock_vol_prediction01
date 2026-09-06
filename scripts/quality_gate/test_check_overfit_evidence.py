@@ -88,6 +88,27 @@ def test_gate_covers_edge_style_result_pass_and_fail(tmp_path):
     assert CO._is_masked_rich_result({}) is False                                        # empty artifact
 
 
+def test_per_seed_nonmasked_driver_autodetects_not_fixed_learned(tmp_path):
+    # regression: a MASTER/walkforward-style result carries metrics_per_seed but is NOT masked_rich (no
+    # 'masked' design). It must auto-detect its own learned models (MASTER/LSTM/VolGA) and pass, NOT be forced
+    # to supply LSTM_wGAT_vol2pk. (Keying fixed-set enforcement on metrics_per_seed wrongly blocked MASTER.)
+    good = {
+        "experiment": "master_transformer",
+        "metrics_per_seed": {"MASTER": {"qlike_mean": 0.49}},
+        "metrics":       {"HAR-X": {"qlike": 0.48, "r2": 0.30}, "LSTM": {"qlike": 0.49, "r2": 0.26},
+                          "VolGA": {"qlike": 0.48, "r2": 0.27}, "MASTER": {"qlike": 0.49, "r2": 0.25}},
+        "train_metrics": {"LSTM": {"qlike": 0.48, "r2": 0.30}, "VolGA": {"qlike": 0.47, "r2": 0.31},
+                          "MASTER": {"qlike": 0.48, "r2": 0.29}},
+        "val_metrics":   {"LSTM": {"qlike": 0.49, "r2": 0.26}, "VolGA": {"qlike": 0.48, "r2": 0.27},
+                          "MASTER": {"qlike": 0.49, "r2": 0.25}},
+    }
+    p = tmp_path / "master_vn30_h1.json"; p.write_text(json.dumps(good), encoding="utf-8")
+    assert CO.check_files([str(p)]) == {}                       # auto-detected learned all have evidence -> pass
+    bad = json.loads(json.dumps(good)); del bad["val_metrics"]  # drop evidence -> must FAIL
+    p2 = tmp_path / "master_bad.json"; p2.write_text(json.dumps(bad), encoding="utf-8")
+    assert str(p2) in CO.check_files([str(p2)])
+
+
 def test_gate_flags_unreadable_file(tmp_path):
     p = tmp_path / "bad.json"; p.write_text("{not json", encoding="utf-8")
     probs = CO.check_files([str(p)])
