@@ -7,9 +7,21 @@ import pragma_logic_guard as G  # noqa: E402
 
 
 def test_added_line_nums_parses_unified0():
-    diff = ("@@ -0,0 +5,2 @@\n+a = 1\n+b = 2\n"
+    diff = ("--- a/f.py\n+++ b/f.py\n"                 # file headers must NOT be counted as added lines
+            "@@ -0,0 +5,2 @@\n+a = 1\n+b = 2\n"
             "@@ -10,1 +12,1 @@\n-old\n+new\n")
     assert G.added_line_nums(diff) == {5, 6, 12}
+
+
+def test_pragma_functions_excludes_main():
+    src = ("def main():  # pragma: no cover\n"
+           "    a = 1\n"
+           "    return a\n"
+           "def run():  # pragma: no cover\n"
+           "    b = 2\n"
+           "    return b\n")
+    names = [f[0] for f in G.pragma_functions(src)]
+    assert names == ["run"]                            # main() is allowed (argparse glue); run() is flagged
 
 
 def test_pragma_functions_detects_marked_def_only():

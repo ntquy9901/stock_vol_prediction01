@@ -49,8 +49,6 @@ def pragma_functions(source: str):
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
-        if not node.body:
-            continue
         body_start = node.body[0].lineno
         header = "\n".join(lines[node.lineno - 1:body_start - 1])
         if "# pragma: no cover" not in header:
