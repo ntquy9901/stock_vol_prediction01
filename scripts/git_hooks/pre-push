@@ -274,6 +274,20 @@ else
   echo "[pre-push]   (no changed .py or scanner absent — skipped)"
 fi
 
+# --- 6b: pragma-logic guard — new logic added inside a `# pragma: no cover` function escapes diff-cover
+# (root cause of the --dump-cells d_tr bug 2026-09-06: buggy wiring lived in run(), never executed by a test).
+echo "[pre-push] 6b/7 pragma-logic guard (untested runner logic)"
+if command -v python >/dev/null 2>&1 && [ -f "$MAINROOT/scripts/quality_gate/pragma_logic_guard.py" ]; then
+  PGOUT="$(python "$MAINROOT/scripts/quality_gate/pragma_logic_guard.py" --base "$PUSH_BASE" 2>&1)"; PGRC=$?
+  echo "$PGOUT" | tail -6
+  echo "$PGOUT" | _logsec "6b/7 pragma-logic guard"
+  if [ "$PGRC" -eq 2 ]; then
+    echo "[pre-push] BLOCK: substantive logic added inside a # pragma: no cover function — extract it into a tested helper or add an executing smoke (do not hide runner logic from coverage)." >&2; FAIL=1
+  fi
+else
+  echo "[pre-push]   (pragma guard script absent — skipped)"
+fi
+
 # --- Emit per-commit gate result JSON the dashboard overlays (real run wins) ---
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
 GATE_DIR="$MAINROOT/scripts/task_dashboard/gate_results"
