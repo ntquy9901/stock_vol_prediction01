@@ -171,6 +171,12 @@ def _pool(o, D):
     return RMR._pred_dict(o, D.y_te, D.tmask_te, D.d_te, D.N)
 
 
+def _provenance(lookback, batch, epochs, qlike_floor, edge_top_k, limit_lock_mult):
+    """Reproducibility block recorded in the result JSON so a run is reconstructable from the artifact."""
+    return {"lookback": int(lookback), "batch": batch, "epochs": int(epochs),
+            "qlike_floor": qlike_floor, "edge_top_k": int(edge_top_k), "limit_lock_mult": limit_lock_mult}
+
+
 def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100",
         lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA"), limit_lock_mult=2.0):  # pragma: no cover
     t0 = time.time()
@@ -234,8 +240,7 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
     val_metrics = {m: _agg_split_metrics(va_acc[m]) for m in sel}
     fit_diagnostics = {m: RMR.OF.classify_fit(train_metrics[m], val_metrics[m], metrics[m]) for m in sel}
     dm = {name: RMR._dm_all(pooled[a], pooled[b], horizon, fl) for name, a, b in _dm_plan(sel)}
-    provenance = {"lookback": int(lookback), "batch": batch, "epochs": (8 if smoke else epochs),
-                  "qlike_floor": fl, "edge_top_k": int(MR.EDGE_TOP_K), "limit_lock_mult": limit_lock_mult}
+    provenance = _provenance(lookback, batch, (8 if smoke else epochs), fl, MR.EDGE_TOP_K, limit_lock_mult)
     result = {"experiment": "edge_horizon_matched", "horizon": horizon, "market": market,
               "num_nodes": int(panel.N), "n_folds": len(folds), "seeds": list(cfg.seeds), "smoke": smoke,
               "models": list(sel), "edge_sig_alpha": EDGE_SIG_ALPHA, "config": provenance,

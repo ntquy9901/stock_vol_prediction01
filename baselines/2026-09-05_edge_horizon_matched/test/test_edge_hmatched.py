@@ -93,6 +93,13 @@ def test_dm_plan_paper_set_and_subset():
     assert EH._dm_plan(("LSTM",)) == [("LSTM_vs_HAR-X", "LSTM", "HAR-X")]
 
 
+def test_provenance_records_run_config():
+    p = EH._provenance(lookback=10, batch=32, epochs=16, qlike_floor=1e-8, edge_top_k=5, limit_lock_mult=2.0)
+    assert p == {"lookback": 10, "batch": 32, "epochs": 16, "qlike_floor": 1e-8,
+                 "edge_top_k": 5, "limit_lock_mult": 2.0}
+    assert EH._provenance(22, None, 16, 1e-8, 5, 2.0)["batch"] is None   # batch=None (training_config default) preserved
+
+
 def test_progress_line_format():
     assert EH._progress("fold 1/7 start", 2.5) == "[edgehm] fold 1/7 start (2.5 min)"
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
