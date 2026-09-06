@@ -13,6 +13,8 @@
 \usepackage{placeins}
 \usepackage[utf8]{inputenc}
 \usepackage[T1,T5]{fontenc}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 
 \begin{document}
 
@@ -85,7 +87,32 @@ it for significance. We test it against both a linear HAR-X and a same-feature n
 graph's contribution, across three markets and four horizons.
 
 \section{Method}
-% DRAFTED. Move sequence: abstraction -> justification -> components -> key decision -> robustness.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners, align=center, minimum height=8mm, inner sep=3pt},
+  edgebox/.style={draw, rounded corners, align=center, fill=black!6, minimum height=8mm, inner sep=3pt},
+  >={Stealth[]}]
+\node[box] (feat) {5 node features\\$t{-}L..t$};
+\node[box, above right=3mm and 12mm of feat] (lstm) {LSTM\\(2-layer)};
+\node[box, below right=3mm and 12mm of feat] (gat) {GAT\\layer};
+\node[edgebox, below=8mm of gat] (edge) {Horizon-matched edge\\$\mathrm{corr}(\mathrm{vol}_i(t),\sigma^2_j(t{+}h))$\\Bonferroni + Top-$K$};
+\node[box, right=30mm of feat] (fuse) {concat\\+ MLP};
+\node[box, right=12mm of fuse] (out) {$\hat\sigma^2_{t+h}$};
+\draw[->] (feat) -- (lstm);
+\draw[->] (feat) -- (gat);
+\draw[->] (edge) -- (gat);
+\draw[->] (lstm) -- (fuse.north west);
+\draw[->] (gat) -- (fuse.south west);
+\draw[->] (fuse) -- (out);
+\end{tikzpicture}
+\caption{VolGA. A per-stock LSTM temporal branch and a graph-attention branch over the horizon-matched
+volume-to-volatility spillover edge are fused to forecast $\sigma^2_{t+h}$. The no-graph LSTM baseline drops
+the GAT branch and edge; HAR-X regresses $\sigma^2_{t+h}$ on the same features linearly.}
+\label{fig:volga}
+\end{figure}
 
 \subsection{Problem and target}
 We forecast the $h$-step-ahead daily variance of each stock in a market panel. The target is the Parkinson
@@ -102,8 +129,8 @@ We compare three models on identical features and splits.
 \textbf{HAR-X} regresses $\sigma^2_{t+h}$ on the HAR terms plus the exogenous market and volume features by
 ordinary least squares; it is the linear benchmark. \textbf{LSTM} encodes each stock's feature sequence with
 a two-layer Long Short-Term Memory (LSTM) network and predicts from the last hidden state, with no cross-stock link; it isolates the temporal
-branch. \textbf{VolGA} adds a graph-attention layer over the temporal features, so a stock's forecast draws on
-the recent dynamics of the stocks that lead it.
+branch. \textbf{VolGA} adds a graph-attention layer over the temporal features (Figure~\ref{fig:volga}), so a
+stock's forecast draws on the recent dynamics of the stocks that lead it.
 
 \subsection{Horizon-matched spillover edge}
 VolGA's edge is the paper's key design decision. For target stock $j$ and source stock $i$, we correlate the
