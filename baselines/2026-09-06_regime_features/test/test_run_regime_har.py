@@ -36,3 +36,20 @@ def test_design_shapes_with_and_without_regime():
     har5 = np.zeros((4, 3, 5)); reg = np.zeros((4, 3))
     assert m._design(har5, reg, False).shape == (12, 5)
     assert m._design(har5, reg, True).shape == (12, 8)   # 5 HAR-X + 3 regime
+
+
+def test_pooled_maps_masked_entries():
+    m = _load()
+    from types import SimpleNamespace
+    D = SimpleNamespace(
+        y_te=np.array([[1.0, 2.0], [3.0, 4.0]]),
+        tmask_te=np.array([[True, False], [True, True]]),
+        d_te=np.array(["2026-01-01", "2026-01-02"]),
+        N=2,
+    )
+    pred_flat = np.array([10.0, 20.0, 30.0, 40.0])   # reshaped to y_te.shape
+    pooled = m._pooled(pred_flat, D, "te")
+    # only masked (True) cells kept: (0,d0),(0,d1),(1,d1) -> not (1,d0)
+    assert set(pooled) == {(0, "2026-01-01"), (0, "2026-01-02"), (1, "2026-01-02")}
+    assert pooled[(0, "2026-01-01")] == (1.0, 10.0)
+    assert pooled[(1, "2026-01-02")] == (4.0, 40.0)
