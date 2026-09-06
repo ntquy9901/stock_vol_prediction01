@@ -171,6 +171,13 @@ def _pool(o, D):
     return RMR._pred_dict(o, D.y_te, D.tmask_te, D.d_te, D.N)
 
 
+def _cell_rows(pred, model, split, fold_idx, tickers):
+    """Flatten a _pred_dict {(node_idx, date): (y_true, y_pred)} into per-cell log rows for the diagnostic
+    dump (one row per ticker-day that was valid in that split), so train/val/test can be inspected offline."""
+    return [{"model": model, "split": split, "fold": int(fold_idx), "ticker": tickers[j], "date": d,
+             "y_true": float(yt), "y_pred": float(yp)} for (j, d), (yt, yp) in pred.items()]
+
+
 def _provenance(lookback, batch, epochs, qlike_floor, edge_top_k, limit_lock_mult):
     """Reproducibility block recorded in the result JSON so a run is reconstructable from the artifact."""
     return {"lookback": int(lookback), "batch": batch, "epochs": int(epochs),
@@ -178,8 +185,10 @@ def _provenance(lookback, batch, epochs, qlike_floor, edge_top_k, limit_lock_mul
 
 
 def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100",
-        lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA"), limit_lock_mult=2.0):  # pragma: no cover
+        lookback=pc.LOOKBACK, batch=None, models=("LSTM", "VolGA"), limit_lock_mult=2.0,
+        dump_cells=False):  # pragma: no cover
     t0 = time.time()
+    cell_rows = []                                              # per-ticker-per-day log (train/val/test) if dump_cells
     sel = tuple(models)                                          # GPU models to train (subset); HAR/HAR-X always
     files = _glob.glob(enriched_glob(market))
     keep = frozen_universe(files, lookback, horizon)
@@ -230,6 +239,14 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
             curves[m].append({"fold": fi, "train": [o["train_curve"] for o in fold_out[m]],
                               "val": [o["val_curve"] for o in fold_out[m]],
                               "best_epoch": [o["best_epoch"] for o in fold_out[m]]})
+        if dump_cells:                                        # per-ticker-per-day log for train/val/test (offline diagnosis)
+            for sname, sp in (("train", "tr"), ("val", "va"), ("test", "te")):
+                y = getattr(D, f"y_{sp}"); tm = getattr(D, f"tmask_{sp}"); dts = getattr(D, f"d_{sp}")
+                cell_rows += _cell_rows(RMR._pred_dict(har[sp], y, tm, dts, D.N), "HAR", sname, fi, panel.tickers)
+                cell_rows += _cell_rows(RMR._pred_dict(harx[sp], y, tm, dts, D.N), "HAR-X", sname, fi, panel.tickers)
+                for m in sel:
+                    ens = RMR._ens_split(fold_out[m], sname)
+                    cell_rows += _cell_rows(RMR._pred_dict(ens, y, tm, dts, D.N), m, sname, fi, panel.tickers)
         print(f"[edgehm] fold {fi + 1}/{len(folds)} done ({(time.time() - t0) / 60:.1f} min)", flush=True)
     for m in sel:
         pooled[m] = RMR._ens(pooled_nn[m])
@@ -264,6 +281,12 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(result, indent=2), encoding="utf-8")
         print(f"[edgehm] wrote {out}", flush=True)
+    if dump_cells and cell_rows:
+        import pandas as pd
+        cp = REPO / "results" / "edge_hmatched" / "cells" / f"cells_{market}_h{horizon}.parquet"
+        cp.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(cell_rows).to_parquet(cp, index=False)
+        print(f"[edgehm] wrote {len(cell_rows)} cell-log rows -> {cp}", flush=True)
     return result
 
 
@@ -281,10 +304,12 @@ def main():  # pragma: no cover
     ap.add_argument("--limit-lock-mult", type=float, default=2.0,   # drop test days with target <= mult*floor from robust QLIKE
                     help="robust QLIKE excludes limit-lock/zero-range days (target <= mult*qlike_floor)")
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--dump-cells", action="store_true",   # write per-ticker-per-day train/val/test preds to parquet
+                    help="dump per-ticker-per-day predictions (train/val/test) to results/edge_hmatched/cells/ for offline diagnosis")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     run(a.horizon, a.folds_target, a.epochs, a.smoke, a.out, a.n_seeds, a.market, a.lookback, a.batch,
-        _select_models(a.models), a.limit_lock_mult)
+        _select_models(a.models), a.limit_lock_mult, a.dump_cells)
 
 
 if __name__ == "__main__":  # pragma: no cover

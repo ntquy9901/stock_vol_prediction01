@@ -159,3 +159,6 @@ archive/data_processed_enriched/sp500/
 
 # reference paper PDFs (open-access; kept local, indexed by docs/papers/README.md)
 docs/papers/*.pdf
+
+# per-ticker-per-day diagnostic cell logs (large, regenerable via --dump-cells)
+results/edge_hmatched/cells/

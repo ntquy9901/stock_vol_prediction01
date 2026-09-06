@@ -100,6 +100,17 @@ def test_provenance_records_run_config():
     assert EH._provenance(22, None, 16, 1e-8, 5, 2.0)["batch"] is None   # batch=None (training_config default) preserved
 
 
+def test_cell_rows_flattens_pred_dict():
+    pred = {(0, "2026-01-01"): (1.0, 1.1), (2, "2026-01-02"): (3.0, 2.9)}
+    rows = EH._cell_rows(pred, "VolGA", "test", 3, ["AAA", "BBB", "CCC"])
+    assert len(rows) == 2
+    r = {(x["ticker"], x["date"]): x for x in rows}
+    assert r[("AAA", "2026-01-01")] == {"model": "VolGA", "split": "test", "fold": 3,
+                                        "ticker": "AAA", "date": "2026-01-01", "y_true": 1.0, "y_pred": 1.1}
+    assert r[("CCC", "2026-01-02")]["y_pred"] == 2.9   # node idx 2 -> tickers[2]
+    assert EH._cell_rows({}, "HAR", "train", 0, []) == []   # empty split -> no rows
+
+
 def test_progress_line_format():
     assert EH._progress("fold 1/7 start", 2.5) == "[edgehm] fold 1/7 start (2.5 min)"
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"
