@@ -67,3 +67,15 @@ def test_bh_fdr_count_skips_all_nan_column():
                   [0.5, 0.4, nan]])                       # column 2 all-NaN -> m==0 -> skipped
     npair = np.full((3, 3), 100.0)
     assert E._bh_fdr_count(R, npair, n=3, q=1.0) == 4     # 2 (col0) + 2 (col1) + 0 (col2)
+
+
+def test_bh_fdr_count_weak_corr_keeps_none():
+    nan = np.nan
+    R = np.array([[nan, 0.1], [0.1, nan]])                # weak r -> p~0.32 each
+    npair = np.full((2, 2), 100.0)
+    assert E._bh_fdr_count(R, npair, n=2, q=0.05) == 0    # none clears q=0.05 (below-empty branch)
+
+
+def test_plots_module_imports():
+    import volga_edge_sparsity_plots as P                 # covers module-level imports/constants
+    assert P.OUT_HTML.name.endswith(".html") and P.JSON.name.endswith(".json")
