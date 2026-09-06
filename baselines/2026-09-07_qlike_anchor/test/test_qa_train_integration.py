@@ -55,3 +55,8 @@ def test_train_deep_runs_all_configs(loss, anchor):
     te = QT.train_deep(D, _cfg(), seed=0, use_graph=(anchor == "none"), adj=adj,
                        loss=loss, anchor=anchor, harx=harx, clip=0.5, return_splits=False)
     assert te.shape == D.y_te.shape and np.all(te > 0)         # return_splits=False path
+    # P2 fix: curves record the training OBJECTIVE (finite, on the correct scale) -- qlike curves are the
+    # QLIKE loss (O(0.1-1)), mse curves are the tiny variance MSE (<1e-2); never NaN.
+    assert np.all(np.isfinite(out["val_curve"])) and np.all(np.isfinite(out["train_curve"]))
+    if loss == "qlike":
+        assert out["val_curve"][-1] > 1e-3                     # QLIKE scale, not the ~1e-6 MSE scale

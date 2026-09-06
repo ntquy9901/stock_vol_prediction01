@@ -150,8 +150,10 @@ def train_deep(D, cfg, seed, use_graph, adj, loss, anchor, harx=None, clip=0.5, 
                            ztr_true[idx] if anchor == "harx" else None)
             opt.zero_grad(); l.backward(); nn.utils.clip_grad_norm_(net.parameters(), cfg.grad_clip); opt.step()
         pva = infer("va"); vs = val_score(pva)
-        train_curve.append(split_objective(D.y_tr, infer("tr"), D.tmask_tr, loss, fl))   # curve == objective
-        val_curve.append(vs)
+        # in-sample-base train fit-evidence over ALL train cells; for anchor=harx this is NOT the OOF training
+        # objective (loss uses OOF-valid cells only) -- see result 'train_metrics_note'. val_curve IS the objective.
+        train_curve.append(split_objective(D.y_tr, infer("tr"), D.tmask_tr, loss, fl))
+        val_curve.append(vs)                             # val objective (== early-stop, matches the training loss)
         sched.step(vs)
         if vs < best - 1e-12:
             best = vs; best_state = {k: v.detach().cpu().clone() for k, v in net.state_dict().items()}; wait = 0; best_ep = ep + 1
