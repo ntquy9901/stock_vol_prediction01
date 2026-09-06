@@ -38,6 +38,13 @@ def test_classify_unknown_on_missing_metrics():
     assert v["status"] == "unknown"
 
 
+def test_looks_learned_detects_tree_models():
+    # tree learners (XGBoost/CatBoost/LightGBM) have capacity to overfit -> must be fit-evidence-checked
+    assert OC.looks_learned("XGB_direct") and OC.looks_learned("HAR-X+XGBresid")
+    assert OC.looks_learned("catboost") and OC.looks_learned("lightgbm")
+    assert not OC.looks_learned("HAR-X") and not OC.looks_learned("HAR")
+
+
 @pytest.mark.parametrize("split", ["train", "val", "test"])
 @pytest.mark.parametrize("bad", [float("nan"), float("inf")])
 def test_classify_nonfinite_metric_is_unknown_not_ok(split, bad):

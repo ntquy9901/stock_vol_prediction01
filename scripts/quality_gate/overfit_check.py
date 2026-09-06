@@ -19,7 +19,8 @@ _REQUIRED_METRIC_KEYS = ("qlike", "r2")
 LEARNED = ("LSTM", "LSTM_wGAT_vol2pk")   # default learned models (masked_rich); other drivers auto-detected by name
 # Name fragments that mark a LEARNED (capacity-to-overfit) model in any driver's metrics keys. Deterministic
 # baselines (HAR / HAR-X / GARCH / RW / EWMA) do not match and are exempt from the fit-evidence requirement.
-_LEARNED_PATTERNS = ("lstm", "volga", "gat", "gnn", "timesfm", "timesnet", "transformer", "patchtst", "mamba")
+_LEARNED_PATTERNS = ("lstm", "volga", "gat", "gnn", "timesfm", "timesnet", "transformer", "patchtst", "mamba",
+                     "xgb", "catboost", "lightgbm")
 
 
 def looks_learned(name: str) -> bool:

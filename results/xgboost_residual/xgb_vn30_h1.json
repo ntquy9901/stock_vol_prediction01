@@ -1,0 +1,844 @@
+{
+  "experiment": "xgboost_residual",
+  "market": "vn30",
+  "horizon": 1,
+  "design": "expanding-window walk-forward XGBoost residual-ratio (enriched panel, CPU)",
+  "data_source": "data/processed_enriched/vn30",
+  "git_commit": "0562f2d2e3e8dcf60becd979b65294a8ddbe4916",
+  "date": "2026-09-06",
+  "smoke": false,
+  "num_nodes": 33,
+  "n_folds": 7,
+  "lookback": 10,
+  "folds_target": 7,
+  "retrain_cadence_K": 56,
+  "seed": 42,
+  "device": "cpu",
+  "n_jobs": 4,
+  "feature_names": [
+    "pk_t",
+    "pk_lag1",
+    "pk_lag2",
+    "pk_lag3",
+    "pk_lag5",
+    "pk_lag10",
+    "pk_lag22",
+    "pk_rollmean5",
+    "pk_rollmean10",
+    "pk_rollmean22",
+    "pk_rollmean44",
+    "pk_rollstd22",
+    "pk_rollmed22",
+    "pk_mad22",
+    "pk_ewma5",
+    "pk_ewma22",
+    "pk_ratio22",
+    "pk_slope22",
+    "ret_t",
+    "absret_t",
+    "negret_ind",
+    "log_range_t",
+    "har_weekly",
+    "har_monthly",
+    "volume_zscore",
+    "market_pk",
+    "cs_mean_pk",
+    "cs_std_pk",
+    "cs_mad_pk",
+    "market_ret",
+    "frac_up",
+    "frac_down",
+    "market_vol_shock"
+  ],
+  "versions": {
+    "xgboost": "3.2.0",
+    "sklearn": "1.7.2",
+    "numpy": "2.2.6",
+    "python": "3.10.11"
+  },
+  "config": {
+    "pk_lags": [
+      1,
+      2,
+      3,
+      5,
+      10,
+      22
+    ],
+    "roll_means": [
+      5,
+      10,
+      22,
+      44
+    ],
+    "oof_splits": 5,
+    "oof_warmup_frac": 0.3,
+    "alpha_grid": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "clip_grid": [
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "grid_size": 5,
+    "edge_top_k": 5,
+    "qlike_floor": 1e-08,
+    "limit_lock_mult": 2.0
+  },
+  "edge_density_mean": 0.12797619047619047,
+  "metrics": {
+    "HAR": {
+      "mse": 2.1002289778017992e-07,
+      "rmse": 0.00045828255234099837,
+      "mae": 0.00025673490319612087,
+      "qlike": 0.47791889501911927,
+      "r2": 0.25714007913099435,
+      "n": 12936,
+      "qlike_nonlock": 0.44405168453151117,
+      "qlike_lockonly": 10.179745792702589,
+      "n_lock": 45,
+      "lock_qlike_share": 0.07409608105364887,
+      "qlike_excl_top_dates": 0.43407382922563587,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    },
+    "HAR-X": {
+      "mse": 2.0933351592030863e-07,
+      "rmse": 0.000457529797849614,
+      "mae": 0.00025473621471699465,
+      "qlike": 0.48009681047837055,
+      "r2": 0.25957845208596864,
+      "n": 12936,
+      "qlike_nonlock": 0.4455354620146467,
+      "qlike_lockonly": 10.380771100386466,
+      "n_lock": 45,
+      "lock_qlike_share": 0.07521653119532752,
+      "qlike_excl_top_dates": 0.4324428268505321,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    },
+    "XGB_direct": {
+      "mse": 2.3633340167286648e-07,
+      "rmse": 0.00048614133919351734,
+      "mae": 0.0002299137987188017,
+      "qlike": 0.766007558318213,
+      "r2": 0.16407870798373225,
+      "n": 12936,
+      "qlike_nonlock": 0.7356858681135644,
+      "qlike_lockonly": 9.452161078943254,
+      "n_lock": 45,
+      "lock_qlike_share": 0.04292502591424217,
+      "qlike_excl_top_dates": 0.5875244210095893,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    },
+    "XGB_resid_base": {
+      "mse": 2.0751987434099565e-07,
+      "rmse": 0.00045554349335820356,
+      "mae": 0.0002493167448120849,
+      "qlike": 0.4791624609213088,
+      "r2": 0.2659933794788061,
+      "n": 12936,
+      "qlike_nonlock": 0.4448811358756131,
+      "qlike_lockonly": 10.299619375678269,
+      "n_lock": 45,
+      "lock_qlike_share": 0.07477404856443695,
+      "qlike_excl_top_dates": 0.4283400755223703,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    },
+    "XGB_resid_market": {
+      "mse": 2.0677956829222668e-07,
+      "rmse": 0.00045473021484417184,
+      "mae": 0.00024913272613105215,
+      "qlike": 0.4786752069182767,
+      "r2": 0.2686118734555103,
+      "n": 12936,
+      "qlike_nonlock": 0.44443067762997673,
+      "qlike_lockonly": 10.288591363706603,
+      "n_lock": 45,
+      "lock_qlike_share": 0.07477001911847561,
+      "qlike_excl_top_dates": 0.42728105899331686,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    },
+    "XGB_resid_graph": {
+      "mse": 2.0702334737395536e-07,
+      "rmse": 0.0004549981839237992,
+      "mae": 0.0002491779601397667,
+      "qlike": 0.47906698493252803,
+      "r2": 0.2677496164765021,
+      "n": 12936,
+      "qlike_nonlock": 0.4447507691980659,
+      "qlike_lockonly": 10.309518918998101,
+      "n_lock": 45,
+      "lock_qlike_share": 0.07486083457642012,
+      "qlike_excl_top_dates": 0.4275011923882491,
+      "n_top_dates_excluded": 4,
+      "n_ticker_date": 12936,
+      "n_unique_dates": 392,
+      "n_tickers": 33
+    }
+  },
+  "win_rates_vs_harx": {
+    "XGB_direct": {
+      "ticker_win_rate": 0.030303030303030304,
+      "date_win_rate": 0.41581632653061223
+    },
+    "XGB_resid_base": {
+      "ticker_win_rate": 0.42424242424242425,
+      "date_win_rate": 0.29846938775510207
+    },
+    "XGB_resid_market": {
+      "ticker_win_rate": 0.6060606060606061,
+      "date_win_rate": 0.29591836734693877
+    },
+    "XGB_resid_graph": {
+      "ticker_win_rate": 0.5151515151515151,
+      "date_win_rate": 0.29846938775510207
+    }
+  },
+  "dm_date_clustered": {
+    "XGB_resid_base_vs_HAR-X": {
+      "qlike": {
+        "p_value": 0.7906457587554808,
+        "mean_diff": -0.0009343495570617458,
+        "favors": "A"
+      },
+      "se": {
+        "p_value": 0.1220403737961343,
+        "mean_diff": -1.8136415793129762e-09,
+        "favors": "A"
+      },
+      "ae": {
+        "p_value": 4.989902173722052e-15,
+        "mean_diff": -5.419469904909737e-06,
+        "favors": "A"
+      }
+    },
+    "XGB_direct_vs_HAR-X": {
+      "qlike": {
+        "p_value": 0.02198016887041386,
+        "mean_diff": 0.2859107478398424,
+        "favors": "B"
+      },
+      "se": {
+        "p_value": 0.00020876747316972866,
+        "mean_diff": 2.6999885752557893e-08,
+        "favors": "B"
+      },
+      "ae": {
+        "p_value": 8.942545993263354e-09,
+        "mean_diff": -2.4822415998192982e-05,
+        "favors": "A"
+      }
+    },
+    "XGB_resid_market_vs_base": {
+      "qlike": {
+        "p_value": 0.531247356387903,
+        "mean_diff": -0.00048725400303219126,
+        "favors": "A"
+      },
+      "se": {
+        "p_value": 0.178630621102119,
+        "mean_diff": -7.403060487689503e-10,
+        "favors": "A"
+      },
+      "ae": {
+        "p_value": 0.20341809007025452,
+        "mean_diff": -1.8401868103280837e-07,
+        "favors": "A"
+      }
+    },
+    "XGB_resid_graph_vs_market": {
+      "qlike": {
+        "p_value": 0.05042227035906759,
+        "mean_diff": 0.00039177801425137587,
+        "favors": "B"
+      },
+      "se": {
+        "p_value": 0.3101299992983862,
+        "mean_diff": 2.437790817286676e-10,
+        "favors": "B"
+      },
+      "ae": {
+        "p_value": 0.6164853150656665,
+        "mean_diff": 4.523400871453158e-08,
+        "favors": "B"
+      }
+    }
+  },
+  "train_metrics": {
+    "XGB_direct": {
+      "mse": 3.226749162417983e-07,
+      "qlike": 1.060777892970417,
+      "r2": 0.13981522637057262,
+      "n": 561078
+    },
+    "XGB_resid_base": {
+      "mse": 3.017795670630714e-07,
+      "qlike": 0.5404917886676079,
+      "r2": 0.22944004394193845,
+      "n": 461118
+    },
+    "XGB_resid_market": {
+      "mse": 3.009918428604067e-07,
+      "qlike": 0.5393442793441471,
+      "r2": 0.231429098357959,
+      "n": 461118
+    },
+    "XGB_resid_graph": {
+      "mse": 3.0134737430107885e-07,
+      "qlike": 0.5400679223636782,
+      "r2": 0.23053886677867916,
+      "n": 461118
+    }
+  },
+  "val_metrics": {
+    "XGB_direct": {
+      "mse": 2.477360664356971e-07,
+      "qlike": 0.7764694965524743,
+      "r2": 0.11289799293359873,
+      "n": 15246
+    },
+    "XGB_resid_base": {
+      "mse": 2.211737563231066e-07,
+      "qlike": 0.5128680352800878,
+      "r2": 0.19519867780339056,
+      "n": 15246
+    },
+    "XGB_resid_market": {
+      "mse": 2.2089307002712544e-07,
+      "qlike": 0.5126889152973761,
+      "r2": 0.1956731947622697,
+      "n": 15246
+    },
+    "XGB_resid_graph": {
+      "mse": 2.2094279854911481e-07,
+      "qlike": 0.5126785659281213,
+      "r2": 0.19562099786090434,
+      "n": 15246
+    }
+  },
+  "fit_diagnostics": {
+    "XGB_direct": {
+      "status": "ok",
+      "val_test_qlike_gap_rel": -0.0135,
+      "train_test_r2_drop": -0.0243,
+      "reasons": []
+    },
+    "XGB_resid_base": {
+      "status": "ok",
+      "val_test_qlike_gap_rel": -0.0657,
+      "train_test_r2_drop": -0.0366,
+      "reasons": []
+    },
+    "XGB_resid_market": {
+      "status": "ok",
+      "val_test_qlike_gap_rel": -0.0663,
+      "train_test_r2_drop": -0.0372,
+      "reasons": []
+    },
+    "XGB_resid_graph": {
+      "status": "ok",
+      "val_test_qlike_gap_rel": -0.0656,
+      "train_test_r2_drop": -0.0372,
+      "reasons": []
+    }
+  },
+  "selections_per_fold": [
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "best_iteration": 254,
+        "val_qlike": 0.5064135180564188
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 935,
+        "val_qlike": 0.4142896043608882
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 810,
+        "val_qlike": 0.4145668545602655
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 607,
+        "val_qlike": 0.41418928729415894
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "best_iteration": 139,
+        "val_qlike": 0.4744681334947557
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 939,
+        "val_qlike": 0.42831169391443824
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 702,
+        "val_qlike": 0.42851184306500345
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 1.0,
+        "best_iteration": 382,
+        "val_qlike": 0.42849013778049855
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "best_iteration": 94,
+        "val_qlike": 1.4001450471368504
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 2,
+        "val_qlike": 0.7541017486322088
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 2,
+        "val_qlike": 0.7541017486322088
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 0,
+        "val_qlike": 0.7541017486322088
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "best_iteration": 31,
+        "val_qlike": 1.4126771670630778
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 10,
+        "val_qlike": 0.77669426705059
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 4,
+        "val_qlike": 0.77669426705059
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 0,
+        "val_qlike": 0.77669426705059
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "best_iteration": 796,
+        "val_qlike": 0.6301302092123402
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 550,
+        "val_qlike": 0.4179460728099332
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 175,
+        "val_qlike": 0.4179460728099332
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 259,
+        "val_qlike": 0.4179460728099332
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "best_iteration": 655,
+        "val_qlike": 0.5548251575555564
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 793,
+        "val_qlike": 0.4243293008851531
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 275,
+        "val_qlike": 0.4243293008851531
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 2,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.0,
+        "clip": 0.25,
+        "best_iteration": 248,
+        "val_qlike": 0.4243293008851531
+      }
+    },
+    {
+      "XGB_direct": {
+        "params": {
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "best_iteration": 262,
+        "val_qlike": 0.45662724334832117
+      },
+      "XGB_resid_base": {
+        "params": {
+          "max_depth": 6,
+          "learning_rate": 0.01,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 1.0
+        },
+        "alpha": 0.25,
+        "clip": 0.75,
+        "best_iteration": 73,
+        "val_qlike": 0.37440355930740354
+      },
+      "XGB_resid_market": {
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.05,
+          "min_child_weight": 5,
+          "subsample": 0.9,
+          "colsample_bytree": 0.9,
+          "reg_lambda": 5.0,
+          "reg_alpha": 0.0
+        },
+        "alpha": 0.25,
+        "clip": 0.75,
+        "best_iteration": 74,
+        "val_qlike": 0.37267232007847917
+      },
+      "XGB_resid_graph": {
+        "params": {
+          "max_depth": 3,
+          "learning_rate": 0.03,
+          "min_child_weight": 10,
+          "subsample": 0.7,
+          "colsample_bytree": 0.7,
+          "reg_lambda": 10.0,
+          "reg_alpha": 0.1
+        },
+        "alpha": 0.25,
+        "clip": 0.75,
+        "best_iteration": 102,
+        "val_qlike": 0.37299914704430653
+      }
+    }
+  ],
+  "shock_diagnostics": {
+    "XGB_resid_graph": {
+      "month": "2025-04",
+      "n_ticker_date": 660,
+      "n_dates": 20,
+      "n_lock_cells": 37,
+      "lock_fraction": 0.05606060606060606,
+      "mean_target": 0.0006959730340431363,
+      "mean_forecast_model": 0.0005336059116268858,
+      "mean_forecast_harx": 0.000562752169162491,
+      "qlike_model_all": 1.6146602591819188,
+      "qlike_harx_all": 1.5814870676308705,
+      "qlike_model_nonlock": 1.092026110908758,
+      "qlike_harx_nonlock": 1.0521302853382877,
+      "underprediction_rate_model": 0.42272727272727273
+    },
+    "HAR-X": {
+      "month": "2025-04",
+      "n_ticker_date": 660,
+      "n_dates": 20,
+      "n_lock_cells": 37,
+      "lock_fraction": 0.05606060606060606,
+      "mean_target": 0.0006959730340431363,
+      "mean_forecast_model": 0.000562752169162491,
+      "mean_forecast_harx": 0.000562752169162491,
+      "qlike_model_all": 1.5814870676308705,
+      "qlike_harx_all": 1.5814870676308705,
+      "qlike_model_nonlock": 1.0521302853382877,
+      "qlike_harx_nonlock": 1.0521302853382877,
+      "underprediction_rate_model": 0.4015151515151515
+    }
+  },
+  "reference_models": {
+    "source": "results\\edge_hmatched\\edgehm_vn30_h1.json",
+    "VolGA_qlike": 0.4739500195893601,
+    "LSTM_qlike": 0.47874805450490765,
+    "HAR-X_qlike": 0.48009681047837055,
+    "dm_VolGA_vs_HARX": {
+      "qlike": {
+        "p_value": 0.2803112351172921,
+        "mean_diff": -0.006146790889010472,
+        "favors": "A"
+      },
+      "se": {
+        "p_value": 0.5759931557713025,
+        "mean_diff": -1.330195743573709e-09,
+        "favors": "A"
+      },
+      "ae": {
+        "p_value": 0.16187575774527363,
+        "mean_diff": -1.755660650215709e-06,
+        "favors": "A"
+      }
+    }
+  },
+  "n_lock_total": 45,
+  "seconds": 328.2
+}
