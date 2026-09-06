@@ -1,8 +1,8 @@
 % vn30 Diebold-Mariano (date-clustered) QLIKE:
-% h1: VolGA_vs_LSTM: p=0.122 (B); VolGA_vs_HAR-X: p=0.009 (B)
-% h5: VolGA_vs_LSTM: p=0.124 (B); VolGA_vs_HAR-X: p=0.235 (B)
-% h10: VolGA_vs_LSTM: p=0.351 (B); VolGA_vs_HAR-X: p=0.787 (B)
-% h22: VolGA_vs_LSTM: p=0.774 (A); VolGA_vs_HAR-X: p=0.537 (B)
+% h1: VolGA_vs_LSTM: p=0.201 (A); VolGA_vs_HAR-X: p=0.280 (A)
+% h5: VolGA_vs_LSTM: p=0.156 (A); VolGA_vs_HAR-X: p=0.652 (B)
+% h10: VolGA_vs_LSTM: p=0.691 (B); VolGA_vs_HAR-X: p=0.843 (A)
+% h22: VolGA_vs_LSTM: p=0.595 (B); VolGA_vs_HAR-X: p=0.756 (B)
 
 % vn30 fit verdicts (train->val->test):
 % h1: LSTM=ok, VolGA=ok
@@ -16,9 +16,9 @@
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
 HAR & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
-HAR-X & 0.0000 & 0.0000 & 0.0000 & \textbf{0.0000} \\
-LSTM & 0.0000 & 0.0000 & \textbf{0.0000} & 0.0000 \\
-VolGA & \textbf{0.0000} & \textbf{0.0000} & 0.0000 & 0.0000 \\
+HAR-X & 0.0000 & \textbf{0.0000} & \textbf{0.0000} & \textbf{0.0000} \\
+LSTM & \textbf{0.0000} & 0.0000 & 0.0000 & 0.0000 \\
+VolGA & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
 \bottomrule
 \end{tabular}
 
@@ -27,10 +27,10 @@ VolGA & \textbf{0.0000} & \textbf{0.0000} & 0.0000 & 0.0000 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & 0.0004 & 0.0005 & 0.0005 & 0.0005 \\
-HAR-X & 0.0004 & 0.0005 & 0.0005 & \textbf{0.0005} \\
-LSTM & 0.0004 & 0.0005 & \textbf{0.0005} & 0.0005 \\
-VolGA & \textbf{0.0004} & \textbf{0.0005} & 0.0005 & 0.0005 \\
+HAR & 0.0005 & 0.0005 & 0.0005 & 0.0005 \\
+HAR-X & 0.0005 & \textbf{0.0005} & \textbf{0.0005} & \textbf{0.0005} \\
+LSTM & \textbf{0.0005} & 0.0005 & 0.0005 & 0.0005 \\
+VolGA & 0.0005 & 0.0005 & 0.0005 & 0.0005 \\
 \bottomrule
 \end{tabular}
 
@@ -39,10 +39,10 @@ VolGA & \textbf{0.0004} & \textbf{0.0005} & 0.0005 & 0.0005 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & 0.0002 & 0.0003 & 0.0003 & 0.0003 \\
-HAR-X & 0.0002 & 0.0003 & 0.0003 & \textbf{0.0003} \\
-LSTM & 0.0002 & 0.0003 & 0.0003 & 0.0003 \\
-VolGA & \textbf{0.0002} & \textbf{0.0003} & \textbf{0.0003} & 0.0003 \\
+HAR & 0.0003 & 0.0003 & 0.0003 & 0.0003 \\
+HAR-X & 0.0003 & \textbf{0.0003} & 0.0003 & \textbf{0.0003} \\
+LSTM & 0.0003 & 0.0003 & 0.0003 & 0.0003 \\
+VolGA & \textbf{0.0003} & 0.0003 & \textbf{0.0003} & 0.0003 \\
 \bottomrule
 \end{tabular}
 
@@ -51,10 +51,22 @@ VolGA & \textbf{0.0002} & \textbf{0.0003} & \textbf{0.0003} & 0.0003 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & \textbf{0.4954} & 0.5938 & 0.6405 & 0.7001 \\
-HAR-X & 0.4967 & \textbf{0.5929} & 0.6385 & \textbf{0.6976} \\
-LSTM & 0.5260 & 0.6127 & \textbf{0.6371} & 0.7121 \\
-VolGA & 0.5363 & 0.6526 & 0.6441 & 0.7106 \\
+HAR & 0.4779 & 0.5609 & 0.6106 & 0.6813 \\
+HAR-X & 0.4801 & \textbf{0.5602} & 0.6091 & \textbf{0.6782} \\
+LSTM & 0.4787 & 0.5738 & \textbf{0.6048} & 0.6832 \\
+VolGA & \textbf{0.4740} & 0.5672 & 0.6061 & 0.6882 \\
+\bottomrule
+\end{tabular}
+
+% vn30: QLIKE_ROBUST by horizon (best per column bold). Source: edgehm_vn30_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.4441 & 0.5303 & 0.5785 & 0.6503 \\
+HAR-X & 0.4455 & \textbf{0.5297} & 0.5770 & \textbf{0.6471} \\
+LSTM & 0.4443 & 0.5438 & \textbf{0.5728} & 0.6523 \\
+VolGA & \textbf{0.4396} & 0.5373 & 0.5742 & 0.6577 \\
 \bottomrule
 \end{tabular}
 
@@ -63,9 +75,9 @@ VolGA & 0.5363 & 0.6526 & 0.6441 & 0.7106 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & 0.2272 & 0.1455 & 0.1067 & 0.0687 \\
-HAR-X & 0.2310 & 0.1514 & 0.1084 & \textbf{0.0704} \\
-LSTM & 0.2451 & 0.1547 & \textbf{0.1158} & 0.0440 \\
-VolGA & \textbf{0.2463} & \textbf{0.1618} & 0.1154 & 0.0503 \\
+HAR & 0.2571 & 0.1708 & 0.1193 & 0.0742 \\
+HAR-X & 0.2596 & \textbf{0.1749} & \textbf{0.1204} & \textbf{0.0763} \\
+LSTM & \textbf{0.2646} & 0.1692 & 0.1172 & 0.0587 \\
+VolGA & 0.2643 & 0.1699 & 0.1178 & 0.0597 \\
 \bottomrule
 \end{tabular}

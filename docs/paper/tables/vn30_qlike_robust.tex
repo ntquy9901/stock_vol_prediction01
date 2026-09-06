@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{Robust QLIKE by horizon on VN30: QLIKE recomputed after excluding limit-lock / floored-target days (lower is better; best per column in bold).}
+\label{tab:qlike_robust_vn30}
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & 0.4441 & 0.5303 & 0.5785 & 0.6503 \\
+HAR-X & 0.4455 & \textbf{0.5297} & 0.5770 & \textbf{0.6471} \\
+LSTM & 0.4443 & 0.5438 & \textbf{0.5728} & 0.6523 \\
+VolGA & \textbf{0.4396} & 0.5373 & 0.5742 & 0.6577 \\
+\bottomrule
+\end{tabular}
+\end{table}

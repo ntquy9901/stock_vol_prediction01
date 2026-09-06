@@ -1,8 +1,8 @@
 % sp500_clean Diebold-Mariano (date-clustered) QLIKE:
 % h1: VolGA_vs_LSTM: p=0.000 (A); VolGA_vs_HAR-X: p=0.000 (B)
-% h5: VolGA_vs_LSTM: p=0.845 (A); VolGA_vs_HAR-X: p=0.000 (B)
-% h10: VolGA_vs_LSTM: p=0.001 (A); VolGA_vs_HAR-X: p=0.000 (B)
-% h22: VolGA_vs_LSTM: p=0.047 (A); VolGA_vs_HAR-X: p=0.001 (B)
+% h5: VolGA_vs_LSTM: p=0.117 (A); VolGA_vs_HAR-X: p=0.000 (B)
+% h10: VolGA_vs_LSTM: p=0.048 (A); VolGA_vs_HAR-X: p=0.000 (B)
+% h22: VolGA_vs_LSTM: p=0.677 (A); VolGA_vs_HAR-X: p=0.002 (B)
 
 % sp500_clean fit verdicts (train->val->test):
 % h1: LSTM=ok, VolGA=ok
@@ -17,8 +17,8 @@ Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
 HAR & 0.0000 & \textbf{0.0000} & \textbf{0.0000} & 0.0000 \\
 HAR-X & 0.0000 & 0.0000 & 0.0000 & \textbf{0.0000} \\
-LSTM & \textbf{0.0000} & 0.0000 & 0.0000 & 0.0000 \\
-VolGA & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
+LSTM & 0.0000 & 0.0000 & 0.0000 & 0.0000 \\
+VolGA & \textbf{0.0000} & 0.0000 & 0.0000 & 0.0000 \\
 \bottomrule
 \end{tabular}
 
@@ -29,8 +29,8 @@ Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
 HAR & 0.0008 & \textbf{0.0008} & \textbf{0.0008} & 0.0008 \\
 HAR-X & 0.0008 & 0.0008 & 0.0008 & \textbf{0.0008} \\
-LSTM & \textbf{0.0008} & 0.0009 & 0.0009 & 0.0009 \\
-VolGA & 0.0008 & 0.0009 & 0.0009 & 0.0009 \\
+LSTM & 0.0008 & 0.0008 & 0.0009 & 0.0008 \\
+VolGA & \textbf{0.0008} & 0.0008 & 0.0009 & 0.0008 \\
 \bottomrule
 \end{tabular}
 
@@ -40,9 +40,9 @@ VolGA & 0.0008 & 0.0009 & 0.0009 & 0.0009 \\
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
 HAR & 0.0002 & 0.0002 & 0.0003 & 0.0003 \\
-HAR-X & 0.0002 & 0.0002 & 0.0002 & 0.0003 \\
-LSTM & 0.0002 & 0.0002 & 0.0003 & \textbf{0.0003} \\
-VolGA & \textbf{0.0002} & \textbf{0.0002} & \textbf{0.0002} & 0.0003 \\
+HAR-X & 0.0002 & 0.0002 & 0.0003 & 0.0003 \\
+LSTM & 0.0002 & 0.0002 & \textbf{0.0002} & 0.0003 \\
+VolGA & \textbf{0.0002} & \textbf{0.0002} & 0.0002 & \textbf{0.0002} \\
 \bottomrule
 \end{tabular}
 
@@ -51,10 +51,22 @@ VolGA & \textbf{0.0002} & \textbf{0.0002} & \textbf{0.0002} & 0.0003 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & \textbf{0.3897} & 0.4607 & \textbf{0.4778} & 0.4987 \\
-HAR-X & 0.4062 & \textbf{0.4552} & 0.4797 & \textbf{0.4955} \\
-LSTM & 0.6314 & 0.5901 & 0.7232 & 0.6762 \\
-VolGA & 0.5485 & 0.5872 & 0.6404 & 0.6317 \\
+HAR & \textbf{0.3895} & 0.4605 & \textbf{0.4781} & 0.4993 \\
+HAR-X & 0.4061 & \textbf{0.4550} & 0.4797 & \textbf{0.4959} \\
+LSTM & 0.6141 & 0.5640 & 0.6821 & 0.6066 \\
+VolGA & 0.5492 & 0.5531 & 0.6375 & 0.6026 \\
+\bottomrule
+\end{tabular}
+
+% sp500_clean: QLIKE_ROBUST by horizon (best per column bold). Source: edgehm_sp500_clean_h*.json
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & \textbf{0.3895} & 0.4605 & \textbf{0.4781} & 0.4993 \\
+HAR-X & 0.4061 & \textbf{0.4550} & 0.4797 & \textbf{0.4959} \\
+LSTM & 0.6141 & 0.5640 & 0.6821 & 0.6066 \\
+VolGA & 0.5492 & 0.5531 & 0.6375 & 0.6026 \\
 \bottomrule
 \end{tabular}
 
@@ -63,9 +75,9 @@ VolGA & 0.5485 & 0.5872 & 0.6404 & 0.6317 \\
 \toprule
 Model & $h1$ & $h5$ & $h10$ & $h22$ \\
 \midrule
-HAR & 0.0966 & \textbf{0.0539} & \textbf{0.0506} & 0.0477 \\
-HAR-X & 0.1129 & 0.0492 & 0.0462 & \textbf{0.0479} \\
-LSTM & \textbf{0.1442} & 0.0161 & -0.0112 & 0.0061 \\
-VolGA & 0.1436 & 0.0233 & 0.0110 & -0.0241 \\
+HAR & 0.0967 & \textbf{0.0539} & \textbf{0.0505} & 0.0477 \\
+HAR-X & 0.1130 & 0.0492 & 0.0460 & \textbf{0.0479} \\
+LSTM & 0.1451 & 0.0387 & 0.0190 & 0.0436 \\
+VolGA & \textbf{0.1460} & 0.0365 & 0.0162 & 0.0445 \\
 \bottomrule
 \end{tabular}
