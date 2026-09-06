@@ -108,6 +108,9 @@ def test_full_metrics_table_has_all_metrics_and_bolds_best():
     assert "\\textbf{0.4000}" in tex                                 # VolGA best QLIKE bold
     assert "S\\&P 500" in tex
     assert tex.count("{") == tex.count("}")                          # brace-balanced (guards the caption bug)
+    r = _res(); del r["metrics"]["LSTM"]                             # a model absent -> its row is all '--'
+    tex2 = B.latex_full_metrics_table("vn30", {1: r}, [1])
+    assert "LSTM & -- & -- & -- & -- & --" in tex2
 
 
 def test_dm_and_fit_summary():
