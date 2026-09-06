@@ -202,6 +202,13 @@ the linear HAR-X attains the lowest QLIKE, and no pairwise difference reaches si
 \textit{Takeaway.} On the small VN30 panel VolGA edges HAR-X on daily QLIKE without significance, while HAR-X
 leads at the longer horizons.
 
+\subsection{Full metrics}
+Tables~\ref{tab:full_sp500_clean}, \ref{tab:full_vn100}, and \ref{tab:full_vn30} report all five metrics
+(MSE, RMSE, MAE, QLIKE, and $R^2$) by horizon for every model on each market.
+\input{tables/sp500_clean_full.tex}
+\input{tables/vn100_full.tex}
+\input{tables/vn30_full.tex}
+
 \section{Generalization: over/under-fit evidence}\label{sec:overfit}
 Every learned model generalizes: the fit verdict is \emph{ok} for both LSTM and VolGA at all four horizons on
 all three markets (S\&P 500, VN100, VN30), from the train-to-test QLIKE and R\textsuperscript{2} gaps that

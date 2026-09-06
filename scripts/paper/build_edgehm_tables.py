@@ -50,6 +50,48 @@ def _has_metric(by_h, metric, models=MODELS):
                for h in by_h for m in models)
 
 
+FULL_METRICS = ("mse", "rmse", "mae", "qlike", "r2")
+# MSE on the variance target is ~1e-4; scale by 1e4 so it reads at 3 decimals (avoids e-notation in the paper).
+_METRIC_LABEL = {"mse": "MSE$\\times10^{4}$", "rmse": "RMSE", "mae": "MAE", "qlike": "QLIKE", "r2": "$R^2$"}
+_METRIC_DEC = {"mse": 3, "rmse": 4, "mae": 4, "qlike": 4, "r2": 3}
+_METRIC_SCALE = {"mse": 1e4, "rmse": 1.0, "mae": 1.0, "qlike": 1.0, "r2": 1.0}
+
+
+def _fmt_metric(v, metric):
+    """Format one metric value: MSE scaled by 1e4, per-metric decimals; None -> '--'."""
+    return "--" if v is None else f"{v * _METRIC_SCALE[metric]:.{_METRIC_DEC[metric]}f}"
+
+
+def latex_full_metrics_table(market: str, by_h: dict, horizons, models=MODELS) -> str:
+    """A \\input-ready table FLOAT with ALL metrics (MSE/RMSE/MAE/QLIKE/R2), grouped by horizon; best per
+    column per horizon in bold. Rows = models under each horizon block."""
+    mlabel = MARKET_LABEL.get(market, market)
+    hs = [h for h in horizons if h in by_h]
+    ncol = len(FULL_METRICS)
+    header = " & ".join(["Model"] + [_METRIC_LABEL[m] for m in FULL_METRICS]) + " \\\\"
+    lines = ["\\begin{table}[t]", "\\centering",
+             (f"\\caption{{All metrics by horizon on {mlabel} (MSE scaled by $10^{{4}}$; best per column within "
+              f"each horizon in bold; lower is better except $R^2$).}}"),
+             f"\\label{{tab:full_{market}}}",
+             "\\begin{tabular}{l" + "r" * ncol + "}", "\\toprule", header]
+    for h in hs:
+        lines.append("\\midrule")
+        lines.append(f"\\multicolumn{{{ncol + 1}}}{{l}}{{\\textit{{$h{h}$}}}} \\\\")
+        for m in models:
+            mt = by_h[h].get("metrics", {}).get(m)
+            cells = [m]
+            for met in FULL_METRICS:
+                v = None if mt is None else mt.get(met)
+                if v is None:
+                    cells.append("--"); continue
+                best = _best_value(by_h, h, met, models)
+                s = _fmt_metric(v, met)
+                cells.append(f"\\textbf{{{s}}}" if best is not None and abs(v - best) < 1e-12 else s)
+            lines.append(" & ".join(cells) + " \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}"]
+    return "\n".join(lines) + "\n"
+
+
 def latex_metric_table(market: str, by_h: dict, horizons, models=MODELS, metric="qlike") -> str:
     """A booktabs table for one metric: rows = models, columns = horizons; best per column in bold."""
     hs = [h for h in horizons if h in by_h]
@@ -133,6 +175,7 @@ def main(argv=None):  # pragma: no cover - entry driver (file I/O)
         blocks += [latex_metric_table(market, by_h, a.horizons, metric=mt) for mt in present]
         (OUT / f"{market}_tables.tex").write_text("\n".join(blocks), encoding="utf-8")
         (OUT / f"{market}_qlike.tex").write_text(latex_qlike_float(market, by_h, a.horizons), encoding="utf-8")
+        (OUT / f"{market}_full.tex").write_text(latex_full_metrics_table(market, by_h, a.horizons), encoding="utf-8")
         extra = ""
         if _has_metric(by_h, "qlike_robust"):
             mlabel = MARKET_LABEL.get(market, market)

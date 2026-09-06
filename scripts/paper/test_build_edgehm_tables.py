@@ -91,6 +91,25 @@ def test_latex_qlike_float_robust_label_and_caption():
     assert "\\textbf{0.3000}" in tex
 
 
+def test_fmt_metric_scales_mse_only():
+    assert B._fmt_metric(1.9e-4, "mse") == "1.900"        # scaled by 1e4, 3 decimals
+    assert B._fmt_metric(0.0134, "rmse") == "0.0134"      # 4 decimals, unscaled
+    assert B._fmt_metric(0.38, "r2") == "0.380"           # 3 decimals
+    assert B._fmt_metric(None, "qlike") == "--"
+
+
+def test_full_metrics_table_has_all_metrics_and_bolds_best():
+    by_h = {1: _res(qlike_volga=0.40)}
+    tex = B.latex_full_metrics_table("sp500_clean", by_h, [1, 5])
+    assert tex.startswith("\\begin{table}") and "\\label{tab:full_sp500_clean}" in tex
+    for lab in ("MSE$\\times10^{4}$", "RMSE", "MAE", "QLIKE", "$R^2$"):
+        assert lab in tex
+    assert "\\textit{$h1$}" in tex and "\\textit{$h5$}" not in tex   # only present horizon blocks
+    assert "\\textbf{0.4000}" in tex                                 # VolGA best QLIKE bold
+    assert "S\\&P 500" in tex
+    assert tex.count("{") == tex.count("}")                          # brace-balanced (guards the caption bug)
+
+
 def test_dm_and_fit_summary():
     by_h = {1: _res()}
     dm = B.dm_summary("vn100", by_h, [1, 5])

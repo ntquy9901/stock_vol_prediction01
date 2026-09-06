@@ -1,0 +1,34 @@
+\begin{table}[t]
+\centering
+\caption{All metrics by horizon on S\&P 500 (MSE scaled by $10^{4}$; best per column within each horizon in bold; lower is better except $R^2$).}
+\label{tab:full_sp500_clean}
+\begin{tabular}{lrrrrr}
+\toprule
+Model & MSE$\times10^{4}$ & RMSE & MAE & QLIKE & $R^2$ \\
+\midrule
+\multicolumn{6}{l}{\textit{$h1$}} \\
+HAR & 0.007 & 0.0008 & 0.0002 & \textbf{0.3895} & 0.097 \\
+HAR-X & 0.007 & 0.0008 & 0.0002 & 0.4061 & 0.113 \\
+LSTM & 0.006 & 0.0008 & 0.0002 & 0.6141 & 0.145 \\
+VolGA & \textbf{0.006} & \textbf{0.0008} & \textbf{0.0002} & 0.5492 & \textbf{0.146} \\
+\midrule
+\multicolumn{6}{l}{\textit{$h5$}} \\
+HAR & \textbf{0.007} & \textbf{0.0008} & 0.0002 & 0.4605 & \textbf{0.054} \\
+HAR-X & 0.007 & 0.0008 & 0.0002 & \textbf{0.4550} & 0.049 \\
+LSTM & 0.007 & 0.0008 & 0.0002 & 0.5640 & 0.039 \\
+VolGA & 0.007 & 0.0008 & \textbf{0.0002} & 0.5531 & 0.037 \\
+\midrule
+\multicolumn{6}{l}{\textit{$h10$}} \\
+HAR & \textbf{0.007} & \textbf{0.0008} & 0.0003 & \textbf{0.4781} & \textbf{0.050} \\
+HAR-X & 0.007 & 0.0008 & 0.0003 & 0.4797 & 0.046 \\
+LSTM & 0.007 & 0.0009 & \textbf{0.0002} & 0.6821 & 0.019 \\
+VolGA & 0.007 & 0.0009 & 0.0002 & 0.6375 & 0.016 \\
+\midrule
+\multicolumn{6}{l}{\textit{$h22$}} \\
+HAR & 0.007 & 0.0008 & 0.0003 & 0.4993 & 0.048 \\
+HAR-X & \textbf{0.007} & \textbf{0.0008} & 0.0003 & \textbf{0.4959} & \textbf{0.048} \\
+LSTM & 0.007 & 0.0008 & 0.0003 & 0.6066 & 0.044 \\
+VolGA & 0.007 & 0.0008 & \textbf{0.0002} & 0.6026 & 0.045 \\
+\bottomrule
+\end{tabular}
+\end{table}
