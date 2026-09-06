@@ -111,6 +111,47 @@ def test_cell_rows_flattens_pred_dict():
     assert EH._cell_rows({}, "HAR", "train", 0, []) == []   # empty split -> no rows
 
 
+def test_split_dates_reads_target_dates():
+    from types import SimpleNamespace
+    panel = SimpleNamespace(target_dates=np.array(["2025-01-01", "2025-01-02", "2025-01-03", "2025-01-04"],
+                                                  dtype="datetime64[D]"))
+    assert EH._split_dates(panel, slice(0, 2)) == ["2025-01-01", "2025-01-02"]
+    assert EH._split_dates(panel, slice(2, 4)) == ["2025-01-03", "2025-01-04"]
+
+
+def test_fold_cell_rows_all_splits_no_dtr_attr():
+    # Regression for the --dump-cells bug: MaskedRichData exposes NO d_tr/d_va/d_te; dates must come from
+    # panel.target_dates. This mock D deliberately lacks d_* to catch any getattr(D,'d_tr') regression.
+    from types import SimpleNamespace
+    ones = np.ones((2, 2), dtype=bool)
+    D = SimpleNamespace(N=2,
+                        y_tr=np.array([[1.0, 2.0], [3.0, 4.0]]), tmask_tr=ones,
+                        y_va=np.array([[5.0, 6.0], [7.0, 8.0]]), tmask_va=ones,
+                        y_te=np.array([[9.0, 10.0], [11.0, 12.0]]), tmask_te=ones)
+    panel = SimpleNamespace(
+        tickers=["AAA", "BBB"],
+        target_dates=np.array(["2025-01-01", "2025-01-02", "2025-01-03",
+                               "2025-01-04", "2025-01-05", "2025-01-06"], dtype="datetime64[D]"))
+    fold = SimpleNamespace(train=slice(0, 2), val=slice(2, 4), forecast=slice(4, 6))
+    har = {"tr": np.full((2, 2), 0.1), "va": np.full((2, 2), 0.2), "te": np.full((2, 2), 0.3)}
+    harx = {"tr": np.full((2, 2), 0.4), "va": np.full((2, 2), 0.5), "te": np.full((2, 2), 0.6)}
+    # deep model "VolGA": two seeds, ensembled -> mean; keys train/val/test
+    fold_out = {"VolGA": [{"train": np.full((2, 2), 1.0), "val": np.full((2, 2), 2.0), "test": np.full((2, 2), 3.0)},
+                          {"train": np.full((2, 2), 3.0), "val": np.full((2, 2), 4.0), "test": np.full((2, 2), 5.0)}]}
+    rows = EH._fold_cell_rows(D, panel, fold, fold_out, har, harx, ("VolGA",), fi=0)
+    assert len(rows) == 3 * 3 * 4          # 3 models x 3 splits x (2 anchors x 2 nodes)
+    assert {r["split"] for r in rows} == {"train", "val", "test"}
+    assert {r["model"] for r in rows} == {"HAR", "HAR-X", "VolGA"}
+    # dates come from panel.target_dates at each split's slice
+    assert {r["date"] for r in rows if r["split"] == "train"} == {"2025-01-01", "2025-01-02"}
+    assert {r["date"] for r in rows if r["split"] == "test"} == {"2025-01-05", "2025-01-06"}
+    # VolGA test pred = mean(3.0, 5.0) = 4.0; HAR-X train = 0.4
+    v = next(r for r in rows if r["model"] == "VolGA" and r["split"] == "test" and r["ticker"] == "AAA")
+    assert v["y_pred"] == 4.0 and v["y_true"] == 9.0
+    hx = next(r for r in rows if r["model"] == "HAR-X" and r["split"] == "train" and r["ticker"] == "BBB")
+    assert hx["y_pred"] == 0.4
+
+
 def test_progress_line_format():
     assert EH._progress("fold 1/7 start", 2.5) == "[edgehm] fold 1/7 start (2.5 min)"
     assert EH._progress("x", 0.04) == "[edgehm] x (0.0 min)"

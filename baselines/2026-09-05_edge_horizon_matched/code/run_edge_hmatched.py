@@ -178,6 +178,28 @@ def _cell_rows(pred, model, split, fold_idx, tickers):
              "y_true": float(yt), "y_pred": float(yp)} for (j, d), (yt, yp) in pred.items()]
 
 
+def _split_dates(panel, fold_slice):
+    """Forecast-target date strings ("YYYY-MM-DD") for a fold split's anchors. Uses panel.target_dates
+    directly (MaskedRichData exposes only d_va/d_te, not d_tr), so train/val/test all resolve uniformly."""
+    return [str(np.datetime_as_string(d, unit="D")) for d in np.asarray(panel.target_dates)[fold_slice]]
+
+
+def _fold_cell_rows(D, panel, fold, fold_out, har, harx, sel, fi):
+    """Per-ticker-per-day rows (train/val/test) for one fold: HAR/HAR-X OLS + seed-ensembled deep models.
+
+    ``har``/``harx`` are dicts keyed tr/va/te; ``fold_out[m]`` is the per-seed return list for deep model m.
+    Dates come from panel.target_dates at each split's anchors (fold.train/val/forecast)."""
+    rows = []
+    for sname, sp, fsl in (("train", "tr", fold.train), ("val", "va", fold.val), ("test", "te", fold.forecast)):
+        y = getattr(D, f"y_{sp}"); tm = getattr(D, f"tmask_{sp}"); dts = _split_dates(panel, fsl)
+        rows += _cell_rows(RMR._pred_dict(har[sp], y, tm, dts, D.N), "HAR", sname, fi, panel.tickers)
+        rows += _cell_rows(RMR._pred_dict(harx[sp], y, tm, dts, D.N), "HAR-X", sname, fi, panel.tickers)
+        for m in sel:
+            ens = RMR._ens_split(fold_out[m], sname)
+            rows += _cell_rows(RMR._pred_dict(ens, y, tm, dts, D.N), m, sname, fi, panel.tickers)
+    return rows
+
+
 def _provenance(lookback, batch, epochs, qlike_floor, edge_top_k, limit_lock_mult):
     """Reproducibility block recorded in the result JSON so a run is reconstructable from the artifact."""
     return {"lookback": int(lookback), "batch": batch, "epochs": int(epochs),
@@ -240,13 +262,7 @@ def run(horizon, folds_target, epochs, smoke, out=None, n_seeds=3, market="vn100
                               "val": [o["val_curve"] for o in fold_out[m]],
                               "best_epoch": [o["best_epoch"] for o in fold_out[m]]})
         if dump_cells:                                        # per-ticker-per-day log for train/val/test (offline diagnosis)
-            for sname, sp in (("train", "tr"), ("val", "va"), ("test", "te")):
-                y = getattr(D, f"y_{sp}"); tm = getattr(D, f"tmask_{sp}"); dts = getattr(D, f"d_{sp}")
-                cell_rows += _cell_rows(RMR._pred_dict(har[sp], y, tm, dts, D.N), "HAR", sname, fi, panel.tickers)
-                cell_rows += _cell_rows(RMR._pred_dict(harx[sp], y, tm, dts, D.N), "HAR-X", sname, fi, panel.tickers)
-                for m in sel:
-                    ens = RMR._ens_split(fold_out[m], sname)
-                    cell_rows += _cell_rows(RMR._pred_dict(ens, y, tm, dts, D.N), m, sname, fi, panel.tickers)
+            cell_rows += _fold_cell_rows(D, panel, fold, fold_out, har, harx, sel, fi)
         print(f"[edgehm] fold {fi + 1}/{len(folds)} done ({(time.time() - t0) / 60:.1f} min)", flush=True)
     for m in sel:
         pooled[m] = RMR._ens(pooled_nn[m])
