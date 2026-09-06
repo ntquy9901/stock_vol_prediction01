@@ -63,10 +63,10 @@ model; p is two-sided. VolGA/LSTM/HAR-X QLIKE match `results/edge_hmatched/` (cr
 | VN30 | 5 | 0.5602 | 0.5738 | 0.5672 | **0.6436** | p=0.179 favors HAR-X | p=0.107 favors VolGA | p=0.108 favors LSTM | ok |
 | VN30 | 10 | 0.6091 | 0.6048 | 0.6061 | **0.6416** | p=0.337 favors HAR-X | p=0.117 favors VolGA | p=0.135 favors LSTM | ok |
 | VN30 | 22 | 0.6782 | 0.6832 | 0.6882 | **0.6973** | p=0.687 favors HAR-X | p=0.595 favors VolGA | p=0.583 favors LSTM | ok |
-| VN100 | 1 | _running_ | | | | | | | |
-| VN100 | 5 | _running_ | | | | | | | |
-| VN100 | 10 | _running_ | | | | | | | |
-| VN100 | 22 | _running_ | | | | | | | |
+| VN100 | 1 | 0.5000 | 0.5155 | **0.4879** | 0.5053 | MASTER>HAR-X (worse) | p=0.006 favors VolGA | p=0.188 favors MASTER | ok |
+| VN100 | 5 | **0.5607** | 0.5759 | 0.5662 | 0.5697 | MASTER>HAR-X (worse) | p=0.476 favors VolGA | p=0.214 favors MASTER | ok |
+| VN100 | 10 | **0.5999** | 0.6127 | 0.6127 | 0.6303 | MASTER>HAR-X (worse) | p=0.093 favors VolGA | p=0.093 favors LSTM | ok |
+| VN100 | 22 | **0.6385** | 0.6452 | 0.6476 | 0.6628 | MASTER>HAR-X (worse) | p=0.272 favors VolGA | p=0.255 favors LSTM | ok |
 
 MASTER (bold) is the WORST of the five models at every VN30 horizon; the date-clustered DM always favours
 the baseline. The only DM that reaches significance is MASTER vs VolGA at h1 (p=0.016, MASTER worse) —
@@ -74,9 +74,9 @@ i.e. the dense cross-sectional attention is significantly beaten by the sparse l
 the horizon most favourable to cross-sectional structure. At longer horizons MASTER stays worst but the
 gap is not individually significant (variance grows). Non-lock conditional QLIKE and per-obs win-rate
 vs HAR-X (ticker-date win-rate 0.53-0.58, i.e. MASTER wins ~half the ticker-days but loses on aggregate
-because a minority of large errors dominate) tell the same story. VN100 is running (5 seeds, ~4h on the
-shared GPU); both smoke runs (2 epochs/1 fold/2 seeds, not final) already showed VN100 h1 MASTER 0.524 as
-the worst, DM favouring HAR-X/VolGA. This report will be updated when VN100 completes.
+because a minority of large errors dominate) tell the same story. VN100 (complete, 5 seeds) confirms it:
+MASTER is not best at any horizon (VolGA best at h1, HAR-X best at h5/h10/h22); at h1 MASTER is
+significantly worse than VolGA (DM p=0.006) and worse than HAR-X, and it is the worst model at h10/h22.
 
 The in-run HAR-X/LSTM/VolGA QLIKE reproduce `results/edge_hmatched/` to 4 decimals at every VN30 horizon.
 
@@ -108,7 +108,7 @@ name incl. "master").
   noisy daily variance target it adds noise rather than signal relative to a sparse edge / linear model.
 
 ## GO / NO-GO
-**NO-GO (full VN30 confirmed; VN100 running).** MASTER does not beat HAR-X, LSTM, or VolGA at ANY VN30
+**NO-GO (VN30 and VN100 both confirmed).** MASTER does not beat HAR-X, LSTM, or VolGA at ANY VN30
 horizon — it is the worst of the five models at h1/h5/h10/h22, and significantly WORSE than the
 sparse-edge VolGA at h1 (DM p=0.016), the horizon most favourable to cross-sectional structure. This is
 consistent with the project-wide prior that dense/learned graph structure does not beat HAR-X on this
