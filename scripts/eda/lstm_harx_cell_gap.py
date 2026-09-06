@@ -48,6 +48,20 @@ def gap_decomposition(y, harx_f, lstm_f, floor=QLIKE_FLOOR, top_frac=0.01):
     }
 
 
+def worst_cells(qlike_vals, n):
+    """Indices of the ``n`` highest-QLIKE cells, descending (the ticker-days that hurt a model most)."""
+    return list(np.argsort(-np.asarray(qlike_vals, dtype=float))[:max(0, n)])
+
+
+def top_by_group(keys, values, n):
+    """Top-``n`` group keys by summed value, as ``[(key, sum), ...]`` descending. Used to rank the worst
+    dates / tickers by their total QLIKE contribution."""
+    agg = {}
+    for k, v in zip(keys, values):
+        agg[k] = agg.get(k, 0.0) + float(v)
+    return sorted(agg.items(), key=lambda kv: -kv[1])[:n]
+
+
 def _load_test_cells(path):  # pragma: no cover - parquet I/O (large file); pure decomposition is tested
     import pyarrow.parquet as pq
     d = pq.read_table(path, columns=["model", "ticker", "date", "y_true", "y_pred"],

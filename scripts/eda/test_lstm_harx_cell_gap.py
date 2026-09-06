@@ -33,3 +33,13 @@ def test_gap_decomposition_zero_gap_no_nan():
     y = np.array([1e-3, 2e-3]); f = np.array([1e-3, 2e-3])
     out = G.gap_decomposition(y, f, f)
     assert out["gap"] == 0.0 and np.isnan(out["top_share_of_gap"])   # total gap 0 -> share is nan (guarded)
+
+
+def test_worst_cells_orders_descending():
+    assert G.worst_cells([0.1, 5.0, 2.0, 9.0], 2) == [3, 1]         # highest QLIKE first
+    assert G.worst_cells([1.0], 0) == []
+
+
+def test_top_by_group_sums_and_ranks():
+    keys = ["A", "B", "A", "C"]; vals = [1.0, 10.0, 2.0, 4.0]
+    assert G.top_by_group(keys, vals, 2) == [("B", 10.0), ("C", 4.0)]   # B=10, C=4, A=3
