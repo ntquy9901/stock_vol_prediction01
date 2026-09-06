@@ -45,6 +45,15 @@ def test_top_by_group_sums_and_ranks():
     assert G.top_by_group(keys, vals, 2) == [("B", 10.0), ("C", 4.0)]   # B=10, C=4, A=3
 
 
+def test_anchored_forecast_falls_back_and_clips():
+    harx = np.array([1.27e-4, 2.0e-4])
+    assert np.allclose(G.anchored_forecast(harx, [0.0, 0.0]), harx)          # z=0 -> exactly HAR-X (no collapse)
+    up = G.anchored_forecast(harx, [0.3, 0.3]); assert np.all(up > harx)      # positive z scales up
+    # a huge negative z is clipped, so the forecast cannot collapse far below HAR-X
+    floor_side = G.anchored_forecast(harx, [-10.0, -10.0], clip=0.5)
+    assert np.allclose(floor_side, harx * np.exp(-0.5))
+
+
 def test_qlike_excluding_top_y_is_model_agnostic():
     # exclude_frac=0 -> full mean; excluding the top-y cell drops the same index for any forecast
     y = np.array([1e-3, 1e-3, 1e-3, 1.0])       # last cell is a spike (top by y)

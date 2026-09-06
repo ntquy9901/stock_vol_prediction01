@@ -73,6 +73,13 @@ def qlike_excluding_top_y(y, f, exclude_frac, floor=QLIKE_FLOOR):
     return float(per_cell_qlike(y[keep], f[keep], floor).mean())
 
 
+def anchored_forecast(harx_f, z, clip=0.5):
+    """HAR-X-anchored residual forecast: yhat = HAR-X * exp(clip(z, -clip, clip)). z=0 -> exactly HAR-X (no
+    collapse); the clip bounds the worst-case correction so a spike day cannot fall far below HAR-X."""
+    z = np.clip(np.asarray(z, dtype=float), -clip, clip)
+    return np.asarray(harx_f, dtype=float) * np.exp(z)
+
+
 def _load_test_cells(path):  # pragma: no cover - parquet I/O (large file); pure decomposition is tested
     import pyarrow.parquet as pq
     d = pq.read_table(path, columns=["model", "ticker", "date", "y_true", "y_pred"],
