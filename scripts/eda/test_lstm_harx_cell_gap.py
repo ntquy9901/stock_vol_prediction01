@@ -43,3 +43,12 @@ def test_worst_cells_orders_descending():
 def test_top_by_group_sums_and_ranks():
     keys = ["A", "B", "A", "C"]; vals = [1.0, 10.0, 2.0, 4.0]
     assert G.top_by_group(keys, vals, 2) == [("B", 10.0), ("C", 4.0)]   # B=10, C=4, A=3
+
+
+def test_qlike_excluding_top_y_is_model_agnostic():
+    # exclude_frac=0 -> full mean; excluding the top-y cell drops the same index for any forecast
+    y = np.array([1e-3, 1e-3, 1e-3, 1.0])       # last cell is a spike (top by y)
+    f = np.array([1e-3, 1e-3, 1e-3, 1e-3])
+    full = G.qlike_excluding_top_y(y, f, 0.0)
+    ex = G.qlike_excluding_top_y(y, f, 0.25)     # drop top 25% (the spike) -> only perfect cells remain
+    assert full > ex and abs(ex) < 1e-9          # remaining cells are perfect -> ~0

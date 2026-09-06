@@ -62,6 +62,17 @@ def top_by_group(keys, values, n):
     return sorted(agg.items(), key=lambda kv: -kv[1])[:n]
 
 
+def qlike_excluding_top_y(y, f, exclude_frac, floor=QLIKE_FLOOR):
+    """Mean QLIKE after excluding the top ``exclude_frac`` of cells by realized value ``y`` (model-agnostic:
+    the SAME cells are dropped for every model). exclude_frac=0 -> all cells."""
+    y = np.asarray(y, dtype=float); f = np.asarray(f, dtype=float)
+    if exclude_frac <= 0:
+        keep = np.ones(len(y), dtype=bool)
+    else:
+        keep = y < np.quantile(y, 1.0 - exclude_frac)
+    return float(per_cell_qlike(y[keep], f[keep], floor).mean())
+
+
 def _load_test_cells(path):  # pragma: no cover - parquet I/O (large file); pure decomposition is tested
     import pyarrow.parquet as pq
     d = pq.read_table(path, columns=["model", "ticker", "date", "y_true", "y_pred"],

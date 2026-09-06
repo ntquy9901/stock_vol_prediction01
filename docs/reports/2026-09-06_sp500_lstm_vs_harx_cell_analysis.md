@@ -40,6 +40,15 @@ collapse far more than it rewards the LSTM's better fit on the other 99% of cell
 QLIKE while losing on 99% of cells (and, consistently, the LSTM/VolGA lead squared- and absolute-error at the
 short horizons).
 
+## Can removing outliers make the deep model beat HAR-X? No (fairly)
+Dropping the worst 1% by the *LSTM−HAR-X gap* flips the ranking, but that is **data snooping** (it removes
+exactly the cells chosen by where the LSTM loses) and is not a valid claim. Under a **model-agnostic** removal —
+excluding the top $p$% of ticker-days by realized variance $y$, the SAME cells for every model — HAR-X stays the
+best QLIKE model at every level and horizon (e.g. h1: at 1% excluded HAR-X 0.366 vs LSTM 0.575 vs VolGA 0.510;
+at 5% HAR-X 0.326 vs LSTM 0.523). The LSTM's spike collapse is graded across all elevated-variance days, not
+confined to the extreme tail, so fair outlier removal does not rescue it. Outlier exclusion is a legitimate
+robustness caveat, not a way to make the deep model win.
+
 ## Implications
 - The result is a property of **QLIKE + spike under-forecasting**, not of dirty data (the S&P 500 has no
   limit-lock days; `n_limitlock=0`).
