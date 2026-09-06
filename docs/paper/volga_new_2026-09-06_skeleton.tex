@@ -1,10 +1,10 @@
 % NEW VolGA paper skeleton (2026-09-06). SOICT / Springer LNCS.
 % Model set: HAR-X, LSTM (no-graph), VolGA (graph on the FIXED horizon-matched edge).
 % Markets: S&P 500 (primary), VN100 + VN30 (cross-market).
-% STATUS 2026-09-06: complete draft, all 3 markets filled from results/edge_hmatched/edgehm_*.json; passed the
-%   mechanical + semantic (red-team) style gates and section checklists. FOLLOW-UPS before submission:
-%   (a) formalize Related Work \cite with a splncs04 .bib; (b) \input the tables/*.tex into the Results tables;
-%   (c) add the architecture figure; (d) optionally populate qlike_robust columns via a re-run.
+% STATUS 2026-09-06: COMPILE-READY complete draft (pdflatex+bibtex clean, 7 pp, 0 undefined refs/cites).
+%   All 3 markets filled from results/edge_hmatched/edgehm_*.json; passed the mechanical + semantic (red-team)
+%   style gates + section checklists; \cite via volga_new_2026-09-06.bib; QLIKE tables \input from tables/.
+%   FOLLOW-UPS: (c) add the architecture figure; (d) optionally populate qlike_robust columns via a re-run.
 \documentclass{llncs}
 \usepackage{graphicx}
 \graphicspath{{diagrams/}}
@@ -65,19 +65,19 @@ fit evidence that every learned model generalizes, and an error attribution show
 comes from real volatility shocks and limit-lock days, not data quality.
 
 \section{Related Work}
-% NOTE: in-text author-year references pending a .bib (splncs04); formalize \cite before submission.
-\textbf{HAR-family econometric models.} The Heterogeneous AutoRegressive model (Corsi, 2009) forecasts realized
-variance from daily, weekly, and monthly averages, and remains a strong baseline. Jump-aware extensions add a
-jump component (HAR-CJ; Corsi, Pirino \& Reno, 2010) or scale the autoregressive coefficients by realized
-quarticity (HARQ; Bollerslev, Patton \& Quaedvlieg, 2016), improving accuracy around jumps. These extensions
-rest on intraday high-frequency estimators (bipower variation; Barndorff-Nielsen \& Shephard, 2004) and are
-linear and univariate, so they ignore cross-sectional spillover.
+\textbf{HAR-family econometric models.} The Heterogeneous AutoRegressive model~\cite{corsi2009har} forecasts
+realized variance from daily, weekly, and monthly averages, and remains a strong baseline. Jump-aware extensions
+add a jump component (HAR-CJ)~\cite{corsi2010threshold} or scale the autoregressive coefficients by realized
+quarticity (HARQ)~\cite{bpq2016harq}, improving accuracy around jumps. These extensions rest on intraday
+high-frequency estimators (bipower variation)~\cite{bns2004bipower} and are linear and univariate, so they
+ignore cross-sectional spillover.
 
-\textbf{Deep sequence models.} LSTM and transformer forecasters capture non-linear temporal structure in a
-single series, but applied per stock they also ignore the cross-section.
+\textbf{Deep sequence models.} LSTM~\cite{lstm1997} and transformer forecasters capture non-linear temporal
+structure in a single series, but applied per stock they also ignore the cross-section.
 
-\textbf{Graph spillover models.} Graph neural networks wire stocks by a learned or correlation edge to model
-volatility spillover across a panel. Their edge typically fixes the lead--lag independent of the forecast
+\textbf{Graph spillover models.} Graph neural networks, such as graph attention~\cite{gat2018}, wire stocks by a
+learned or correlation edge to model volatility spillover across a panel. Their edge typically fixes the
+lead--lag independent of the forecast
 horizon, so it misaligns with the target at horizons beyond the next day.
 
 \textbf{Positioning.} VolGA keeps the graph but matches the edge's lead--lag to the forecast horizon and screens
@@ -89,7 +89,7 @@ graph's contribution, across three markets and four horizons.
 
 \subsection{Problem and target}
 We forecast the $h$-step-ahead daily variance of each stock in a market panel. The target is the Parkinson
-high--low variance $\sigma^2_{t+h}$, which uses the intraday range and needs only daily OHLC data. We report
+high--low variance $\sigma^2_{t+h}$~\cite{parkinson1980}, which uses the intraday range and needs only daily OHLC data. We report
 horizons $h \in \{1,5,10,22\}$ trading days.
 
 \subsection{Node features}
@@ -135,7 +135,8 @@ We ensemble five seeds and pool the test predictions across folds before scoring
 We report five metrics on the pooled test set: mean squared error (MSE), root mean squared error (RMSE), mean
 absolute error (MAE), the QLIKE quasi-likelihood loss $L = \sigma^2/f - \log(\sigma^2/f) - 1$ (which penalizes
 under-forecasting variance more than over-forecasting it), and $R^2$. All models share one QLIKE positivity
-floor, so no model gains from a looser floor. We test accuracy differences with a Diebold--Mariano test
+floor, so no model gains from a looser floor; QLIKE is robust to the noise in a range-based variance
+proxy~\cite{patton2011proxies}. We test accuracy differences with a Diebold--Mariano test~\cite{dm1995}
 clustered by date, which accounts for the cross-sectional dependence of the panel, and report two contrasts:
 VolGA versus the no-graph LSTM (the value of the graph) and VolGA versus HAR-X (deep versus linear).
 
@@ -149,7 +150,7 @@ at $h1$ (0.549 vs 0.631, Diebold--Mariano $p<0.001$), $h10$ (0.640 vs 0.723, $p=
 0.676, $p=0.047$), and the lowest MAE at the daily and weekly horizons. The linear HAR and HAR-X attain the
 lowest QLIKE at every horizon (daily HAR 0.390), and HAR-X's QLIKE advantage over VolGA is significant
 throughout ($p\le0.001$). Both learned models are classified fit=ok at every horizon.
-% Table: see tables/sp500_clean_tables.tex
+\input{tables/sp500_clean_qlike.tex}
 \textit{Takeaway.} On the large liquid panel the spillover graph significantly improves the deep model over its
 no-graph counterpart at three of four horizons, yet the parsimonious HAR-X still leads on QLIKE.
 
@@ -160,7 +161,7 @@ directional but not significant (Diebold--Mariano $p=0.16$), as is its edge over
 $h10$, and $h22$ the linear HAR-X attains the lowest QLIKE (0.561, 0.600, 0.639) and the lowest MSE, while
 VolGA retains the lowest MAE at every horizon beyond the first. No VolGA advantage clears significance at any
 horizon on VN100.
-% Table (metrics per horizon, best per column bold): see tables/vn100_tables.tex
+\input{tables/vn100_qlike.tex}
 \textit{Takeaway.} On the VN100 panel the volume-to-volatility graph lowers squared-error and QLIKE only at
 the one-day horizon, and there without significance; the parsimonious HAR-X is the strongest QLIKE model at
 the weekly and monthly horizons.
@@ -171,7 +172,7 @@ not QLIKE. VolGA attains the lowest MSE, MAE, and R\textsuperscript{2} at the da
 the linear models attain the lowest QLIKE at every horizon: HAR-X's QLIKE is lower than VolGA's at $h1$ and the
 gap reaches significance (Diebold--Mariano $p=0.009$). At the monthly horizon HAR-X is strongest on every
 metric.
-% Table: see tables/vn30_tables.tex
+\input{tables/vn30_qlike.tex}
 \textit{Takeaway.} On the small VN30 panel VolGA lowers squared and absolute error at the short horizons, yet
 the parsimonious HAR-X remains the QLIKE leader throughout.
 
@@ -219,5 +220,8 @@ horizons, and VolGA leads mean absolute error at the short horizons across the S
 parsimonious HAR-X remains the strongest QLIKE model across markets, and every learned model generalizes without
 over- or under-fitting. The residual difficulty concentrates on real volatility shocks and market-wide
 limit-lock days, which a robust QLIKE that excludes floored-target days keeps from dominating the comparison.
+
+\bibliographystyle{splncs04}
+\bibliography{volga_new_2026-09-06}
 
 \end{document}

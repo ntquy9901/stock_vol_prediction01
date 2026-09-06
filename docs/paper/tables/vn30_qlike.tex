@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{QLIKE by horizon on VN30 (lower is better; best per column in bold). Numbers from the pooled walk-forward test set.}
+\label{tab:qlike_vn30}
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & \textbf{0.4954} & 0.5938 & 0.6405 & 0.7001 \\
+HAR-X & 0.4967 & \textbf{0.5929} & 0.6385 & \textbf{0.6976} \\
+LSTM & 0.5260 & 0.6127 & \textbf{0.6371} & 0.7121 \\
+VolGA & 0.5363 & 0.6526 & 0.6441 & 0.7106 \\
+\bottomrule
+\end{tabular}
+\end{table}

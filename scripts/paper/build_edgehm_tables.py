@@ -63,6 +63,21 @@ def latex_metric_table(market: str, by_h: dict, horizons, models=MODELS, metric=
     return cap + "\n" + "\n".join(lines) + "\n"
 
 
+MARKET_LABEL = {"sp500_clean": "S\\&P 500", "vn100": "VN100", "vn30": "VN30"}
+
+
+def latex_qlike_float(market: str, by_h: dict, horizons, models=MODELS) -> str:
+    """A ready-to-\\input LaTeX table FLOAT of QLIKE by horizon (rows=models, best per column bold)."""
+    mlabel = MARKET_LABEL.get(market, market)
+    inner = latex_metric_table(market, by_h, horizons, models, metric="qlike").split("\n", 1)[1]  # drop % header
+    return ("\\begin{table}[t]\n\\centering\n"
+            f"\\caption{{QLIKE by horizon on {mlabel} (lower is better; best per column in bold). "
+            "Numbers from the pooled walk-forward test set.}\n"
+            f"\\label{{tab:qlike_{market}}}\n"
+            + inner +
+            "\\end{table}\n")
+
+
 def dm_summary(market: str, by_h: dict, horizons) -> str:
     """One line per horizon of the DM comparisons + p-values (favored model in parentheses)."""
     lines = [f"% {market} Diebold-Mariano (date-clustered) QLIKE:"]
@@ -103,7 +118,8 @@ def main(argv=None):  # pragma: no cover - entry driver (file I/O)
         blocks = [dm_summary(market, by_h, a.horizons), fit_summary(market, by_h, a.horizons)]
         blocks += [latex_metric_table(market, by_h, a.horizons, metric=mt) for mt in METRICS]
         (OUT / f"{market}_tables.tex").write_text("\n".join(blocks), encoding="utf-8")
-        print(f"[tables] wrote {OUT / (market + '_tables.tex')} ({len(by_h)} horizons)")
+        (OUT / f"{market}_qlike.tex").write_text(latex_qlike_float(market, by_h, a.horizons), encoding="utf-8")
+        print(f"[tables] wrote {OUT / (market + '_tables.tex')} + {market}_qlike.tex ({len(by_h)} horizons)")
 
 
 if __name__ == "__main__":  # pragma: no cover

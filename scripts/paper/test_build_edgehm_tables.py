@@ -54,6 +54,14 @@ def test_handles_missing_model():
     assert B._best_value({1: {"metrics": {}}}, 1, "qlike", B.MODELS) is None   # empty -> None
 
 
+def test_latex_qlike_float_is_a_table_env():
+    tex = B.latex_qlike_float("sp500_clean", {1: _res(qlike_volga=0.40)}, [1])
+    assert tex.startswith("\\begin{table}") and tex.rstrip().endswith("\\end{table}")
+    assert "\\caption{" in tex and "\\label{tab:qlike_sp500_clean}" in tex
+    assert "S\\&P 500" in tex and "\\textbf{0.4000}" in tex
+    assert "% " not in tex.split("\n")[0]   # % comment header stripped
+
+
 def test_dm_and_fit_summary():
     by_h = {1: _res()}
     dm = B.dm_summary("vn100", by_h, [1, 5])

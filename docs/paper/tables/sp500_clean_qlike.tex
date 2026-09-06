@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{QLIKE by horizon on S\&P 500 (lower is better; best per column in bold). Numbers from the pooled walk-forward test set.}
+\label{tab:qlike_sp500_clean}
+\begin{tabular}{lrrrr}
+\toprule
+Model & $h1$ & $h5$ & $h10$ & $h22$ \\
+\midrule
+HAR & \textbf{0.3897} & 0.4607 & \textbf{0.4778} & 0.4987 \\
+HAR-X & 0.4062 & \textbf{0.4552} & 0.4797 & \textbf{0.4955} \\
+LSTM & 0.6314 & 0.5901 & 0.7232 & 0.6762 \\
+VolGA & 0.5485 & 0.5872 & 0.6404 & 0.6317 \\
+\bottomrule
+\end{tabular}
+\end{table}
