@@ -1,0 +1,465 @@
+{
+  "experiment": "limitlock_hurdle",
+  "market": "vn30",
+  "horizon": 10,
+  "num_nodes": 31,
+  "n_folds": 7,
+  "n_total_lock_targets": 43,
+  "limit_frac": 0.065,
+  "near_limit_mult": 0.9,
+  "lock_window": 22,
+  "thresholds": [
+    0.5,
+    0.7,
+    0.9
+  ],
+  "metrics": {
+    "HAR-X": {
+      "mse": 2.3620334347648373e-07,
+      "rmse": 0.00048600755495823697,
+      "mae": 0.000276910284945611,
+      "qlike": 0.6385387154677651,
+      "r2": 0.1084304635624822,
+      "n": 10757,
+      "qlike_robust": 0.604166042998089,
+      "qlike_lockdays": 9.202929711749404,
+      "n_lockdays": 43
+    },
+    "HAR-X+hurdle@0.5": {
+      "mse": 2.3620334347648373e-07,
+      "rmse": 0.00048600755495823697,
+      "mae": 0.000276910284945611,
+      "qlike": 0.6385387154677651,
+      "r2": 0.1084304635624822,
+      "n": 10757,
+      "qlike_robust": 0.604166042998089,
+      "qlike_lockdays": 9.202929711749404,
+      "n_lockdays": 43
+    },
+    "HAR-X+hurdle@0.7": {
+      "mse": 2.3620334347648373e-07,
+      "rmse": 0.00048600755495823697,
+      "mae": 0.000276910284945611,
+      "qlike": 0.6385387154677651,
+      "r2": 0.1084304635624822,
+      "n": 10757,
+      "qlike_robust": 0.604166042998089,
+      "qlike_lockdays": 9.202929711749404,
+      "n_lockdays": 43
+    },
+    "HAR-X+hurdle@0.9": {
+      "mse": 2.3620334347648373e-07,
+      "rmse": 0.00048600755495823697,
+      "mae": 0.000276910284945611,
+      "qlike": 0.6385387154677651,
+      "r2": 0.1084304635624822,
+      "n": 10757,
+      "qlike_robust": 0.604166042998089,
+      "qlike_lockdays": 9.202929711749404,
+      "n_lockdays": 43
+    },
+    "HAR-X+hurdle@oracle": {
+      "mse": 2.3578465936102098e-07,
+      "rmse": 0.00048557662563288706,
+      "mae": 0.00027574620538139543,
+      "qlike": 0.6215515985262196,
+      "r2": 0.11001082223667691,
+      "n": 10757,
+      "qlike_robust": 0.604166042998089,
+      "qlike_lockdays": 4.9533851317446,
+      "n_lockdays": 43
+    }
+  },
+  "classifier_confusion": {
+    "0.5": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 43,
+      "tn": 10714
+    },
+    "0.7": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 43,
+      "tn": 10714
+    },
+    "0.9": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 43,
+      "tn": 10714
+    }
+  },
+  "dm_hurdle_vs_harx": {
+    "HAR-X+hurdle@0.5": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@0.7": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@0.9": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@oracle": {
+      "qlike": {
+        "p_value": 0.211042129913192,
+        "mean_diff": -0.016987116941545647,
+        "favors": "A"
+      },
+      "se": {
+        "p_value": 0.09497446374470678,
+        "mean_diff": -4.186841154627429e-10,
+        "favors": "A"
+      },
+      "ae": {
+        "p_value": 0.16073952598022223,
+        "mean_diff": -1.1640795642155432e-06,
+        "favors": "A"
+      }
+    }
+  },
+  "case_2025_04_10": {
+    "target_date": "2025-04-10",
+    "n_records": 31,
+    "n_lock": 30,
+    "n_lock_caught_at_0.7": 0,
+    "qlike_harx_sum": 271.00913339459555,
+    "qlike_hurdle_sum": 271.00913339459555,
+    "records": [
+      {
+        "ticker": "ACB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.000160380587436144,
+        "hurdle_pred": 0.000160380587436144,
+        "qlike_harx": 8.682782199822894,
+        "qlike_hurdle": 8.682782199822894
+      },
+      {
+        "ticker": "BCM",
+        "is_lock": true,
+        "p_lock": 0.004639616276014944,
+        "y_true": 0.0,
+        "harx_pred": 0.0002846114854080784,
+        "hurdle_pred": 0.0002846114854080784,
+        "qlike_harx": 9.256330362763954,
+        "qlike_hurdle": 9.256330362763954
+      },
+      {
+        "ticker": "BID",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0001425746883022689,
+        "hurdle_pred": 0.0001425746883022689,
+        "qlike_harx": 8.565106315503359,
+        "qlike_hurdle": 8.565106315503359
+      },
+      {
+        "ticker": "BVH",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00021314662131360391,
+        "hurdle_pred": 0.00021314662131360391,
+        "qlike_harx": 8.967197393920587,
+        "qlike_hurdle": 8.967197393920587
+      },
+      {
+        "ticker": "CTG",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0001731638116529148,
+        "hurdle_pred": 0.0001731638116529148,
+        "qlike_harx": 8.759465969423765,
+        "qlike_hurdle": 8.759465969423765
+      },
+      {
+        "ticker": "FPT",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00026706231989706846,
+        "hurdle_pred": 0.00026706231989706846,
+        "qlike_harx": 9.192689669450848,
+        "qlike_hurdle": 9.192689669450848
+      },
+      {
+        "ticker": "GAS",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0001396544363703163,
+        "hurdle_pred": 0.0001396544363703163,
+        "qlike_harx": 8.544412850969204,
+        "qlike_hurdle": 8.544412850969204
+      },
+      {
+        "ticker": "GVR",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0002906769975398794,
+        "hurdle_pred": 0.0002906769975398794,
+        "qlike_harx": 9.27741726503935,
+        "qlike_hurdle": 9.27741726503935
+      },
+      {
+        "ticker": "HDB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00020598575465132814,
+        "hurdle_pred": 0.00020598575465132814,
+        "qlike_harx": 8.933025747254986,
+        "qlike_hurdle": 8.933025747254986
+      },
+      {
+        "ticker": "HPG",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00021543758852659756,
+        "hurdle_pred": 0.00021543758852659756,
+        "qlike_harx": 8.977887858335823,
+        "qlike_hurdle": 8.977887858335823
+      },
+      {
+        "ticker": "MBB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00020178282115591306,
+        "hurdle_pred": 0.00020178282115591306,
+        "qlike_harx": 8.912411720448848,
+        "qlike_hurdle": 8.912411720448848
+      },
+      {
+        "ticker": "MSN",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0001875913963906532,
+        "hurdle_pred": 0.0001875913963906532,
+        "qlike_harx": 8.839489667400278,
+        "qlike_hurdle": 8.839489667400278
+      },
+      {
+        "ticker": "MWG",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00017689246327919547,
+        "hurdle_pred": 0.00017689246327919547,
+        "qlike_harx": 8.780768713353403,
+        "qlike_hurdle": 8.780768713353403
+      },
+      {
+        "ticker": "NVL",
+        "is_lock": true,
+        "p_lock": 0.004639616276014944,
+        "y_true": 0.0,
+        "harx_pred": 0.0003386015532448169,
+        "hurdle_pred": 0.0003386015532448169,
+        "qlike_harx": 9.43002377616965,
+        "qlike_hurdle": 9.43002377616965
+      },
+      {
+        "ticker": "PDR",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00033160486982034844,
+        "hurdle_pred": 0.00033160486982034844,
+        "qlike_harx": 9.409144451341312,
+        "qlike_hurdle": 9.409144451341312
+      },
+      {
+        "ticker": "PLX",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0001616181185741456,
+        "hurdle_pred": 0.0001616181185741456,
+        "qlike_harx": 8.690468319930421,
+        "qlike_hurdle": 8.690468319930421
+      },
+      {
+        "ticker": "POW",
+        "is_lock": true,
+        "p_lock": 0.004639616276014944,
+        "y_true": 0.0,
+        "harx_pred": 0.0003336069021855803,
+        "hurdle_pred": 0.0003336069021855803,
+        "qlike_harx": 9.415163521662379,
+        "qlike_hurdle": 9.415163521662379
+      },
+      {
+        "ticker": "SAB",
+        "is_lock": false,
+        "p_lock": 0.005020887104566903,
+        "y_true": 4.988503595626434e-07,
+        "harx_pred": 0.00017029792926200705,
+        "hurdle_pred": 0.00017029792926200705,
+        "qlike_harx": 4.835927817323186,
+        "qlike_hurdle": 4.835927817323186
+      },
+      {
+        "ticker": "SHB",
+        "is_lock": true,
+        "p_lock": 0.004639616276014944,
+        "y_true": 0.0,
+        "harx_pred": 0.0003878154549932586,
+        "hurdle_pred": 0.0003878154549932586,
+        "qlike_harx": 9.56572556646242,
+        "qlike_hurdle": 9.56572556646242
+      },
+      {
+        "ticker": "SSI",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00021479153969878158,
+        "hurdle_pred": 0.00021479153969878158,
+        "qlike_harx": 8.974884717738485,
+        "qlike_hurdle": 8.974884717738485
+      },
+      {
+        "ticker": "STB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0002057504766583559,
+        "hurdle_pred": 0.0002057504766583559,
+        "qlike_harx": 8.931882944790164,
+        "qlike_hurdle": 8.931882944790164
+      },
+      {
+        "ticker": "TCB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.0002460427136348964,
+        "hurdle_pred": 0.0002460427136348964,
+        "qlike_harx": 9.11071598285972,
+        "qlike_hurdle": 9.11071598285972
+      },
+      {
+        "ticker": "TPB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00030513503298894556,
+        "hurdle_pred": 0.00030513503298894556,
+        "qlike_harx": 9.325957368106193,
+        "qlike_hurdle": 9.325957368106193
+      },
+      {
+        "ticker": "VCB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00016137693614695409,
+        "hurdle_pred": 0.00016137693614695409,
+        "qlike_harx": 8.688974999618804,
+        "qlike_hurdle": 8.688974999618804
+      },
+      {
+        "ticker": "VHM",
+        "is_lock": true,
+        "p_lock": 0.004639616276014944,
+        "y_true": 0.0,
+        "harx_pred": 0.00038002684363448226,
+        "hurdle_pred": 0.00038002684363448226,
+        "qlike_harx": 9.545438391287556,
+        "qlike_hurdle": 9.545438391287556
+      },
+      {
+        "ticker": "VIB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00019429927178809875,
+        "hurdle_pred": 0.00019429927178809875,
+        "qlike_harx": 8.874621261487352,
+        "qlike_hurdle": 8.874621261487352
+      },
+      {
+        "ticker": "VIC",
+        "is_lock": true,
+        "p_lock": 0.003961396584899704,
+        "y_true": 0.0,
+        "harx_pred": 0.0005188762226502186,
+        "hurdle_pred": 0.0005188762226502186,
+        "qlike_harx": 9.85685482112586,
+        "qlike_hurdle": 9.85685482112586
+      },
+      {
+        "ticker": "VJC",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00018943364739426103,
+        "hurdle_pred": 0.00018943364739426103,
+        "qlike_harx": 8.849261792450903,
+        "qlike_hurdle": 8.849261792450903
+      },
+      {
+        "ticker": "VNM",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00012374749504206342,
+        "hurdle_pred": 0.00012374749504206342,
+        "qlike_harx": 8.423494154864246,
+        "qlike_hurdle": 8.423494154864246
+      },
+      {
+        "ticker": "VPB",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00017809710536872514,
+        "hurdle_pred": 0.00017809710536872514,
+        "qlike_harx": 8.787555272452899,
+        "qlike_hurdle": 8.787555272452899
+      },
+      {
+        "ticker": "VRE",
+        "is_lock": true,
+        "p_lock": 0.005020887104566903,
+        "y_true": 0.0,
+        "harx_pred": 0.00034198979311799376,
+        "hurdle_pred": 0.00034198979311799376,
+        "qlike_harx": 9.439980318559867,
+        "qlike_hurdle": 9.439980318559867
+      }
+    ]
+  }
+}

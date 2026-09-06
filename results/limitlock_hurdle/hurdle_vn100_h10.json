@@ -1,0 +1,1175 @@
+{
+  "experiment": "limitlock_hurdle",
+  "market": "vn100",
+  "horizon": 10,
+  "num_nodes": 102,
+  "n_folds": 7,
+  "n_total_lock_targets": 153,
+  "limit_frac": 0.065,
+  "near_limit_mult": 0.9,
+  "lock_window": 22,
+  "thresholds": [
+    0.5,
+    0.7,
+    0.9
+  ],
+  "metrics": {
+    "HAR-X": {
+      "mse": 2.747409504474949e-07,
+      "rmse": 0.0005241573718335887,
+      "mae": 0.00032475036245296397,
+      "qlike": 0.600000527001503,
+      "r2": 0.10016082205122046,
+      "n": 46206,
+      "qlike_robust": 0.5709121653506197,
+      "qlike_lockdays": 9.35559738391736,
+      "n_lockdays": 153
+    },
+    "HAR-X+hurdle@0.5": {
+      "mse": 2.747409504474949e-07,
+      "rmse": 0.0005241573718335887,
+      "mae": 0.00032475036245296397,
+      "qlike": 0.600000527001503,
+      "r2": 0.10016082205122046,
+      "n": 46206,
+      "qlike_robust": 0.5709121653506197,
+      "qlike_lockdays": 9.35559738391736,
+      "n_lockdays": 153
+    },
+    "HAR-X+hurdle@0.7": {
+      "mse": 2.747409504474949e-07,
+      "rmse": 0.0005241573718335887,
+      "mae": 0.00032475036245296397,
+      "qlike": 0.600000527001503,
+      "r2": 0.10016082205122046,
+      "n": 46206,
+      "qlike_robust": 0.5709121653506197,
+      "qlike_lockdays": 9.35559738391736,
+      "n_lockdays": 153
+    },
+    "HAR-X+hurdle@0.9": {
+      "mse": 2.747409504474949e-07,
+      "rmse": 0.0005241573718335887,
+      "mae": 0.00032475036245296397,
+      "qlike": 0.600000527001503,
+      "r2": 0.10016082205122046,
+      "n": 46206,
+      "qlike_robust": 0.5709121653506197,
+      "qlike_lockdays": 9.35559738391736,
+      "n_lockdays": 153
+    },
+    "HAR-X+hurdle@oracle": {
+      "mse": 2.742903339633869e-07,
+      "rmse": 0.0005237273469691906,
+      "mae": 0.0003236476058598412,
+      "qlike": 0.5861617559839416,
+      "r2": 0.10163669365306738,
+      "n": 46206,
+      "qlike_robust": 0.5709121653506197,
+      "qlike_lockdays": 5.17628853661385,
+      "n_lockdays": 153
+    }
+  },
+  "classifier_confusion": {
+    "0.5": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 153,
+      "tn": 46053
+    },
+    "0.7": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 153,
+      "tn": 46053
+    },
+    "0.9": {
+      "tp": 0,
+      "fp": 0,
+      "fn": 153,
+      "tn": 46053
+    }
+  },
+  "dm_hurdle_vs_harx": {
+    "HAR-X+hurdle@0.5": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@0.7": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@0.9": {
+      "qlike": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "se": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      },
+      "ae": {
+        "error": "non-positive long-run variance; DM statistic undefined"
+      }
+    },
+    "HAR-X+hurdle@oracle": {
+      "qlike": {
+        "p_value": 0.16408852297273405,
+        "mean_diff": -0.013838771017561294,
+        "favors": "A"
+      },
+      "se": {
+        "p_value": 0.07926533633464983,
+        "mean_diff": -4.5061648410795183e-10,
+        "favors": "A"
+      },
+      "ae": {
+        "p_value": 0.13652703782913972,
+        "mean_diff": -1.1027565931228302e-06,
+        "favors": "A"
+      }
+    }
+  },
+  "case_2025_04_10": {
+    "target_date": "2025-04-10",
+    "n_records": 102,
+    "n_lock": 87,
+    "n_lock_caught_at_0.7": 0,
+    "qlike_harx_sum": 807.0009171725462,
+    "qlike_hurdle_sum": 807.0009171725462,
+    "records": [
+      {
+        "ticker": "AAA",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00017765528553242077,
+        "hurdle_pred": 0.00017765528553242077,
+        "qlike_harx": 8.785071549301046,
+        "qlike_hurdle": 8.785071549301046
+      },
+      {
+        "ticker": "ACB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00019902166005998753,
+        "hurdle_pred": 0.00019902166005998753,
+        "qlike_harx": 8.898634095099302,
+        "qlike_hurdle": 8.898634095099302
+      },
+      {
+        "ticker": "ANV",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00022324190588965571,
+        "hurdle_pred": 0.00022324190588965571,
+        "qlike_harx": 9.013470943731237,
+        "qlike_hurdle": 9.013470943731237
+      },
+      {
+        "ticker": "ASM",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00020853854505661638,
+        "hurdle_pred": 0.00020853854505661638,
+        "qlike_harx": 8.945342031283698,
+        "qlike_hurdle": 8.945342031283698
+      },
+      {
+        "ticker": "BCM",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.00032866842054334505,
+        "hurdle_pred": 0.00032866842054334505,
+        "qlike_harx": 9.400250014048284,
+        "qlike_hurdle": 9.400250014048284
+      },
+      {
+        "ticker": "BFC",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 5.443344827687673e-07,
+        "harx_pred": 0.00024519481610845367,
+        "hurdle_pred": 0.00024519481610845367,
+        "qlike_harx": 5.112464433519151,
+        "qlike_hurdle": 5.112464433519151
+      },
+      {
+        "ticker": "BID",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00017975499861072887,
+        "hurdle_pred": 0.00017975499861072887,
+        "qlike_harx": 8.796820622161702,
+        "qlike_hurdle": 8.796820622161702
+      },
+      {
+        "ticker": "BMP",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 2.968995526861676e-05,
+        "harx_pred": 0.00023289659126678425,
+        "hurdle_pred": 0.00023289659126678425,
+        "qlike_harx": 1.1872670373241427,
+        "qlike_hurdle": 1.1872670373241427
+      },
+      {
+        "ticker": "BSI",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0005096655586004442,
+        "hurdle_pred": 0.0005096655586004442,
+        "qlike_harx": 9.838944549856594,
+        "qlike_hurdle": 9.838944549856594
+      },
+      {
+        "ticker": "BVH",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00025215413228643017,
+        "hurdle_pred": 0.00025215413228643017,
+        "qlike_harx": 9.135250380866925,
+        "qlike_hurdle": 9.135250380866925
+      },
+      {
+        "ticker": "BWE",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0007338141476295,
+        "harx_pred": 0.00018072669852530827,
+        "hurdle_pred": 0.00018072669852530827,
+        "qlike_harx": 1.6590828970661802,
+        "qlike_hurdle": 1.6590828970661802
+      },
+      {
+        "ticker": "CII",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00022096195145408657,
+        "hurdle_pred": 0.00022096195145408657,
+        "qlike_harx": 9.00320596397797,
+        "qlike_hurdle": 9.00320596397797
+      },
+      {
+        "ticker": "CMG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00029007713877937256,
+        "hurdle_pred": 0.00029007713877937256,
+        "qlike_harx": 9.275351542977733,
+        "qlike_hurdle": 9.275351542977733
+      },
+      {
+        "ticker": "CTD",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003909875834618282,
+        "hurdle_pred": 0.0003909875834618282,
+        "qlike_harx": 9.573871565876894,
+        "qlike_hurdle": 9.573871565876894
+      },
+      {
+        "ticker": "CTG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00021080410159548917,
+        "hurdle_pred": 0.00021080410159548917,
+        "qlike_harx": 8.956146897157279,
+        "qlike_hurdle": 8.956146897157279
+      },
+      {
+        "ticker": "CTR",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00039328704746154677,
+        "hurdle_pred": 0.00039328704746154677,
+        "qlike_harx": 9.57973535863104,
+        "qlike_hurdle": 9.57973535863104
+      },
+      {
+        "ticker": "CTS",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00035989269376543215,
+        "hurdle_pred": 0.00035989269376543215,
+        "qlike_harx": 9.491003886191947,
+        "qlike_hurdle": 9.491003886191947
+      },
+      {
+        "ticker": "DBC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002822173918455399,
+        "hurdle_pred": 0.0002822173918455399,
+        "qlike_harx": 9.247883286687383,
+        "qlike_hurdle": 9.247883286687383
+      },
+      {
+        "ticker": "DCM",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00017750134420545206,
+        "hurdle_pred": 0.00017750134420545206,
+        "qlike_harx": 8.784204705464873,
+        "qlike_hurdle": 8.784204705464873
+      },
+      {
+        "ticker": "DGC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00022663428460950873,
+        "hurdle_pred": 0.00022663428460950873,
+        "qlike_harx": 9.028551947218206,
+        "qlike_hurdle": 9.028551947218206
+      },
+      {
+        "ticker": "DGW",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002583396008566368,
+        "hurdle_pred": 0.0002583396008566368,
+        "qlike_harx": 9.159483896497846,
+        "qlike_hurdle": 9.159483896497846
+      },
+      {
+        "ticker": "DIG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003406819220581706,
+        "hurdle_pred": 0.0003406819220581706,
+        "qlike_harx": 9.43614880096665,
+        "qlike_hurdle": 9.43614880096665
+      },
+      {
+        "ticker": "DPM",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00020370040052975627,
+        "hurdle_pred": 0.00020370040052975627,
+        "qlike_harx": 8.921869567196795,
+        "qlike_hurdle": 8.921869567196795
+      },
+      {
+        "ticker": "DXG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00036586719519950074,
+        "hurdle_pred": 0.00036586719519950074,
+        "qlike_harx": 9.50746793121764,
+        "qlike_hurdle": 9.50746793121764
+      },
+      {
+        "ticker": "DXS",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00039648260948105913,
+        "hurdle_pred": 0.00039648260948105913,
+        "qlike_harx": 9.58782758781531,
+        "qlike_hurdle": 9.58782758781531
+      },
+      {
+        "ticker": "EIB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003811584132806467,
+        "hurdle_pred": 0.0003811584132806467,
+        "qlike_harx": 9.548411493400636,
+        "qlike_hurdle": 9.548411493400636
+      },
+      {
+        "ticker": "EVF",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.000409296303843436,
+        "hurdle_pred": 0.000409296303843436,
+        "qlike_harx": 9.619633971189483,
+        "qlike_hurdle": 9.619633971189483
+      },
+      {
+        "ticker": "FPT",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.000311112520610994,
+        "hurdle_pred": 0.000311112520610994,
+        "qlike_harx": 9.345356978051763,
+        "qlike_hurdle": 9.345356978051763
+      },
+      {
+        "ticker": "FRT",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00023122280887024897,
+        "hurdle_pred": 0.00023122280887024897,
+        "qlike_harx": 9.048595220531906,
+        "qlike_hurdle": 9.048595220531906
+      },
+      {
+        "ticker": "FTS",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00044709900356451447,
+        "hurdle_pred": 0.00044709900356451447,
+        "qlike_harx": 9.707972606972806,
+        "qlike_hurdle": 9.707972606972806
+      },
+      {
+        "ticker": "GAS",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00017636000236569564,
+        "hurdle_pred": 0.00017636000236569564,
+        "qlike_harx": 8.777754262091127,
+        "qlike_hurdle": 8.777754262091127
+      },
+      {
+        "ticker": "GEX",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00035506704098523954,
+        "hurdle_pred": 0.00035506704098523954,
+        "qlike_harx": 9.477504969175174,
+        "qlike_hurdle": 9.477504969175174
+      },
+      {
+        "ticker": "GMD",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00019462885164909922,
+        "hurdle_pred": 0.00019462885164909922,
+        "qlike_harx": 8.876315985894806,
+        "qlike_hurdle": 8.876315985894806
+      },
+      {
+        "ticker": "GVR",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00033528695684311853,
+        "hurdle_pred": 0.00033528695684311853,
+        "qlike_harx": 9.42018676394115,
+        "qlike_hurdle": 9.42018676394115
+      },
+      {
+        "ticker": "HAG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003634961750900376,
+        "hurdle_pred": 0.0003634961750900376,
+        "qlike_harx": 9.500966471063837,
+        "qlike_hurdle": 9.500966471063837
+      },
+      {
+        "ticker": "HAH",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003269680201548464,
+        "hurdle_pred": 0.0003269680201548464,
+        "qlike_harx": 9.39506313844204,
+        "qlike_hurdle": 9.39506313844204
+      },
+      {
+        "ticker": "HCM",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003371760643753954,
+        "hurdle_pred": 0.0003371760643753954,
+        "qlike_harx": 9.425805084226479,
+        "qlike_hurdle": 9.425805084226479
+      },
+      {
+        "ticker": "HDB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00024696427130683167,
+        "hurdle_pred": 0.00024696427130683167,
+        "qlike_harx": 9.11445435326064,
+        "qlike_hurdle": 9.11445435326064
+      },
+      {
+        "ticker": "HDC",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.0004249515345429055,
+        "hurdle_pred": 0.0004249515345429055,
+        "qlike_harx": 9.657168844135512,
+        "qlike_hurdle": 9.657168844135512
+      },
+      {
+        "ticker": "HDG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00020667036639006688,
+        "hurdle_pred": 0.00020667036639006688,
+        "qlike_harx": 8.93634366331687,
+        "qlike_hurdle": 8.93634366331687
+      },
+      {
+        "ticker": "HHV",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00026142264151974334,
+        "hurdle_pred": 0.00026142264151974334,
+        "qlike_harx": 9.171346852033407,
+        "qlike_hurdle": 9.171346852033407
+      },
+      {
+        "ticker": "HPG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002568735274337572,
+        "hurdle_pred": 0.0002568735274337572,
+        "qlike_harx": 9.15379296826774,
+        "qlike_hurdle": 9.15379296826774
+      },
+      {
+        "ticker": "HSG",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.0003211157708717233,
+        "hurdle_pred": 0.0003211157708717233,
+        "qlike_harx": 9.377003042434897,
+        "qlike_hurdle": 9.377003042434897
+      },
+      {
+        "ticker": "HT1",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00020754542704084003,
+        "hurdle_pred": 0.00020754542704084003,
+        "qlike_harx": 8.940568609418946,
+        "qlike_hurdle": 8.940568609418946
+      },
+      {
+        "ticker": "HVN",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00041884889412161695,
+        "hurdle_pred": 0.00041884889412161695,
+        "qlike_harx": 9.64270428126992,
+        "qlike_hurdle": 9.64270428126992
+      },
+      {
+        "ticker": "IJC",
+        "is_lock": true,
+        "p_lock": 0.010324349191225815,
+        "y_true": 0.0,
+        "harx_pred": 0.00044888470348025683,
+        "hurdle_pred": 0.00044888470348025683,
+        "qlike_harx": 9.711958533068914,
+        "qlike_hurdle": 9.711958533068914
+      },
+      {
+        "ticker": "IMP",
+        "is_lock": true,
+        "p_lock": 0.009782852690351111,
+        "y_true": 0.0,
+        "harx_pred": 0.00044557343072073805,
+        "hurdle_pred": 0.00044557343072073805,
+        "qlike_harx": 9.704554689962235,
+        "qlike_hurdle": 9.704554689962235
+      },
+      {
+        "ticker": "KBC",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0003241917176212,
+        "harx_pred": 0.00020699393083956872,
+        "hurdle_pred": 0.00020699393083956872,
+        "qlike_harx": 0.11754389483345462,
+        "qlike_hurdle": 0.11754389483345462
+      },
+      {
+        "ticker": "KDC",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0005636202730929,
+        "harx_pred": 0.00024284834103131245,
+        "hurdle_pred": 0.00024284834103131245,
+        "qlike_harx": 0.4789298622069298,
+        "qlike_hurdle": 0.4789298622069298
+      },
+      {
+        "ticker": "KDH",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002727429193114509,
+        "hurdle_pred": 0.0002727429193114509,
+        "qlike_harx": 9.21373651456617,
+        "qlike_hurdle": 9.21373651456617
+      },
+      {
+        "ticker": "KOS",
+        "is_lock": false,
+        "p_lock": 0.024161137405487712,
+        "y_true": 5.425471791575143e-06,
+        "harx_pred": 0.0001825208543767685,
+        "hurdle_pred": 0.0001825208543767685,
+        "qlike_harx": 2.5454847910572354,
+        "qlike_hurdle": 2.5454847910572354
+      },
+      {
+        "ticker": "LPB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002652958914158562,
+        "hurdle_pred": 0.0002652958914158562,
+        "qlike_harx": 9.186053654213994,
+        "qlike_hurdle": 9.186053654213994
+      },
+      {
+        "ticker": "MBB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002415888270252032,
+        "hurdle_pred": 0.0002415888270252032,
+        "qlike_harx": 9.092448797865485,
+        "qlike_hurdle": 9.092448797865485
+      },
+      {
+        "ticker": "MSN",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00022653148443829924,
+        "hurdle_pred": 0.00022653148443829924,
+        "qlike_harx": 9.02809826936778,
+        "qlike_hurdle": 9.02809826936778
+      },
+      {
+        "ticker": "MWG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.000214495878145032,
+        "hurdle_pred": 0.000214495878145032,
+        "qlike_harx": 8.973507329006948,
+        "qlike_hurdle": 8.973507329006948
+      },
+      {
+        "ticker": "NKG",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.00038101831465371433,
+        "hurdle_pred": 0.00038101831465371433,
+        "qlike_harx": 9.548043875374267,
+        "qlike_hurdle": 9.548043875374267
+      },
+      {
+        "ticker": "NLG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003295233494902425,
+        "hurdle_pred": 0.0003295233494902425,
+        "qlike_harx": 9.402847747682962,
+        "qlike_hurdle": 9.402847747682962
+      },
+      {
+        "ticker": "NT2",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00023837992778423135,
+        "hurdle_pred": 0.00023837992778423135,
+        "qlike_harx": 9.079077871939415,
+        "qlike_hurdle": 9.079077871939415
+      },
+      {
+        "ticker": "NVL",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.0003864037575329527,
+        "hurdle_pred": 0.0003864037575329527,
+        "qlike_harx": 9.562078892408854,
+        "qlike_hurdle": 9.562078892408854
+      },
+      {
+        "ticker": "OCB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00024681320251120206,
+        "hurdle_pred": 0.00024681320251120206,
+        "qlike_harx": 9.11384248783765,
+        "qlike_hurdle": 9.11384248783765
+      },
+      {
+        "ticker": "PAN",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 2.145592610476653e-06,
+        "harx_pred": 0.0002525168877523957,
+        "hurdle_pred": 0.0002525168877523957,
+        "qlike_harx": 3.7765591673538,
+        "qlike_hurdle": 3.7765591673538
+      },
+      {
+        "ticker": "PC1",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002077816220286934,
+        "hurdle_pred": 0.0002077816220286934,
+        "qlike_harx": 8.941705947523529,
+        "qlike_hurdle": 8.941705947523529
+      },
+      {
+        "ticker": "PDR",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003782664290372952,
+        "hurdle_pred": 0.0003782664290372952,
+        "qlike_harx": 9.540795408441591,
+        "qlike_hurdle": 9.540795408441591
+      },
+      {
+        "ticker": "PHR",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.000286465673496,
+        "harx_pred": 0.0004996248287025266,
+        "hurdle_pred": 0.0004996248287025266,
+        "qlike_harx": 0.12960032307644154,
+        "qlike_hurdle": 0.12960032307644154
+      },
+      {
+        "ticker": "PLX",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0001986449431894773,
+        "hurdle_pred": 0.0001986449431894773,
+        "qlike_harx": 8.896739553119973,
+        "qlike_hurdle": 8.896739553119973
+      },
+      {
+        "ticker": "PNJ",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00023863057063001306,
+        "hurdle_pred": 0.00023863057063001306,
+        "qlike_harx": 9.080128718244794,
+        "qlike_hurdle": 9.080128718244794
+      },
+      {
+        "ticker": "POW",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.00038344911631501465,
+        "hurdle_pred": 0.00038344911631501465,
+        "qlike_harx": 9.554403194712044,
+        "qlike_hurdle": 9.554403194712044
+      },
+      {
+        "ticker": "PPC",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 7.540818621780848e-06,
+        "harx_pred": 0.0002282396076431758,
+        "hurdle_pred": 0.0002282396076431758,
+        "qlike_harx": 2.4431042859943464,
+        "qlike_hurdle": 2.4431042859943464
+      },
+      {
+        "ticker": "PTB",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.001567920258559,
+        "harx_pred": 0.0002590419068885422,
+        "hurdle_pred": 0.0002590419068885422,
+        "qlike_harx": 3.2522513254432477,
+        "qlike_hurdle": 3.2522513254432477
+      },
+      {
+        "ticker": "PVD",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002508635790840235,
+        "hurdle_pred": 0.0002508635790840235,
+        "qlike_harx": 9.130119330042572,
+        "qlike_hurdle": 9.130119330042572
+      },
+      {
+        "ticker": "PVT",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00024055016007080532,
+        "hurdle_pred": 0.00024055016007080532,
+        "qlike_harx": 9.088140390941277,
+        "qlike_hurdle": 9.088140390941277
+      },
+      {
+        "ticker": "REE",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002845288227361263,
+        "hurdle_pred": 0.0002845288227361263,
+        "qlike_harx": 9.256039890391765,
+        "qlike_hurdle": 9.256039890391765
+      },
+      {
+        "ticker": "SAB",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 3.6467420587117657e-07,
+        "harx_pred": 0.00020863304698573833,
+        "hurdle_pred": 0.00020863304698573833,
+        "qlike_harx": 5.351075784999728,
+        "qlike_hurdle": 5.351075784999728
+      },
+      {
+        "ticker": "SBT",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0001844043812162,
+        "harx_pred": 0.00029072435664534045,
+        "hurdle_pred": 0.00029072435664534045,
+        "qlike_harx": 0.08953737173203247,
+        "qlike_hurdle": 0.08953737173203247
+      },
+      {
+        "ticker": "SCS",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00025732058767420195,
+        "hurdle_pred": 0.00025732058767420195,
+        "qlike_harx": 9.155531778383109,
+        "qlike_hurdle": 9.155531778383109
+      },
+      {
+        "ticker": "SHB",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.000441661728227156,
+        "hurdle_pred": 0.000441661728227156,
+        "qlike_harx": 9.695737096067916,
+        "qlike_hurdle": 9.695737096067916
+      },
+      {
+        "ticker": "SIP",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00030279009496393075,
+        "hurdle_pred": 0.00030279009496393075,
+        "qlike_harx": 9.318243021716011,
+        "qlike_hurdle": 9.318243021716011
+      },
+      {
+        "ticker": "SJS",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.00046306043468874914,
+        "hurdle_pred": 0.00046306043468874914,
+        "qlike_harx": 9.74304935549496,
+        "qlike_hurdle": 9.74304935549496
+      },
+      {
+        "ticker": "SSB",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0003700506628599,
+        "harx_pred": 0.00023377603932320107,
+        "hurdle_pred": 0.00023377603932320107,
+        "qlike_harx": 0.12365174196727002,
+        "qlike_hurdle": 0.12365174196727002
+      },
+      {
+        "ticker": "SSI",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002555763451571489,
+        "hurdle_pred": 0.0002555763451571489,
+        "qlike_harx": 9.148730485127018,
+        "qlike_hurdle": 9.148730485127018
+      },
+      {
+        "ticker": "STB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00024645026991886005,
+        "hurdle_pred": 0.00024645026991886005,
+        "qlike_harx": 9.112370990503893,
+        "qlike_hurdle": 9.112370990503893
+      },
+      {
+        "ticker": "SZC",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0003299065136972,
+        "harx_pred": 0.0002961051376759779,
+        "hurdle_pred": 0.0002961051376759779,
+        "qlike_harx": 0.006058554857656162,
+        "qlike_hurdle": 0.006058554857656162
+      },
+      {
+        "ticker": "TCB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00028930819089985604,
+        "hurdle_pred": 0.00028930819089985604,
+        "qlike_harx": 9.272697275608564,
+        "qlike_hurdle": 9.272697275608564
+      },
+      {
+        "ticker": "TCH",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00040010178062281637,
+        "hurdle_pred": 0.00040010178062281637,
+        "qlike_harx": 9.596914145926137,
+        "qlike_hurdle": 9.596914145926137
+      },
+      {
+        "ticker": "TLG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00032034910437700123,
+        "hurdle_pred": 0.00032034910437700123,
+        "qlike_harx": 9.374612754250137,
+        "qlike_hurdle": 9.374612754250137
+      },
+      {
+        "ticker": "TPB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0003553071110164034,
+        "hurdle_pred": 0.0003553071110164034,
+        "qlike_harx": 9.478180847599669,
+        "qlike_hurdle": 9.478180847599669
+      },
+      {
+        "ticker": "VCB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00019861030832744574,
+        "hurdle_pred": 0.00019861030832744574,
+        "qlike_harx": 8.896565191078043,
+        "qlike_hurdle": 8.896565191078043
+      },
+      {
+        "ticker": "VCG",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.000313609377133847,
+        "hurdle_pred": 0.000313609377133847,
+        "qlike_harx": 9.353350262393704,
+        "qlike_hurdle": 9.353350262393704
+      },
+      {
+        "ticker": "VCI",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00026070287055642314,
+        "hurdle_pred": 0.00026070287055642314,
+        "qlike_harx": 9.168589875667521,
+        "qlike_hurdle": 9.168589875667521
+      },
+      {
+        "ticker": "VGC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00037100482726923367,
+        "hurdle_pred": 0.00037100482726923367,
+        "qlike_harx": 9.521412213845434,
+        "qlike_hurdle": 9.521412213845434
+      },
+      {
+        "ticker": "VHC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002729200587756684,
+        "hurdle_pred": 0.0002729200587756684,
+        "qlike_harx": 9.214385754059851,
+        "qlike_hurdle": 9.214385754059851
+      },
+      {
+        "ticker": "VHM",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.0004294216891695579,
+        "hurdle_pred": 0.0004294216891695579,
+        "qlike_harx": 9.667632867699034,
+        "qlike_hurdle": 9.667632867699034
+      },
+      {
+        "ticker": "VIB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.0002348558368915243,
+        "hurdle_pred": 0.0002348558368915243,
+        "qlike_harx": 9.06418463116478,
+        "qlike_hurdle": 9.06418463116478
+      },
+      {
+        "ticker": "VIC",
+        "is_lock": true,
+        "p_lock": 0.009782852690351111,
+        "y_true": 0.0,
+        "harx_pred": 0.0005779779630043562,
+        "hurdle_pred": 0.0005779779630043562,
+        "qlike_harx": 9.964723229341313,
+        "qlike_hurdle": 9.964723229341313
+      },
+      {
+        "ticker": "VIX",
+        "is_lock": true,
+        "p_lock": 0.010895488615728892,
+        "y_true": 0.0,
+        "harx_pred": 0.00046996161781671583,
+        "hurdle_pred": 0.00046996161781671583,
+        "qlike_harx": 9.75784249147116,
+        "qlike_hurdle": 9.75784249147116
+      },
+      {
+        "ticker": "VJC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00022973220370628927,
+        "hurdle_pred": 0.00022973220370628927,
+        "qlike_harx": 9.042128013781722,
+        "qlike_hurdle": 9.042128013781722
+      },
+      {
+        "ticker": "VND",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00035324477050001205,
+        "hurdle_pred": 0.00035324477050001205,
+        "qlike_harx": 9.47235971246241,
+        "qlike_hurdle": 9.47235971246241
+      },
+      {
+        "ticker": "VNM",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00015951848083213042,
+        "hurdle_pred": 0.00015951848083213042,
+        "qlike_harx": 8.677392657448179,
+        "qlike_hurdle": 8.677392657448179
+      },
+      {
+        "ticker": "VPB",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00021588320521726012,
+        "hurdle_pred": 0.00021588320521726012,
+        "qlike_harx": 8.979954052188582,
+        "qlike_hurdle": 8.979954052188582
+      },
+      {
+        "ticker": "VPI",
+        "is_lock": false,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0005863765432445,
+        "harx_pred": 0.0002820444354826457,
+        "hurdle_pred": 0.0002820444354826457,
+        "qlike_harx": 0.3471243298562241,
+        "qlike_hurdle": 0.3471243298562241
+      },
+      {
+        "ticker": "VRE",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00039274881842181594,
+        "hurdle_pred": 0.00039274881842181594,
+        "qlike_harx": 9.578365916211343,
+        "qlike_hurdle": 9.578365916211343
+      },
+      {
+        "ticker": "VSC",
+        "is_lock": true,
+        "p_lock": 0.011497856229491192,
+        "y_true": 0.0,
+        "harx_pred": 0.00025288758040395654,
+        "hurdle_pred": 0.00025288758040395654,
+        "qlike_harx": 9.13815477299775,
+        "qlike_hurdle": 9.13815477299775
+      }
+    ]
+  }
+}
