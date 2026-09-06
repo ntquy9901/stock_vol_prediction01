@@ -17,8 +17,8 @@ REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "results" / "edge_hmatched"
 OUT = REPO / "docs" / "paper" / "tables"
 MODELS = ("HAR", "HAR-X", "LSTM", "VolGA")
-METRICS = ("mse", "rmse", "mae", "qlike", "r2")
-LOWER_BETTER = {"mse": True, "rmse": True, "mae": True, "qlike": True, "r2": False}
+METRICS = ("mse", "rmse", "mae", "qlike", "qlike_robust", "r2")
+LOWER_BETTER = {"mse": True, "rmse": True, "mae": True, "qlike": True, "qlike_robust": True, "r2": False}
 
 
 def load_results(market: str, horizons, results_dir: Path = RESULTS) -> dict:
@@ -37,10 +37,17 @@ def _fmt(v, decimals=4):
 
 def _best_value(by_h, h, metric, models):
     """The best (min or max) metric value across models present at horizon h, or None."""
-    vals = [by_h[h]["metrics"][m][metric] for m in models if m in by_h[h].get("metrics", {})]
+    vals = [by_h[h]["metrics"][m][metric] for m in models
+            if m in by_h[h].get("metrics", {}) and by_h[h]["metrics"][m].get(metric) is not None]
     if not vals:
         return None
     return (min if LOWER_BETTER[metric] else max)(vals)
+
+
+def _has_metric(by_h, metric, models=MODELS):
+    """True if any model at any horizon carries a non-None value for ``metric``."""
+    return any(by_h[h]["metrics"].get(m, {}).get(metric) is not None
+               for h in by_h for m in models)
 
 
 def latex_metric_table(market: str, by_h: dict, horizons, models=MODELS, metric="qlike") -> str:
@@ -52,9 +59,10 @@ def latex_metric_table(market: str, by_h: dict, horizons, models=MODELS, metric=
         cells = [m]
         for h in hs:
             mt = by_h[h].get("metrics", {}).get(m)
-            if mt is None:
+            v = None if mt is None else mt.get(metric)
+            if v is None:
                 cells.append("--"); continue
-            v = mt[metric]; best = _best_value(by_h, h, metric, models)
+            best = _best_value(by_h, h, metric, models)
             s = _fmt(v)
             cells.append(f"\\textbf{{{s}}}" if best is not None and abs(v - best) < 1e-12 else s)
         lines.append(" & ".join(cells) + " \\\\")
@@ -66,14 +74,19 @@ def latex_metric_table(market: str, by_h: dict, horizons, models=MODELS, metric=
 MARKET_LABEL = {"sp500_clean": "S\\&P 500", "vn100": "VN100", "vn30": "VN30"}
 
 
-def latex_qlike_float(market: str, by_h: dict, horizons, models=MODELS) -> str:
-    """A ready-to-\\input LaTeX table FLOAT of QLIKE by horizon (rows=models, best per column bold)."""
+def latex_qlike_float(market: str, by_h: dict, horizons, models=MODELS,
+                      metric="qlike", caption=None, label=None) -> str:
+    """A ready-to-\\input LaTeX table FLOAT of a metric by horizon (rows=models, best per column bold)."""
     mlabel = MARKET_LABEL.get(market, market)
-    inner = latex_metric_table(market, by_h, horizons, models, metric="qlike").split("\n", 1)[1]  # drop % header
+    inner = latex_metric_table(market, by_h, horizons, models, metric=metric).split("\n", 1)[1]  # drop % header
+    if caption is None:
+        caption = (f"QLIKE by horizon on {mlabel} (lower is better; best per column in bold). "
+                   "Numbers from the pooled walk-forward test set.")
+    if label is None:
+        label = f"tab:qlike_{market}"
     return ("\\begin{table}[t]\n\\centering\n"
-            f"\\caption{{QLIKE by horizon on {mlabel} (lower is better; best per column in bold). "
-            "Numbers from the pooled walk-forward test set.}\n"
-            f"\\label{{tab:qlike_{market}}}\n"
+            f"\\caption{{{caption}}}\n"
+            f"\\label{{{label}}}\n"
             + inner +
             "\\end{table}\n")
 
@@ -115,11 +128,22 @@ def main(argv=None):  # pragma: no cover - entry driver (file I/O)
         if not by_h:
             print(f"[tables] {market}: no results yet, skip")
             continue
+        present = [mt for mt in METRICS if _has_metric(by_h, mt)]
         blocks = [dm_summary(market, by_h, a.horizons), fit_summary(market, by_h, a.horizons)]
-        blocks += [latex_metric_table(market, by_h, a.horizons, metric=mt) for mt in METRICS]
+        blocks += [latex_metric_table(market, by_h, a.horizons, metric=mt) for mt in present]
         (OUT / f"{market}_tables.tex").write_text("\n".join(blocks), encoding="utf-8")
         (OUT / f"{market}_qlike.tex").write_text(latex_qlike_float(market, by_h, a.horizons), encoding="utf-8")
-        print(f"[tables] wrote {OUT / (market + '_tables.tex')} + {market}_qlike.tex ({len(by_h)} horizons)")
+        extra = ""
+        if _has_metric(by_h, "qlike_robust"):
+            mlabel = MARKET_LABEL.get(market, market)
+            robust = latex_qlike_float(
+                market, by_h, a.horizons, metric="qlike_robust",
+                caption=(f"Robust QLIKE by horizon on {mlabel}: QLIKE recomputed after excluding "
+                         "limit-lock / floored-target days (lower is better; best per column in bold)."),
+                label=f"tab:qlike_robust_{market}")
+            (OUT / f"{market}_qlike_robust.tex").write_text(robust, encoding="utf-8")
+            extra = f" + {market}_qlike_robust.tex"
+        print(f"[tables] wrote {OUT / (market + '_tables.tex')} + {market}_qlike.tex{extra} ({len(by_h)} horizons)")
 
 
 if __name__ == "__main__":  # pragma: no cover

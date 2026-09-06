@@ -62,6 +62,35 @@ def test_latex_qlike_float_is_a_table_env():
     assert "% " not in tex.split("\n")[0]   # % comment header stripped
 
 
+def _res_robust(qr_volga=0.30):
+    r = _res(qlike_volga=0.40)
+    for m, qr in (("HAR", 0.42), ("HAR-X", 0.41), ("LSTM", 0.35), ("VolGA", qr_volga)):
+        r["metrics"][m]["qlike_robust"] = qr
+    return r
+
+
+def test_has_metric_true_false():
+    assert B._has_metric({1: _res_robust()}, "qlike_robust") is True
+    assert B._has_metric({1: _res()}, "qlike_robust") is False   # plain fixture lacks it
+
+
+def test_qlike_robust_column_bolds_and_dashes():
+    r = _res_robust(qr_volga=0.30)
+    del r["metrics"]["HAR"]["qlike_robust"]        # one model missing the robust value
+    tex = B.latex_metric_table("vn30", {1: r}, [1], metric="qlike_robust")
+    assert "\\textbf{0.3000}" in tex               # VolGA best robust -> bold
+    assert "HAR & --" in tex                       # missing robust value -> '--'
+
+
+def test_latex_qlike_float_robust_label_and_caption():
+    tex = B.latex_qlike_float(
+        "vn30", {1: _res_robust()}, [1], metric="qlike_robust",
+        caption="Robust QLIKE by horizon on VN30.", label="tab:qlike_robust_vn30")
+    assert "\\label{tab:qlike_robust_vn30}" in tex
+    assert "Robust QLIKE by horizon on VN30." in tex
+    assert "\\textbf{0.3000}" in tex
+
+
 def test_dm_and_fit_summary():
     by_h = {1: _res()}
     dm = B.dm_summary("vn100", by_h, [1, 5])
