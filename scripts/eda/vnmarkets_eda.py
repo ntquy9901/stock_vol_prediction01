@@ -11,8 +11,9 @@ Data (READ-ONLY):
     NaN frac <=0.5) for HOSE/HNX; vn30/vn100 keep all tickers.
 
 Parkinson = ln(H/L)^2 / (4 ln2) = sigma^2 (daily variance). market_pk = cross-sectional per-day mean of the
-Parkinson variance (common market factor); volume_zscore_20 = 20-day rolling z-score of volume; HAR
-weekly/monthly = 5-/22-day rolling means of the Parkinson variance (mirrors the reference runner).
+Parkinson variance (common market factor); volume z-score = VOLUME_ZSCORE_WINDOW-day (canonical 22)
+rolling z-score of volume; HAR weekly/monthly = HAR_WEEKLY_WINDOW-/HAR_MONTHLY_WINDOW-day rolling
+means of the Parkinson variance. All windows import from the canonical ``pipeline_config``.
 
 Outputs one self-contained HTML per market (charts embedded as base64 PNG, no external CDN) plus a
 cross-market comparison HTML + short markdown.
@@ -41,9 +42,11 @@ import matplotlib.pyplot as plt  # noqa: E402
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "scripts" / "eda"))
 sys.path.insert(0, str(REPO / "scripts" / "garch_masked"))
+sys.path.insert(0, str(REPO / "submission" / "soict_lstm_gat"))
 
 import volatility_estimators as VE  # noqa: E402
 import floor_sensitivity as FS      # noqa: E402
+import pipeline_config as PC        # noqa: E402  # canonical windows (single source of truth)
 
 # processed dirs the DELIVERED runners read (raw dirs come from VE.PRICE)
 PROCESSED = {
@@ -496,8 +499,8 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
                     zero_pk_num += int(np.sum(fin == 0.0))
                     zero_pk_den += int(fin.size)
                     sp = pd.Series(pk)
-                    all_har_w.append(sp.rolling(5, min_periods=5).mean().dropna().to_numpy())
-                    all_har_m.append(sp.rolling(22, min_periods=22).mean().dropna().to_numpy())
+                    all_har_w.append(sp.rolling(PC.HAR_WEEKLY_WINDOW, min_periods=PC.HAR_WEEKLY_WINDOW).mean().dropna().to_numpy())
+                    all_har_m.append(sp.rolling(PC.HAR_MONTHLY_WINDOW, min_periods=PC.HAR_MONTHLY_WINDOW).mean().dropna().to_numpy())
                     if pdates is not None:
                         pk_frames[ticker] = (pdates.dt.strftime("%Y-%m-%d").to_numpy(), pk)
 
@@ -548,7 +551,7 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
     pooled_har_w = np.concatenate(all_har_w) if all_har_w else np.array([])
     pooled_har_m = np.concatenate(all_har_m) if all_har_m else np.array([])
 
-    # volume_zscore_20 pooled (per-ticker rolling z, then pool)
+    # volume z-score pooled (per-ticker VOLUME_ZSCORE_WINDOW-day rolling z, then pool)
     vz_vals = []
     for f in raw_files:
         ticker = Path(f).stem.replace("_ohlcv", "")
@@ -558,8 +561,8 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
         if "volume" not in raw.columns:
             continue
         s = pd.to_numeric(raw["volume"], errors="coerce")
-        mu = s.rolling(20, min_periods=20).mean()
-        sd = s.rolling(20, min_periods=20).std()
+        mu = s.rolling(PC.VOLUME_ZSCORE_WINDOW, min_periods=PC.VOLUME_ZSCORE_WINDOW).mean()
+        sd = s.rolling(PC.VOLUME_ZSCORE_WINDOW, min_periods=PC.VOLUME_ZSCORE_WINDOW).std()
         z = ((s - mu) / sd).replace([np.inf, -np.inf], np.nan).dropna().to_numpy()
         if z.size:
             vz_vals.append(z)
@@ -571,7 +574,7 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
 
     tickers_per_year = {y: len(s) for y, s in sorted(year_active.items())}
 
-    raw_n = len(raw_files) if limit is None else len(raw_files)
+    raw_n = len(raw_files)   # raw_files already capped to `limit` at load, so both cases are equal
     screened_n = (len(screen) if screen is not None else raw_n) if limit is None else \
         sum(1 for pt in per_ticker if pt["screened_in"])
 
@@ -598,7 +601,7 @@ def analyze_panel(panel: str, limit: int | None = None) -> dict:
             "har_weekly": summary_stats(pooled_har_w),
             "har_monthly": summary_stats(pooled_har_m),
             "market_pk": summary_stats(market_pk_vals),
-            "volume_zscore_20": summary_stats(pooled_vz),
+            "volume_zscore_22": summary_stats(pooled_vz),
         },
         "_charts": {
             "ret": pooled_ret, "pk": pooled_pk, "vol": pooled_vol,
@@ -679,7 +682,7 @@ def render_market_html(summary: dict) -> str:  # pragma: no cover - presentation
     parts.append("<div class='card'>" + hist_chart(ch["har_w"], "HAR weekly (log10)", log_x=True) + "</div>")
     parts.append("<div class='card'>" + hist_chart(ch["har_m"], "HAR monthly (log10)", log_x=True) + "</div>")
     parts.append("<div class='card'>" + hist_chart(ch["market_pk"], "market_pk (log10)", log_x=True) + "</div>")
-    parts.append("<div class='card'>" + hist_chart(ch["vz"], "volume_zscore_20") + "</div>")
+    parts.append("<div class='card'>" + hist_chart(ch["vz"], "volume_zscore_22") + "</div>")
     parts.append("</div>")
 
     # 3. Dirty-data / anomalies
