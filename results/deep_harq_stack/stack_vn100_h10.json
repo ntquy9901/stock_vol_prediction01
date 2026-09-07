@@ -1,0 +1,26 @@
+{
+ "experiment": "deep_harq_stack",
+ "market": "vn100",
+ "horizon": 10,
+ "n_test": 46410,
+ "w_fit_on_val": 0.8,
+ "qlike": {
+  "HAR-X": 0.5998518907545808,
+  "HAR-X-Q": 0.598911745060149,
+  "VolGA": 0.5984835336792783
+ },
+ "stack": {
+  "equal_0.5": {
+   "w": 0.5,
+   "qlike": 0.5929341028926333,
+   "dm_vs_HARX_p": 0.04252144435344919,
+   "beats_HARX_sig": true
+  },
+  "val_fit": {
+   "w": 0.8,
+   "qlike": 0.5945834867748573,
+   "dm_vs_HARX_p": 0.3897101482652672,
+   "beats_HARX_sig": false
+  }
+ }
+}
