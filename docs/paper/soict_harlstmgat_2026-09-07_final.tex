@@ -51,7 +51,10 @@ and MSE, where the models are otherwise close. On the smaller VN30 panel VolGA l
 at the daily horizon, though its advantage over HAR-X is not statistically distinguishable; there the
 graph branch's clearest effect is a significant absolute-error gain over the no-graph LSTM at the
 daily, fortnightly and monthly horizons ($p<0.001$). The graph branch's QLIKE contribution is confined
-to the broader, more actively traded VN100 panel at the daily horizon.
+to the broader, more actively traded VN100 panel at the daily horizon. Finally, training the deep
+models directly on a QLIKE loss (rather than MSE) makes both the LSTM and VolGA significantly beat
+HAR-X on QLIKE at the daily horizon on both panels ($p\le0.006$), at negligible cost to the
+squared-error metrics.
 \keywords{Volatility forecasting \and HAR \and LSTM \and Graph Attention Network \and Diebold--Mariano.}
 \end{abstract}
 
@@ -138,7 +141,9 @@ edge-weighted, over two hops), motivated by the documented volume--volatility
 association~\cite{karpoff1987} and used here as a predictive design choice rather than a causal claim.
 \textbf{Evaluation.}
 Volatility is latent, so we report the proxy-robust QLIKE metric~\cite{patton2011} alongside MSE, RMSE,
-MAE and $R^2$; the learned models are trained with the MSE loss, and QLIKE is used only for evaluation.
+MAE and $R^2$; the learned models are trained with the MSE loss unless stated otherwise (the QLIKE-loss
+ablation of Sec.~\ref{sec:qlikeloss} trains them directly on QLIKE), and QLIKE is otherwise an
+evaluation-only metric.
 Significance is assessed with the Diebold--Mariano test~\cite{dm1995} using the
 Harvey--Leybourne--Newbold small-sample correction~\cite{hln1997}.
 
@@ -440,6 +445,50 @@ $h$ & QLIKE & MSE & MAE \\
 \end{tabular}
 \end{table}
 
+\subsection{Training objective: QLIKE-loss training}\label{sec:qlikeloss}
+The main results train the deep models on the MSE loss (Sec.~3), on which HAR-X is the strongest on
+QLIKE at the weekly and longer horizons. Because QLIKE is the evaluation target, we also train the
+LSTM and VolGA directly on a QLIKE loss and re-evaluate (Table~\ref{tab:qlikeloss}). QLIKE-loss
+training lowers the deep models' QLIKE at almost every horizon and, at the daily horizon, makes both
+significantly beat HAR-X on QLIKE on both panels (date-clustered DM --- VN100: LSTM $p=0.003$, VolGA
+$p=0.004$; VN30: LSTM $p=0.004$, VolGA $p=0.006$). This removes the weakness of the MSE-loss models,
+where the LSTM trails HAR-X on VN100 and VolGA's VN30 QLIKE advantage is not significant (Tables
+\ref{tab:vn100main}, \ref{tab:vn30main}). At the weekly and fortnightly horizons the QLIKE-loss deep
+models match HAR-X (no longer significantly worse); at the monthly horizon HAR-X stays competitive.
+The gain is nearly free on the squared-error metrics: relative to the MSE-loss models, MSE and RMSE
+change by under $1.1\%$ and MAE rises by at most $2.5\%$. Training directly on the evaluation loss is
+therefore the lever that lets the deep models overtake HAR-X on QLIKE at the daily horizon, on both
+panels.
+
+\begin{table}[t]
+\centering
+\caption{QLIKE-loss ablation --- QLIKE by horizon on both panels: HAR-X, and the LSTM and VolGA
+trained on the MSE loss (subscript MSE; the values of Tables~\ref{tab:vn100main}, \ref{tab:vn30main})
+versus trained directly on the QLIKE loss (subscript QL). Five-seed ensemble; lower is better; bold
+when the model's QLIKE is below HAR-X. The daily-horizon QLIKE-loss advantage over HAR-X is
+significant on both panels (DM $p\le0.006$, in text).}
+\label{tab:qlikeloss}
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{lccccc}
+\toprule
+$h$ & HAR-X & LSTM$_{\mathrm{MSE}}$ & LSTM$_{\mathrm{QL}}$ & VolGA$_{\mathrm{MSE}}$ & VolGA$_{\mathrm{QL}}$ \\
+\midrule
+\multicolumn{6}{l}{\emph{VN100 panel}} \\
+1 & 0.5000 & 0.5155 & \textbf{0.4840} & \textbf{0.4879} & \textbf{0.4833} \\
+5 & 0.5607 & 0.5759 & \textbf{0.5601} & 0.5662 & \textbf{0.5565} \\
+10 & 0.5999 & 0.6127 & \textbf{0.5973} & 0.6127 & \textbf{0.5985} \\
+22 & 0.6385 & 0.6452 & 0.6390 & 0.6476 & 0.6436 \\
+\midrule
+\multicolumn{6}{l}{\emph{VN30 panel}} \\
+1 & 0.4801 & \textbf{0.4787} & \textbf{0.4634} & \textbf{0.4740} & \textbf{0.4639} \\
+5 & 0.5602 & 0.5738 & \textbf{0.5585} & 0.5672 & \textbf{0.5576} \\
+10 & 0.6091 & \textbf{0.6048} & \textbf{0.6037} & \textbf{0.6061} & \textbf{0.6045} \\
+22 & 0.6782 & 0.6832 & \textbf{0.6777} & 0.6882 & 0.6782 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \FloatBarrier
 \section{Discussion}\label{sec:disc}
 \textbf{Graph contribution.} The directed volume$\to$Parkinson graph has a loss- and panel-dependent
@@ -466,7 +515,10 @@ is why all five metrics are reported: the daily horizon favours VolGA across met
 the graph-vs-LSTM comparison favours VolGA on QLIKE for VN100 at $h1$ but on absolute error for VN30 at
 $h1$, $h10$ and $h22$; and HAR-X is the strongest on QLIKE at the longer horizons. We report per-metric
 DM contrasts without a multiple-comparison correction; the significant absolute-error and VN100 graph
-QLIKE results are reported with their exact $p$-values as exploratory findings.
+QLIKE results are reported with their exact $p$-values as exploratory findings. The QLIKE-loss
+ablation (Sec.~\ref{sec:qlikeloss}) shows this metric-dependence is partly a training-objective
+choice: training the deep models on QLIKE rather than MSE makes them beat HAR-X on QLIKE at the daily
+horizon on both panels, so their daily-horizon advantage is not confined to the squared-error losses.
 
 \section{Limitations}
 \noindent\textbf{Small VN30.} With only 33 stocks, the deep and graph models have little training data
