@@ -458,15 +458,22 @@ models match HAR-X (no longer significantly worse); at the monthly horizon HAR-X
 The gain is nearly free on the squared-error metrics: relative to the MSE-loss models, MSE and RMSE
 change by under $1.1\%$ and MAE rises by at most $2.5\%$. Training directly on the evaluation loss is
 therefore the lever that lets the deep models overtake HAR-X on QLIKE at the daily horizon, on both
-panels.
+panels. The effect is strongest on the large, liquid \textbf{S\&P 500} panel (480 screened tickers,
+320{,}141 daily observations), which we add as an out-of-Vietnam robustness check for this finding:
+MSE-loss training there leaves the deep models far worse than HAR-X on QLIKE (VolGA $0.549$ vs
+$0.406$ at $h1$), whereas QLIKE-loss training cuts the daily-horizon QLIKE to $0.360$ (both deep
+models, DM $p=0.001$) and also wins at the monthly horizon ($p=0.010$/$0.013$), at no cost to the
+squared-error metrics. The QLIKE-loss advantage over HAR-X therefore holds beyond the Vietnamese
+panels, and is largest where the MSE-loss models were weakest.
 
 \begin{table}[t]
 \centering
-\caption{QLIKE-loss ablation --- QLIKE by horizon on both panels: HAR-X, and the LSTM and VolGA
-trained on the MSE loss (subscript MSE; the values of Tables~\ref{tab:vn100main}, \ref{tab:vn30main})
-versus trained directly on the QLIKE loss (subscript QL). Five-seed ensemble; lower is better; bold
-when the model's QLIKE is below HAR-X. The daily-horizon QLIKE-loss advantage over HAR-X is
-significant on both panels (DM $p\le0.006$, in text).}
+\caption{QLIKE-loss ablation --- QLIKE by horizon on the two Vietnamese panels and, as an
+out-of-Vietnam robustness check, the S\&P 500 panel: HAR-X, and the LSTM and VolGA trained on the MSE
+loss (subscript MSE; the VN values of Tables~\ref{tab:vn100main}, \ref{tab:vn30main}) versus trained
+directly on the QLIKE loss (subscript QL). Five-seed ensemble; lower is better; bold when the model's
+QLIKE is below HAR-X. The daily-horizon QLIKE-loss advantage over HAR-X is significant on all three
+panels (DM $p\le0.006$; S\&P 500 also at $h22$; in text).}
 \label{tab:qlikeloss}
 \footnotesize
 \setlength{\tabcolsep}{5pt}
@@ -485,6 +492,12 @@ $h$ & HAR-X & LSTM$_{\mathrm{MSE}}$ & LSTM$_{\mathrm{QL}}$ & VolGA$_{\mathrm{MSE
 5 & 0.5602 & 0.5738 & \textbf{0.5585} & 0.5672 & \textbf{0.5576} \\
 10 & 0.6091 & \textbf{0.6048} & \textbf{0.6037} & \textbf{0.6061} & \textbf{0.6045} \\
 22 & 0.6782 & 0.6832 & \textbf{0.6777} & 0.6882 & 0.6782 \\
+\midrule
+\multicolumn{6}{l}{\emph{S\&P 500 panel (US; out-of-Vietnam robustness check)}} \\
+1 & 0.4061 & 0.6141 & \textbf{0.3603} & 0.5492 & \textbf{0.3598} \\
+5 & 0.4550 & 0.5640 & \textbf{0.4448} & 0.5531 & \textbf{0.4468} \\
+10 & 0.4797 & 0.6821 & \textbf{0.4714} & 0.6375 & \textbf{0.4695} \\
+22 & 0.4959 & 0.6066 & \textbf{0.4699} & 0.6026 & \textbf{0.4696} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -525,8 +538,10 @@ horizon on both panels, so their daily-horizon advantage is not confined to the 
 on VN30, which is part of why VolGA's daily-horizon lead there is not statistically distinguishable
 from HAR-X.
 
-\noindent\textbf{Scope.} This is a Vietnamese-market case study on two index panels; we do not claim
-the results generalise beyond them.
+\noindent\textbf{Scope.} The main study is a Vietnamese-market case study on two index panels; the
+S\&P 500 panel enters only as an out-of-Vietnam robustness check for the QLIKE-loss finding
+(Sec.~\ref{sec:qlikeloss}), not as a fully analysed third market. We do not claim the graph and
+cross-market results generalise beyond the panels studied.
 
 \section{Conclusion}
 On the VN100 and VN30 panels of the Vietnamese market we benchmarked the extended linear HAR-X against
