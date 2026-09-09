@@ -4,17 +4,21 @@ A nonlinear, QLIKE-trained gradient-boosted model significantly beats HAR-X on t
 strongest single-model result on that panel, where deep models (VolGA/MASTER) only tie or lose.
 
 ## Result (canonical walk-forward, 7 folds; HAR-X reproduces canonical exactly)
+S&P 500 — GBM beats HAR-X significantly at ALL FOUR horizons:
 | market | h | HAR-X | GBM | Δ vs HAR-X | DM p |
 |---|---|---|---|---|---|
+| **S&P 500** | 1 | 0.4061 | **0.3521** | **+13.31%** | **0.0001** ✓ |
 | **S&P 500** | 5 | 0.4550 | **0.4378** | **+3.78%** | **0.0000** ✓ |
 | **S&P 500** | 10 | 0.4797 | **0.4624** | **+3.61%** | **0.0393** ✓ |
+| **S&P 500** | 22 | 0.4959 | **0.4677** | **+5.70%** | **0.0025** ✓ |
 | VN100 | 1 | 0.5000 | 0.5523 | −10.5% | 0.000 (worse) |
 | VN100 | 5 | 0.5607 | 0.6016 | −7.3% | 0.000 (worse) |
 | VN100 | 10 | 0.5999 | 0.6227 | −3.8% | 0.042 (worse) |
 | VN30 | 5 | 0.5602 | 0.5537 | +1.1% | 0.289 (n.s.) |
 | VN30 | 10 | 0.6091 | 0.6149 | −1.0% | 0.509 (worse) |
 
-(S&P 500 h1/h22 pending — local memory limit; the h5/h10 wins are the claim.)
+The S&P 500 win is large and significant at every horizon (h1 +13.3%!), and unlike the VN HARQ/stack (which
+fade at h22) it holds strongly at the monthly horizon too.
 
 ## Model
 `HistGradientBoostingRegressor(loss='gamma')` on 11 features = the 5 HAR-X features + a realized-quarticity
