@@ -1,0 +1,96 @@
+{
+ "experiment": "gbm_refined_champion",
+ "market": "vn100",
+ "horizon": 1,
+ "n_folds": 7,
+ "git_commit": "8fee528e",
+ "metrics": {
+  "HAR-X": {
+   "mse": 2.3556282780543967e-07,
+   "rmse": 0.00048534815113013426,
+   "mae": 0.0002845337667452335,
+   "qlike": 0.4999560219746216,
+   "r2": 0.2252131851847935,
+   "n": 46512
+  },
+  "GBM+earn": {
+   "mse": 2.6103339020048133e-07,
+   "rmse": 0.0005109142689341151,
+   "mae": 0.0003115435237404565,
+   "qlike": 0.5522947344781963,
+   "r2": 0.14143827004450849,
+   "n": 46512
+  },
+  "GBM+refined": {
+   "mse": Infinity,
+   "rmse": Infinity,
+   "mae": 5.676748933572063e+160,
+   "qlike": 21.25470989635306,
+   "r2": -Infinity,
+   "n": 46512
+  }
+ },
+ "dm_vs_HARX": {
+  "GBM+earn": {
+   "qlike": {
+    "p_value": 6.59976001830758e-09,
+    "mean_diff": 0.05233871250357476,
+    "favors": "B"
+   },
+   "se": {
+    "p_value": 4.5850807419920466e-09,
+    "mean_diff": 2.547056239504166e-08,
+    "favors": "B"
+   },
+   "ae": {
+    "p_value": 1.391317781489586e-24,
+    "mean_diff": 2.7009756995223004e-05,
+    "favors": "B"
+   }
+  },
+  "GBM+refined": {
+   "qlike": {
+    "p_value": 4.576624108674792e-17,
+    "mean_diff": 20.754753874378434,
+    "favors": "B"
+   },
+   "se": {
+    "error": "losses must be finite"
+   },
+   "ae": {
+    "p_value": 1.0,
+    "mean_diff": 5.676748933572061e+160,
+    "favors": "B"
+   }
+  }
+ },
+ "dm_vs_GBMearn": {
+  "GBM+refined": {
+   "qlike": {
+    "p_value": 5.422503870141265e-17,
+    "mean_diff": 20.70241516187486,
+    "favors": "B"
+   },
+   "se": {
+    "error": "losses must be finite"
+   },
+   "ae": {
+    "p_value": 1.0,
+    "mean_diff": 5.676748933572061e+160,
+    "favors": "B"
+   }
+  }
+ },
+ "overfit_evidence": {
+  "GBM+earn": {
+   "train_qlike": 1.4304624665831063,
+   "test_qlike": 0.5522947344781963,
+   "train_to_test_gap_pct": -61.39047703939813
+  },
+  "GBM+refined": {
+   "train_qlike": 237.84028037885452,
+   "test_qlike": 21.25470989635306,
+   "train_to_test_gap_pct": -91.06345238809148
+  }
+ }
+}
