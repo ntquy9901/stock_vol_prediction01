@@ -271,6 +271,8 @@ def test_pool_write(tmp_path):
     G.pool_write(out, 1, (0,), base, gnn_names, preds, yy, [dates], gnn_seed_q, outpath, verbose=True)
     assert "h1" in out and out["h1"]["n"] == n and outpath.exists()
     assert set(out["h1"]["qlike"]) == set(base + gnn_names)
+    assert set(out["h1"]["metrics"]) == set(base + gnn_names)
+    assert set(out["h1"]["metrics"][base[0]]) == {"mse", "rmse", "mae", "r2", "qlike"}
 
 
 def test_row_in_te_robust_to_datetime64_keys():

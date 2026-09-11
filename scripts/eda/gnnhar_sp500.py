@@ -220,8 +220,11 @@ def pool_write(out, h, seeds, base, gnn_names, preds, yy, dts_all, gnn_seed_q, o
     every fold (crash-resilient checkpoint) and at horizon end (verbose table)."""
     y = np.concatenate(yy)
     dates = np.concatenate(dts_all)
-    e = {m: M.per_obs_qlike(y, np.concatenate(preds[m]), floor=FL) for m in preds}
+    pooled = {m: np.concatenate(preds[m]) for m in preds}
+    e = {m: M.per_obs_qlike(y, pooled[m], floor=FL) for m in preds}
     q = {m: float(np.mean(e[m])) for m in e}
+    metrics_all = {m: {"mse": M.mse(y, pooled[m]), "rmse": M.rmse(y, pooled[m]), "mae": M.mae(y, pooled[m]),
+                       "r2": M.r2(y, pooled[m]), "qlike": q[m]} for m in e}
     if verbose:
         print(f"\n===== SP500 h{h} (n={len(y):,}, {len(seeds)} seeds, {len(yy)} folds) =====", flush=True)
         for m in base + gnn_names:
@@ -237,7 +240,7 @@ def pool_write(out, h, seeds, base, gnn_names, preds, yy, dts_all, gnn_seed_q, o
         dmr[f"{x}_vs_{b}"] = p
         if verbose:
             print(f"  DM {x:20s} vs {b:20s}: {(q[b]-q[x])/q[b]*100:+.2f}% (p={p:.3f})", flush=True)
-    out[f"h{h}"] = {"n": int(len(y)), "n_folds": len(yy), "qlike": q, "dm": dmr,
+    out[f"h{h}"] = {"n": int(len(y)), "n_folds": len(yy), "qlike": q, "metrics": metrics_all, "dm": dmr,
                     "per_seed_qlike": {m: [round(v, 6) for v in gnn_seed_q[m]] for m in gnn_seed_q}}
     outpath.write_text(json.dumps(out, indent=2))
 
