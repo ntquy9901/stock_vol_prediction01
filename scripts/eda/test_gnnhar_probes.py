@@ -271,3 +271,14 @@ def test_pool_write(tmp_path):
     G.pool_write(out, 1, (0,), base, gnn_names, preds, yy, [dates], gnn_seed_q, outpath, verbose=True)
     assert "h1" in out and out["h1"]["n"] == n and outpath.exists()
     assert set(out["h1"]["qlike"]) == set(base + gnn_names)
+
+
+def test_row_in_te_robust_to_datetime64_keys():
+    """Regression: dpos built from np.datetime64 keys (some pandas builds) must still map
+    Timestamp test dates. A direct dict lookup raised KeyError on Colab; _row_in_te uses .map."""
+    dts = np.sort(pd.to_datetime(["2022-07-01", "2022-07-05", "2022-07-06"]).values)  # np.datetime64 keys
+    dpos = {d: i for i, d in enumerate(dts)}
+    te_idx = np.array([1, 2])
+    tef_dates = pd.Series(pd.to_datetime(["2022-07-05", "2022-07-06"]))
+    out = G._row_in_te(tef_dates, dpos, te_idx)
+    assert out.tolist() == [0, 1]

@@ -194,6 +194,18 @@ def build_fold_tensors(fold, tickers, feats, tr_dates_mask_date):
     return X, Y, Y * sc, mask, sc, dpos, cpos, dts
 
 
+def _row_in_te(tef_dates, dpos, te_idx):
+    """Index of each test-row date within te_idx (the fold-pivot test positions).
+
+    Uses pandas ``.map`` for the date->fold-position lookup so it is robust to a
+    datetime64-vs-Timestamp key mismatch across pandas versions: a direct ``dpos[d]``
+    dict lookup raised ``KeyError`` on pandas builds where ``fold['date'].unique()``
+    yields ``np.datetime64`` keys while ``tef['date']`` iterates ``Timestamp`` values.
+    """
+    te_pos = {int(p): i for i, p in enumerate(te_idx)}
+    return np.array([te_pos[int(p)] for p in tef_dates.map(dpos)])
+
+
 CMP = [("GNNHAR2L-corr-HAR3", "HAR"), ("GNNHAR2L-corr-OWN9", "GBM"),
        ("GNNHAR2L-corr-OWN9", "GBM+corr"),
        ("GNNHAR2L-corr-HAR3", "GNNHAR2L-none-HAR3"),
@@ -312,8 +324,7 @@ def main():  # pragma: no cover - entry driver: argparse + full training loop ov
                     tr_idx = tr_idx[:-VALID_LEN]
                     te_idx = np.where((dts >= np.datetime64(ts)) & (dts < np.datetime64(tend)))[0]
                     cidx = tef["ticker"].map(cpos).to_numpy()
-                    te_pos = {d: i for i, d in enumerate(te_idx)}
-                    row_in_te = np.array([te_pos[dpos[d]] for d in tef["date"]])
+                    row_in_te = _row_in_te(tef["date"], dpos, te_idx)
                     x_cache[key] = (Xt, Yst, Mt, sc, tr_idx, va_idx, te_idx, cidx, row_in_te)
                 Xt, Yst, Mt, sc, tr_idx, va_idx, te_idx, cidx, row_in_te = x_cache[key]
                 adj = adj_cache[adj_type]
