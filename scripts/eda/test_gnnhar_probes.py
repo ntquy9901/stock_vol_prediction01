@@ -8,6 +8,7 @@ on the changed lines. The argparse ``main()`` bodies and the full walk-forward t
 Behaviour is not altered by these tests — they only call the existing functions and assert shapes /
 finiteness, so the probes' reported numbers are unchanged.
 """
+import json
 import sys
 from pathlib import Path
 
@@ -231,16 +232,15 @@ def test_train_once_break_and_no_best():
     assert model is not None and not np.isfinite(bv)                 # never improved -> break at epoch>=20
 
 
-def test_train_predict_normal(monkeypatch):
+def test_fit_gnn_normal(monkeypatch):
     X, Ys, Mt, adj = _tiny_train_inputs(D=6)
     m = G.GNNHAR(3, G.N_HID, 2).to(DEVICE)
     monkeypatch.setattr(G, "_train_once", lambda *a, **k: (m, 1.0))  # finite <1.6 -> no retry
-    preds, bv = G.train_predict(X, Ys, Mt, adj, np.array([0, 1, 2]), np.array([3]),
-                                np.array([4, 5]), 3, 2, 0, 2, 1)
-    assert bv == 1.0 and preds.shape == (2, 3)
+    model, bv = G.fit_gnn(X, Ys, Mt, adj, np.array([0, 1, 2]), np.array([3, 4]), 3, 2, 0, 2, 1)
+    assert bv == 1.0 and model is m
 
 
-def test_train_predict_retry(monkeypatch):
+def test_fit_gnn_retry(monkeypatch):
     X, Ys, Mt, adj = _tiny_train_inputs(D=6)
     m = G.GNNHAR(3, G.N_HID, 2).to(DEVICE)
     calls = {"n": 0}
@@ -249,30 +249,92 @@ def test_train_predict_retry(monkeypatch):
         calls["n"] += 1
         return (m, 5.0)                                              # >1.6 -> drives the retry loop
     monkeypatch.setattr(G, "_train_once", fake)
-    preds, bv = G.train_predict(X, Ys, Mt, adj, np.array([0, 1, 2]), np.array([3]),
-                                np.array([4, 5]), 3, 2, 0, 2, 1)
-    assert bv == 5.0 and calls["n"] == 5                             # 1 initial + 4 retries
+    model, bv = G.fit_gnn(X, Ys, Mt, adj, np.array([0, 1, 2]), np.array([3, 4]), 3, 2, 0, 2, 1)
+    assert bv == 5.0 and calls["n"] == 5 and model is m             # 1 initial + 4 retries
 
 
-def test_pool_write(tmp_path):
-    base = ["HAR", "GBM", "GBM+corr"]
+def test_row_preds():
+    m = G.GNNHAR(3, G.N_HID, 2).to(DEVICE)
+    X = torch.randn(6, 4, 3, device=DEVICE)
+    adj = torch.eye(4, device=DEVICE)
+    date_idx = np.array([4, 5])
+    row_in = np.array([0, 1, 1])                                     # 3 obs across the 2 test dates
+    cidx = np.array([0, 2, 3])
+    pr = G.row_preds(m, X, adj, date_idx, row_in, cidx, sc=100.0)
+    assert pr.shape == (3,) and np.all(pr >= G.FL)                  # raw-scale, floored
+
+
+def test_nb_col():
+    dates = pd.to_datetime([f"2020-01-0{i}" for i in range(1, 5)])
+    rows = [{"date": d, "ticker": t, "pk": 0.001 * (i + 1) + (0.5 if t == "B" else 0.0)}
+            for i, d in enumerate(dates) for t in ("A", "B")]
+    fold = pd.DataFrame(rows)
+    W = np.array([[0.0, 1.0], [1.0, 0.0]])                          # each node's neighbour is the other
+    nb = G._nb_col(fold, ["A", "B"], W, "pk")
+    assert nb.shape[0] == len(fold) and np.all(np.isfinite(nb))
+
+
+def test_ghar_ols():
+    rng = np.random.default_rng(0)
+    cols = G.HAR3 + [f"g_{c}" for c in G.HAR3]
+    tr = pd.DataFrame({**{c: rng.uniform(1e-4, 1e-3, 50) for c in cols},
+                       "y": rng.uniform(1e-4, 1e-3, 50)})
+    te = pd.DataFrame({c: rng.uniform(1e-4, 1e-3, 10) for c in cols})
+    p = G.ghar_ols(tr, te, cols)
+    assert p.shape == (10,) and np.all(p >= 0.01 * np.maximum(tr["y"], G.FL).mean() - 1e-12)
+
+
+def test_metrics5():
+    y = np.array([0.5, 1.0, 1.5, 2.0])
+    p = np.array([0.6, 0.9, 1.4, 2.1])
+    m = G._metrics5(y, p)
+    assert set(m) == {"mse", "rmse", "mae", "r2", "qlike"} and all(np.isfinite(v) for v in m.values())
+
+
+def _pool_write_inputs():
+    base = ["HAR", "GHAR", "GBM", "GBM+corr"]
     gnn_names = ["GNNHAR2L-corr-HAR3", "GNNHAR2L-none-HAR3", "GNNHAR2L-plac-HAR3",
                  "GNNHAR1L-corr-HAR3", "GNNHAR2L-corr-OWN9", "GNNHAR2L-none-OWN9",
                  "GNNHAR2L-plac-OWN9"]
     n = 40
     dates = np.array([np.datetime64("2020-01-01") + np.timedelta64(i, "D") for i in range(n)])
-    yy = [np.random.default_rng(99).uniform(0.5, 1.5, n)]
-    preds = {name: [np.random.default_rng(i + 1).uniform(0.5, 1.5, n)]
-             for i, name in enumerate(base + gnn_names)}
-    gnn_seed_q = {name: ([0.10, 0.20] if i % 2 == 0 else []) for i, name in enumerate(gnn_names)}
-    out = {}
-    outpath = tmp_path / "g.json"
-    G.pool_write(out, 1, (0,), base, gnn_names, preds, yy, [dates], gnn_seed_q, outpath, verbose=False)
-    G.pool_write(out, 1, (0,), base, gnn_names, preds, yy, [dates], gnn_seed_q, outpath, verbose=True)
-    assert "h1" in out and out["h1"]["n"] == n and outpath.exists()
-    assert set(out["h1"]["qlike"]) == set(base + gnn_names)
-    assert set(out["h1"]["metrics"]) == set(base + gnn_names)
-    assert set(out["h1"]["metrics"][base[0]]) == {"mse", "rmse", "mae", "r2", "qlike"}
+    order = base + gnn_names
+    yy_te = [np.random.default_rng(99).uniform(0.5, 1.5, n)]
+    yy_tr = [np.random.default_rng(98).uniform(0.5, 1.5, n)]
+    yy_va = [np.random.default_rng(97).uniform(0.5, 1.5, n)]
+    preds_te = {m: [np.random.default_rng(i + 1).uniform(0.5, 1.5, n)] for i, m in enumerate(order)}
+    preds_tr = {m: [np.random.default_rng(i + 100).uniform(0.5, 1.5, n)] for i, m in enumerate(order)}
+    preds_va = {m: [np.random.default_rng(i + 200).uniform(0.5, 1.5, n)] for i, m in enumerate(order)}
+    # spread present for even-indexed GNNs, empty for the rest -> both branches of the per-seed print
+    gnn_seed_q = {m: ([0.10, 0.20] if i % 2 == 0 else []) for i, m in enumerate(gnn_names)}
+    return base, gnn_names, dates, yy_te, yy_tr, yy_va, preds_te, preds_tr, preds_va, gnn_seed_q
+
+
+def test_pool_write_sp500(tmp_path):
+    base, gnn_names, dates, yy_te, yy_tr, yy_va, preds_te, preds_tr, preds_va, gnn_seed_q = _pool_write_inputs()
+    outpath = tmp_path / "sp.json"
+    G.pool_write(1, "sp500", (0,), base, gnn_names, gnn_names, preds_te, yy_te, [dates],
+                 preds_tr, yy_tr, preds_va, yy_va, gnn_seed_q, outpath, verbose=False)
+    G.pool_write(1, "sp500", (0,), base, gnn_names, gnn_names, preds_te, yy_te, [dates],
+                 preds_tr, yy_tr, preds_va, yy_va, gnn_seed_q, outpath, verbose=True)
+    doc = json.loads(outpath.read_text())
+    assert doc["n"] == 40 and doc["market"] == "sp500" and "per_fold_qlike" not in doc
+    assert set(doc["metrics"]) == set(base + gnn_names)
+    assert set(doc["metrics"][base[0]]) == {"mse", "rmse", "mae", "r2", "qlike"}
+    assert set(doc["train_metrics"]) == set(base + gnn_names) and set(doc["val_metrics"]) == set(base + gnn_names)
+    assert set(doc["fit_diagnostics"]) == set(gnn_names)             # learned models only
+    assert all("status" in v for v in doc["fit_diagnostics"].values())
+
+
+def test_pool_write_hose_per_fold(tmp_path):
+    base, gnn_names, dates, yy_te, yy_tr, yy_va, preds_te, preds_tr, preds_va, gnn_seed_q = _pool_write_inputs()
+    outpath = tmp_path / "hose.json"
+    G.pool_write(1, "hose", (0,), base, gnn_names, gnn_names, preds_te, yy_te, [dates],
+                 preds_tr, yy_tr, preds_va, yy_va, gnn_seed_q, outpath, verbose=False)
+    doc = json.loads(outpath.read_text())
+    assert doc["market"] == "hose" and "per_fold_qlike" in doc      # HOSE exposes per-fold QLIKE
+    assert set(doc["per_fold_qlike"]) == set(base + gnn_names)
+    assert len(doc["per_fold_qlike"][base[0]]) == 1                 # one fold in this fixture
 
 
 def test_row_in_te_robust_to_datetime64_keys():
