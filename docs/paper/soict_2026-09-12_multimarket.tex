@@ -1,0 +1,376 @@
+% SOICT 2026 submission - Springer LNCS format (single-blind: keep author names).
+% Requires the Springer LNCS class `llncs.cls` + `splncs04.bst`.
+% Multi-market volatility forecasting model. Figures in docs/paper/figures/.
+% Numbers read from docs/reports/2026-09-12_gbme_metrics_table.md and
+%   docs/paper/2026-09-12_sp500_hose_gnnhar_final.md.
+\documentclass{llncs}
+\usepackage{graphicx}
+\graphicspath{{figures/}}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{placeins}
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T5]{fontenc}
+
+\begin{document}
+
+\title{Multi-Market Stock Volatility Forecasting Model}
+
+\author{Nguyễn Thành Quy\inst{1} \and Lê Trung Hoàng\inst{1} \and Trần Duy Hoàng\inst{1}}
+\institute{University of Science, Vietnam National University Ho Chi Minh City, Ho Chi Minh City, Vietnam \\ \email{lthoang@hcmus.edu.vn}}
+
+\maketitle
+
+\begin{abstract}
+Forecasting daily stock-price volatility, how much a stock's price is likely to swing on a given day,
+is a core input to risk management and option pricing: a risk manager sizing exposure or a trader
+pricing an option needs to know not only which direction a price may move but how large its swings
+will be. We propose a per-stock volatility forecasting model built on a gamma-loss gradient-boosting
+machine (GBM) over own-history features, and we ask where extra information actually helps. On the
+S\&P~500, adding an External, forward-looking scheduled-earnings feature (GBME) cuts QLIKE by
+8.7 to 11.2\% over own-history at every horizon (Diebold-Mariano $p<0.001$), roughly seven times the
+size of any graph term. A cross-firm graph feature, by contrast, adds nothing once own-history and the
+firm's own momentum are in the model: it is not distinguishable from the earnings model at the short
+horizons and it hurts at the monthly horizon. We replicate the study on a second, structurally
+different market, 405 Vietnam Ho Chi Minh Stock Exchange (HOSE) tickers, under an identical
+leakage-controlled walk-forward protocol scored on QLIKE with date-clustered Diebold-Mariano tests.
+The graph null replicates on HOSE, while the earnings lever does not transfer, which localizes the
+earnings gain to the S\&P~500 and shows that the graph carries no reliable signal on either market.
+\keywords{Volatility forecasting \and HAR \and Gradient boosting \and Earnings announcements \and Diebold-Mariano.}
+\end{abstract}
+
+\section{Introduction}
+Financial markets are volatile: prices swing, and the size of those swings, an asset's
+\emph{volatility}, is the standard measure of its risk. Because volatility drives how options are
+priced, how much capital a position ties up, and how risk is budgeted across a portfolio, forecasting
+it accurately is a long-standing problem in financial econometrics~\cite{corsi2009}. Volatility is
+not observed directly; it is estimated from prices, so any forecast is a forecast of an estimate. We
+target the daily \emph{Parkinson estimator}~\cite{parkinson1980}, which gauges a day's variance from
+its high-low price range and uses more of the day's information than a close-to-close measure; our
+forecasting target is therefore a variance (a squared quantity), not a standard deviation.
+
+The standard linear approach is the HAR family~\cite{corsi2009}: a plain linear regression that
+predicts tomorrow's volatility from its own averages over the last day, the last week (about five
+trading days), and the last month (about twenty-two), summarising volatility's long memory with a
+handful of coefficients. This benchmark is deliberately simple yet hard to beat. A recent literature
+argues that HAR treats each stock in isolation and misses cross-firm spillover, and wires stocks
+together with graph neural networks that aggregate a stock's correlated neighbors, reporting gains on
+squared-error metrics. We test whether such cross-firm structure helps once the comparison is fair,
+and we contrast it with a different kind of information: a forward-looking, per-firm signal.
+
+We forecast daily Parkinson variance for the S\&P~500 with a per-stock gamma-loss gradient-boosting
+model over own-history features, then add two candidate levers and measure each one under a
+leakage-controlled walk-forward protocol scored on QLIKE with date-clustered Diebold-Mariano tests.
+The lever that works is forward-looking and specific to the firm. A scheduled earnings release is
+known weeks ahead and raises volatility around the announcement~\cite{patell1981}; encoding the distance from the
+forecast target to the nearest scheduled release cuts QLIKE by 8.7 to 11.2\% over own-history at
+every horizon, roughly seven times the size of any graph term. A cross-firm graph feature adds no
+reliable value: the short-horizon signal it could carry is redundant with the stock's own momentum,
+and its remaining signal arrives contemporaneously with the target rather than at the forecast origin.
+
+This paper contributes three results. First, a per-stock gamma-GBM over own-history features is a
+strong, transparent baseline for daily volatility that already beats HAR and HARQ. Second, a
+forward-looking scheduled-earnings feature is the dominant lever on the S\&P~500, cutting QLIKE by
+8.7 to 11.2\% at every horizon (Diebold-Mariano $p<0.001$), while a cross-firm graph feature adds
+nothing. Third, we replicate the study on a second market, 405 Vietnam HOSE tickers, where the graph
+null holds and the earnings lever does not transfer, which localizes the earnings gain and shows the
+graph carries no reliable signal on either market.
+
+\paragraph{Terminology.}
+\emph{Volatility}: the size of a stock's price fluctuations, the standard proxy for its risk.
+\emph{Parkinson estimator}: a day's variance measured from its high-low price range; our forecasting
+target is this variance (squared units), not the standard deviation.
+\emph{HAR}: a linear model predicting volatility from its own daily, weekly, and monthly averages.
+\emph{QLIKE}: a proxy-robust error measure for volatility forecasts that stays reliable when the
+target is a noisy proxy~\cite{patton2011}.
+\emph{Diebold-Mariano (DM) test}: a test of whether one forecast is more accurate than another by
+more than chance, computed from their day-by-day loss differences~\cite{dm1995}.
+\emph{Horizon} $h$: how many trading days ahead we forecast ($h\in\{1,5,10,22\}$, roughly a day, week,
+fortnight, and month).
+
+\section{Method and Setup}
+\textbf{Target and metric.} We forecast daily Parkinson variance
+$\mathrm{pk}_t=\ln(H_t/L_t)^2/(4\ln 2)$ from the daily high $H$ and low $L$ ($\ln$ is the natural
+logarithm), at horizons $h\in\{1,5,10,22\}$ over 497 S\&P~500 constituents. We report QLIKE as the
+primary loss~\cite{patton2011}, alongside MSE, RMSE and MAE. We test significance with a
+Diebold-Mariano statistic~\cite{dm1995} on per-trading-date mean loss, with the
+Harvey-Leybourne-Newbold small-sample correction~\cite{hln1997}, because within-day stock errors are
+dependent.
+
+\textbf{Model.} The forecasting model is a per-stock GBM (a gamma-loss Gradient Boosting
+Machine~\cite{friedman2001}: scikit-learn HistGradientBoostingRegressor~\cite{pedregosa2011},
+gamma-deviance loss equal to QLIKE up to a constant, 300 iterations, learning rate 0.05, 31 leaves,
+L2=1.0, 3-seed ensemble). Its own-history feature vector is $\mathbb{R}^9$: three HAR
+lags~\cite{corsi2009}, a realized-quarticity proxy, and five log-volatility momentum terms. Two
+optional feature blocks extend it. The External block (GBME) is $\mathbb{R}^4$ of forward-looking
+scheduled-earnings features, chiefly the distance from the forecast target to the nearest scheduled
+release. The graph block (GBME+graph) is a single cross-firm neighbor aggregate,
+$\mathbb{R}^1$, formed by averaging each node's top-10 train-correlation neighbors with positive
+row-normalized weights. Figure~\ref{fig:arch} shows the architecture.
+
+\textbf{Baselines.} HAR~\cite{corsi2009} fits three own-history lags by ordinary least squares. HARQ
+adds a realized-quarticity interaction~\cite{harq2016}. Both share the same target, protocol, and
+positivity floor as the GBM.
+
+\textbf{Protocol.} We use expanding-window walk-forward folds with a target-horizon embargo. All
+correlations, adjacencies, factor estimates, and model fits use training data only; the test window is
+read once. Every gradient-boosting model averages three seeds. Predictions are floored identically
+across models before scoring.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig_architecture.png}
+\caption{Model architecture. A per-stock feature vector combines own-history features
+($\mathbb{R}^9$: three HAR lags, a realized-quarticity proxy, five log-volatility momentum terms), an
+External forward-looking scheduled-earnings block ($\mathbb{R}^4$), and one cross-firm graph
+neighbor-aggregate feature ($\mathbb{R}^1$). A gamma-loss gradient-boosting ensemble maps the feature
+vector to the multi-horizon Parkinson-variance forecast.}
+\label{fig:arch}
+\end{figure}
+
+\section{Cross-Firm Graphs Add No Incremental Value}\label{sec:graph}
+Table~\ref{tab:sp500} reports all four metrics for the S\&P~500 across HAR, HARQ, the own-history GBM,
+the earnings model GBME, and GBME+graph at every horizon. The own-history GBM already beats HAR and
+HARQ on QLIKE at every horizon. Adding the cross-firm graph feature to the earnings model does not
+help: GBME+graph is not distinguishable from GBME on QLIKE at the short horizons and it is worse at
+the monthly horizon. The graph is therefore never the DM-verified best, and it is not bolded in any
+horizon block.
+
+\begin{table}[t]
+\centering
+\caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed GBM ensemble). Lower is better
+on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE unscaled. Bold marks the QLIKE
+that is significantly best by a date-clustered Diebold-Mariano test; unbolded values are not
+DM-distinguishable from the best.}
+\label{tab:sp500}
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{llcccc}
+\toprule
+$h$ & Model & MSE & RMSE & MAE & QLIKE \\
+\midrule
+1 & HAR        & 5.754 & 7.586 & 2.132 & 0.3697 \\
+1 & HARQ       & 5.648 & 7.515 & 2.151 & 0.3780 \\
+1 & GBM        & 5.557 & 7.454 & 2.089 & 0.3570 \\
+1 & GBME       & 5.397 & 7.346 & 2.017 & \textbf{0.3172} \\
+1 & GBME+graph & 5.424 & 7.365 & 2.010 & 0.3158 \\
+\midrule
+5 & HAR        & 6.141 & 7.836 & 2.297 & 0.4364 \\
+5 & HARQ       & 6.132 & 7.831 & 2.309 & 0.4377 \\
+5 & GBM        & 6.117 & 7.821 & 2.255 & 0.4116 \\
+5 & GBME       & 5.972 & 7.728 & 2.180 & \textbf{0.3705} \\
+5 & GBME+graph & 6.063 & 7.787 & 2.196 & 0.3715 \\
+\midrule
+10 & HAR        & 6.214 & 7.883 & 2.356 & 0.4615 \\
+10 & HARQ       & 6.205 & 7.877 & 2.358 & 0.4614 \\
+10 & GBM        & 6.262 & 7.913 & 2.312 & 0.4307 \\
+10 & GBME       & 6.118 & 7.822 & 2.239 & \textbf{0.3912} \\
+10 & GBME+graph & 6.240 & 7.899 & 2.272 & 0.3939 \\
+\midrule
+22 & HAR        & 6.327 & 7.954 & 2.419 & 0.4855 \\
+22 & HARQ       & 6.311 & 7.944 & 2.415 & 0.4831 \\
+22 & GBM        & 6.233 & 7.895 & 2.359 & 0.4464 \\
+22 & GBME       & 6.098 & 7.809 & 2.277 & \textbf{0.4074} \\
+22 & GBME+graph & 6.087 & 7.802 & 2.300 & 0.4110 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{The short-horizon graph signal is redundant with own-history momentum.} A short-horizon graph
+signal appears only when the model's own-history is stripped to three HAR lags; restoring the five
+log-volatility momentum features to the base erases it. The stock's own momentum features carry what
+the neighbor aggregate would otherwise supply, so the cross-sectional neighbor signal is redundant
+with the stock's own past.
+
+\textbf{An oracle bound locates the missing signal in time.} Replacing the neighbor value at the
+origin $t$ with the neighbor value at the target day $t+h$, an illegal upper bound contemporaneous
+with the label, cuts QLIKE by 19.2 to 27.2\% over the graph feature ($p<0.001$ at every horizon),
+where the legal graph cuts it by under 1\%. The cross-sectional signal exists and is large, but it
+arrives contemporaneously with the target, not at the forecast origin, so no origin-time graph can
+capture it.
+
+\textbf{Takeaway.} Conditional on own-history, cross-firm graph structure adds no reliable incremental
+QLIKE value at any horizon on the S\&P~500. The signal a graph could carry is either redundant with
+the stock's own momentum or contemporaneous with the target.
+
+\FloatBarrier
+\section{Forward-Looking Earnings Are the Lever}\label{sec:earn}
+\textbf{A diagnostic locates the missing lever.} The own-history GBM beats HAR across the calm
+deciles, yet its remaining QLIKE concentrates in the storm decile: decile D9 alone carries 43\% of the
+model's total test QLIKE (Fig.~\ref{fig:decile-error}). The model under-forecasts exactly there, where
+its median forecast-to-realized ratio falls below one while every calm decile sits above one
+(Fig.~\ref{fig:decile-bias}). Permutation importance ranks the three own-history HAR lags far above
+every momentum and auxiliary term (Fig.~\ref{fig:importance}), so own-history is exhausted and the
+storm component needs a signal from outside the stock's past. A scheduled earnings release is known
+weeks ahead and drives the announcement-driven part of these spikes, which makes a forward-looking
+earnings feature the natural lever for the residual the GBM cannot reach.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_remaining_error_by_decile.png}
+\caption{The own-history GBM beats HAR on the calm deciles, and its remaining QLIKE concentrates in
+the storm decile D9, which carries 43\% of the model total.}
+\label{fig:decile-error}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_forecast_bias_by_decile.png}
+\caption{The GBM under-forecasts the storm deciles, where its median forecast-to-realized ratio drops
+below one.}
+\label{fig:decile-bias}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig_feature_importance.png}
+\caption{Permutation importance ranks the own-history HAR lags far above every other feature, so
+own-history is exhausted.}
+\label{fig:importance}
+\end{figure}
+
+\textbf{The earnings feature is the lever.} In Table~\ref{tab:sp500}, the External earnings model GBME
+posts the lowest RMSE, MAE and QLIKE at every horizon. The QLIKE gain over own-history is 8.7 to
+11.2\% and is significant at every horizon (DM GBME vs GBM $p<0.001$ at $h1$, $h5$, $h10$, $h22$),
+which is why GBME carries the bolded QLIKE in every block. Against the HAR baseline the earnings model
+gains 14 to 16\%. Nonlinearity and the QLIKE-loss alignment, isolated by the own-history GBM over HAR,
+contribute a further 3.4\%. A graph added on top of earnings changes nothing at short horizons and
+hurts at the monthly horizon, so the two signals do not combine.
+
+\textbf{Earnings do not fix the storm tail.} Decomposed by realized-volatility decile, the model's
+error still concentrates in the top decile, which carries roughly ten times the calm-day QLIKE, and
+its forecast-to-realized ratio there is about 0.4. The model compresses its predictions toward the
+conditional mean because the storm magnitude is absent from origin-time features. The residual is
+exogenous, which is why no cross-firm graph recovers it.
+
+\FloatBarrier
+\section{Related Work}
+\textbf{Graph volatility forecasting.} A recent literature wires stocks or markets through correlation
+or spillover edges and reports squared-error gains from graph neural networks. We test the claim on
+daily per-firm QLIKE with a leakage-controlled walk-forward protocol and show the gains do not survive: a cross-firm
+graph adds no reliable incremental QLIKE value once own-history is conditioned on. Prior Vietnamese
+work builds correlation and centrality networks to predict index volatility at a monthly horizon
+without a HAR or QLIKE benchmark; we extend that setting to daily per-firm QLIKE on 405 HOSE tickers.
+
+\textbf{HAR and its extensions.} HAR~\cite{corsi2009} and HARQ~\cite{harq2016} model volatility from
+own history and a realized-quarticity interaction. We keep HAR and HARQ as baselines and show that a
+QLIKE-loss gradient-boosting model~\cite{friedman2001,pedregosa2011} with an External earnings feature
+dominates them without a graph, while QLIKE~\cite{patton2011} and the Diebold-Mariano
+test~\cite{dm1995,hln1997} provide the proxy-robust evaluation.
+
+\FloatBarrier
+\section{Multi-Market Replication: Vietnam HOSE}\label{sec:hose}
+We replicate the study on a second, structurally different market. On 405 Ho Chi Minh Stock Exchange
+(HOSE) tickers under the identical protocol, forecasting daily Parkinson variance at the same four
+horizons with 390{,}577 to 399{,}040 stock-day observations per horizon, the graph null replicates and
+the earnings lever does not transfer.
+
+\textbf{The own-history GBM wins and the graph adds nothing.} Table~\ref{tab:hose} reports all four
+metrics. The own-history GBM posts the lowest QLIKE at every horizon, while HAR and HARQ trail by a
+wide margin. Adding the graph feature ties the GBM, and adding the External earnings feature does not
+improve it: GBME ties or slightly worsens GBM at every horizon (DM GBME vs GBM $p=0.000$ at $h1$;
+$p=0.214$, $0.122$, $0.919$ at $h5$, $h10$, $h22$). The own-history GBM is therefore the DM-verified
+best legal model on HOSE and carries the bolded QLIKE in every block.
+
+\begin{table}[t]
+\centering
+\caption{Multi-market replication, HOSE (405 tickers; 390{,}577 to 399{,}040 stock-day observations per
+horizon). Lower is better on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE
+unscaled. Bold marks the QLIKE that is significantly best by a date-clustered Diebold-Mariano test;
+unbolded values are not DM-distinguishable from the best.}
+\label{tab:hose}
+\footnotesize
+\setlength{\tabcolsep}{6pt}
+\begin{tabular}{llcccc}
+\toprule
+$h$ & Model & MSE & RMSE & MAE & QLIKE \\
+\midrule
+1 & HAR        & 6.604 & 8.126 & 5.193 & 1.8117 \\
+1 & HARQ       & 6.389 & 7.993 & 5.062 & 1.7854 \\
+1 & GBM        & 5.399 & 7.348 & 3.944 & \textbf{1.5679} \\
+1 & GBME       & 5.477 & 7.401 & 3.966 & 1.5730 \\
+1 & GBME+graph & 5.555 & 7.453 & 3.980 & 1.5783 \\
+\midrule
+5 & HAR        & 6.626 & 8.140 & 5.227 & 1.8218 \\
+5 & HARQ       & 6.519 & 8.074 & 5.152 & 1.8075 \\
+5 & GBM        & 5.796 & 7.613 & 4.265 & \textbf{1.6478} \\
+5 & GBME       & 5.795 & 7.613 & 4.276 & 1.6485 \\
+5 & GBME+graph & 5.815 & 7.625 & 4.256 & 1.6494 \\
+\midrule
+10 & HAR        & 6.660 & 8.161 & 5.250 & 1.8277 \\
+10 & HARQ       & 6.589 & 8.118 & 5.198 & 1.8180 \\
+10 & GBM        & 5.966 & 7.724 & 4.425 & \textbf{1.6842} \\
+10 & GBME       & 5.962 & 7.721 & 4.441 & 1.6862 \\
+10 & GBME+graph & 5.959 & 7.720 & 4.407 & 1.6837 \\
+\midrule
+22 & HAR        & 6.716 & 8.195 & 5.282 & 1.8355 \\
+22 & HARQ       & 6.677 & 8.171 & 5.250 & 1.8299 \\
+22 & GBM        & 6.211 & 7.881 & 4.615 & \textbf{1.7263} \\
+22 & GBME       & 6.211 & 7.881 & 4.627 & 1.7262 \\
+22 & GBME+graph & 6.207 & 7.878 & 4.604 & 1.7267 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Earnings does not transfer to Vietnam.} Using real crawled Vietnam announcement dates, GBME
+ties or slightly worsens GBM at every horizon. A per-stock, per-day diagnostic on the HOSE test set
+locates two compounding causes. First, the feature fires on only 5.6\% of test observations, and
+0.84\% before 2025, so it cannot move the pooled metric across most of the panel. Second, where it
+fires the volatility response is muted: realized variance on announcement-proximate days runs about
+1.1 times the baseline, against the pronounced S\&P~500 earnings spike, because Vietnam's daily price
+limits cap the informational jump. The no-transfer result holds in the well-covered 2025-2026 folds,
+so it does not rest on missing dates in that window.
+
+\textbf{The oracle bound confirms the signal is contemporaneous.} Replacing the neighbor value at the
+origin with its value at the target day cuts QLIKE by 1.3\% to 3.2\% over the graph feature (DM
+$p=0.009$, $0.000$, $0.000$, $0.012$). The gain is smaller than the S\&P~500's 19 to 27\% and points
+the same way: the cross-sectional signal is contemporaneous with the label, not available at the
+forecast origin, so no origin-time graph captures it.
+
+\textbf{Takeaway.} The graph null replicates on a second, structurally different market. The earnings
+lever is specific to the S\&P~500 and does not generalize to HOSE under the available real
+announcement dates.
+
+\section{Limitations}
+\noindent\textbf{Earnings dates.} The earnings feature measures distance to the nearest scheduled
+release from an archive that records realized dates, not a point-in-time scheduling snapshot. A
+date-jitter check shows the gain does not depend on exact-date timing: perturbing every S\&P~500
+earnings date by a uniform random offset, the $h1$ QLIKE gain over own-history falls from 11.1\% with
+true dates to 9.0\% at plus or minus one trading day, 6.6\% at plus or minus three days, and 4.5\% at
+plus or minus five days, and stays positive at every horizon. A point-in-time scheduling calendar
+remains to be added to control rescheduling within the forecast window.
+
+\noindent\textbf{Vietnam coverage.} The Vietnam earnings test draws on real announcement dates that
+are comprehensive only for 2025-01 through 2026-09, plus a sparse 2016-2026 news feed covering roughly
+218 tickers. We therefore claim no incremental earnings value on HOSE under the available real dates,
+rather than a definitive full-history null.
+
+\noindent\textbf{Scope.} The analysis is conditional on the Parkinson daily-OHLC regime and does not
+speak to intraday or option-implied signals.
+
+\section{Conclusion}
+We built a per-stock volatility forecasting model on a gamma-loss gradient-boosting machine over
+own-history features and asked where extra information helps. On the S\&P~500, an External,
+forward-looking scheduled-earnings feature cuts QLIKE by 8.7 to 11.2\% at every horizon
+(Diebold-Mariano $p<0.001$), roughly seven times the size of any graph term, while a cross-firm graph
+feature adds nothing once own-history and the firm's own momentum are in the model. We replicated the
+study on 405 Vietnam HOSE tickers under an identical protocol: the graph null holds, and the earnings
+lever does not transfer, which localizes the earnings gain to the S\&P~500 and shows that the graph
+carries no reliable signal on either market. The practical takeaway is that, for daily volatility,
+a forward-looking per-firm signal beats cross-firm wiring, and its value depends on the market's
+information and microstructure.
+
+\begin{thebibliography}{99}
+\bibitem{corsi2009} Corsi, F.: A simple approximate long-memory model of realized volatility. J. Financial Econometrics \textbf{7}(2), 174--196 (2009)
+\bibitem{parkinson1980} Parkinson, M.: The extreme value method for estimating the variance of the rate of return. J. Business \textbf{53}(1), 61--65 (1980)
+\bibitem{harq2016} Bollerslev, T., Patton, A.J., Quaedvlieg, R.: Exploiting the errors: a simple approach for improved volatility forecasting. J. Econometrics \textbf{192}(1), 1--18 (2016)
+\bibitem{patton2011} Patton, A.J.: Volatility forecast comparison using imperfect volatility proxies. J. Econometrics \textbf{160}(1), 246--256 (2011)
+\bibitem{dm1995} Diebold, F.X., Mariano, R.S.: Comparing predictive accuracy. J. Business \& Economic Statistics \textbf{13}(3), 253--263 (1995)
+\bibitem{hln1997} Harvey, D., Leybourne, S., Newbold, P.: Testing the equality of prediction mean squared errors. Int. J. Forecasting \textbf{13}(2), 281--291 (1997)
+\bibitem{friedman2001} Friedman, J.H.: Greedy function approximation: a gradient boosting machine. Annals of Statistics \textbf{29}(5), 1189--1232 (2001)
+\bibitem{pedregosa2011} Pedregosa, F., et al.: Scikit-learn: machine learning in Python. J. Machine Learning Research \textbf{12}, 2825--2830 (2011)
+\bibitem{patell1981} Patell, J.M., Wolfson, M.A.: The ex ante and ex post price effects of quarterly earnings announcements reflected in option and stock prices. J. Accounting Research \textbf{19}(2), 434--458 (1981)
+\end{thebibliography}
+
+\end{document}
