@@ -174,6 +174,22 @@ the stock's own momentum or contemporaneous with the target.
 
 ## 4. Forward-Looking Earnings Are the Lever
 
+**A diagnostic locates the missing lever.** The own-history GBM beats HAR-X across the calm
+deciles, yet its remaining QLIKE concentrates in the storm decile: decile D9 alone carries
+43% of the model's total test QLIKE (panel B). The model under-forecasts exactly there, where
+its median forecast-to-realized ratio falls below one while every calm decile sits above one
+(panel C). Permutation importance ranks the three own-history HAR lags far above every
+momentum and auxiliary term (panel E), so own-history is exhausted and the storm component
+needs a signal from outside the stock's past. A scheduled earnings release is known weeks
+ahead and drives the announcement-driven part of these spikes, which makes a forward-looking
+earnings feature the natural lever for the residual the GBM cannot reach.
+
+![Panel B: the own-history GBM beats HAR-X on the calm deciles, and its remaining QLIKE concentrates in the storm decile D9, which carries 43% of the model total.](figures/fig_remaining_error_by_decile.png)
+
+![Panel C: the GBM under-forecasts the storm deciles, where its median forecast-to-realized ratio drops below one.](figures/fig_forecast_bias_by_decile.png)
+
+![Panel E: permutation importance ranks the own-history HAR lags far above every other feature, so own-history is exhausted.](figures/fig_feature_importance.png)
+
 Table 2 adds a scheduled-earnings feature to the own-history GBM.
 
 | h | GBM (own) | GBM+earn | earn vs GBM | +earn+graph vs +earn |
