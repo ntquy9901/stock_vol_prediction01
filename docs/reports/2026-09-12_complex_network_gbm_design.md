@@ -1,20 +1,26 @@
-# Complex-Network Topology Features for the gamma-GBM: Technical Design
+# Complex-Network Topology Features for Market-Index Volatility Forecasting: Technical Design
 
 **Date:** 2026-09-12
-**Status:** DESIGN-BEFORE-RUN (for advisor review; the experiment is NOT yet run)
-**Scope:** How we adapt the Complexity-2026 complex-network method as market-level features for our per-stock daily gamma-GBM volatility model.
-**Implementation under review:** `scripts/eda/complex_network_gbm.py`
+**Status:** DESIGN-BEFORE-RUN (for advisor review; neither experiment is run yet)
+**Scope:** Replicate the Complexity-2026 complex-network method faithfully (Experiment A: predict the future MARKET-INDEX volatility from network topology, exactly as the paper's Section 2.4 and Figure 1), then test whether the same topology features add incremental value to our per-stock daily gamma-GBM (Experiment B).
+**Implementation under review:** `scripts/eda/complex_network_index.py` (Experiment A, to be written), `scripts/eda/complex_network_gbm.py` (Experiment B).
 **Pipeline figure:** `docs/paper/figures/fig_complex_network_pipeline.png`
 
 Source paper: N-K-K. Nguyen, H-T. Dinh, Q. Nguyen, "Complex Network Built From Stock Price Returns and Volumes to Predict Market Volatility and Volume," *Complexity*, 2026. DOI 10.1155/cplx/5670093. Framework figure: `docs/experement_guide/cplx5670093-fig-0001-m.jpg`.
 
 ---
 
-## 1. Purpose and the honest question
+## 1. Purpose and the two questions
 
-The paper builds time-varying financial networks from combined return-and-volume correlations and shows that GLOBAL network-topology metrics predict one-month-ahead VNIndex volatility. This document specifies how we test whether the SAME topology metrics add incremental value to our own per-stock daily gamma-GBM, and it fixes every design choice BEFORE running so the advisor can approve or reject the protocol.
+The paper builds time-varying financial networks from a combined return-and-volume correlation matrix and shows that seven GLOBAL network-topology metrics predict the **future one-month VNIndex volatility** (the standard deviation of the index's daily log returns over the next 21 days), reaching `R^2 ≈ 0.563`. This document fixes every design choice BEFORE running so the advisor can approve or reject the protocol.
 
-The design mirrors the code exactly. Where our application deviates from the paper (target, scoring, window sizes), the deviation is stated explicitly with its rationale.
+Two experiments, in priority order:
+
+- **Experiment A (faithful replication of Section 2.4).** Reproduce the paper's actual task on our data: features = the 7 topology metrics of a rolling network; target = the future 21-day **market-index** volatility (and, as the paper also does, the future average index return and average log volume). Models = Linear Regression and Random Forest. Score = `R^2` and RMSE. Market index = the real **VNIndex** for HOSE and the **S&P 500 index** for the US. This answers the paper's own question on our data.
+
+- **Experiment B (our thesis extension).** Take the same 7 topology metrics, broadcast them to every stock, and test whether they add INCREMENTAL value to our per-stock gamma-GBM that forecasts each stock's Parkinson variance. Score = pooled per-observation QLIKE + date-clustered Diebold-Mariano. This answers the stricter question our thesis cares about: does the paper's graph beat own-history on our loss of record?
+
+The design mirrors the code exactly. Every deviation from the paper (window size, volume proxy, US index source) is stated with its rationale.
 
 ---
 
@@ -22,64 +28,73 @@ The design mirrors the code exactly. Where our application deviates from the pap
 
 Reference: paper Section 2 (Methodology), pages 2-8; framework in Figure 1.
 
-**Data.** HOSE (Ho Chi Minh City Stock Exchange), 2015 to end of 2024, 1750 trading days. Liquidity filter: exclude stocks with average daily volume below 10,000 shares or with more than 70% trading-day gaps; 279 stocks of 1679 survive. For each stock and day the paper records the log return `r_it = ln S_it - ln S_{i,t-1}` and the log volume `ln(V_i(t))`. VNIndex is the market target series.
+**Data (Section 2.1).** HOSE, 2015 to end of 2024, 1750 trading days. Liquidity filter: exclude stocks with average daily volume below 10,000 shares, then remove stocks with less than 70% trading-day availability; 279 stocks of 1679 survive. For each stock and day the paper records the log return `r_it = ln S_it - ln S_{i,t-1}` and the log volume `ln V_i(t)`. It also collects the daily close **VNIndex**, the market index of HOSE.
 
-**Rolling window and network construction (Section 2.2).** A sliding window spans `ΔT = 125` trading days (approximately 6 months) and is shifted forward by `L = 21` trading days (approximately 1 month). Within each window, for the N surviving stocks:
+**Rolling window and network construction (Section 2.2).** A sliding window spans `ΔT = 125` trading days (about 6 months), shifted forward by `L = 21` trading days (about 1 month). Window `W_k = [t, t + ΔT - 1]` is aligned with the prediction period `[t + ΔT, t + ΔT + L]`. Within each window, for the N surviving stocks:
 
 1. Compute the return correlation matrix `ρ^R` and the log-volume correlation matrix `ρ^V` (Pearson).
-2. Blend them: `ρ_mix = α · ρ^R + (1 - α) · ρ^V`, with `α ∈ [0, 1]` controlling the return-vs-volume weight. The paper's optimal weight for volatility is `α = 0.7` (paper eq. 1).
-3. Build a network by one of three filters: **Threshold** (undirected edge if `|ρ_mix| ≥ τ`), **MST** (Kruskal on distance `d_ij = sqrt(2(1 - ρ_ij))`), or **Top-k** (each node keeps its k highest-correlation neighbours, k = 5). The paper reports **Threshold is best for volatility**.
+2. Blend them: `ρ_mix = α · ρ^R + (1 - α) · ρ^V`, `α ∈ [0, 1]` (paper eq. 1). The optimal weight for volatility is `α = 0.7`.
+3. Build a network by one of three filters: **Threshold** (undirected edge if `|ρ_mix| ≥ τ`), **MST** (Kruskal on `d_ij = sqrt(2(1 - ρ_ij))`), or **Top-k** (`k = 5`). **Threshold is best for volatility.**
 
-**Seven global topology metrics (Section 2.3).** From each network the paper extracts a standardized set of seven metrics: Density, Average Degree, Average Clustering Coefficient, Average Weight (mean `|corr|` over edges), Diameter (of the largest connected component), Average Betweenness Centrality, Average Eigenvector Centrality.
+**Seven global topology metrics (Section 2.3).** Density, Average Degree, Average Clustering Coefficient, Average Weight (mean `|corr|` over edges), Diameter (largest connected component), Average Betweenness Centrality, Average Eigenvector Centrality.
 
-**Targets and models (Sections 2.4, 2.5).** Each window yields one feature-target pair. The three market-level targets over the next `L = 21` days are: average VNIndex log return, average log volume, and the standard deviation of log returns (volatility). Models are Linear Regression and Random Forest under walk-forward validation, scored by `R^2` and RMSE.
+**Future market-index targets (Section 2.4, the part this design now follows).** After building the network for window `W_k`, the paper extracts THREE market-level targets from the **VNIndex** over the next `L = 21` days `[t + ΔT, t + ΔT + L]`:
 
-**Headline result.** Threshold + Random Forest at `α = 0.7` gives volatility `R^2 ≈ 0.563` and volume `R^2 ≈ 0.95`. Mechanism claim (Section 3.6, Discussion): surges in network density and centrality precede heightened market volatility, interpreted as market synchronization / a systemic-risk regime where idiosyncratic risk is replaced by systemic risk.
+- (i) average index log return: `r_index = (1/L) Σ r_index(t + p)` (paper eq. 2);
+- (ii) average log volume: `lnV_index = (1/L) Σ log V_index(t + p)` (paper eq. 3);
+- (iii) **standard deviation of index log returns (volatility)**: `σ_r,index = sqrt( (1/(L-1)) Σ (r_index(t+p) - r_index)^2 )` (paper eq. 4).
+
+Each rolling window therefore produces ONE supervised sample: a 7-metric feature vector and a 3-target output vector. Figure 1 shows exactly this: N-stock return and volume series plus the VNIndex feed the window; the network gives 7 metrics; the 7 metrics predict the 3 future VNIndex quantities.
+
+**Models and evaluation (Section 2.5).** Linear Regression and Random Forest, walk-forward (train on past windows, test on the subsequent window, no look-ahead). Score: `R^2` (eq. 6) and RMSE (eq. 5).
+
+**Headline result.** Threshold + Random Forest at `α = 0.7` gives volatility `R^2 ≈ 0.563`; volume `R^2 ≈ 0.95`; return `R^2` is modest (Top-k `α = 0.8` RF, `R^2 ≈ 0.56`, most settings 0.1-0.35). Mechanism claim (Section 3.6): surges in network density and centrality precede heightened index volatility, read as market synchronization where idiosyncratic risk is replaced by systemic risk.
 
 ---
 
-## 3. Our application: what differs and why
+## 3. Experiment A: faithful replication (predict the market-index volatility)
 
-### 3.1 Target and scoring difference (the honest question)
+This is the paper's actual task on our data. It follows Figure 1 and Section 2.4 directly.
 
-| Axis | Paper (Complexity-2026) | Our application |
+### 3.1 Data
+
+| Role | HOSE | S&P 500 |
 |---|---|---|
-| Prediction unit | MARKET-LEVEL (VNIndex), one series | PER-STOCK, every ticker in the panel |
-| Horizon / frequency | one-month-ahead (21-day), one value per window | daily, `h ∈ {1, 5, 10, 22}` steps ahead |
-| Target | avg return / avg log volume / return std-dev | Parkinson variance `pk_{i,t+h}` |
-| Predictors | 7 topology metrics ALONE | 9 own-history features + the 7 topology metrics |
-| Score | `R^2`, RMSE | pooled per-observation QLIKE + date-clustered Diebold-Mariano |
-| Question | Do topology features explain market volatility? | Do topology features add INCREMENTAL QLIKE to own-history GBM? |
+| Network nodes (stocks) | our HOSE processed panel (`daily_return`, `volume_zscore_22`), 300+ tickers | our S&P 500 processed panel, 498 tickers |
+| **Market index (target series)** | **real VNIndex** (`data/raw/prices/_market_index/vnindex.csv`, vnstock VCI, daily close + volume, 2017-2024, 2000 trading days) | **S&P 500 index** (`^GSPC` daily close + volume; if the feed is unavailable, a cap/equal-weight proxy built from the 498-stock panel, documented as a deviation) |
 
-The paper answers an explanatory question ("can topology alone explain market volatility?", scored by `R^2`). We answer a different, stricter question: do these market-level topology features, broadcast to every stock, beat the model's own history on our loss-of-record (QLIKE) with a significance test that respects cross-sectional dependence (date-clustered DM)?
+The VNIndex has already been fetched (2017-01-03 to 2024-12-31, 2000 rows) so the target series is real, not a proxy. The community vnstock feed caps 1-day history at 8 years, so HOSE Experiment A runs on 2017-2024 (the paper used 2015-2024; the 2 missing years are a documented data-availability limit, not a design choice).
 
-**Why QLIKE + DM incremental test is the honest question.** A high `R^2` for market volatility does not imply the features help a strong per-stock forecaster. Our gamma-GBM already encodes each stock's own volatility persistence; the only defensible claim is that topology adds signal ON TOP of that. QLIKE is our scoring loss of record for volatility (gamma deviance equals QLIKE up to a constant, so the GBM trains and is scored on the same objective), and the date-clustered DM collapses each day's cross-section to one value before testing so that many tickers sharing a date are not counted as independent observations. `R^2` on a single market series cannot make the incremental claim; QLIKE-vs-GBM under DM can.
+### 3.2 One supervised sample per window
 
-### 3.2 Window-size deviation (documented)
+For each window end `i` (stepping by `STEP` trading days over the common trading calendar):
 
-Our implementation uses `WIN = 66` and `STEP = 22`, NOT the paper's `ΔT = 125` / `L = 21`.
+- **Feature vector (7-dim):** `global_feats(combined)` where `combined = α ρ^R + (1 - α) ρ^V` is built from the stock returns and volumes over the trailing window `[i - WIN, i)` (strictly past). Same construction as Experiment B (Section 5, Section 6).
+- **Target vector (3-dim), strictly future:** from the market index over `[i, i + L)`:
+  - `idx_ret` = mean daily log return of the index;
+  - `idx_lnvol` = mean daily `log(index volume)`;
+  - `idx_vol` = standard deviation (ddof=1) of the index's daily log returns = the paper's volatility target (headline).
 
-Quoting the code (`scripts/eda/complex_network_gbm.py`):
+A window is emitted only if it has at least `WIN * 0.8` past rows and a full `L`-day future block; the last incomplete future block is dropped (no partial-horizon target).
 
-```python
-# scripts/eda/complex_network_gbm.py
-WIN = 66          # trailing window ΔT = 3 months at 22 trading days/month (our monthly convention;
-#                   paper used 125 ~= 6 months, we align with the project's month=22 features)
-STEP = 22         # recompute + slide by one month = 22 trading days, forward-fill in between
-THR = 0.5         # threshold tau on |combined corr| (paper "Threshold" network; best for volatility)
-ALPHA = 0.7       # combined = ALPHA*return-corr + (1-ALPHA)*log-volume-corr (paper's optimal alpha=0.7)
-```
+### 3.3 Models and score (paper protocol)
 
-**Rationale.** The project's convention is 1 month = 22 trading days. `har_monthly` and `volume_zscore_22` both use a 22-day month. We therefore set the trailing correlation window to `ΔT = 3 months = 66 trading days` and recompute / slide the network by one month = `22 trading days`, forward-filling the metrics on the days in between. This aligns the topology window with the project's monthly features rather than importing the paper's 125/21 calendar. Everything else (`α = 0.7`, `τ = 0.5`, the 7 metrics, combined return+volume correlation, causal construction, forward-fill) matches the paper.
+- **Models:** `sklearn.linear_model.LinearRegression` and `sklearn.ensemble.RandomForestRegressor` (paper's LR + RF). RF hyperparameters are the project config defaults (`n_estimators`, `max_depth`, `min_samples_leaf` from `pipeline_config`; no test-set tuning). Features are standardized with a scaler fit on the training windows only.
+- **Walk-forward:** expanding, one target at a time. Train on all windows strictly before a cutoff, test on the windows after it; slide the cutoff across the sample. Because a window's target ends at `i + L`, the training set stops at windows whose target end is at or before the test window's feature start (an `L`-day embargo between train targets and test features). Pooled `R^2` and RMSE are reported across the held-out test windows.
+- **Headline configuration:** Threshold network, `α = 0.7`, `τ = 0.5` (the paper's best-for-volatility). A small `α` grid `{0.0, 0.5, 0.7, 1.0}` is reported as robustness (the paper's Table 1 structure), not as the headline.
+- **Targets reported:** all three (`idx_vol` primary; `idx_ret` and `idx_lnvol` for completeness, as in the paper).
+
+### 3.4 What a faithful result would and would not show
+
+`R^2 ≈ 0.56` for `idx_vol` on VNIndex would replicate the paper. It would show topology explains a large share of the variance of the FUTURE INDEX volatility. It would NOT, on its own, show topology helps a strong per-stock forecaster (that is Experiment B). The sample is small (about 90 monthly windows over 2017-2024), so `R^2` is reported with the number of test windows and is not over-interpreted.
 
 ---
 
 ## 4. Graph construction (matching the code)
 
-Quoting `scripts/eda/complex_network_gbm.py::build_topo`:
+Quoting `scripts/eda/complex_network_gbm.py::build_topo` (shared by both experiments):
 
 ```python
-# scripts/eda/complex_network_gbm.py
 def build_topo(frames, market):
     ret = pd.DataFrame({tk: d.set_index("date")["daily_return"] for tk, d in frames.items()}).sort_index()
     vcol = "volume_zscore_22"                                   # log-volume proxy (normalised volume)
@@ -101,13 +116,13 @@ def build_topo(frames, market):
     return F
 ```
 
-Construction notes, all matching the paper except the window sizes above:
+Construction notes, all matching the paper except the window sizes (Section 7):
 
-- **Two correlation matrices on a common ticker set.** The return matrix uses `daily_return`; the volume matrix uses `volume_zscore_22`. Only tickers present in BOTH windows (`common`) enter the blend, so the two matrices are conformable. A window needs at least 20 common tickers or it is skipped.
-- **Volume proxy.** Our stand-in for the paper's log-volume is `volume_zscore_22` (normalised volume). This is a deviation in the volume variable name only; the correlation structure it captures is the co-movement of trading activity, which is the paper's intent.
-- **Blend `α = 0.7`.** `combined = ALPHA * rc + (1 - ALPHA) * vc`, exactly the paper's eq. (1) with the paper's optimal `α` for volatility.
-- **Threshold `τ = 0.5`.** The network keeps an undirected edge wherever `|combined| ≥ 0.5` (paper's best filter for volatility). MST and Top-k are the paper's alternatives; this design uses Threshold only, as the paper found it best for volatility.
-- **Causal / leakage-safe.** For a network dated `d0 = dates[i]`, every correlation uses only rows `iloc[i - WIN : i]`, i.e. data strictly up to (not including) `d0`. Metrics are then forward-filled (`.ffill()`) to daily so each trading day inherits the most recent past network. No future window ever contributes to a day's features.
+- **Two correlation matrices on a common ticker set.** Return matrix from `daily_return`; volume matrix from `volume_zscore_22`. Only tickers in BOTH windows enter the blend. A window needs at least 20 common tickers or it is skipped.
+- **Volume proxy.** Our stand-in for the paper's log volume is `volume_zscore_22` (normalised volume). Deviation in the volume variable only; it still captures co-movement of trading activity.
+- **Blend `α = 0.7`.** `combined = ALPHA * rc + (1 - ALPHA) * vc`, exactly paper eq. (1) at the paper's optimal `α` for volatility.
+- **Threshold `τ = 0.5`.** Undirected edge wherever `|combined| ≥ 0.5` (best filter for volatility). MST and Top-k are the paper's alternatives; this design uses Threshold, as the paper found it best for volatility.
+- **Causal.** A network dated `d0 = dates[i]` uses only rows `iloc[i - WIN : i]`, strictly before `d0`. In Experiment B the daily panel forward-fills these metrics; in Experiment A each window is a sample in its own right (no forward-fill needed).
 
 ---
 
@@ -116,7 +131,6 @@ Construction notes, all matching the paper except the window sizes above:
 Quoting `scripts/eda/complex_network_gbm.py::global_feats`:
 
 ```python
-# scripts/eda/complex_network_gbm.py
 def global_feats(C):
     """The paper's 7 global topology metrics of the Threshold graph from combined correlation matrix C:
     density, average degree, average clustering, average weight, diameter (largest component), average
@@ -145,31 +159,29 @@ def global_feats(C):
 
 `TOPO = ["dens", "avg_deg", "clus", "avg_w", "diam", "betw", "eig"]`.
 
-| # | Feature (code) | Metric | One-line meaning / formula |
+| # | Feature (code) | Metric | One-line meaning |
 |---|---|---|---|
 | 1 | `dens` | Density | actual edges / maximum possible edges; overall interconnectedness (market integration). |
 | 2 | `avg_deg` | Average Degree | mean node degree; average number of co-movement links per stock. |
 | 3 | `clus` | Average Clustering Coefficient | mean fraction of a node's neighbours that are themselves linked; local herding / sector cohesion. |
-| 4 | `avg_w` | Average Weight | mean `|corr|` over the edges that pass the threshold; average strength of retained links. |
+| 4 | `avg_w` | Average Weight | mean `|corr|` over retained edges; average strength of retained links. |
 | 5 | `diam` | Diameter | longest shortest path in the largest connected component; network spread / fragmentation. |
-| 6 | `betw` | Average Betweenness Centrality | mean node betweenness; extent to which nodes act as bridges on shortest paths (contagion pathways). |
-| 7 | `eig` | Average Eigenvector Centrality | mean eigenvector centrality; influence of nodes via connection to other well-connected nodes (core hubs). |
+| 6 | `betw` | Average Betweenness Centrality | mean node betweenness; nodes acting as bridges on shortest paths (contagion pathways). |
+| 7 | `eig` | Average Eigenvector Centrality | mean eigenvector centrality; influence via connection to other well-connected nodes (core hubs). |
 
-These seven metrics are GLOBAL: each is a single scalar per day describing the whole market network. There is one 7-vector per day, and it is broadcast IDENTICALLY to every stock on that day (Section 6).
+Each metric is one scalar per network (global). Experiment A uses the 7-vector directly as the sample's features; Experiment B broadcasts the 7-vector identically to every stock on that date.
 
 ---
 
-## 6. Feature integration (matching the code)
+## 6. Experiment B: per-stock gamma-GBM extension (secondary)
 
-The topology 7-vector is merged onto every ticker frame by date and then fed to the GBM alongside the own-history block. Quoting `scripts/eda/complex_network_gbm.py::main`:
+The topology 7-vector is merged onto every ticker frame by date and fed to the GBM alongside the own-history block. Quoting `scripts/eda/complex_network_gbm.py::main`:
 
 ```python
-# scripts/eda/complex_network_gbm.py
     F = build_topo(frames, market)
     Fr = F.reset_index().rename(columns={"index": "date"})
     for tk in list(frames):
         frames[tk] = frames[tk].merge(Fr, on="date", how="left")
-    ...
     for h in (1, 5, 10, 22):
         a = FM.panel(frames, {}, h)
         for c in TOPO:
@@ -178,90 +190,85 @@ The topology 7-vector is merged onto every ticker frame by date and then fed to 
         models = {"GBM": FM.OWN, "GBM+topo": FM.OWN + TOPO}
 ```
 
-- **OWN block (9 features).** From `full_matrix.py`: `OWN = HAR + ["rq", "mr_change", "mr_slope5", "mr_slope10", "mr_dev5", "mr_z22"]`, where `HAR = ["har_daily", "har_weekly", "har_monthly"]`. These are own-history only (no market or volume scalar).
+- **OWN block (9 features).** `OWN = HAR + ["rq", "mr_change", "mr_slope5", "mr_slope10", "mr_dev5", "mr_z22"]`, `HAR = ["har_daily", "har_weekly", "har_monthly"]`; own-history only.
 - **GBM (baseline):** gamma `HistGradientBoostingRegressor` on the 9 OWN features.
-- **GBM+topo (treatment):** the same GBM on OWN + the 7 topology features = **16-dim** input. The topology block is identical across stocks on a given date; the model must find incremental value from a market-level regime signal.
-- **Ensemble and floor.** Predictions are averaged over 3 seeds (`FM.SEEDS = (0, 1, 2)`) and floored at `FL = QLIKE_FLOOR = 1e-8`.
+- **GBM+topo (treatment):** the same GBM on OWN + 7 topology = **16-dim** input; the topology block is identical across stocks on a date.
+- **Ensemble and floor:** 3 seeds `(0, 1, 2)`, floored at `FL = 1e-8`.
+- **Score:** pooled per-observation QLIKE + date-clustered Diebold-Mariano at `h ∈ {1, 5, 10, 22}`, on HOSE and S&P 500. `gain_pct = (QLIKE_GBM - QLIKE_GBM+topo) / QLIKE_GBM * 100`.
 
-The estimator, quoted from `scripts/eda/full_matrix.py::gbm`:
+The gamma loss equals QLIKE up to a constant, so the model is trained and scored on the same volatility objective. Output: `results/gamma_gbm/complex_network_<market>.json`.
+
+---
+
+## 7. Window-size deviation (documented, applies to both experiments)
+
+Our implementation uses `WIN = 66` and `STEP = 22`, NOT the paper's `ΔT = 125` / `L = 21`.
 
 ```python
-# scripts/eda/full_matrix.py
-def gbm(tr, te, cols, seed):
-    m = HistGradientBoostingRegressor(loss="gamma", max_iter=300, learning_rate=0.05, max_leaf_nodes=31,
-                                      l2_regularization=1.0, random_state=seed)
-    m.fit(tr[cols].to_numpy(float), np.maximum(tr["y"].to_numpy(float), FL))
-    return np.maximum(m.predict(te[cols].to_numpy(float)), FL)
+WIN = 66          # trailing window ΔT = 3 months at 22 trading days/month (project month=22 convention;
+#                   paper used 125 ~= 6 months)
+STEP = 22         # recompute + slide by one month = 22 trading days
+THR = 0.5         # threshold tau on |combined corr| (paper "Threshold" network; best for volatility)
+ALPHA = 0.7       # combined = ALPHA*return-corr + (1-ALPHA)*log-volume-corr (paper's optimal alpha=0.7)
 ```
 
-The gamma loss is chosen because gamma deviance equals QLIKE up to a constant, so the model is trained and scored on the same volatility objective.
+**Rationale.** The project's convention is 1 month = 22 trading days (`har_monthly`, `volume_zscore_22` both use 22). We therefore set the trailing correlation window to `ΔT = 3 months = 66 trading days` and slide by one month = `22 trading days`. For Experiment A the future target block is `L = 22` days (one project-month), replacing the paper's 21. Everything else (`α = 0.7`, `τ = 0.5`, the 7 metrics, combined return+volume correlation, causal construction) matches the paper.
+
+**Robustness row.** Because the paper's window is 6 months, Experiment A will also report `WIN = 132` (`6 months × 22`) so the advisor can compare our 3-month choice against a faithful 6-month window on the same data. The headline stays `WIN = 66` per the project convention unless the advisor prefers 132.
 
 ---
 
-## 7. Evaluation protocol (matching the code)
+## 8. Evaluation protocol summary
 
-Quoting the walk-forward loop from `scripts/eda/complex_network_gbm.py::main`:
-
-```python
-# scripts/eda/complex_network_gbm.py
-        models = {"GBM": FM.OWN, "GBM+topo": FM.OWN + TOPO}
-        preds = {m: [] for m in models}; yy, dts = [], []
-        for k in range(len(S1.FOLDS) - 1):
-            ts, tend = pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k + 1])
-            tr = a[(a.date >= S1.TRAIN_START) & (a.date < ts - embargo)]; te = a[(a.date >= ts) & (a.date < tend)]
-            if len(te) == 0 or len(tr) < min_rows:
-                continue
-            for m, cols in models.items():
-                preds[m].append(np.mean([FM.gbm(tr, te, cols, s) for s in FM.SEEDS], 0))
-            yy.append(te["y"].to_numpy(float)); dts.append(te["date"].to_numpy())
-        y = np.concatenate(yy); dates = np.concatenate(dts)
-        e = {m: M.per_obs_qlike(y, np.concatenate(preds[m]), floor=FL) for m in models}
-        q = {m: float(np.mean(e[m])) for m in models}
-        p = ST.date_clustered_dm(e["GBM+topo"], e["GBM"], dates, h)["p_value"]
-```
-
-- **Expanding walk-forward folds.** `S1.FOLDS` (from `vn_gbm_graph_stage1.py`) are semi-annual boundaries `["2022-07-01", "2023-01-01", ..., "2026-01-01", "2100-01-01"]`; training always starts at `S1.TRAIN_START = "2015-01-01"` and expands. Each fold trains on `[TRAIN_START, ts - embargo)` and tests on `[ts, tend)`.
-- **Target-horizon embargo.** A gap of `int(h * 1.6) + 5` days is removed at the train/test boundary so the shifted target `pk_{t+h}` from late-train rows cannot leak into the test window.
-- **Minimum train rows.** `min_rows = 30000` (S&P 500) or `3000` (HOSE); folds with too little history or an empty test are skipped.
-- **Pooled per-observation QLIKE.** `M.per_obs_qlike` (from `submission/soict_lstm_gat/metrics.py`) clamps both `y` and `p` to the shared floor `FL`, forms `r = y / p`, and returns `r - log(r) - 1` per observation. The reported number is the mean over all pooled test observations.
-- **Date-clustered Diebold-Mariano.** `ST.date_clustered_dm` (from `baselines/2026-08-21_har_anchored_residual/code/stats.py`) collapses each loss series to one cross-sectional mean per unique date, then runs the HLN-corrected DM with the HAC lag set to `h - 1`. This removes the cross-sectional dependence of many tickers sharing a date. `mean_diff < 0` favours GBM+topo. We report `gain_pct = (QLIKE_GBM - QLIKE_GBM+topo) / QLIKE_GBM * 100` and the DM p-value at each `h ∈ {1, 5, 10, 22}`.
-- **Markets.** Run on HOSE and S&P 500 (the driver takes the market as `sys.argv[1]`).
-
-Output is written to `results/gamma_gbm/complex_network_<market>.json`.
+| | Experiment A (faithful) | Experiment B (extension) |
+|---|---|---|
+| Sample | one per window (about 90 monthly windows, 2017-2024 HOSE) | one per ticker-day (pooled panel) |
+| Features | 7 topology metrics | 9 OWN + 7 topology (16) |
+| Target | future 22-day market-index vol / return / log-volume | per-stock `pk_{i,t+h}`, `h ∈ {1,5,10,22}` |
+| Models | LinearRegression, RandomForest | gamma HistGradientBoosting (3 seeds) |
+| Score | `R^2`, RMSE (paper) | pooled QLIKE + date-clustered DM |
+| Walk-forward | expanding, `L`-day embargo between train targets and test features | expanding semi-annual folds, `int(h*1.6)+5`-day embargo |
+| Markets | HOSE (real VNIndex), S&P 500 (index/proxy) | HOSE, S&P 500 |
+| Output | `results/gamma_gbm/complex_network_index_<market>.json` | `results/gamma_gbm/complex_network_<market>.json` |
 
 ---
 
-## 8. Leakage controls and honest prior expectation
+## 9. Leakage controls and honest prior expectation
 
-**Leakage controls (each also a review checkpoint):**
+**Leakage controls (each a review checkpoint):**
 
-1. **Causal network windows.** Every correlation matrix uses only `iloc[i - WIN : i]`, strictly before the network date; topology is forward-filled, never back-filled.
-2. **Train-only fold boundary.** The GBM trains on `[TRAIN_START, ts - embargo)` and is evaluated on the disjoint `[ts, tend)`; the embargo covers the horizon so the shifted target cannot cross the boundary.
-3. **Shared positivity floor.** GBM and GBM+topo are scored with the identical `FL = 1e-8` clamp inside `per_obs_qlike`, so no model gains from a different floor.
-4. **Identical basis for DM.** Both loss series are aggregated over the SAME `dates` array before the DM test.
-5. **Broadcast is market-level, not cross-sectional leakage.** The 7 metrics are the same for every stock on a date and are built only from past windows, so a stock never sees its own future or another stock's contemporaneous target.
+1. **Causal network windows.** Every correlation matrix uses only rows strictly before the network date.
+2. **Strictly-future targets.** Experiment A's target spans `[i, i + L)`, entirely after the feature window `[i - WIN, i)`; Experiment B shifts `pk` by `+h` and embargoes the fold boundary.
+3. **Train-only scaling and fitting.** Feature scaler and both models fit on training windows/rows only.
+4. **Shared positivity floor (Experiment B).** GBM and GBM+topo scored with the identical `FL = 1e-8` clamp.
+5. **Identical basis for DM (Experiment B).** Both loss series aggregated over the same `dates` array before the test.
+6. **Market-level broadcast, not cross-sectional leakage (Experiment B).** The 7 metrics are the same for every stock on a date and built only from past windows.
 
-**Honest prior.** Market-level regime features have NOT beaten own-history on our per-stock QLIKE before: the market-factor / market-aggregate feature was NO-GO or unstable on HOSE in earlier runs (see `scripts/eda/full_matrix.py`'s `GBM+market` and `scripts/eda/vn_gbm_graph_stage1.py`'s `M1`). Prior probability that a broadcast market feature helps per-stock QLIKE is therefore low. What is new here is the specific combined return+volume, time-varying network topology (not a single market-volatility scalar): it encodes market synchronization / breadth in a way a single aggregate does not, so it is worth a rigorous test. The expectation is skeptical, and the outcome (help or NO-GO under DM) will be reported honestly after the advisor approves running it.
+**Honest prior.**
 
----
-
-## 9. Pipeline figure
-
-`docs/paper/figures/fig_complex_network_pipeline.png` (generator: `docs/paper/figures/generate_complex_network_pipeline.py`, matplotlib, dpi 180) shows the full pipeline:
-
-Part A (market-level topology, causal): N-stock returns + volume over a trailing `ΔT = 66` day window -> return correlation matrix `ρ^R` and volume correlation matrix `ρ^V` -> blend `ρ_mix = α ρ^R + (1 - α) ρ^V` with `α = 0.7` -> Threshold network (`τ = 0.5`) -> 7 global metrics -> forward-fill to daily (recompute every `STEP = 22` days) and broadcast identically to all stocks.
-
-Part B (per-stock GBM): the broadcast 7-vector is concatenated with the per-stock OWN(9) feature vector to form a 16-dim input -> gamma-GBM (3-seed ensemble, floor FL) -> Parkinson-variance forecast `pk_{i,t+h}` for `h ∈ {1, 5, 10, 22}` -> QLIKE and date-clustered DM of GBM+topo vs GBM. The legend states the dimensions: GBM uses `R^9` (OWN); GBM+topo uses `R^16` (OWN plus 7 topology). Both markets (HOSE and S&P 500) are trained.
+- *Experiment A* is a genuine replication. The paper reports `R^2 ≈ 0.56` for VNIndex volatility with the real index, 2015-2024, `ΔT = 125`. On 2017-2024 with `ΔT = 66` and about 90 windows the `R^2` may come out lower; whatever it is will be reported with the test-window count, not oversold.
+- *Experiment B* is skeptical. Market-level regime features have not beaten own-history on our per-stock QLIKE before (`GBM+market` and `vn_gbm_graph_stage1` M1 were NO-GO or unstable on HOSE). What is new is the specific combined return+volume time-varying topology, so a rigorous DM test is warranted. The expected outcome is NO-GO on QLIKE, and it will be reported honestly.
 
 ---
 
-## 10. Go / no-go for the advisor
+## 10. Pipeline figure
 
-Approve running `scripts/eda/complex_network_gbm.py` on HOSE and S&P 500 if the design above is acceptable, in particular:
+`docs/paper/figures/fig_complex_network_pipeline.png` (generator `generate_complex_network_pipeline.py`, matplotlib, dpi 180) will be updated to show BOTH branches:
 
-- the window-size deviation (`WIN = 66`, `STEP = 22`) aligned to the project's 22-day month, versus the paper's 125/21;
+- **Part A (faithful, Section 2.4):** N-stock returns + volume over a trailing `ΔT = 66` window plus the market index -> `ρ^R`, `ρ^V` -> blend `ρ_mix` (`α = 0.7`) -> Threshold network (`τ = 0.5`) -> 7 metrics -> predict the future 22-day index volatility / return / log-volume (LR, RF; `R^2`, RMSE).
+- **Part B (extension):** the same 7-vector, broadcast to all stocks, concatenated with per-stock OWN(9) -> 16-dim gamma-GBM -> `pk_{i,t+h}` -> QLIKE + date-clustered DM (GBM+topo vs GBM).
+
+---
+
+## 11. Go / no-go for the advisor
+
+Approve running both experiments if the design is acceptable, in particular:
+
+- **Experiment A now follows Section 2.4 and Figure 1**: features = 7 topology metrics, target = future market-index volatility (real VNIndex for HOSE, S&P 500 index for the US), models = LR + RF, score = `R^2` + RMSE.
+- the window-size deviation (`WIN = 66`, `STEP = 22`, `L = 22`) aligned to the 22-day month, with `WIN = 132` reported as a 6-month robustness row;
 - the volume proxy `volume_zscore_22` in place of raw log volume;
-- Threshold-only network at `τ = 0.5`, `α = 0.7`;
-- the incremental QLIKE + date-clustered DM test (GBM+topo vs GBM) as the decision metric, replacing the paper's `R^2` on the market series.
+- Threshold-only network at `τ = 0.5`, `α = 0.7` (with an `α` grid as robustness);
+- the S&P 500 index source (real `^GSPC` if the feed is available, else a documented panel proxy);
+- Experiment B's incremental QLIKE + date-clustered DM as the decision metric for the per-stock question.
 
-The experiment is NOT run in this document; it waits for advisor approval.
+Neither experiment is run in this document; both wait for advisor approval.
