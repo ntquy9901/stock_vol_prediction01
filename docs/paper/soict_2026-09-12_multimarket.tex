@@ -155,18 +155,20 @@ and reaches 0 once the nearest release is at least a week away, $\mathrm{earn\_s
 $\pm 3$-day flag, $\mathrm{earn\_pre}$ rises into the next release, and $\mathrm{earn\_post}$ decays
 over a longer 10-day window because post-earnings volatility drift persists longer than the
 pre-announcement run-up. Away from any release all four are zero, so GBME reduces to GBM on ordinary
-days and activates only in the roughly two-week window around a scheduled release. An event study
-(Fig.~\ref{fig:event}) shows the S\&P~500 median variance rises to about 2.75 times baseline on the
-announcement day, which motivates these windows; on HOSE the median stays flat, so the block is inert
-there.
+days and activates only in the roughly two-week window around a scheduled release.
+Figure~\ref{fig:eventstudy} shows the S\&P~500 median variance rises to about 2.75 times baseline on
+the announcement day, which motivates these windows; on HOSE the median stays flat, so the block is
+inert there.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.7\textwidth]{fig_earnings_event_study.png}
-\caption{Median Parkinson variance around scheduled earnings, normalized to the pre-window baseline.
-The S\&P~500 median rises to about 2.75 times baseline on the announcement day, while the HOSE median
-stays flat.}
-\label{fig:event}
+\includegraphics[width=\linewidth]{figures/fig_earnings_event_study.png}
+\caption{Event study: median realized Parkinson variance (normalised by each ticker's median) versus
+trading days from a scheduled earnings release. The S\&P~500 median rises to about 2.75 times baseline
+on the announcement day and returns within roughly a week; the HOSE median stays near one at every
+offset, showing no announcement spike, which is why the earnings feature helps the S\&P~500 but not
+HOSE.}
+\label{fig:eventstudy}
 \end{figure}
 
 \textbf{Cross-firm graph block (1 feature, used by GBM+graph and GBME+graph).} The graph feature
