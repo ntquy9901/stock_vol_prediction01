@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>MASTER transformer: design and code</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">MASTER transformer: design and code</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#master-market-guided-stock-transformer-reimplementation-design-and-code" id="toc-master-market-guided-stock-transformer-reimplementation-design-and-code">MASTER
+(Market-Guided Stock Transformer) — reimplementation design and code</a>
+<ul>
+<li><a href="#overview" id="toc-overview">1. Overview</a>
+<ul>
+<li><a href="#what-master-is" id="toc-what-master-is">What MASTER
+is</a></li>
+<li><a href="#why-we-tried-it-on-our-volatility-panel" id="toc-why-we-tried-it-on-our-volatility-panel">Why we tried it on our
+volatility panel</a></li>
+<li><a href="#what-our-reimplementation-adapts" id="toc-what-our-reimplementation-adapts">What our reimplementation
+adapts</a></li>
+</ul></li>
+<li><a href="#data-organization-train-validation-test" id="toc-data-organization-train-validation-test">2. Data organization
+(train / validation / test)</a>
+<ul>
+<li><a href="#panel-and-sequence-construction" id="toc-panel-and-sequence-construction">Panel and sequence
+construction</a></li>
+<li><a href="#the-split-retrain-cadence-and-seeds" id="toc-the-split-retrain-cadence-and-seeds">The split, retrain cadence
+and seeds</a></li>
+</ul></li>
+<li><a href="#model-architecture" id="toc-model-architecture">3. Model
+architecture</a>
+<ul>
+<li><a href="#forward-pass-step-by-step" id="toc-forward-pass-step-by-step">Forward pass, step by step</a></li>
+<li><a href="#market-guided-gate" id="toc-market-guided-gate">Market-guided gate</a></li>
+<li><a href="#intra-stock-temporal-attention-tattention" id="toc-intra-stock-temporal-attention-tattention">Intra-stock temporal
+attention (TAttention)</a></li>
+<li><a href="#inter-stock-cross-sectional-attention-sattention" id="toc-inter-stock-cross-sectional-attention-sattention">Inter-stock /
+cross-sectional attention (SAttention)</a></li>
+<li><a href="#temporal-aggregation-and-head" id="toc-temporal-aggregation-and-head">Temporal aggregation and
+head</a></li>
+<li><a href="#construction-and-dimensions" id="toc-construction-and-dimensions">Construction and
+dimensions</a></li>
+</ul></li>
+<li><a href="#market-features-the-market-status-vector" id="toc-market-features-the-market-status-vector">4. Market features
+(the market-status vector)</a>
+<ul>
+<li><a href="#cross-sectional-aggregates-per-date-all-nan-neutral-0" id="toc-cross-sectional-aggregates-per-date-all-nan-neutral-0">Cross-sectional
+aggregates (per date, all-NaN → neutral 0)</a></li>
+<li><a href="#causal-trailing-z-of-the-market-vol-level" id="toc-causal-trailing-z-of-the-market-vol-level">Causal trailing z of
+the market vol level</a></li>
+<li><a href="#leakage-safe-train-only-scaler" id="toc-leakage-safe-train-only-scaler">Leakage-safe (train-only)
+scaler</a></li>
+</ul></li>
+<li><a href="#training-and-evaluation" id="toc-training-and-evaluation">5. Training and evaluation</a>
+<ul>
+<li><a href="#loss-optimizer-early-stopping-mirrors-train_masked_rich" id="toc-loss-optimizer-early-stopping-mirrors-train_masked_rich">Loss,
+optimizer, early stopping (mirrors
+<code>train_masked_rich</code>)</a></li>
+<li><a href="#metrics-and-dm" id="toc-metrics-and-dm">Metrics and
+DM</a></li>
+</ul></li>
+<li><a href="#result" id="toc-result">6. Result</a></li>
+<li><a href="#code-review-findings" id="toc-code-review-findings">7.
+Code review findings</a></li>
+<li><a href="#where-this-lives-in-the-repo" id="toc-where-this-lives-in-the-repo">8. Where this lives in the
+repo</a>
+<ul>
+<li><a href="#reproduce" id="toc-reproduce">Reproduce</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="master-market-guided-stock-transformer-reimplementation-design-and-code">MASTER
+(Market-Guided Stock Transformer) — reimplementation design and
+code</h1>
+<p><strong>Purpose of this document.</strong> Detailed design and code
+walkthrough of our reimplementation of MASTER (Market-Guided Stock
+Transformer, Li et al., AAAI 2024) adapted to our daily
+Parkinson-variance forecasting task, for discussion with the advisor. It
+quotes the real code and design in the repository and reports the actual
+measured outcome.</p>
+<p><strong>Upstream reference.</strong> MASTER: Li, Wang, Yang, Luo, Qu,
+Wang, Zhang, Zhou, “MASTER: Market-Guided Stock Transformer for Stock
+Price Forecasting”, AAAI 2024, arXiv:2312.15235. Reference
+implementation: <a href="https://github.com/SJTU-DMTai/MASTER" class="uri">https://github.com/SJTU-DMTai/MASTER</a> (MIT License),
+vendored under <code>_master_ref/</code>.</p>
+<p><strong>Where the experiment lives.</strong>
+<code>baselines/2026-09-06_master_transformer/</code> (code, tests,
+review, requirements, design) and
+<code>results/master_transformer/*.json</code> (8 runs: VN30 and VN100 ×
+h ∈ {1,5,10,22}). The full prose report is
+<code>docs/reports/2026-09-06_master_transformer_report.md</code>.</p>
+<hr />
+<h2 id="overview">1. Overview</h2>
+<h3 id="what-master-is">What MASTER is</h3>
+<p>MASTER is a transformer for cross-sectional stock forecasting built
+on three mechanisms, all in the upstream <code>master.py</code>:</p>
+<ol type="1">
+<li><strong>Market-guided gating.</strong> A market-status vector (index
+price + volume aggregates over several horizons) is mapped by a linear
+layer then <code>softmax(·/beta)</code> to a per-feature scaling vector
+<code>alpha(m) ∈ R^F</code>; the input features are rescaled
+<code>x_tilde = alpha(m) ⊙ x</code>. The market regime decides which
+stock features matter (regime-adaptive feature selection).
+<code>beta</code> is a temperature controlling the sharpness of
+selection.</li>
+<li><strong>Intra-stock temporal attention (TAttention).</strong>
+Per-stock transformer self-attention over TIME, keeping a sequence of
+local embeddings (not collapsed). This replaces an LSTM temporal
+encoder.</li>
+<li><strong>Inter-stock (cross-sectional) attention
+(SAttention).</strong> At each timestep, all-pairs self-attention ACROSS
+stocks — learned, with no predefined graph. This replaces a GAT over
+fixed edges.</li>
+</ol>
+<p>A <strong>temporal aggregation</strong> (attention pooling over time,
+query = last step) collapses the sequence to one embedding per stock,
+and a <strong>linear head</strong> produces the forecast.</p>
+<p>The upstream task is cross-sectional <strong>return ranking</strong>
+(predict a d-day normalized return ratio, rank stocks), evaluated by IC
+/ RankIC / ICIR + portfolio metrics on CSI300/CSI800 with Alpha158
+factors + 63 market indicators, lookback τ=8, horizon d=5.</p>
+<h3 id="why-we-tried-it-on-our-volatility-panel">Why we tried it on our
+volatility panel</h3>
+<p>Our task is daily <strong>Parkinson-variance</strong> (σ²) regression
+at t+h on VN30/VN100, evaluated by MSE/RMSE/MAE/QLIKE/R² with
+date-clustered Diebold-Mariano (DM). The project prior is strong: graph
+/ attention structure has repeatedly failed to beat the linear HAR-X on
+this noisy daily target, and our VolGA model (LSTM + a <em>sparse</em>
+horizon-matched vol→PK GAT edge) only wins at h1. MASTER offers a clean
+contrast to test: <strong>dense learned cross-sectional
+attention</strong> (softmax over ALL stocks) plus a
+<strong>market-volatility-regime gate</strong> we had never tried. The
+motivation and mapping are laid out in
+<code>docs/reports/2026-09-05_MASTER_analysis_application.md</code>,
+which ranked the market-guided gate as the highest-value, lowest-cost
+idea to port, and the dense inter-stock attention as a medium-value /
+medium-risk second probe, tempered by the fact that prior learned
+adjacencies (MTGNN, Graph-WaveNet-adaptive) were already null on thin VN
+data.</p>
+<p>A <strong>negative</strong> result (MASTER also fails to beat HAR-X,
+or its dense attention loses to VolGA’s sparse edge) was declared a
+valid, publishable finding up front; the narrative was not to be
+optimised (<code>requirements/requirements.md</code>).</p>
+<h3 id="what-our-reimplementation-adapts">What our reimplementation
+adapts</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th></th>
+<th>Upstream MASTER</th>
+<th>Our reimplementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Target</td>
+<td>d-day return <strong>ranking</strong></td>
+<td>Parkinson <strong>variance</strong> regression at t+h</td>
+</tr>
+<tr>
+<td>Loss / metric</td>
+<td>MSE on z-scored labels; IC/RankIC</td>
+<td>masked MSE (z-scored target); QLIKE + date-clustered DM</td>
+</tr>
+<tr>
+<td>Universe</td>
+<td>CSI300/CSI800 (300–800 stocks)</td>
+<td>VN30/VN100 (33 / 102 stocks)</td>
+</tr>
+<tr>
+<td>Features</td>
+<td>158 factors + 63 market</td>
+<td>5 stock node features + 4 causal market features</td>
+</tr>
+<tr>
+<td>Cross-stock</td>
+<td>learned per-timestep dense attention</td>
+<td>same dense attention (kept), vs VolGA’s sparse vol→PK edge</td>
+</tr>
+<tr>
+<td>Temporal</td>
+<td>transformer (TAttention)</td>
+<td>transformer (TAttention), kept</td>
+</tr>
+<tr>
+<td>Positivity</td>
+<td>(ranking, N/A)</td>
+<td>linear output + inverse z-score + shared positivity floor</td>
+</tr>
+</tbody>
+</table>
+<p>The IC/RankIC results do not transfer; what we port are the
+<strong>architectural ideas</strong>, tempered to a small-N,
+few-feature, regression setting with a QLIKE objective and a strict
+leakage-safe walk-forward.</p>
+<hr />
+<h2 id="data-organization-train-validation-test">2. Data organization
+(train / validation / test)</h2>
+<h3 id="panel-and-sequence-construction">Panel and sequence
+construction</h3>
+<p>Inputs are the enriched causal panels
+<code>data/processed_enriched/{vn30,vn100}/&lt;ticker&gt;.csv</code>,
+each carrying the 5 stock node features
+<code>[parkinson_variance, har_weekly, har_monthly, market_pk, volume_zscore_22]</code>.
+They are read READ-ONLY through the delivered
+<code>build_enriched_panel</code>. Each <strong>anchor</strong> (one
+trading date t) is one MASTER sample: the cross-section of N stocks,
+each with a T=lookback window of D features. The batched forward
+consumes <code>[B, N, T, D]</code> (B anchors).</p>
+<p>The data flow (from <code>design/design.md</code>):</p>
+<pre class="text"><code># baselines/2026-09-06_master_transformer/design/design.md
+enriched CSVs ──build_enriched_panel──▶ EnrichedPanel(pk[T,N], feats[T,N,5], anchors[A], masks, target_dates)
+                                          │
+              frozen_universe (train-row screen, once)
+                                          │
+   make_folds(n, test_start, K, val, h) ──▶ expanding-window folds (assert_no_leakage)
+                                          │  per fold:
+   pack_fold ──▶ D: X_*[A,N,T,5] (train-only per-node feature scaler), y_*[A,N] (raw pk[t+h]),
+                    tmask/nmask, t_mean/t_std[N], d_va/d_te, har_*/har5_*  (all delivered, READ-ONLY)
+   market_features.compute_market_raw(pk, vshock, window) ──▶ mkt_raw[T,4] (causal)
+   market_features.fit_market_scaler(mkt_raw, last_train_anchor) ──▶ (mean,std)  (TRAIN-only)
+   market_features.pack_market(mkt_std, anchors, lookback) ──▶ Xm_*[A,T,4]</code></pre>
+<h3 id="the-split-retrain-cadence-and-seeds">The split, retrain cadence
+and seeds</h3>
+<p>The walk-forward is an <strong>expanding window</strong> with
+<code>folds_target=7</code> retrain points over the OOS region, lookback
+<code>lb=10</code> (canonical), a validation block for early stopping,
+and a purge equal to the horizon. The exact fold arithmetic in
+<code>run_master.run</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/run_master.py  (run)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>wf <span class="op">=</span> VolgaWFConfig(lookback<span class="op">=</span>lookback, horizon<span class="op">=</span>horizon, folds_target<span class="op">=</span>folds_target)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>n <span class="op">=</span> <span class="bu">len</span>(panel.anchors)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>ts <span class="op">=</span> <span class="bu">int</span>(n <span class="op">*</span> wf.test_frac)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="bu">max</span>(<span class="dv">1</span>, math.ceil((n <span class="op">-</span> ts) <span class="op">/</span> wf.folds_target))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>folds <span class="op">=</span> make_folds(n, ts, K, wf.val, wf.horizon)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>assert_no_leakage(folds, panel.target_dates, wf.horizon)</span></code></pre></div>
+<p>Within each fold, <code>pack_fold</code> returns train/val/test
+tensors <code>X_*[A,N,T,5]</code>, targets <code>y_*[A,N]</code> (raw
+<code>pk[t+h]</code>), the target-validity masks <code>tmask_*</code>,
+the node-validity masks <code>nmask_*</code>, per-node target mean/std
+<code>t_mean/t_std</code>, and the OOS dates <code>d_te</code>. Feature
+and target scalers are fit on <strong>train only</strong>. The 5 seeds
+are the canonical <code>(42, 123, 2026, 7, 2024)</code>; per-seed
+predictions are ensembled for the pooled metrics and DM.</p>
+<p><strong>Fairness.</strong> HAR, HAR-X, LSTM, VolGA and MASTER are all
+trained on the SAME folds, seeds, lookback, per-node train-only scalers
+and the SAME shared QLIKE positivity floor, so every DM test is exactly
+paired. <code>assert_no_leakage</code> runs each fold.</p>
+<hr />
+<h2 id="model-architecture">3. Model architecture</h2>
+<p>The network is vendored from the upstream <code>master.py</code> into
+<code>code/master_net.py</code> and <strong>adapted</strong> to add a
+leading anchor-batch dimension <code>B</code> (documented in the file
+header for honesty; the per-anchor math is identical, pinned by a test
+that a B=1 batched forward equals the reference).</p>
+<h3 id="forward-pass-step-by-step">Forward pass, step by step</h3>
+<p>The top-level <code>MASTER.forward</code> takes
+<code>x [B, N, T, d_feat + d_gate]</code> and an optional stock-validity
+<code>key_mask [B, N]</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (MASTER.forward)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor, key_mask: torch.Tensor <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># x [B, N, T, d_feat + d_gate]; key_mask [B, N] (1=valid stock)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    src <span class="op">=</span> x[:, :, :, :<span class="va">self</span>.gate_input_start_index]                       <span class="co"># [B, N, T, d_feat]</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    gate_input <span class="op">=</span> x[:, :, <span class="op">-</span><span class="dv">1</span>, <span class="va">self</span>.gate_input_start_index:<span class="va">self</span>.gate_input_end_index]   <span class="co"># [B, N, d_gate]</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    src <span class="op">=</span> src <span class="op">*</span> <span class="va">self</span>.feature_gate(gate_input).unsqueeze(<span class="dv">2</span>)               <span class="co"># gate broadcasts over T</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="va">self</span>.pos(<span class="va">self</span>.proj(src))</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="va">self</span>.tattn(h)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="va">self</span>.sattn(h, key_mask)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="va">self</span>.temporal(h)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.decoder(h).squeeze(<span class="op">-</span><span class="dv">1</span>)                                   <span class="co"># [B, N]</span></span></code></pre></div>
+<p>Step by step:</p>
+<ol type="1">
+<li><strong>Split.</strong> <code>src</code> is the 5 stock features;
+<code>gate_input</code> is the 4 market features read at the LAST
+timestep only (the current, causal market state).
+<code>gate_input_start_index = 5</code>,
+<code>gate_input_end_index = 9</code>.</li>
+<li><strong>Market gate.</strong> <code>feature_gate(gate_input)</code>
+→ a per-feature soft weight, broadcast over T and applied to
+<code>src</code>.</li>
+<li><strong>Project + positional encoding.</strong>
+<code>proj: Linear(d_feat → d_model)</code> then sinusoidal
+<code>PositionalEncoding</code> over time.</li>
+<li><strong>Intra-stock temporal attention</strong> <code>tattn</code>
+over T.</li>
+<li><strong>Dense inter-stock attention</strong> <code>sattn</code> over
+N (masked by <code>key_mask</code>).</li>
+<li><strong>Temporal aggregation</strong> <code>temporal</code> → one
+<code>[B, N, d_model]</code> vector per stock.</li>
+<li><strong>Linear decoder</strong> → <code>[B, N]</code> variance
+forecast per stock.</li>
+</ol>
+<h3 id="market-guided-gate">Market-guided gate</h3>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (Gate)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Gate(nn.Module):</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Market-guided feature gate: market features -&gt; soft per-feature weight (reference master.py).&quot;&quot;&quot;</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, d_input: <span class="bu">int</span>, d_output: <span class="bu">int</span>, beta: <span class="bu">float</span> <span class="op">=</span> <span class="fl">1.0</span>):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.trans <span class="op">=</span> nn.Linear(d_input, d_output)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.d_output <span class="op">=</span> d_output</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.t <span class="op">=</span> beta</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, gate_input: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        output <span class="op">=</span> torch.softmax(<span class="va">self</span>.trans(gate_input) <span class="op">/</span> <span class="va">self</span>.t, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.d_output <span class="op">*</span> output</span></code></pre></div>
+<p>The softmax over the <code>d_output = d_feat = 5</code> feature axis,
+scaled by temperature <code>beta</code>, produces a weighting that sums
+to <code>d_output</code>, so it re-weights the 5 stock features by the
+market regime.</p>
+<h3 id="intra-stock-temporal-attention-tattention">Intra-stock temporal
+attention (TAttention)</h3>
+<p>Multi-head self-attention over the T axis, batched over
+<code>(B, N)</code> — every stock’s own sequence attends to itself in
+time:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (TAttention.forward)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:      <span class="co"># x [B, N, T, d_model]</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="va">self</span>.norm1(x)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    q, k, v <span class="op">=</span> <span class="va">self</span>.qtrans(x), <span class="va">self</span>.ktrans(x), <span class="va">self</span>.vtrans(x)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    dim <span class="op">=</span> <span class="va">self</span>.d_model <span class="op">//</span> <span class="va">self</span>.nhead</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    outs <span class="op">=</span> []</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.nhead):</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        sl <span class="op">=</span> <span class="bu">slice</span>(i <span class="op">*</span> dim, <span class="va">None</span>) <span class="cf">if</span> i <span class="op">==</span> <span class="va">self</span>.nhead <span class="op">-</span> <span class="dv">1</span> <span class="cf">else</span> <span class="bu">slice</span>(i <span class="op">*</span> dim, (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> dim)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        qh, kh, vh <span class="op">=</span> q[..., sl], k[..., sl], v[..., sl]   <span class="co"># [B, N, T, dim]</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> torch.softmax(torch.matmul(qh, kh.transpose(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>)), dim<span class="op">=-</span><span class="dv">1</span>)   <span class="co"># [B, N, T, T]</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="va">self</span>.attn_dropout <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            att <span class="op">=</span> <span class="va">self</span>.attn_dropout[i](att)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        outs.append(torch.matmul(att, vh))               <span class="co"># [B, N, T, dim]</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    att_output <span class="op">=</span> torch.cat(outs, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    xt <span class="op">=</span> <span class="va">self</span>.norm2(x <span class="op">+</span> att_output)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> xt <span class="op">+</span> <span class="va">self</span>.ffn(xt)</span></code></pre></div>
+<p>Scores are <code>[B, N, T, T]</code>; residual + LayerNorm + FFN as
+in a standard transformer block.</p>
+<h3 id="inter-stock-cross-sectional-attention-sattention">Inter-stock /
+cross-sectional attention (SAttention)</h3>
+<p>The defining mechanism: at each timestep every stock attends to EVERY
+other stock in the same anchor’s cross-section (dense softmax over N),
+the contrast to VolGA’s sparse Top-5 edge. Stocks are permuted to the
+second-to-last axis so attention runs over N within each
+<code>(B, T)</code>; invalid (non-trading) stocks are masked out as
+keys:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (SAttention.forward)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(<span class="va">self</span>, x: torch.Tensor, key_mask: torch.Tensor <span class="op">|</span> <span class="va">None</span> <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> torch.Tensor:</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># x [B, N, T, d_model]; key_mask [B, N] (1=valid stock, 0=invalid/non-trading -&gt; excluded as a key).</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="va">self</span>.norm1(x)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># move stocks to the second-to-last axis so attention runs over N within each (B, T)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> <span class="va">self</span>.qtrans(x).permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>)               <span class="co"># [B, T, N, d_model]</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> <span class="va">self</span>.ktrans(x).permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> <span class="va">self</span>.vtrans(x).permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    dim <span class="op">=</span> <span class="va">self</span>.d_model <span class="op">//</span> <span class="va">self</span>.nhead</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="co"># invalid KEY stocks get -inf logits so valid stocks never attend to zero-padded non-trading stocks</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    neg <span class="op">=</span> <span class="va">None</span> <span class="cf">if</span> key_mask <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> (key_mask <span class="op">&lt;</span> <span class="fl">0.5</span>).view(key_mask.shape[<span class="dv">0</span>], <span class="dv">1</span>, <span class="dv">1</span>, key_mask.shape[<span class="dv">1</span>])</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    outs <span class="op">=</span> []</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="va">self</span>.nhead):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        sl <span class="op">=</span> <span class="bu">slice</span>(i <span class="op">*</span> dim, <span class="va">None</span>) <span class="cf">if</span> i <span class="op">==</span> <span class="va">self</span>.nhead <span class="op">-</span> <span class="dv">1</span> <span class="cf">else</span> <span class="bu">slice</span>(i <span class="op">*</span> dim, (i <span class="op">+</span> <span class="dv">1</span>) <span class="op">*</span> dim)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        qh, kh, vh <span class="op">=</span> q[..., sl], k[..., sl], v[..., sl]   <span class="co"># [B, T, N, dim]</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        logit <span class="op">=</span> torch.matmul(qh, kh.transpose(<span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">2</span>)) <span class="op">/</span> <span class="va">self</span>.temperature   <span class="co"># [B, T, N, N]</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> neg <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>            logit <span class="op">=</span> logit.masked_fill(neg, <span class="bu">float</span>(<span class="st">&quot;-inf&quot;</span>))</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> torch.softmax(logit, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> torch.nan_to_num(att, nan<span class="op">=</span><span class="fl">0.0</span>)             <span class="co"># invalid TARGET rows (all-masked) -&gt; 0 (discarded)</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        att <span class="op">=</span> <span class="va">self</span>.attn_dropout[i](att)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>        outs.append(torch.matmul(att, vh))               <span class="co"># [B, T, N, dim]</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    att_output <span class="op">=</span> torch.cat(outs, dim<span class="op">=-</span><span class="dv">1</span>).permute(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>)   <span class="co"># back to [B, N, T, d_model]</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    xt <span class="op">=</span> <span class="va">self</span>.norm2(x <span class="op">+</span> att_output)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> xt <span class="op">+</span> <span class="va">self</span>.ffn(xt)</span></code></pre></div>
+<p>The cross-sectional scores are <code>[B, T, N, N]</code> — this is
+the VRAM-bounding tensor, kept modest by <code>d_model=128</code> and
+<code>batch≤64</code> for N=102. Masking invalid keys is the fair
+analogue of VolGA’s masked adjacency.</p>
+<h3 id="temporal-aggregation-and-head">Temporal aggregation and
+head</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (TemporalAttention.forward)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> forward(<span class="va">self</span>, z: torch.Tensor) <span class="op">-&gt;</span> torch.Tensor:      <span class="co"># z [B, N, T, d_model]</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="va">self</span>.trans(z)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    query <span class="op">=</span> h[:, :, <span class="op">-</span><span class="dv">1</span>, :].unsqueeze(<span class="dv">2</span>)                  <span class="co"># [B, N, 1, d_model]</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> (h <span class="op">*</span> query).<span class="bu">sum</span>(<span class="op">-</span><span class="dv">1</span>)                            <span class="co"># [B, N, T]</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    lam <span class="op">=</span> torch.softmax(lam, dim<span class="op">=-</span><span class="dv">1</span>).unsqueeze(<span class="op">-</span><span class="dv">1</span>)       <span class="co"># [B, N, T, 1]</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (lam <span class="op">*</span> z).<span class="bu">sum</span>(<span class="dv">2</span>)                              <span class="co"># [B, N, d_model]</span></span></code></pre></div>
+<p>Attention pooling with the last timestep as query collapses T;
+<code>decoder = nn.Linear(d_model, 1)</code> maps to one scalar variance
+forecast per stock, giving <code>[B, N]</code>.</p>
+<h3 id="construction-and-dimensions">Construction and dimensions</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/master_net.py  (build_master)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_master(cfg) <span class="op">-&gt;</span> MASTER:</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> MASTER(d_feat<span class="op">=</span>cfg.n_stock_feat, d_model<span class="op">=</span>cfg.d_model, t_nhead<span class="op">=</span>cfg.t_nhead, s_nhead<span class="op">=</span>cfg.s_nhead,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                  t_dropout<span class="op">=</span>cfg.dropout, s_dropout<span class="op">=</span>cfg.dropout, gate_input_start_index<span class="op">=</span>cfg.n_stock_feat,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                  gate_input_end_index<span class="op">=</span>cfg.n_stock_feat <span class="op">+</span> cfg.n_market_feat, beta<span class="op">=</span>cfg.beta,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                  max_len<span class="op">=</span>cfg.max_len)</span></code></pre></div>
+<p>Resolved dimensions (<code>master_config.py</code>):
+<code>d_model=128</code>, <code>t_nhead=4</code>,
+<code>s_nhead=2</code>, <code>dropout=0.2</code>, <code>beta=2.0</code>,
+<code>n_stock_feat=5</code>, <code>n_market_feat=4</code>,
+<code>max_len=100</code>.</p>
+<hr />
+<h2 id="market-features-the-market-status-vector">4. Market features
+(the market-status vector)</h2>
+<p>The 4 causal market features are built in
+<code>code/market_features.py</code>. All use only information up to day
+t.</p>
+<h3 id="cross-sectional-aggregates-per-date-all-nan-neutral-0">Cross-sectional
+aggregates (per date, all-NaN → neutral 0)</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/market_features.py  (_cross_sectional)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _cross_sectional(pk: np.ndarray, vshock: np.ndarray):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    valid <span class="op">=</span> np.isfinite(pk)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    any_valid <span class="op">=</span> valid.<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    m_mean <span class="op">=</span> np.zeros(pk.shape[<span class="dv">0</span>])<span class="op">;</span> m_disp <span class="op">=</span> np.zeros(pk.shape[<span class="dv">0</span>])<span class="op">;</span> m_vshock <span class="op">=</span> np.zeros(pk.shape[<span class="dv">0</span>])</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> np.errstate(invalid<span class="op">=</span><span class="st">&quot;ignore&quot;</span>), warnings.catch_warnings():</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        warnings.simplefilter(<span class="st">&quot;ignore&quot;</span>, <span class="pp">RuntimeWarning</span>)     <span class="co"># all-NaN rows -&gt; handled explicitly below</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        mm <span class="op">=</span> np.nanmean(np.where(valid, pk, np.nan), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>        md <span class="op">=</span> np.nanstd(np.where(valid, pk, np.nan), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>        mv <span class="op">=</span> np.nanmean(np.where(np.isfinite(vshock), vshock, np.nan), axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    m_mean[any_valid] <span class="op">=</span> mm[any_valid]</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    m_disp[any_valid] <span class="op">=</span> md[any_valid]</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    mv_valid <span class="op">=</span> np.isfinite(vshock).<span class="bu">any</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    m_vshock[mv_valid] <span class="op">=</span> mv[mv_valid]</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> m_mean, m_disp, m_vshock</span></code></pre></div>
+<h3 id="causal-trailing-z-of-the-market-vol-level">Causal trailing z of
+the market vol level</h3>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/market_features.py  (causal_rolling_z)</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> causal_rolling_z(series: np.ndarray, window: <span class="bu">int</span>) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Causal trailing z-score over [max(0, t-window+1) .. t] (min_periods=1). No look-ahead.&quot;&quot;&quot;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    v <span class="op">=</span> np.asarray(series, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(v)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> np.zeros(n)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> v[<span class="bu">max</span>(<span class="dv">0</span>, t <span class="op">-</span> window <span class="op">+</span> <span class="dv">1</span>):t <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> w.std()</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        z[t] <span class="op">=</span> (v[t] <span class="op">-</span> w.mean()) <span class="op">/</span> s <span class="cf">if</span> s <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z</span></code></pre></div>
+<p>The 4 features (<code>compute_market_raw</code> stacks them into
+<code>[T, 4]</code>):</p>
+<ol type="1">
+<li><code>m_mean</code> — cross-sectional mean of Parkinson variance
+over stocks (market vol level).</li>
+<li><code>m_disp</code> — cross-sectional dispersion (std) over stocks
+(market dispersion).</li>
+<li><code>m_vshock</code> — cross-sectional mean of the volume z-shock
+(market volume shock).</li>
+<li><code>m_volz</code> — causal 22-day rolling z of <code>m_mean</code>
+(how extreme today’s market vol is).</li>
+</ol>
+<h3 id="leakage-safe-train-only-scaler">Leakage-safe (train-only)
+scaler</h3>
+<p>The market scaler is fit on rows
+<code>[0 : last_train_anchor + 1]</code> — every train input window ends
+at or before the last train anchor, so no val/test date enters the
+scaler:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/market_features.py  (fit_market_scaler)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_market_scaler(mkt_raw, train_end_row, eps):</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="dv">0</span> <span class="op">&lt;=</span> train_end_row <span class="op">&lt;</span> <span class="bu">len</span>(mkt_raw):</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;train_end_row </span><span class="sc">{</span>train_end_row<span class="sc">}</span><span class="ss"> out of range for T=</span><span class="sc">{</span><span class="bu">len</span>(mkt_raw)<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    block <span class="op">=</span> mkt_raw[:train_end_row <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    mean <span class="op">=</span> block.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    std <span class="op">=</span> block.std(axis<span class="op">=</span><span class="dv">0</span>) <span class="op">+</span> eps</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> mean, std</span></code></pre></div>
+<p><code>standardize</code> maps any residual non-finite to 0 (neutral),
+and <code>pack_market</code> builds the per-anchor window
+<code>mkt_std[t - lookback + 1 : t + 1]</code> (all dates ≤ t, causal).
+The market row is the same for every stock at a given date, broadcast
+across N by the caller (<code>_cat_input</code>).</p>
+<hr />
+<h2 id="training-and-evaluation">5. Training and evaluation</h2>
+<h3 id="loss-optimizer-early-stopping-mirrors-train_masked_rich">Loss,
+optimizer, early stopping (mirrors <code>train_masked_rich</code>)</h3>
+<p>MASTER is trained with masked MSE on the per-node
+<strong>z-scored</strong> target, a LINEAR decoder output (no
+Softplus/ReLU), and inverse-transform + a shared positivity floor at
+eval — the project’s proven pattern:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/run_master.py  (train_master, epoch loop)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ep <span class="kw">in</span> <span class="bu">range</span>(cfg.epochs):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    net.train()</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> rng.permutation(<span class="bu">len</span>(xtr))</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">0</span>, <span class="bu">len</span>(idx), bs):</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> idx[i:i <span class="op">+</span> bs]</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        xb, kmb, tmb, yb <span class="op">=</span> xtr[b], kmtr[b], tmtr[b], ytr_n[b]</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        opt.zero_grad()</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        pred <span class="op">=</span> net(xb, kmb)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        loss <span class="op">=</span> (((pred <span class="op">-</span> yb) <span class="op">**</span> <span class="dv">2</span>) <span class="op">*</span> tmb).<span class="bu">sum</span>() <span class="op">/</span> tmb.<span class="bu">sum</span>().clamp(<span class="bu">min</span><span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        loss.backward()</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        torch.nn.utils.clip_grad_norm_(net.parameters(), cfg.grad_clip)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        opt.step()</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    pva <span class="op">=</span> infer(xva, kmva)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    mva <span class="op">=</span> D.tmask_va.astype(<span class="bu">bool</span>)</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>    vmse <span class="op">=</span> <span class="bu">float</span>(np.mean((pva[mva] <span class="op">-</span> D.y_va[mva]) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    sched.step(vmse)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> vmse <span class="op">&lt;</span> best <span class="op">-</span> <span class="fl">1e-12</span>:</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>        best <span class="op">=</span> vmse</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>        best_state <span class="op">=</span> {k: v.detach().cpu().clone() <span class="cf">for</span> k, v <span class="kw">in</span> net.state_dict().items()}</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        wait <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> best_ep <span class="op">=</span> ep <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        wait <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ep <span class="op">+</span> <span class="dv">1</span> <span class="op">&gt;=</span> cfg.min_epochs <span class="kw">and</span> wait <span class="op">&gt;=</span> cfg.patience:</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span></code></pre></div>
+<p>Optimizer is <code>Adam(lr=5e-4, weight_decay=1e-5)</code> with
+<code>ReduceLROnPlateau(factor=0.5, patience=2)</code>,
+<code>grad_clip=1.0</code>, <code>epochs=16</code> max,
+<code>patience=5</code>, <code>min_epochs=5</code>, anchor
+<code>batch_size=64</code>. The positivity floor and inverse
+z-score:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/run_master.py  (_floor)</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _floor(pn, t_mean, t_std, cfg):</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Inverse per-node z-score then apply the shared positivity floor (identical basis to LSTM/VolGA).&quot;&quot;&quot;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(pn <span class="op">*</span> t_std <span class="op">+</span> t_mean, cfg.pos_floor_frac <span class="op">*</span> t_mean <span class="op">+</span> cfg.pos_floor_eps)</span></code></pre></div>
+<p><strong>Performance.</strong> The concatenated <code>[A,N,T,D]</code>
+inputs and key masks are built ONCE per split as GPU tensors; the epoch
+loop and per-epoch learning-curve inference index minibatch views on the
+GPU (no per-item batch=1, no per-epoch host re-allocation — see
+code-review F10 below).</p>
+<h3 id="metrics-and-dm">Metrics and DM</h3>
+<p>For each fold, HAR/HAR-X (OLS), LSTM (no graph), VolGA (LSTM +
+horizon-matched vol→PK GAT) and MASTER are all trained; predictions are
+pooled per-(node,date) over the whole OOS region. Reported metrics per
+model: MSE/RMSE/MAE/QLIKE/R², non-lock conditional QLIKE (drop
+limit-lock obs where target ≤ 2·floor), and per-obs win-rate vs HAR-X.
+The comparison is date-clustered Diebold-Mariano on per-obs QLIKE:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-09-06_master_transformer/code/run_master.py  (run, DM block)</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>dm <span class="op">=</span> {<span class="st">&quot;MASTER_vs_HARX&quot;</span>: RMR._dm_all(ens[<span class="st">&quot;MASTER&quot;</span>], pooled[<span class="st">&quot;HAR-X&quot;</span>], horizon, fl),</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;MASTER_vs_LSTM&quot;</span>: RMR._dm_all(ens[<span class="st">&quot;MASTER&quot;</span>], ens[<span class="st">&quot;LSTM&quot;</span>], horizon, fl),</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;MASTER_vs_VolGA&quot;</span>: RMR._dm_all(ens[<span class="st">&quot;MASTER&quot;</span>], ens[<span class="st">&quot;VolGA&quot;</span>], horizon, fl),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;VolGA_vs_HARX&quot;</span>: RMR._dm_all(ens[<span class="st">&quot;VolGA&quot;</span>], pooled[<span class="st">&quot;HAR-X&quot;</span>], horizon, fl),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;LSTM_vs_HARX&quot;</span>: RMR._dm_all(ens[<span class="st">&quot;LSTM&quot;</span>], pooled[<span class="st">&quot;HAR-X&quot;</span>], horizon, fl)}</span></code></pre></div>
+<p>The DM convention “favours A if mean_diff &lt; 0” means A is the
+first (MASTER); a positive mean-diff and “favors B” means the baseline
+is better. Every learned model’s result JSON carries
+<code>train_metrics</code>, <code>val_metrics</code>, test
+<code>metrics</code>, per-model <code>fit_diagnostics</code>, and
+per-fold/seed <code>learning_curves</code>, so the overfit gate can
+verify no over/under-fit.</p>
+<p><strong>Pipeline validation.</strong> The in-run HAR-X/LSTM/VolGA
+QLIKE reproduce the delivered <code>results/edge_hmatched/</code>
+numbers exactly (VN30 h1: HAR-X 0.4801, LSTM 0.4787, VolGA 0.4740 —
+identical), confirming identical folds/seeds/config.</p>
+<hr />
+<h2 id="result">6. Result</h2>
+<p><strong>Outcome: NO-GO. MASTER does not beat HAR-X (nor LSTM, nor
+VolGA) on QLIKE at any horizon on either panel.</strong> It is the worst
+of the five models at every VN30 horizon, and the only DM tests that
+reach significance are MASTER <strong>losing</strong> to VolGA at h1
+(VN30 p=0.016, VN100 p=0.006) — the sparse learned edge significantly
+beats the dense attention at exactly the horizon most favourable to
+cross-sectional structure.</p>
+<p>Pooled OOS QLIKE (lower is better); “DM vs X” gives the p-value and
+which model it favours. Numbers from
+<code>results/master_transformer/master_&lt;market&gt;_h&lt;h&gt;.json</code>.</p>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th>Market</th>
+<th>h</th>
+<th>HAR-X</th>
+<th>LSTM</th>
+<th>VolGA</th>
+<th><strong>MASTER</strong></th>
+<th>DM MASTER vs HAR-X</th>
+<th>DM MASTER vs VolGA</th>
+<th>DM MASTER vs LSTM</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VN30</td>
+<td>1</td>
+<td>0.4801</td>
+<td>0.4787</td>
+<td>0.4740</td>
+<td><strong>0.4910</strong></td>
+<td>p=0.165 favors HAR-X</td>
+<td><strong>p=0.016 favors VolGA</strong></td>
+<td>p=0.093 favors LSTM</td>
+</tr>
+<tr>
+<td>VN30</td>
+<td>5</td>
+<td>0.5602</td>
+<td>0.5738</td>
+<td>0.5672</td>
+<td><strong>0.6436</strong></td>
+<td>p=0.179 favors HAR-X</td>
+<td>p=0.107 favors VolGA</td>
+<td>p=0.108 favors LSTM</td>
+</tr>
+<tr>
+<td>VN30</td>
+<td>10</td>
+<td>0.6091</td>
+<td>0.6048</td>
+<td>0.6061</td>
+<td><strong>0.6416</strong></td>
+<td>p=0.337 favors HAR-X</td>
+<td>p=0.117 favors VolGA</td>
+<td>p=0.135 favors LSTM</td>
+</tr>
+<tr>
+<td>VN30</td>
+<td>22</td>
+<td>0.6782</td>
+<td>0.6832</td>
+<td>0.6882</td>
+<td><strong>0.6973</strong></td>
+<td>p=0.687 favors HAR-X</td>
+<td>p=0.595 favors VolGA</td>
+<td>p=0.583 favors LSTM</td>
+</tr>
+<tr>
+<td>VN100</td>
+<td>1</td>
+<td>0.5000</td>
+<td>0.5155</td>
+<td><strong>0.4879</strong></td>
+<td>0.5053</td>
+<td>p=0.562 favors HAR-X</td>
+<td><strong>p=0.006 favors VolGA</strong></td>
+<td>p=0.188 favors MASTER</td>
+</tr>
+<tr>
+<td>VN100</td>
+<td>5</td>
+<td><strong>0.5607</strong></td>
+<td>0.5759</td>
+<td>0.5662</td>
+<td>0.5697</td>
+<td>p=0.555 favors HAR-X</td>
+<td>p=0.476 favors VolGA</td>
+<td>p=0.214 favors MASTER</td>
+</tr>
+<tr>
+<td>VN100</td>
+<td>10</td>
+<td><strong>0.5999</strong></td>
+<td>0.6127</td>
+<td>0.6127</td>
+<td>0.6303</td>
+<td>p=0.300 favors HAR-X</td>
+<td>p=0.093 favors VolGA</td>
+<td>p=0.093 favors LSTM</td>
+</tr>
+<tr>
+<td>VN100</td>
+<td>22</td>
+<td><strong>0.6385</strong></td>
+<td>0.6452</td>
+<td>0.6476</td>
+<td>0.6628</td>
+<td>p=0.457 favors HAR-X</td>
+<td>p=0.272 favors VolGA</td>
+<td>p=0.255 favors LSTM</td>
+</tr>
+</tbody>
+</table>
+<p>Best model per row in bold in the QLIKE columns; MASTER’s QLIKE is
+bolded to mark it. VolGA is best at VN100 h1, HAR-X is best at VN100
+h5/h10/h22, and no MASTER cell is best. MASTER’s fit diagnostics are
+<code>ok</code> (no over/under-fit) at the pooled level for every
+run.</p>
+<p><strong>VN30 h1 detail</strong> (the horizon most favourable to
+cross-sectional structure): MASTER pooled QLIKE 0.4910 is the WORST of
+five (HAR 0.4779, VolGA 0.4740, LSTM 0.4787, HAR-X 0.4801). Non-lock
+QLIKE tells the same story (MASTER 0.4566 vs VolGA 0.4396, HAR-X
+0.4455). MASTER’s per-obs QLIKE beats HAR-X on only 52.9% of ticker-days
+yet loses on the aggregate because a minority of large errors dominate.
+Per-seed QLIKE mean is 0.5718 ± 0.0467.</p>
+<p><strong>Interpretation.</strong> A market-guided dense
+cross-sectional transformer underperforms both a sparse learned edge
+(VolGA) and a linear HAR-X on this noisy daily variance target; the
+dense attention adds noise, not signal. This is consistent with the
+project-wide prior that dense/learned graph structure does not beat
+HAR-X here. The finding is honest and negative — a valid result under
+the pre-registered go/no-go.</p>
+<hr />
+<h2 id="code-review-findings">7. Code review findings</h2>
+<p>Self-review (<code>code_review/code_review_2026-09-06.md</code>, 3
+lenses) plus the coordinator’s <code>/code-review</code> and pre-push
+gate. No unresolved critical/major findings. Summary:</p>
+<ul>
+<li><strong>F1–F4 (leakage / fairness, all OK).</strong> Per-node
+feature and target scalers come from <code>pack_fold</code>
+(train-only); the market scaler is fit on
+<code>mkt_raw[0 : last_train_anchor+1]</code> (test pins the row range);
+market features are causal (truncation test); folds reuse
+<code>make_folds</code> / <code>assert_no_leakage</code>; the VolGA edge
+is the horizon-matched train-only edge.</li>
+<li><strong>F5 (design choice, documented).</strong> The dense
+SAttention masks invalid (non-trading) stocks as keys via
+<code>key_mask=nmask</code>, the fair analogue of VolGA’s masked
+adjacency.</li>
+<li><strong>F6 (correctness, OK).</strong> Batched attention does not
+mix anchors —
+<code>test_per_anchor_independence_of_batched_attention</code> perturbs
+one anchor and asserts the other’s output is unchanged.</li>
+<li><strong>F7 (positivity, OK).</strong> Positivity via
+inverse-transform + shared floor (no Softplus/ReLU); QLIKE uses the
+single shared <code>qlike_floor=1e-8</code>, identical across all five
+models.</li>
+<li><strong>F8 / F9 (edge cases, handled).</strong> An all-masked key
+set yields a NaN softmax that <code>torch.nan_to_num</code> zeroes;
+all-NaN cross-sectional rows → neutral 0 market feature.</li>
+<li><strong>F10 (performance, fixed).</strong> The initial loop rebuilt
+the concatenated <code>[A,N,T,D]</code> input every epoch/inference call
+(a batch/GPU-underutilization anti-pattern). Fixed: inputs + key masks
+are built ONCE per split as GPU tensors; the epoch loop indexes
+minibatch views. Anchors are batched, tensors stay on GPU, no per-item
+batch=1.</li>
+<li><strong>F11–F13 (config / hygiene / isolation, OK).</strong> All
+MASTER tunables live in <code>master_config.py</code>; floors/
+windows/seeds/lookback come from <code>pipeline_config</code> (no magic
+numbers). <code>run()</code>/<code>main()</code> are thin
+<code># pragma: no cover</code> drivers with logic in tested helpers.
+Hard isolation: only read-only imports from other baselines; the MASTER
+nn.Module is vendored with an attribution header (arXiv:2312.15235 + MIT
+SJTU-DMTai repo).</li>
+</ul>
+<p>Tests (<code>test/test_master.py</code>, 23 tests) cover forward
+shape, gate slicing (last-timestep-only), per-anchor independence of
+batched attention, key masking, reproducibility, causal market features,
+train-only scaler fit, positive floored output, the driver helpers, and
+two end-to-end tiny-fold smoke tests.</p>
+<hr />
+<h2 id="where-this-lives-in-the-repo">8. Where this lives in the
+repo</h2>
+<ul>
+<li><code>baselines/2026-09-06_master_transformer/requirements/requirements.md</code>
+— objective, inputs/outputs, success criteria, go/no-go.</li>
+<li><code>baselines/2026-09-06_master_transformer/design/design.md</code>
+— data flow, <code>[N,T,D]</code> + gate design, normalization,
+batching, config gates, comparison plan.</li>
+<li><code>baselines/2026-09-06_master_transformer/code/master_net.py</code>
+— vendored + batched MASTER nn.Module.</li>
+<li><code>baselines/2026-09-06_master_transformer/code/master_config.py</code>
+— <code>MasterConfig</code> (single source of tunables).</li>
+<li><code>baselines/2026-09-06_master_transformer/code/market_features.py</code>
+— causal market features + train-only scaler + per-anchor packing.</li>
+<li><code>baselines/2026-09-06_master_transformer/code/run_master.py</code>
+— walk-forward driver (train all five models, pool, metrics, DM,
+evidence, JSON).</li>
+<li><code>baselines/2026-09-06_master_transformer/code_review/code_review_2026-09-06.md</code>
+— review findings.</li>
+<li><code>baselines/2026-09-06_master_transformer/test/test_master.py</code>
+— tests.</li>
+<li><code>results/master_transformer/master_{vn30,vn100}_h{1,5,10,22}.json</code>
+— the 8 result files.</li>
+<li><code>docs/reports/2026-09-05_MASTER_analysis_application.md</code>
+— analysis / application report (motivation + mapping to our task).</li>
+<li><code>docs/reports/2026-09-06_master_transformer_report.md</code> —
+the full prose result report.</li>
+<li><code>_master_ref/</code> — the vendored MIT-licensed upstream
+reference clone.</li>
+</ul>
+<h3 id="reproduce">Reproduce</h3>
+<div class="sourceCode" id="cb15"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv_gpu_encode/Scripts/python.exe</span> baselines/2026-09-06_master_transformer/code/run_master.py <span class="at">--market</span> vn30 <span class="at">--horizon</span> 1</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ex">.venv_gpu_encode/Scripts/python.exe</span> <span class="at">-m</span> pytest baselines/2026-09-06_master_transformer/test <span class="at">-q</span></span></code></pre></div>
+</body>
+</html>
