@@ -82,8 +82,12 @@ data/features/DEBUG_by_ticker/
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb
-# ...except the Colab training notebook (must be on git so Colab can `git clone` it)
+# ...except the Colab training notebooks (must be on git so Colab can `git clone` them)
 !notebooks/train_volga_colab_a100.ipynb
+!notebooks/complex_network_sp500_colab.ipynb
+
+# Colab data bundles (large, Yahoo redistribution-restricted) -- uploaded to Drive, never on git
+colab_bundle_*.zip
 
 # PyTorch
 *.pth
