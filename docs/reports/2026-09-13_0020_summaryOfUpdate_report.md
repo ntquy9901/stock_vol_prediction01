@@ -99,6 +99,16 @@ own-history mean, Pearson 0.1–0.23 and Spearman up to 0.23 (`dens`, `clus`, `b
 (final fold): adding topology lowers **train** QLIKE (−0.01 to −0.17) but raises **test** QLIKE (+0.005 to
 +0.051) at h1/h5/h10 — the overfit signature. `dens`/`avg_deg` VIF ≈ 1900–2000 (near-perfect duplicates).
 
+### Experiment A — topology metrics → future ^GSPC volatility (OOS R², 302 windows)
+| Model | idx_vol (headline) | idx_ret | idx_lnvol |
+|---|---|---|---|
+| LinearRegression | −0.055 | −0.239 | −0.047 |
+| RandomForest | +0.042 | −0.110 | +0.331 |
+
+Same as HOSE: on the headline volatility target LR fails OOS and RF is ≈0 (+0.04, train R²=0.42 ≫ test);
+signal appears only on the log-volume target and is largely in-sample (train 0.73 vs test 0.33). The paper's
+reported R²≈0.56 for index volatility does **not** replicate out-of-sample on either market.
+
 ### Cross-market conclusion
 - **HOSE (thin VN market):** topology is essentially noise — MI 3–5× below own-history, Pearson ≈ 0,
   Spearman ≤ 0.11. GBM: no horizon benefits (h1 sig worse, h5–h22 ties).
