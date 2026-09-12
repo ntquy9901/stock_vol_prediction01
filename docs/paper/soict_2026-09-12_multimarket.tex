@@ -113,6 +113,72 @@ row-normalized weights. Figure~\ref{fig:arch} shows the architecture.
 adds a realized-quarticity interaction~\cite{harq2016}. Both share the same target, protocol, and
 positivity floor as the GBM.
 
+\subsection*{Features}
+\textbf{Own-history block (9 features, used by GBM).} Every own-history feature is observable at the
+forecast origin $t$. The three HAR lags capture short, medium, and long memory of realized variance
+over one day, one trading week ($\mathrm{WK}=5$), and one trading month (22 days):
+\begin{align}
+\mathrm{har\_daily} = \mathrm{pk}_t, \qquad
+\mathrm{har\_weekly} = \frac{1}{5}\sum_{k=0}^{4}\mathrm{pk}_{t-k}, \qquad
+\mathrm{har\_monthly} = \frac{1}{22}\sum_{k=0}^{21}\mathrm{pk}_{t-k}.
+\end{align}
+A realized-quarticity proxy gauges the magnitude and dispersion of recent variance, which lets the
+model down-weight noisy high-variance periods:
+\begin{equation}
+\mathrm{rq}_t = \sqrt{\tfrac{1}{5}\sum_{k=0}^{4}\mathrm{pk}_{t-k}^{2}}.
+\end{equation}
+Five log-volatility momentum terms, built on $\ell_t=\ln(\max(\mathrm{pk}_t,\varepsilon))$ with
+$\varepsilon=10^{-8}$, encode recent trend, multi-scale slope, deviation from the recent mean, and a
+standardized 22-day level:
+\begin{align}
+\mathrm{mr\_change} &= \ell_t-\ell_{t-1}, &
+\mathrm{mr\_slope5} &= \frac{\ell_t-\ell_{t-5}}{5}, &
+\mathrm{mr\_slope10} &= \frac{\ell_t-\ell_{t-10}}{10},\\
+\mathrm{mr\_dev5} &= \ell_t-\frac{1}{5}\sum_{k=0}^{4}\ell_{t-k}, &
+\mathrm{mr\_z22} &= \frac{\ell_t-\mu_{22}(\ell)}{\sigma_{22}(\ell)+\varepsilon}, &&
+\end{align}
+where $\mu_{22}$ and $\sigma_{22}$ are the trailing 22-day mean and standard deviation of $\ell$.
+Together these summarize the stock's own short-run acceleration and regime level.
+
+\textbf{External earnings block (4 features, used by GBME).} Each earnings feature is evaluated at the
+target day $t+h$ from scheduled release dates known weeks ahead, so the block is forward-looking and
+leakage-safe. Let $\mathrm{nxt}$ be the trading days from $t+h$ to the next scheduled announcement,
+$\mathrm{prv}$ the trading days since the previous one, and $\mathrm{dist}=\min(\mathrm{nxt},\mathrm{prv})$:
+\begin{align}
+\mathrm{earn\_prox} &= \max\!\Big(0,\,1-\tfrac{\mathrm{dist}}{5}\Big), &
+\mathrm{earn\_soon} &= \mathbf{1}[\mathrm{dist}\le 3],\\
+\mathrm{earn\_pre} &= \max\!\Big(0,\,1-\tfrac{\mathrm{nxt}}{5}\Big), &
+\mathrm{earn\_post} &= \max\!\Big(0,\,1-\tfrac{\mathrm{prv}}{10}\Big).
+\end{align}
+Here $\mathrm{earn\_prox}$ is a symmetric triangular proximity that peaks at 1 on the announcement day
+and reaches 0 once the nearest release is at least a week away, $\mathrm{earn\_soon}$ is a sharp
+$\pm 3$-day flag, $\mathrm{earn\_pre}$ rises into the next release, and $\mathrm{earn\_post}$ decays
+over a longer 10-day window because post-earnings volatility drift persists longer than the
+pre-announcement run-up. Away from any release all four are zero, so GBME reduces to GBM on ordinary
+days and activates only in the roughly two-week window around a scheduled release. An event study
+(Fig.~\ref{fig:event}) shows the S\&P~500 median variance rises to about 2.75 times baseline on the
+announcement day, which motivates these windows; on HOSE the median stays flat, so the block is inert
+there.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\textwidth]{fig_earnings_event_study.png}
+\caption{Median Parkinson variance around scheduled earnings, normalized to the pre-window baseline.
+The S\&P~500 median rises to about 2.75 times baseline on the announcement day, while the HOSE median
+stays flat.}
+\label{fig:event}
+\end{figure}
+
+\textbf{Cross-firm graph block (1 feature, used by GBM+graph and GBME+graph).} The graph feature
+aggregates neighbours' contemporaneous variance at the forecast origin,
+\begin{equation}
+g_{i,t}=\sum_{j} W_{ij}\,\mathrm{pk}_{j,t},
+\end{equation}
+where $W$ is the row-normalized adjacency that keeps each stock's top-$k{=}10$ positive
+train-correlation neighbours, with correlations computed from log-$\mathrm{pk}$ on the training window
+only. The aggregate is leakage-safe, but because the signal is contemporaneous it adds no incremental
+QLIKE beyond own-history, as the results show.
+
 \textbf{Protocol.} We use expanding-window walk-forward folds with a target-horizon embargo. All
 correlations, adjacencies, factor estimates, and model fits use training data only; the test window is
 read once. Every gradient-boosting model averages three seeds. Predictions are floored identically
