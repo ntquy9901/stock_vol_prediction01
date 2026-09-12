@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Model Design and Methodology: Multi-Horizon Parkinson-Variance Forecasting</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style>
+html { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.55; color: #1a1a1a; }
+body { max-width: 900px; margin: 2rem auto; padding: 0 1.2rem; }
+h1, h2, h3 { line-height: 1.25; color: #0b3d5c; }
+h1 { border-bottom: 3px solid #0b3d5c; padding-bottom: .3rem; }
+h2 { border-bottom: 1px solid #ccc; padding-bottom: .2rem; margin-top: 2.2rem; }
+code { background: #f4f6f8; padding: .1rem .3rem; border-radius: 3px; font-size: 92%; }
+pre { background: #f4f6f8; border: 1px solid #e1e4e8; border-radius: 6px; padding: .8rem 1rem; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: .4rem .6rem; text-align: left; }
+th { background: #eef3f7; }
+#TOC { background: #f8fafb; border: 1px solid #e1e4e8; border-radius: 6px; padding: .6rem 1.2rem; margin-bottom: 2rem; }
+#TOC ul { list-style: none; padding-left: 1rem; }
+blockquote { border-left: 4px solid #0b3d5c; margin-left: 0; padding-left: 1rem; color: #444; }
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Model Design and Methodology: Multi-Horizon
+Parkinson-Variance Forecasting</h1>
+</header>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#model-design-and-methodology-multi-horizon-parkinson-variance-forecasting" id="toc-model-design-and-methodology-multi-horizon-parkinson-variance-forecasting">Model
+Design and Methodology: Multi-Horizon Parkinson-Variance Forecasting</a>
+<ul>
+<li><a href="#overview" id="toc-overview">1. Overview</a></li>
+<li><a href="#data-organization-train-validation-test" id="toc-data-organization-train-validation-test">2. Data organization
+(train / validation / test)</a>
+<ul>
+<li><a href="#per-ticker-enriched-csvs" id="toc-per-ticker-enriched-csvs">2.1 Per-ticker enriched CSVs</a></li>
+<li><a href="#pooled-panel" id="toc-pooled-panel">2.2 Pooled
+panel</a></li>
+<li><a href="#expanding-window-walk-forward-folds" id="toc-expanding-window-walk-forward-folds">2.3 Expanding-window
+walk-forward folds</a></li>
+<li><a href="#target-horizon-embargo" id="toc-target-horizon-embargo">2.4 Target-horizon embargo</a></li>
+<li><a href="#per-fold-minimum-rows-guard" id="toc-per-fold-minimum-rows-guard">2.5 Per-fold minimum-rows
+guard</a></li>
+<li><a href="#validation-policy-important" id="toc-validation-policy-important">2.6 Validation policy
+(important)</a></li>
+<li><a href="#ascii-timeline-expanding-folds-embargo" id="toc-ascii-timeline-expanding-folds-embargo">2.7 ASCII timeline
+(expanding folds + embargo)</a></li>
+</ul></li>
+<li><a href="#feature-construction" id="toc-feature-construction">3.
+Feature construction</a>
+<ul>
+<li><a href="#own-history-features-own-9-features" id="toc-own-history-features-own-9-features">3.1 Own-history features
+(OWN, 9 features)</a></li>
+<li><a href="#external-earnings-features-earn-4-features" id="toc-external-earnings-features-earn-4-features">3.2 External
+earnings features (EARN, 4 features)</a></li>
+<li><a href="#cross-firm-graph-feature-g" id="toc-cross-firm-graph-feature-g">3.3 Cross-firm graph feature
+(g)</a></li>
+</ul></li>
+<li><a href="#models-with-code" id="toc-models-with-code">4. Models
+(with code)</a>
+<ul>
+<li><a href="#har-ols-on-3-lags" id="toc-har-ols-on-3-lags">4.1 HAR (OLS
+on 3 lags)</a></li>
+<li><a href="#harq-ols-rq-interaction" id="toc-harq-ols-rq-interaction">4.2 HARQ (OLS + RQ
+interaction)</a></li>
+<li><a href="#gbm-gbme-gbmegraph-gamma-histgradientboostingregressor" id="toc-gbm-gbme-gbmegraph-gamma-histgradientboostingregressor">4.3 GBM
+/ GBME / GBME+graph (gamma HistGradientBoostingRegressor)</a></li>
+</ul></li>
+<li><a href="#training" id="toc-training">5. Training</a></li>
+<li><a href="#validation-and-testing" id="toc-validation-and-testing">6.
+Validation and testing</a>
+<ul>
+<li><a href="#significance-date-clustered-diebold-mariano" id="toc-significance-date-clustered-diebold-mariano">6.1 Significance:
+date-clustered Diebold-Mariano</a></li>
+</ul></li>
+<li><a href="#metrics" id="toc-metrics">7. Metrics</a></li>
+<li><a href="#leakage-controls" id="toc-leakage-controls">8. Leakage
+controls</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="model-design-and-methodology-multi-horizon-parkinson-variance-forecasting">Model
+Design and Methodology: Multi-Horizon Parkinson-Variance
+Forecasting</h1>
+<p><strong>Date:</strong> 2026-09-12 <strong>Scope:</strong> Detailed
+design of how the paper’s models are built, trained, validated, and
+tested. All code blocks below are quoted verbatim from the project
+source files (path given as a comment header on each block); no code is
+paraphrased.</p>
+<hr />
+<h2 id="overview">1. Overview</h2>
+<p>The task is multi-horizon forecasting of daily <strong>Parkinson
+variance</strong>. For a trading day <code>t</code> with intraday high
+<code>H</code> and low <code>L</code>, the target series is</p>
+<pre><code>pk_t = ln(H/L)^2 / (4 ln 2)</code></pre>
+<p>This quantity is a <strong>variance</strong> (squared units), not a
+standard deviation. The <code>parkinson_variance</code> column on each
+enriched per-ticker CSV holds <code>pk_t</code>. The forecast target at
+horizon <code>h</code> is the future value <code>pk_{t+h}</code> (see
+the <code>panel</code> builder below,
+<code>y = parkinson_variance.shift(-h)</code>).</p>
+<p><strong>Horizons:</strong> <code>h in {1, 5, 10, 22}</code> trading
+days (daily, weekly, biweekly, monthly).</p>
+<p><strong>Markets:</strong> two equity universes are evaluated
+independently.</p>
+<ul>
+<li><strong>S&amp;P 500</strong> (497 tickers), enriched CSVs under
+<code>data/processed_enriched/sp500_clean/</code>.</li>
+<li><strong>HOSE</strong> (Ho Chi Minh Stock Exchange, 405 tickers),
+enriched CSVs under <code>data/processed_enriched/hose/</code>.</li>
+</ul>
+<p><strong>Models compared:</strong></p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 36%" />
+<col style="width: 43%" />
+</colgroup>
+<thead>
+<tr>
+<th>Name</th>
+<th>Estimator</th>
+<th>Feature set</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HAR</td>
+<td>OLS</td>
+<td>3 HAR lags</td>
+</tr>
+<tr>
+<td>HARQ</td>
+<td>OLS + RQ interaction</td>
+<td>3 HAR lags + realized-quarticity interaction</td>
+</tr>
+<tr>
+<td>GBM</td>
+<td>gamma HistGradientBoostingRegressor</td>
+<td>OWN (9 own-history features)</td>
+</tr>
+<tr>
+<td>GBME</td>
+<td>gamma HistGradientBoostingRegressor</td>
+<td>OWN + EARN (4 earnings features)</td>
+</tr>
+<tr>
+<td>GBME+graph</td>
+<td>gamma HistGradientBoostingRegressor</td>
+<td>OWN + EARN + correlation-graph neighbour aggregate
+<code>g</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>GBM definition.</strong> GBM here is scikit-learn’s
+<code>HistGradientBoostingRegressor</code> configured with the
+<strong>gamma deviance loss</strong> (<code>loss=&quot;gamma&quot;</code>). The
+gamma deviance equals QLIKE up to an additive constant, so the training
+objective is aligned with the reported evaluation loss. This is why GBM
+is trained to minimize an objective in the same family as the metric it
+is scored on.</p>
+<p>Earnings features (EARN) apply to S&amp;P 500 natively and to HOSE
+via real crawled announcement dates
+(<code>hose_earnings_combined.parquet</code>). Vietnam has no per-firm
+scheduled-date coverage on the primary vendor, so HOSE earnings are
+partial (dense only for 2025-2026); the code injects them where
+available.</p>
+<hr />
+<h2 id="data-organization-train-validation-test">2. Data organization
+(train / validation / test)</h2>
+<h3 id="per-ticker-enriched-csvs">2.1 Per-ticker enriched CSVs</h3>
+<p>Each ticker is one CSV under
+<code>data/processed_enriched/&lt;market&gt;/</code>. Files ending in
+<code>_rejections</code> are skipped. Each CSV is parsed with a
+<code>date</code> column, sorted chronologically, and passed through the
+feature builder <code>_feat</code> (Section 3). This is the loader in
+<code>full_matrix.py</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> load(market):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> market <span class="op">==</span> <span class="st">&quot;sp500&quot;</span>:</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>        sect <span class="op">=</span> json.load(<span class="bu">open</span>(REPO <span class="op">/</span> <span class="st">&quot;results&quot;</span> <span class="op">/</span> <span class="st">&quot;gamma_gbm&quot;</span> <span class="op">/</span> <span class="st">&quot;sp500_sectors.json&quot;</span>))</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>        d <span class="op">=</span> <span class="st">&quot;sp500_clean&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        sect <span class="op">=</span> pd.read_csv(S1.SECT).set_index(<span class="st">&quot;symbol&quot;</span>)[<span class="st">&quot;industry_code&quot;</span>].to_dict()<span class="op">;</span> d <span class="op">=</span> market</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    frames <span class="op">=</span> {}</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> p <span class="kw">in</span> glob.glob(<span class="bu">str</span>(REPO <span class="op">/</span> <span class="st">&quot;data&quot;</span> <span class="op">/</span> <span class="st">&quot;processed_enriched&quot;</span> <span class="op">/</span> d <span class="op">/</span> <span class="st">&quot;*.csv&quot;</span>)):</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        tk <span class="op">=</span> Path(p).stem</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> tk.endswith(<span class="st">&quot;_rejections&quot;</span>):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        fr <span class="op">=</span> pd.read_csv(p, parse_dates<span class="op">=</span>[<span class="st">&quot;date&quot;</span>]).sort_values(<span class="st">&quot;date&quot;</span>).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        frames[tk] <span class="op">=</span> S1._feat(fr).assign(ticker<span class="op">=</span>tk, sector<span class="op">=</span>sect.get(tk, <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    edates <span class="op">=</span> {}</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> market <span class="op">==</span> <span class="st">&quot;sp500&quot;</span>:</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        e <span class="op">=</span> pd.read_parquet(REPO <span class="op">/</span> <span class="st">&quot;results&quot;</span> <span class="op">/</span> <span class="st">&quot;gamma_gbm&quot;</span> <span class="op">/</span> <span class="st">&quot;sp500_earnings.parquet&quot;</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        edates <span class="op">=</span> {tk: np.sort(g[<span class="st">&quot;earnings_date&quot;</span>].to_numpy()) <span class="cf">for</span> tk, g <span class="kw">in</span> e.groupby(<span class="st">&quot;ticker&quot;</span>)}</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> frames, sect, edates</span></code></pre></div>
+<h3 id="pooled-panel">2.2 Pooled panel</h3>
+<p>All tickers are stacked into one long panel (all ticker-days). The
+target is created per ticker as <code>pk.shift(-h)</code> before
+stacking, so the horizon shift is causal and per-ticker (no cross-ticker
+leakage of the future). Rows with any missing OWN feature or missing
+<code>y</code> are dropped:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> panel(frames, edates, h):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> tk, d <span class="kw">in</span> frames.items():</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        e <span class="op">=</span> d.copy()<span class="op">;</span> e[<span class="st">&quot;y&quot;</span>] <span class="op">=</span> e[<span class="st">&quot;parkinson_variance&quot;</span>].shift(<span class="op">-</span>h)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> edates:</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>            T <span class="op">=</span> e[<span class="st">&quot;date&quot;</span>].shift(<span class="op">-</span>h).to_numpy()<span class="op">;</span> nxt, prv <span class="op">=</span> _signed(T, edates.get(tk))<span class="op">;</span> dist <span class="op">=</span> np.minimum(nxt, prv)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>            e[<span class="st">&quot;earn_prox&quot;</span>] <span class="op">=</span> np.maximum(<span class="fl">0.0</span>, <span class="fl">1.0</span> <span class="op">-</span> dist <span class="op">/</span> WK)<span class="op">;</span> e[<span class="st">&quot;earn_soon&quot;</span>] <span class="op">=</span> (dist <span class="op">&lt;=</span> <span class="dv">3</span>).astype(<span class="bu">float</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>            e[<span class="st">&quot;earn_pre&quot;</span>] <span class="op">=</span> np.maximum(<span class="fl">0.0</span>, <span class="fl">1.0</span> <span class="op">-</span> nxt <span class="op">/</span> WK)<span class="op">;</span> e[<span class="st">&quot;earn_post&quot;</span>] <span class="op">=</span> np.maximum(<span class="fl">0.0</span>, <span class="fl">1.0</span> <span class="op">-</span> prv <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> WK))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>        rows.append(e)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> pd.concat(rows, ignore_index<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> a.dropna(subset<span class="op">=</span>OWN <span class="op">+</span> [<span class="st">&quot;y&quot;</span>]).reset_index(drop<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
+<h3 id="expanding-window-walk-forward-folds">2.3 Expanding-window
+walk-forward folds</h3>
+<p>The evaluation is an <strong>expanding-window walk-forward</strong>.
+Fold boundaries and the training start date are constants in
+<code>vn_gbm_graph_stage1.py</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/vn_gbm_graph_stage1.py</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>TRAIN_START <span class="op">=</span> <span class="st">&quot;2015-01-01&quot;</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>FOLDS <span class="op">=</span> [<span class="st">&quot;2022-07-01&quot;</span>, <span class="st">&quot;2023-01-01&quot;</span>, <span class="st">&quot;2023-07-01&quot;</span>, <span class="st">&quot;2024-01-01&quot;</span>, <span class="st">&quot;2024-07-01&quot;</span>, <span class="st">&quot;2025-01-01&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>         <span class="st">&quot;2025-07-01&quot;</span>, <span class="st">&quot;2026-01-01&quot;</span>, <span class="st">&quot;2100-01-01&quot;</span>]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>TOPK, RNG_SEED <span class="op">=</span> <span class="dv">10</span>, <span class="dv">20260910</span></span></code></pre></div>
+<p>There are <code>len(FOLDS) - 1 = 8</code> test folds. Fold
+<code>k</code> has test window <code>[FOLDS[k], FOLDS[k+1])</code>; the
+training window always starts at <code>TRAIN_START</code> and grows
+(expands) as <code>k</code> increases. The eight test windows are:</p>
+<table>
+<thead>
+<tr>
+<th>Fold <code>k</code></th>
+<th>Test start <code>ts</code></th>
+<th>Test end <code>tend</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>2022-07-01</td>
+<td>2023-01-01</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2023-01-01</td>
+<td>2023-07-01</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2023-07-01</td>
+<td>2024-01-01</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2024-01-01</td>
+<td>2024-07-01</td>
+</tr>
+<tr>
+<td>4</td>
+<td>2024-07-01</td>
+<td>2025-01-01</td>
+</tr>
+<tr>
+<td>5</td>
+<td>2025-01-01</td>
+<td>2025-07-01</td>
+</tr>
+<tr>
+<td>6</td>
+<td>2025-07-01</td>
+<td>2026-01-01</td>
+</tr>
+<tr>
+<td>7</td>
+<td>2026-01-01</td>
+<td>2100-01-01 (open-ended, all remaining)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="target-horizon-embargo">2.4 Target-horizon embargo</h3>
+<p>Between the training window end and the test window start there is a
+horizon-dependent <strong>embargo</strong> of
+<code>int(h*1.6) + 5</code> calendar days. Because the target is
+<code>pk_{t+h}</code>, a training row dated near <code>ts</code> would
+otherwise have its label reach into the test window; the embargo removes
+that overlap. The training slice ends at <code>ts - embargo</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> h <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">22</span>):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> panel(frames, edates, h)<span class="op">;</span> embargo <span class="op">=</span> pd.Timedelta(days<span class="op">=</span><span class="bu">int</span>(h <span class="op">*</span> <span class="fl">1.6</span>) <span class="op">+</span> <span class="dv">5</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    tickers <span class="op">=</span> <span class="bu">sorted</span>(a[<span class="st">&quot;ticker&quot;</span>].unique())<span class="op">;</span> n <span class="op">=</span> <span class="bu">len</span>(tickers)<span class="op">;</span> Wu <span class="op">=</span> _uniform(n)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    preds <span class="op">=</span> {m: [] <span class="cf">for</span> m <span class="kw">in</span> [<span class="st">&quot;HAR&quot;</span>, <span class="st">&quot;HARQ&quot;</span>] <span class="op">+</span> <span class="bu">list</span>(GMODELS)}<span class="op">;</span> yy, dts <span class="op">=</span> [], []</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(S1.FOLDS) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        ts, tend <span class="op">=</span> pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        tr <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> S1.TRAIN_START) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> ts <span class="op">-</span> embargo)]<span class="op">;</span> te <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> ts) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> tend)]</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(te) <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> <span class="bu">len</span>(tr) <span class="op">&lt;</span> (<span class="dv">30000</span> <span class="cf">if</span> market <span class="op">==</span> <span class="st">&quot;sp500&quot;</span> <span class="cf">else</span> <span class="dv">3000</span>):</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span></code></pre></div>
+<p>Embargo widths: <code>h=1 -&gt; 6 days</code>,
+<code>h=5 -&gt; 13 days</code>, <code>h=10 -&gt; 21 days</code>,
+<code>h=22 -&gt; 40 days</code>.</p>
+<h3 id="per-fold-minimum-rows-guard">2.5 Per-fold minimum-rows
+guard</h3>
+<p>A fold is skipped if the test slice is empty or the training panel
+has fewer than <code>30000</code> rows for S&amp;P 500
+(<code>3000</code> for HOSE / VN). This prevents fitting on a too-thin
+early expanding window. The guard is the
+<code>if len(te) == 0 or len(tr) &lt; (30000 if market == &quot;sp500&quot; else 3000): continue</code>
+line above.</p>
+<h3 id="validation-policy-important">2.6 Validation policy
+(important)</h3>
+<p>The gamma-GBM models use <strong>fixed hyperparameters</strong>: no
+early stopping, no separate held-out validation split, no hyperparameter
+search. The <code>HistGradientBoostingRegressor</code> is fit once per
+(fold, seed) with constant settings (Section 4). The
+<strong>walk-forward test folds themselves are the out-of-sample
+evaluation</strong>. There is no invented held-out validation set for
+the tree models; model selection is not performed inside the loop.</p>
+<p>For completeness: an earlier GNNHAR line of work used a trailing
+22-day validation slice for early stopping. That mechanism is
+<strong>separate and is not part of the reframed paper’s GBM/HAR/HARQ
+models</strong> described here.</p>
+<h3 id="ascii-timeline-expanding-folds-embargo">2.7 ASCII timeline
+(expanding folds + embargo)</h3>
+<pre><code>TRAIN_START=2015-01-01
+|============================ TRAIN (expands) ============================|--embargo--|=== TEST fold0 ===|
+2015 ................................................. 2022-07-01 - (h*1.6+5d)          [2022-07-01, 2023-01-01)
+
+|============================ TRAIN (expands further) ====================================|--embargo--|=== TEST fold1 ===|
+2015 ....................................................... 2023-01-01 - (h*1.6+5d)                  [2023-01-01, 2023-07-01)
+
+... one fold per 6-month block through 2026-01-01, final fold open-ended to 2100-01-01 ...
+
+Legend:  TRAIN = [2015-01-01, ts - embargo)     TEST = [ts, tend)     embargo = int(h*1.6)+5 calendar days</code></pre>
+<hr />
+<h2 id="feature-construction">3. Feature construction</h2>
+<h3 id="own-history-features-own-9-features">3.1 Own-history features
+(OWN, 9 features)</h3>
+<p><code>OWN</code> for S&amp;P 500 is defined in
+<code>full_matrix.py</code> as the three HAR lags plus six log-vol /
+quarticity descriptors:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>FL <span class="op">=</span> S1.FL</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>HAR <span class="op">=</span> [<span class="st">&quot;har_daily&quot;</span>, <span class="st">&quot;har_weekly&quot;</span>, <span class="st">&quot;har_monthly&quot;</span>]</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>OWN <span class="op">=</span> HAR <span class="op">+</span> [<span class="st">&quot;rq&quot;</span>, <span class="st">&quot;mr_change&quot;</span>, <span class="st">&quot;mr_slope5&quot;</span>, <span class="st">&quot;mr_slope10&quot;</span>, <span class="st">&quot;mr_dev5&quot;</span>, <span class="st">&quot;mr_z22&quot;</span>]   <span class="co"># own-history, no market/volume</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>EARN <span class="op">=</span> [<span class="st">&quot;earn_prox&quot;</span>, <span class="st">&quot;earn_soon&quot;</span>, <span class="st">&quot;earn_pre&quot;</span>, <span class="st">&quot;earn_post&quot;</span>]</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>SEEDS <span class="op">=</span> (<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>PLAC_SEEDS <span class="op">=</span> (<span class="dv">11</span>, <span class="dv">12</span>, <span class="dv">13</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>WK <span class="op">=</span> <span class="dv">5</span></span></code></pre></div>
+<p>The HAR lags (<code>har_daily</code>, <code>har_weekly</code>,
+<code>har_monthly</code>) are rolling means of <code>pk</code> over 1,
+5, and 22 trading days respectively, precomputed on the enriched CSV.
+The remaining six OWN descriptors are built in <code>_feat</code>
+(<code>vn_gbm_graph_stage1.py</code>), which also produces the log-vol
+series <code>logpk</code> used for the graph:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/vn_gbm_graph_stage1.py</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _feat(d):</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    pk <span class="op">=</span> d[<span class="st">&quot;parkinson_variance&quot;</span>].to_numpy(<span class="bu">float</span>)<span class="op">;</span> lpk <span class="op">=</span> pd.Series(np.log(np.maximum(pk, FL)), index<span class="op">=</span>d.index)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">&quot;logpk&quot;</span>] <span class="op">=</span> lpk</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">&quot;rq&quot;</span>] <span class="op">=</span> np.sqrt(pd.Series(pk <span class="op">**</span> <span class="dv">2</span>, index<span class="op">=</span>d.index).rolling(WK, min_periods<span class="op">=</span><span class="dv">1</span>).mean())</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">&quot;mr_change&quot;</span>] <span class="op">=</span> lpk.diff(<span class="dv">1</span>)<span class="op">;</span> d[<span class="st">&quot;mr_slope5&quot;</span>] <span class="op">=</span> (lpk <span class="op">-</span> lpk.shift(WK)) <span class="op">/</span> WK</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">&quot;mr_slope10&quot;</span>] <span class="op">=</span> (lpk <span class="op">-</span> lpk.shift(<span class="dv">2</span> <span class="op">*</span> WK)) <span class="op">/</span> (<span class="dv">2</span> <span class="op">*</span> WK)<span class="op">;</span> d[<span class="st">&quot;mr_dev5&quot;</span>] <span class="op">=</span> lpk <span class="op">-</span> lpk.rolling(WK).mean()</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    d[<span class="st">&quot;mr_z22&quot;</span>] <span class="op">=</span> (lpk <span class="op">-</span> lpk.rolling(MO).mean()) <span class="op">/</span> (lpk.rolling(MO).std() <span class="op">+</span> FL)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d</span></code></pre></div>
+<p>with <code>WK, MO = 5, 22</code>. Feature formulas (all observable at
+origin <code>t</code>, causal, using only history up to
+<code>t</code>):</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Formula</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>har_daily</code></td>
+<td>mean of <code>pk</code> over last 1 day</td>
+<td>HAR daily component</td>
+</tr>
+<tr>
+<td><code>har_weekly</code></td>
+<td>mean of <code>pk</code> over last 5 days</td>
+<td>HAR weekly component</td>
+</tr>
+<tr>
+<td><code>har_monthly</code></td>
+<td>mean of <code>pk</code> over last 22 days</td>
+<td>HAR monthly component</td>
+</tr>
+<tr>
+<td><code>rq</code></td>
+<td><code>sqrt(rolling_mean(pk^2, 5))</code></td>
+<td>realized-quarticity proxy</td>
+</tr>
+<tr>
+<td><code>mr_change</code></td>
+<td><code>logpk_t - logpk_{t-1}</code></td>
+<td>1-day log-vol change</td>
+</tr>
+<tr>
+<td><code>mr_slope5</code></td>
+<td><code>(logpk_t - logpk_{t-5}) / 5</code></td>
+<td>5-day log-vol slope</td>
+</tr>
+<tr>
+<td><code>mr_slope10</code></td>
+<td><code>(logpk_t - logpk_{t-10}) / 10</code></td>
+<td>10-day log-vol slope</td>
+</tr>
+<tr>
+<td><code>mr_dev5</code></td>
+<td><code>logpk_t - rolling_mean(logpk, 5)</code></td>
+<td>deviation from 5-day mean</td>
+</tr>
+<tr>
+<td><code>mr_z22</code></td>
+<td><code>(logpk_t - rolling_mean(logpk, 22)) / (rolling_std(logpk, 22) + FL)</code></td>
+<td>22-day z-score</td>
+</tr>
+</tbody>
+</table>
+<p>Note the VN pipeline (<code>vn_gbm_graph_stage1.py</code>) uses a
+slightly different <code>OWN</code> list that also includes
+<code>volume_zscore_22</code>; the SP500 paper <code>OWN</code> (from
+<code>full_matrix.py</code>, quoted above) does not, keeping OWN
+strictly to own-history vol descriptors.</p>
+<h3 id="external-earnings-features-earn-4-features">3.2 External
+earnings features (EARN, 4 features)</h3>
+<p>Earnings features are built from the <strong>signed distance to the
+nearest scheduled announcement date</strong>. <code>_signed</code>
+returns, for each date, the days to the next announcement
+(<code>nxt</code>) and the days since the previous one
+(<code>prv</code>); missing coverage returns a large sentinel
+<code>1e9</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _signed(T, ed):</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(T)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ed <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> <span class="bu">len</span>(ed) <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> np.full(n, <span class="fl">1e9</span>), np.full(n, <span class="fl">1e9</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    tv <span class="op">=</span> pd.DatetimeIndex(pd.to_datetime(T)).asi8 <span class="op">/</span> <span class="fl">86_400_000_000_000.0</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    ev <span class="op">=</span> np.sort(pd.DatetimeIndex(pd.to_datetime(ed)).asi8 <span class="op">/</span> <span class="fl">86_400_000_000_000.0</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> np.searchsorted(ev, tv, side<span class="op">=</span><span class="st">&quot;left&quot;</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    nxt <span class="op">=</span> np.where(idx <span class="op">&lt;</span> <span class="bu">len</span>(ev), ev[np.clip(idx, <span class="dv">0</span>, <span class="bu">len</span>(ev) <span class="op">-</span> <span class="dv">1</span>)] <span class="op">-</span> tv, <span class="fl">1e9</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    prv <span class="op">=</span> np.where(idx <span class="op">&gt;</span> <span class="dv">0</span>, tv <span class="op">-</span> ev[np.clip(idx <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(ev) <span class="op">-</span> <span class="dv">1</span>)], <span class="fl">1e9</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(nxt, <span class="fl">0.0</span>), np.maximum(prv, <span class="fl">0.0</span>)</span></code></pre></div>
+<p>The four EARN columns are then derived in <code>panel</code> (quoted
+in Section 2.2) with <code>WK = 5</code>:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Formula</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>earn_prox</code></td>
+<td><code>max(0, 1 - dist/5)</code> where
+<code>dist = min(nxt, prv)</code></td>
+<td>proximity to nearest announcement</td>
+</tr>
+<tr>
+<td><code>earn_soon</code></td>
+<td><code>1[dist &lt;= 3]</code></td>
+<td>binary: announcement within 3 days</td>
+</tr>
+<tr>
+<td><code>earn_pre</code></td>
+<td><code>max(0, 1 - nxt/5)</code></td>
+<td>ramp before an announcement</td>
+</tr>
+<tr>
+<td><code>earn_post</code></td>
+<td><code>max(0, 1 - prv/10)</code></td>
+<td>decay after an announcement</td>
+</tr>
+</tbody>
+</table>
+<p>The distances are measured at the <strong>target date</strong>
+<code>T = date.shift(-h)</code> so the earnings signal aligns with the
+day being predicted, and are computed against <strong>real announcement
+dates</strong>, not filing deadlines.</p>
+<h3 id="cross-firm-graph-feature-g">3.3 Cross-firm graph feature
+(g)</h3>
+<p>The graph feature is a neighbour aggregate under a
+<strong>correlation top-k adjacency</strong> estimated on training data
+only. <code>build_graph</code> computes the correlation of the
+standardized TRAIN <code>logpk</code> panel, keeps the top-10 positive
+neighbours per node, and row-normalizes:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/vn_gbm_graph_stage1.py</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _std_cols(df):</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> (df <span class="op">-</span> df.mean()) <span class="op">/</span> df.std().replace(<span class="dv">0</span>, np.nan)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> z.fillna(<span class="fl">0.0</span>).to_numpy(<span class="bu">float</span>), z.notna().to_numpy(<span class="bu">float</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_graph(train, tickers, rng):</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;per-fold static vol-correlation top-k graph on TRAIN logpk; returns real+placebo row-normalised weight</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">    matrices W[i,j] (neighbour j of node i), positive-only.&quot;&quot;&quot;</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    piv <span class="op">=</span> train.pivot_table(index<span class="op">=</span><span class="st">&quot;date&quot;</span>, columns<span class="op">=</span><span class="st">&quot;ticker&quot;</span>, values<span class="op">=</span><span class="st">&quot;logpk&quot;</span>).reindex(columns<span class="op">=</span>tickers)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    X, Xm <span class="op">=</span> _std_cols(piv)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    corr <span class="op">=</span> (X.T <span class="op">@</span> X) <span class="op">/</span> np.maximum(Xm.T <span class="op">@</span> Xm, <span class="fl">1.0</span>)<span class="op">;</span> np.fill_diagonal(corr, <span class="op">-</span>np.inf)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> <span class="bu">len</span>(tickers)<span class="op">;</span> W <span class="op">=</span> np.zeros((n, n))<span class="op">;</span> Wp <span class="op">=</span> np.zeros((n, n))</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        top <span class="op">=</span> np.argsort(corr[i])[::<span class="op">-</span><span class="dv">1</span>][:TOPK]</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        W[i, top] <span class="op">=</span> np.clip(corr[i, top], <span class="fl">0.0</span>, <span class="va">None</span>)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>        rand <span class="op">=</span> rng.choice(np.delete(np.arange(n), i), size<span class="op">=</span><span class="bu">min</span>(TOPK, n <span class="op">-</span> <span class="dv">1</span>), replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        Wp[i, rand] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    W <span class="op">/=</span> np.maximum(np.<span class="bu">abs</span>(W).<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>), <span class="fl">1e-12</span>)</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    Wp <span class="op">/=</span> np.maximum(np.<span class="bu">abs</span>(Wp).<span class="bu">sum</span>(<span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>), <span class="fl">1e-12</span>)</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> W, Wp</span></code></pre></div>
+<p>The neighbour aggregate <code>g</code> is then, for row
+<code>(i, t)</code>, <code>g[i,t] = sum_j W_ij * pk[j,t]</code>. This is
+computed by pivoting <code>parkinson_variance</code> to a
+<code>[date x ticker]</code> matrix and multiplying by <code>W.T</code>,
+with NaNs filled by the cross-sectional mean:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> nb(fold, tickers, W):</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    piv <span class="op">=</span> fold.pivot_table(index<span class="op">=</span><span class="st">&quot;date&quot;</span>, columns<span class="op">=</span><span class="st">&quot;ticker&quot;</span>, values<span class="op">=</span><span class="st">&quot;parkinson_variance&quot;</span>).reindex(columns<span class="op">=</span>tickers).sort_index()</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    V <span class="op">=</span> piv.to_numpy(<span class="bu">float</span>)<span class="op">;</span> Vf <span class="op">=</span> np.nan_to_num(np.where(np.isnan(V), np.nanmean(V, axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>), V))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    NB <span class="op">=</span> Vf <span class="op">@</span> W.T<span class="op">;</span> dpos <span class="op">=</span> {d: i <span class="cf">for</span> i, d <span class="kw">in</span> <span class="bu">enumerate</span>(piv.index)}<span class="op">;</span> cpos <span class="op">=</span> {c: j <span class="cf">for</span> j, c <span class="kw">in</span> <span class="bu">enumerate</span>(tickers)}</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> NB[fold[<span class="st">&quot;date&quot;</span>].<span class="bu">map</span>(dpos).to_numpy(), fold[<span class="st">&quot;ticker&quot;</span>].<span class="bu">map</span>(cpos).to_numpy()]</span></code></pre></div>
+<p>A uniform-adjacency market aggregate (all off-diagonal weights equal)
+is available for the market-mean control:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _uniform(n):</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (np.ones((n, n)) <span class="op">-</span> np.eye(n)) <span class="op">/</span> (n <span class="op">-</span> <span class="dv">1</span>)</span></code></pre></div>
+<p><strong>Leakage-safety of the graph.</strong> The adjacency
+<code>W</code> is estimated with <code>build_graph(tr, ...)</code> where
+<code>tr</code> is the training slice only
+(<code>fold.date &lt; ts - embargo</code>), and it is rebuilt per fold
+with a fold-dependent RNG
+(<code>np.random.default_rng(S1.RNG_SEED + k)</code>). The neighbour
+aggregate at <code>(i,t)</code> uses only contemporaneous observed
+<code>pk[j,t]</code> values (same day <code>t</code>, not future), so
+<code>g</code> is observable at origin <code>t</code>.</p>
+<hr />
+<h2 id="models-with-code">4. Models (with code)</h2>
+<h3 id="har-ols-on-3-lags">4.1 HAR (OLS on 3 lags)</h3>
+<p>HAR is ordinary least squares on the three HAR lags with an
+intercept. Targets are floored at <code>FL</code> before fitting;
+predictions are floored at <code>1%</code> of the mean training
+target:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _har_ols(tr, te):</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="kw">lambda</span> df: np.column_stack([np.ones(<span class="bu">len</span>(df)), df[HAR].to_numpy(<span class="bu">float</span>)])  <span class="co"># noqa: E731</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> np.linalg.lstsq(x(tr), np.maximum(tr[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>), FL), rcond<span class="op">=</span><span class="va">None</span>)[<span class="dv">0</span>]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(x(te) <span class="op">@</span> c, <span class="fl">0.01</span> <span class="op">*</span> np.maximum(tr[<span class="st">&quot;y&quot;</span>], FL).mean())</span></code></pre></div>
+<h3 id="harq-ols-rq-interaction">4.2 HARQ (OLS + RQ interaction)</h3>
+<p>HARQ augments the HAR design matrix with an interaction between the
+daily HAR term and the realized-quarticity proxy <code>rq</code>:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _harq_ols(tr, te):</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> dm(df):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> df[HAR].to_numpy(<span class="bu">float</span>)<span class="op">;</span> <span class="cf">return</span> np.column_stack([np.ones(<span class="bu">len</span>(x)), x, x[:, <span class="dv">0</span>] <span class="op">*</span> df[<span class="st">&quot;rq&quot;</span>].to_numpy(<span class="bu">float</span>)])</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    c <span class="op">=</span> np.linalg.lstsq(dm(tr), np.maximum(tr[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>), FL), rcond<span class="op">=</span><span class="va">None</span>)[<span class="dv">0</span>]</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    nf <span class="op">=</span> <span class="fl">0.01</span> <span class="op">*</span> np.maximum(tr[<span class="st">&quot;y&quot;</span>], FL).mean()</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(dm(te) <span class="op">@</span> c, nf)</span></code></pre></div>
+<p>The design matrix columns are: intercept, <code>har_daily</code>,
+<code>har_weekly</code>, <code>har_monthly</code>, and
+<code>har_daily * rq</code>.</p>
+<h3 id="gbm-gbme-gbmegraph-gamma-histgradientboostingregressor">4.3 GBM
+/ GBME / GBME+graph (gamma HistGradientBoostingRegressor)</h3>
+<p>All three tree models share one fit function; only the
+<code>cols</code> (feature column list) differs. The gamma-loss
+configuration is fixed:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gbm(tr, te, cols, seed):</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> HistGradientBoostingRegressor(loss<span class="op">=</span><span class="st">&quot;gamma&quot;</span>, max_iter<span class="op">=</span><span class="dv">300</span>, learning_rate<span class="op">=</span><span class="fl">0.05</span>, max_leaf_nodes<span class="op">=</span><span class="dv">31</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>                                      l2_regularization<span class="op">=</span><span class="fl">1.0</span>, random_state<span class="op">=</span>seed)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    m.fit(tr[cols].to_numpy(<span class="bu">float</span>), np.maximum(tr[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>), FL))</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(m.predict(te[cols].to_numpy(<span class="bu">float</span>)), FL)</span></code></pre></div>
+<p>Hyperparameters (identical for every tree model, no tuning):
+<code>loss=&quot;gamma&quot;</code>, <code>max_iter=300</code>,
+<code>learning_rate=0.05</code>, <code>max_leaf_nodes=31</code>,
+<code>l2_regularization=1.0</code>, <code>random_state=seed</code>.
+Predictions are floored at <code>FL = 1e-8</code>.</p>
+<p>Feature-column sets, from the model registry in
+<code>full_matrix.main</code>:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>GMODELS <span class="op">=</span> {<span class="st">&quot;GBM&quot;</span>: OWN, <span class="st">&quot;GBM+market&quot;</span>: OWN <span class="op">+</span> [<span class="st">&quot;g_market&quot;</span>], <span class="st">&quot;GBM+graph&quot;</span>: OWN <span class="op">+</span> [<span class="st">&quot;g_corr&quot;</span>],</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>           <span class="st">&quot;GBM+plac&quot;</span>: OWN <span class="op">+</span> [<span class="st">&quot;g_plac&quot;</span>]}</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> has_earn:</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    GMODELS.update({<span class="st">&quot;GBM+earn&quot;</span>: OWN <span class="op">+</span> EARN, <span class="st">&quot;GBM+earn+graph&quot;</span>: OWN <span class="op">+</span> EARN <span class="op">+</span> [<span class="st">&quot;g_corr&quot;</span>]})</span></code></pre></div>
+<p>Mapping to the paper names:</p>
+<table>
+<thead>
+<tr>
+<th>Paper name</th>
+<th>Registry key</th>
+<th>Feature columns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GBM</td>
+<td><code>GBM</code></td>
+<td><code>OWN</code> (9)</td>
+</tr>
+<tr>
+<td>GBME</td>
+<td><code>GBM+earn</code></td>
+<td><code>OWN + EARN</code> (13)</td>
+</tr>
+<tr>
+<td>GBME+graph</td>
+<td><code>GBM+earn+graph</code></td>
+<td><code>OWN + EARN + [&quot;g_corr&quot;]</code> (14)</td>
+</tr>
+</tbody>
+</table>
+<p><code>g_corr</code> is the correlation-graph neighbour aggregate;
+<code>g_market</code> (uniform) and <code>g_plac</code> (degree-matched
+random edges) are controls, not headline models.</p>
+<hr />
+<h2 id="training">5. Training</h2>
+<p>Each tree model is fit once per fold per seed. The <code>gbm</code>
+fit call (Section 4.3) trains on the fold’s training slice
+<code>trf</code> with targets floored at <code>FL</code>. Three seeds
+<code>SEEDS = (0, 1, 2)</code> are averaged into a <strong>seed
+ensemble</strong>; the mean prediction is what enters the metric:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> mdl, cols <span class="kw">in</span> GMODELS.items():</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    preds[mdl].append(np.mean([gbm(trf, tef, cols, s) <span class="cf">for</span> s <span class="kw">in</span> SEEDS], <span class="dv">0</span>))   <span class="co"># seed-ensemble</span></span></code></pre></div>
+<p>Training properties:</p>
+<ul>
+<li><strong>Objective:</strong> gamma deviance
+(<code>loss=&quot;gamma&quot;</code>), which equals QLIKE up to an additive
+constant, so the fitting loss and the reported loss are in the same
+family.</li>
+<li><strong>QLIKE floor <code>FL = 1e-8</code>:</strong> applied to
+training targets (<code>np.maximum(tr[&quot;y&quot;], FL)</code>) and to
+predictions (<code>np.maximum(m.predict(...), FL)</code>); the same
+floor is later used in the metric so the positivity basis is identical
+across models.</li>
+<li><strong>No early stopping / no validation split:</strong> fixed
+<code>max_iter=300</code>; the walk-forward test folds are the only
+out-of-sample check.</li>
+<li><strong>Seed ensemble:</strong> mean over 3 seeds reduces boosting
+variance; per-seed spread is reported separately in the driver
+output.</li>
+</ul>
+<p>HAR and HARQ are deterministic OLS fits (no seeds).</p>
+<hr />
+<h2 id="validation-and-testing">6. Validation and testing</h2>
+<p>Testing is <strong>pooled per-observation QLIKE over the concatenated
+test folds</strong>. For each horizon, each model’s per-fold predictions
+are concatenated across all folds, then scored against the concatenated
+targets. The full driver loop ties data, folds, features, models, and
+scoring together:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(S1.FOLDS) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>            ts, tend <span class="op">=</span> pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>            tr <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> S1.TRAIN_START) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> ts <span class="op">-</span> embargo)]<span class="op">;</span> te <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> ts) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> tend)]</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(te) <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> <span class="bu">len</span>(tr) <span class="op">&lt;</span> (<span class="dv">30000</span> <span class="cf">if</span> market <span class="op">==</span> <span class="st">&quot;sp500&quot;</span> <span class="cf">else</span> <span class="dv">3000</span>):</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>            Wc, _ <span class="op">=</span> S1.build_graph(tr, tickers, np.random.default_rng(S1.RNG_SEED <span class="op">+</span> k))</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>            fold <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> S1.TRAIN_START) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> tend)].copy()</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>            fold[<span class="st">&quot;g_market&quot;</span>] <span class="op">=</span> nb(fold, tickers, Wu)<span class="op">;</span> fold[<span class="st">&quot;g_corr&quot;</span>] <span class="op">=</span> nb(fold, tickers, Wc)</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>            plc <span class="op">=</span> []</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> ps <span class="kw">in</span> PLAC_SEEDS:</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>                rng <span class="op">=</span> np.random.default_rng(ps <span class="op">+</span> k)<span class="op">;</span> Wp <span class="op">=</span> np.zeros((n, n))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>                <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>                    j <span class="op">=</span> rng.choice(np.delete(np.arange(n), i), size<span class="op">=</span><span class="bu">min</span>(S1.TOPK, n <span class="op">-</span> <span class="dv">1</span>), replace<span class="op">=</span><span class="va">False</span>)<span class="op">;</span> Wp[i, j] <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> <span class="bu">len</span>(j)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>                plc.append(nb(fold, tickers, Wp))</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>            fold[<span class="st">&quot;g_plac&quot;</span>] <span class="op">=</span> np.mean(plc, <span class="dv">0</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">&quot;g_market&quot;</span>, <span class="st">&quot;g_corr&quot;</span>, <span class="st">&quot;g_plac&quot;</span>]:</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                fold[c] <span class="op">=</span> fold[c].fillna(<span class="fl">0.0</span>)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>            trf <span class="op">=</span> fold[(fold.date <span class="op">&gt;=</span> S1.TRAIN_START) <span class="op">&amp;</span> (fold.date <span class="op">&lt;</span> ts <span class="op">-</span> embargo)]<span class="op">;</span> tef <span class="op">=</span> fold[(fold.date <span class="op">&gt;=</span> ts) <span class="op">&amp;</span> (fold.date <span class="op">&lt;</span> tend)]</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>            preds[<span class="st">&quot;HAR&quot;</span>].append(_har_ols(trf, tef))<span class="op">;</span> preds[<span class="st">&quot;HARQ&quot;</span>].append(_harq_ols(trf, tef))</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> mdl, cols <span class="kw">in</span> GMODELS.items():</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>                preds[mdl].append(np.mean([gbm(trf, tef, cols, s) <span class="cf">for</span> s <span class="kw">in</span> SEEDS], <span class="dv">0</span>))   <span class="co"># seed-ensemble</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>            yy.append(tef[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>))<span class="op">;</span> dts.append(tef[<span class="st">&quot;date&quot;</span>].to_numpy())</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> np.concatenate(yy)<span class="op">;</span> dates <span class="op">=</span> np.concatenate(dts)</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>        e <span class="op">=</span> {m: M.per_obs_qlike(y, np.concatenate(preds[m]), floor<span class="op">=</span>FL) <span class="cf">for</span> m <span class="kw">in</span> preds}</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>        q <span class="op">=</span> {m: <span class="bu">float</span>(np.mean(e[m])) <span class="cf">for</span> m <span class="kw">in</span> e}</span></code></pre></div>
+<p>The all-metrics variant (<code>paper_metrics_sp500.py</code>) reports
+MSE / RMSE / MAE / R2 / QLIKE per model, and is where HOSE earnings are
+injected from the crawled parquet:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/paper_metrics_sp500.py</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> all_metrics(y, p):</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">&quot;mse&quot;</span>: M.mse(y, p), <span class="st">&quot;rmse&quot;</span>: M.rmse(y, p), <span class="st">&quot;mae&quot;</span>: M.mae(y, p),</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;r2&quot;</span>: M.r2(y, p), <span class="st">&quot;qlike&quot;</span>: <span class="bu">float</span>(np.mean(M.per_obs_qlike(y, p, floor<span class="op">=</span>FL)))}</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/paper_metrics_sp500.py</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    frames, sect, edates <span class="op">=</span> FM.load(market)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> market <span class="op">!=</span> <span class="st">&quot;sp500&quot;</span>:                                           <span class="co"># inject REAL crawled VN announcement dates</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        _ep <span class="op">=</span> REPO <span class="op">/</span> <span class="st">&quot;results&quot;</span> <span class="op">/</span> <span class="st">&quot;gamma_gbm&quot;</span> <span class="op">/</span> <span class="st">&quot;hose_earnings_combined.parquet&quot;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> _ep.exists():</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>            _e <span class="op">=</span> pd.read_parquet(_ep)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>            edates <span class="op">=</span> {tk: np.sort(g[<span class="st">&quot;earnings_date&quot;</span>].to_numpy()) <span class="cf">for</span> tk, g <span class="kw">in</span> _e.groupby(<span class="st">&quot;ticker&quot;</span>)}</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    has_earn <span class="op">=</span> <span class="bu">bool</span>(edates)                                          <span class="co"># VN earnings partial (dense 2025-26)</span></span></code></pre></div>
+<h3 id="significance-date-clustered-diebold-mariano">6.1 Significance:
+date-clustered Diebold-Mariano</h3>
+<p>Significance between two models is a <strong>date-clustered
+Diebold-Mariano</strong> test. Because the panel has many tickers per
+date, per-observation loss differentials are cross-sectionally
+dependent; the test first collapses the differential to one value per
+trading date (cross-sectional mean), then runs the HLN-corrected DM on
+the date-level series:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-08-21_har_anchored_residual/code/stats.py</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> date_clustered_dm(</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    loss_a: np.ndarray, loss_b: np.ndarray, dates: np.ndarray, h: <span class="bu">int</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> <span class="bu">dict</span>[<span class="bu">str</span>, <span class="bu">float</span>]:</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Date-clustered Diebold-Mariano on a dependent panel.</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Aggregates each loss series to one value per unique date (cross-sectional mean), then runs the</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">    reused HLN Diebold-Mariano on the date-level series. Because the mean is linear,</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co">    ``mean(loss_a) - mean(loss_b)`` per date equals the mean loss differential per date, so this is</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co">    exactly DM on the date-aggregated differential. ``mean_diff &lt; 0`` favours model A (smaller loss).</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns ``{&quot;dm_hln&quot;, &quot;p_value&quot;, &quot;mean_diff&quot;, &quot;n_dates&quot;}``.</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    loss_a <span class="op">=</span> np.asarray(loss_a, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>    loss_b <span class="op">=</span> np.asarray(loss_b, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> loss_a.shape <span class="op">!=</span> loss_b.shape:                 <span class="co"># both aggregate over the SAME `dates` array; require</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;loss_a and loss_b must have the same shape (aligned per-observation)&quot;</span>)</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>    _, a_by_date <span class="op">=</span> _aggregate_by_date(loss_a, dates)</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>    _, b_by_date <span class="op">=</span> _aggregate_by_date(loss_b, dates)</span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a>    res <span class="op">=</span> _metrics.diebold_mariano(a_by_date, b_by_date, h<span class="op">=</span>h)</span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;dm_hln&quot;</span>: res.dm_hln,</span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;p_value&quot;</span>: res.p_value,</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;mean_diff&quot;</span>: res.mean_diff,</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;n_dates&quot;</span>: <span class="bu">int</span>(a_by_date.size),</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div>
+<p>The per-date collapse itself:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># baselines/2026-08-21_har_anchored_residual/code/stats.py</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _aggregate_by_date(values: np.ndarray, dates: np.ndarray) <span class="op">-&gt;</span> <span class="bu">tuple</span>[np.ndarray, np.ndarray]:</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Collapse ``values`` to the mean within each unique date.</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns ``(unique_dates_sorted, mean_per_date)``. ``np.unique`` yields dates in chronological</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="co">    order (dates are sortable ints/datetimes), giving a time-ordered aggregated series.</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>    values <span class="op">=</span> np.asarray(values, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    dates <span class="op">=</span> np.asarray(dates)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> values.shape[<span class="dv">0</span>] <span class="op">!=</span> dates.shape[<span class="dv">0</span>]:</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;values and dates must have the same length&quot;</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>    uniq, inverse <span class="op">=</span> np.unique(dates, return_inverse<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>    sums <span class="op">=</span> np.zeros(uniq.size, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    counts <span class="op">=</span> np.zeros(uniq.size, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    np.add.at(sums, inverse, values)</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    np.add.at(counts, inverse, <span class="fl">1.0</span>)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> uniq, sums <span class="op">/</span> counts</span></code></pre></div>
+<p>The underlying DM statistic (HLN small-sample correction, Newey-West
+Bartlett HAC truncated at <code>h-1</code> lags, Student-t p-value)
+is:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># submission/soict_lstm_gat/metrics.py</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> diebold_mariano(loss_a: np.ndarray, loss_b: np.ndarray, h: <span class="bu">int</span>) <span class="op">-&gt;</span> DMResult:</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Two-sided Diebold-Mariano test on per-observation losses.</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Loss differential ``d = loss_a - loss_b``; a negative statistic means series A carries</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="co">    the smaller loss (A more accurate). The long-run variance uses a Newey-West Bartlett</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="co">    HAC estimator truncated at ``h - 1`` lags; the HLN (1997) small-sample correction is</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="co">    applied and the statistic referred to Student-t with ``n - 1`` degrees of freedom.</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="co">    Copied from baselines/2026-08-08_pooled_news_gnn_ablation_baseline/code/diebold_mariano.py.</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> np.asarray(loss_a, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> np.asarray(loss_b, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> a.shape <span class="op">!=</span> b.shape:</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;loss_a and loss_b must have the same shape&quot;</span>)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> a.ndim <span class="op">!=</span> <span class="dv">1</span>:</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;losses must be one-dimensional per-observation series&quot;</span>)</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(h, <span class="bu">bool</span>) <span class="kw">or</span> <span class="kw">not</span> <span class="bu">float</span>(h).is_integer():</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;horizon h must be an integer, got </span><span class="sc">{</span>h<span class="sc">!r}</span><span class="ss">&quot;</span>)   <span class="co"># R-13: h=1.5 fails loud, not TypeError</span></span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> <span class="bu">int</span>(h)</span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> h <span class="op">&lt;</span> <span class="dv">1</span>:</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;horizon h must be &gt;= 1&quot;</span>)</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> a.size</span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="op">&lt;</span> <span class="dv">2</span>:</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;Diebold-Mariano requires at least two observations&quot;</span>)</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> h <span class="op">&gt;=</span> n:</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;horizon h must be &lt; n (HLN factor / HAC lag undefined for h &gt;= n), got h=</span><span class="sc">{</span>h<span class="sc">}</span><span class="ss">, n=</span><span class="sc">{</span>n<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> (np.isfinite(a).<span class="bu">all</span>() <span class="kw">and</span> np.isfinite(b).<span class="bu">all</span>()):</span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;losses must be finite&quot;</span>)</span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-31"><a href="#cb23-31" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> a <span class="op">-</span> b</span>
+<span id="cb23-32"><a href="#cb23-32" aria-hidden="true" tabindex="-1"></a>    mean_diff <span class="op">=</span> <span class="bu">float</span>(d.mean())</span>
+<span id="cb23-33"><a href="#cb23-33" aria-hidden="true" tabindex="-1"></a>    dev <span class="op">=</span> d <span class="op">-</span> mean_diff</span>
+<span id="cb23-34"><a href="#cb23-34" aria-hidden="true" tabindex="-1"></a>    max_lag <span class="op">=</span> h <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb23-35"><a href="#cb23-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-36"><a href="#cb23-36" aria-hidden="true" tabindex="-1"></a>    gamma0 <span class="op">=</span> <span class="bu">float</span>(np.dot(dev, dev) <span class="op">/</span> n)</span>
+<span id="cb23-37"><a href="#cb23-37" aria-hidden="true" tabindex="-1"></a>    long_run <span class="op">=</span> gamma0</span>
+<span id="cb23-38"><a href="#cb23-38" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> lag <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, max_lag <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb23-39"><a href="#cb23-39" aria-hidden="true" tabindex="-1"></a>        gamma <span class="op">=</span> <span class="bu">float</span>(np.dot(dev[lag:], dev[:<span class="op">-</span>lag]) <span class="op">/</span> n)</span>
+<span id="cb23-40"><a href="#cb23-40" aria-hidden="true" tabindex="-1"></a>        weight <span class="op">=</span> <span class="fl">1.0</span> <span class="op">-</span> lag <span class="op">/</span> (max_lag <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb23-41"><a href="#cb23-41" aria-hidden="true" tabindex="-1"></a>        long_run <span class="op">+=</span> <span class="fl">2.0</span> <span class="op">*</span> weight <span class="op">*</span> gamma</span>
+<span id="cb23-42"><a href="#cb23-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-43"><a href="#cb23-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> long_run <span class="op">&lt;=</span> <span class="fl">0.0</span>:</span>
+<span id="cb23-44"><a href="#cb23-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="st">&quot;non-positive long-run variance; DM statistic undefined&quot;</span>)</span>
+<span id="cb23-45"><a href="#cb23-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-46"><a href="#cb23-46" aria-hidden="true" tabindex="-1"></a>    dm_stat <span class="op">=</span> mean_diff <span class="op">/</span> np.sqrt(long_run <span class="op">/</span> n)</span>
+<span id="cb23-47"><a href="#cb23-47" aria-hidden="true" tabindex="-1"></a>    hln_factor <span class="op">=</span> np.sqrt((n <span class="op">+</span> <span class="dv">1</span> <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> h <span class="op">+</span> h <span class="op">*</span> (h <span class="op">-</span> <span class="dv">1</span>) <span class="op">/</span> n) <span class="op">/</span> n)</span>
+<span id="cb23-48"><a href="#cb23-48" aria-hidden="true" tabindex="-1"></a>    dm_hln <span class="op">=</span> <span class="bu">float</span>(dm_stat <span class="op">*</span> hln_factor)</span>
+<span id="cb23-49"><a href="#cb23-49" aria-hidden="true" tabindex="-1"></a>    p_value <span class="op">=</span> <span class="bu">float</span>(<span class="fl">2.0</span> <span class="op">*</span> stats.t.cdf(<span class="op">-</span><span class="bu">abs</span>(dm_hln), df<span class="op">=</span>n <span class="op">-</span> <span class="dv">1</span>))</span>
+<span id="cb23-50"><a href="#cb23-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-51"><a href="#cb23-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> DMResult(dm_hln<span class="op">=</span>dm_hln, p_value<span class="op">=</span>p_value, mean_diff<span class="op">=</span>mean_diff, n<span class="op">=</span>n)</span></code></pre></div>
+<p><strong>Bolding rule in the results tables.</strong> In each horizon
+block the best model on QLIKE is bolded only when its improvement over
+the relevant comparator is <strong>DM-significant</strong> under this
+date-clustered test. A lower QLIKE that is not DM-significant is not
+bolded as a win.</p>
+<hr />
+<h2 id="metrics">7. Metrics</h2>
+<p>All metrics are self-contained in
+<code>submission/soict_lstm_gat/metrics.py</code> and operate on paired
+<code>(y, p)</code> arrays with a shared shape/finite guard.</p>
+<p><strong>Point-forecast metrics.</strong></p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># submission/soict_lstm_gat/metrics.py</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mse(y: np.ndarray, p: np.ndarray) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Mean squared error.&quot;&quot;&quot;</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    y, p <span class="op">=</span> _check_pair(y, p)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.mean((y <span class="op">-</span> p) <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rmse(y: np.ndarray, p: np.ndarray) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Root mean squared error.&quot;&quot;&quot;</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.sqrt(mse(y, p)))</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mae(y: np.ndarray, p: np.ndarray) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Mean absolute error.&quot;&quot;&quot;</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    y, p <span class="op">=</span> _check_pair(y, p)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">float</span>(np.mean(np.<span class="bu">abs</span>(y <span class="op">-</span> p)))</span></code></pre></div>
+<p><strong>QLIKE (per-observation and mean).</strong> Both target and
+prediction are clamped to <code>&gt;= floor</code> on a single shared
+floor, then <code>r = y/p</code> and loss <code>= r - log(r) - 1</code>
+(zero when the forecast is exact):</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># submission/soict_lstm_gat/metrics.py</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> per_obs_qlike(y: np.ndarray, p: np.ndarray, floor: <span class="bu">float</span> <span class="op">=</span> _EPSILON) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Per-observation QLIKE with a single shared positivity floor.</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Both target and prediction are clamped to ``&gt;= floor`` (identical basis), then</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="co">    ``r = y / p`` and loss ``= r - log(r) - 1`` (== 0 when the forecast is exact).</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="co">    ``floor`` must be finite and positive (else the positivity clamp is meaningless), and</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="co">    ``y``/``p`` must be finite (NaN/inf fail loud rather than silently surviving ``np.maximum``).</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> (np.isfinite(floor) <span class="kw">and</span> floor <span class="op">&gt;</span> <span class="fl">0.0</span>):</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;floor must be finite and positive, got </span><span class="sc">{</span>floor<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    y, p <span class="op">=</span> _check_pair(y, p)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.maximum(y, floor)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.maximum(p, floor)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    ratio <span class="op">=</span> y <span class="op">/</span> p</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ratio <span class="op">-</span> np.log(ratio) <span class="op">-</span> <span class="fl">1.0</span></span></code></pre></div>
+<p>The QLIKE formula is therefore, per observation:</p>
+<pre><code>QLIKE(y, f) = y/f - ln(y/f) - 1</code></pre>
+<p><strong>Gamma-deviance / QLIKE relation.</strong> The scikit-learn
+gamma deviance for target <code>y</code> and prediction <code>f</code>
+is <code>2 * (log(f/y) + y/f - 1) = 2 * (y/f - log(y/f) - 1)</code>.
+This is <code>2 * QLIKE</code>, i.e. QLIKE up to a positive
+multiplicative-and-additive constant. Minimizing the gamma deviance
+during boosting therefore minimizes QLIKE, which is why
+<code>loss=&quot;gamma&quot;</code> is the training objective for a QLIKE-scored
+task.</p>
+<hr />
+<h2 id="leakage-controls">8. Leakage controls</h2>
+<p>The design enforces the following controls, each visible in the
+quoted code:</p>
+<ol type="1">
+<li><strong>Adjacency / correlation on train only.</strong>
+<code>build_graph(tr, ...)</code> fits the correlation top-k graph on
+the training slice <code>tr</code>
+(<code>fold.date &lt; ts - embargo</code>); the graph is rebuilt per
+fold. No test-window data enters the adjacency (Section 3.3).</li>
+<li><strong>Standardization on train panel only.</strong>
+<code>_std_cols</code> inside <code>build_graph</code> standardizes the
+TRAIN <code>logpk</code> pivot; there is no scaler fit on test
+data.</li>
+<li><strong>Target-horizon embargo.</strong>
+<code>embargo = int(h*1.6) + 5</code> calendar days separates train end
+from test start, so no training label <code>pk_{t+h}</code> reaches into
+the test window (Section 2.4).</li>
+<li><strong>Test read once.</strong> Each fold’s test slice
+<code>tef</code> is scored a single time and concatenated; there is no
+repeated peeking or model selection on test folds (Section 6).</li>
+<li><strong>Per-ticker causal features.</strong> All OWN features are
+rolling / lag operations over each ticker’s own past
+(<code>_feat</code>), and the target <code>y = pk.shift(-h)</code> is
+created per ticker before pooling, so no future or cross-ticker leakage
+occurs in feature or label construction (Sections 2.2, 3.1).</li>
+<li><strong>Earnings distances to real announcement dates.</strong> EARN
+features use <code>_signed</code> distances to actual crawled
+announcement dates (<code>sp500_earnings.parquet</code>;
+<code>hose_earnings_combined.parquet</code> for HOSE), measured at the
+target date <code>date.shift(-h)</code>; they are not filing deadlines
+(Section 3.2).</li>
+<li><strong>Neighbour aggregate observable at origin.</strong>
+<code>g[i,t] = sum_j W_ij * pk[j,t]</code> uses same-day
+<code>pk[j,t]</code> of other firms (contemporaneous, observable at
+<code>t</code>), never a future value; the illegal <code>g_oracle</code>
+(neighbour target at <code>t+h</code>) exists only as a separate
+contemporaneous upper-bound diagnostic in
+<code>paper_metrics_sp500.py</code>, not as a reported model.</li>
+<li><strong>Shared positivity floor.</strong> The same
+<code>FL = 1e-8</code> floor is applied to training targets,
+predictions, and the QLIKE metric across every model, so no model gains
+an artifactual edge from a different floor. ```</li>
+</ol>
+</body>
+</html>
