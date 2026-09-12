@@ -140,9 +140,9 @@ horizon block.
 \begin{table}[t]
 \centering
 \caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed GBM ensemble). Lower is better
-on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE unscaled. Bold marks the QLIKE
-that is significantly best by a date-clustered Diebold-Mariano test; unbolded values are not
-DM-distinguishable from the best.}
+on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE unscaled. Bold marks the best
+value in each metric column per horizon; the QLIKE bold additionally requires a significant
+date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:sp500}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -153,26 +153,26 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 1 & HAR        & 5.754 & 7.586 & 2.132 & 0.3697 \\
 1 & HARQ       & 5.648 & 7.515 & 2.151 & 0.3780 \\
 1 & GBM        & 5.557 & 7.454 & 2.089 & 0.3570 \\
-1 & GBME       & 5.397 & 7.346 & 2.017 & \textbf{0.3172} \\
-1 & GBME+graph & 5.424 & 7.365 & 2.010 & 0.3158 \\
+1 & GBME       & \textbf{5.397} & \textbf{7.346} & 2.017 & \textbf{0.3172} \\
+1 & GBME+graph & 5.424 & 7.365 & \textbf{2.010} & 0.3158 \\
 \midrule
 5 & HAR        & 6.141 & 7.836 & 2.297 & 0.4364 \\
 5 & HARQ       & 6.132 & 7.831 & 2.309 & 0.4377 \\
 5 & GBM        & 6.117 & 7.821 & 2.255 & 0.4116 \\
-5 & GBME       & 5.972 & 7.728 & 2.180 & \textbf{0.3705} \\
+5 & GBME       & \textbf{5.972} & \textbf{7.728} & \textbf{2.180} & \textbf{0.3705} \\
 5 & GBME+graph & 6.063 & 7.787 & 2.196 & 0.3715 \\
 \midrule
 10 & HAR        & 6.214 & 7.883 & 2.356 & 0.4615 \\
 10 & HARQ       & 6.205 & 7.877 & 2.358 & 0.4614 \\
 10 & GBM        & 6.262 & 7.913 & 2.312 & 0.4307 \\
-10 & GBME       & 6.118 & 7.822 & 2.239 & \textbf{0.3912} \\
+10 & GBME       & \textbf{6.118} & \textbf{7.822} & \textbf{2.239} & \textbf{0.3912} \\
 10 & GBME+graph & 6.240 & 7.899 & 2.272 & 0.3939 \\
 \midrule
 22 & HAR        & 6.327 & 7.954 & 2.419 & 0.4855 \\
 22 & HARQ       & 6.311 & 7.944 & 2.415 & 0.4831 \\
 22 & GBM        & 6.233 & 7.895 & 2.359 & 0.4464 \\
-22 & GBME       & 6.098 & 7.809 & 2.277 & \textbf{0.4074} \\
-22 & GBME+graph & 6.087 & 7.802 & 2.300 & 0.4110 \\
+22 & GBME       & 6.098 & 7.809 & \textbf{2.277} & \textbf{0.4074} \\
+22 & GBME+graph & \textbf{6.087} & \textbf{7.802} & 2.300 & 0.4110 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -277,8 +277,8 @@ best legal model on HOSE and carries the bolded QLIKE in every block.
 \centering
 \caption{Multi-market replication, HOSE (405 tickers; 390{,}577 to 399{,}040 stock-day observations per
 horizon). Lower is better on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE
-unscaled. Bold marks the QLIKE that is significantly best by a date-clustered Diebold-Mariano test;
-unbolded values are not DM-distinguishable from the best.}
+unscaled. Bold marks the best value in each metric column per horizon; the QLIKE bold additionally
+requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:hose}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -288,27 +288,27 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
 1 & HAR        & 6.604 & 8.126 & 5.193 & 1.8117 \\
 1 & HARQ       & 6.389 & 7.993 & 5.062 & 1.7854 \\
-1 & GBM        & 5.399 & 7.348 & 3.944 & \textbf{1.5679} \\
+1 & GBM        & \textbf{5.399} & \textbf{7.348} & \textbf{3.944} & \textbf{1.5679} \\
 1 & GBME       & 5.477 & 7.401 & 3.966 & 1.5730 \\
 1 & GBME+graph & 5.555 & 7.453 & 3.980 & 1.5783 \\
 \midrule
 5 & HAR        & 6.626 & 8.140 & 5.227 & 1.8218 \\
 5 & HARQ       & 6.519 & 8.074 & 5.152 & 1.8075 \\
 5 & GBM        & 5.796 & 7.613 & 4.265 & \textbf{1.6478} \\
-5 & GBME       & 5.795 & 7.613 & 4.276 & 1.6485 \\
-5 & GBME+graph & 5.815 & 7.625 & 4.256 & 1.6494 \\
+5 & GBME       & \textbf{5.795} & \textbf{7.613} & 4.276 & 1.6485 \\
+5 & GBME+graph & 5.815 & 7.625 & \textbf{4.256} & 1.6494 \\
 \midrule
 10 & HAR        & 6.660 & 8.161 & 5.250 & 1.8277 \\
 10 & HARQ       & 6.589 & 8.118 & 5.198 & 1.8180 \\
 10 & GBM        & 5.966 & 7.724 & 4.425 & \textbf{1.6842} \\
 10 & GBME       & 5.962 & 7.721 & 4.441 & 1.6862 \\
-10 & GBME+graph & 5.959 & 7.720 & 4.407 & 1.6837 \\
+10 & GBME+graph & \textbf{5.959} & \textbf{7.720} & \textbf{4.407} & 1.6837 \\
 \midrule
 22 & HAR        & 6.716 & 8.195 & 5.282 & 1.8355 \\
 22 & HARQ       & 6.677 & 8.171 & 5.250 & 1.8299 \\
 22 & GBM        & 6.211 & 7.881 & 4.615 & \textbf{1.7263} \\
 22 & GBME       & 6.211 & 7.881 & 4.627 & 1.7262 \\
-22 & GBME+graph & 6.207 & 7.878 & 4.604 & 1.7267 \\
+22 & GBME+graph & \textbf{6.207} & \textbf{7.878} & \textbf{4.604} & 1.7267 \\
 \bottomrule
 \end{tabular}
 \end{table}
