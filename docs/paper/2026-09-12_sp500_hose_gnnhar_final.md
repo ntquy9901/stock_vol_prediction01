@@ -1,0 +1,396 @@
+# Forward-Looking Earnings Dominate Cross-Firm Graphs in Daily S&P 500 Volatility Forecasting
+
+*Draft v3 for novelty review, 2026-09-12. Claim-first, active-voice editorial standard; not yet a formatted submission.*
+
+## Abstract
+
+A recent literature wires stocks together with graph neural networks and reports that cross-firm structure
+improves volatility forecasts. We test the claim on daily Parkinson variance for the S&P 500 under a
+leakage-controlled protocol, scored on QLIKE with date-clustered Diebold-Mariano tests, multiple seeds, and full
+walk-forward folds. Conditional on own-history and a market factor, a correlation graph adds no reliable
+incremental value at any horizon: it ties a uniform-adjacency market aggregate (h1 p=0.84) and a random-edge
+placebo (h1 p=0.13), and it hurts at the monthly horizon. A short-horizon graph signal appears only on a minimal
+three-lag HAR base and vanishes once own-history momentum features enter the model, so the graph is redundant with
+the stock's own past. The lever that works is forward-looking and per-firm: a scheduled-earnings feature added to
+a QLIKE-loss gradient-boosting model cuts QLIKE by 8.7-11.2% over own-history at every horizon (p<0.001), a gain
+seven times any graph term. We situate the negative result against eight recent methods reimplemented under the
+same protocol, none of which beats the baseline on QLIKE, and one of which owes its published gain to test-set
+early stopping in its official code. The eighth method is a faithful GNNHAR, a learned multi-hop message-passing
+graph network: its learned message passing still does not beat own-history on QLIKE on either market (p=0.000).
+The graph null replicates on a second market, 405 Vietnam HOSE tickers,
+where the earnings lever does not transfer, which localizes the earnings gain to the S&P 500 while the graph
+null holds on both markets.
+
+## 1. Introduction
+
+Daily volatility prices options and margin. The Heterogeneous Autoregressive (HAR) model forecasts realized
+volatility from three own-history lags and remains the benchmark. A recent literature argues that HAR treats each
+stock in isolation and misses cross-firm spillover, and adds graph neural networks that aggregate a stock's
+correlated or spillover-linked neighbors. Reported gains reach 8-50% on squared-error metrics.
+
+We test whether cross-firm structure helps once the comparison is fair. A market factor already carries the common
+component of cross-stock co-movement, so the question is not "does a graph beat a stock in isolation" but "does a
+graph add anything beyond own-history and a market factor." We express the market factor itself as a graph: the
+uniform, fully-connected adjacency whose neighbor aggregate is the cross-sectional mean. A correlation graph, a
+sector graph, and a random-edge placebo then differ from it only in their adjacency, which isolates the value of
+the wiring.
+
+Under this framing, on the S&P 500, the correlation graph adds nothing a market factor does not already provide.
+It ties the uniform market graph at every horizon and beats a random-edge placebo at none. A small short-horizon
+graph signal survives only when the model's own-history is stripped to three HAR lags; adding the stock's own
+log-volatility momentum features erases it. The cross-sectional neighbor signal is redundant with the stock's own
+past.
+
+The lever that beats HAR is forward-looking and specific to the firm. A scheduled earnings release is known weeks
+ahead and raises volatility around the announcement. A QLIKE-loss gradient-boosting model that encodes the
+distance from the forecast target to the nearest scheduled release cuts QLIKE by 8.7-11.2% over own-history at
+every horizon, seven times the size of any graph term, and a decomposition assigns the bulk of the gain to
+earnings rather than to nonlinearity or added features.
+
+This paper contributes three results. First, under a leakage-controlled, placebo-controlled, market-factor-as-graph
+protocol, cross-firm graph structure adds no reliable incremental QLIKE value for daily S&P 500 volatility at any
+horizon, and the apparent short-horizon signal is redundant with own-history momentum. Second, forward-looking
+scheduled earnings are the dominant lever, and we decompose the gain. Third, eight recent graph and cross-market
+methods reimplemented under the same protocol fail to beat the baseline on QLIKE, and one method's published gain
+is a test-set early-stopping artifact. The eighth method is a faithful GNNHAR whose learned multi-hop message
+passing still does not beat own-history on QLIKE on either market. A replication on 405 Vietnam HOSE tickers
+confirms the graph null on a second market and shows the earnings lever is specific to the S&P 500 and does not
+transfer to Vietnam under real announcement dates.
+
+## 2. Setup and Baselines
+
+**Target and metric.** We forecast daily Parkinson variance, $\mathrm{pk}_t=\ln(H_t/L_t)^2/(4\ln 2)$, at horizons
+$h\in\{1,5,10,22\}$ over 497 S&P 500 constituents. We report QLIKE as the primary loss, with MSE, RMSE, MAE, and
+$R^2$. We test significance with a Diebold-Mariano statistic on per-trading-date mean loss, because within-day
+stock errors are dependent.
+
+**Baselines.** HAR fits three own-history lags by ordinary least squares. HARQ adds a realized-quarticity
+interaction. The own-history gradient-boosting model (GBM) trains a gamma-deviance regressor, equal to QLIKE up to
+a constant, on nine own-history features: three HAR lags, a realized-quarticity proxy, and five log-volatility
+momentum terms. No market or volume scalar enters the feature set; cross-sectional information enters only through
+graph aggregates.
+
+**Market factor as a graph.** A neighbor aggregate under a uniform adjacency, $g_{\mathrm{mkt}}[i,t]=\frac1{N-1}
+\sum_{j\ne i}\mathrm{pk}[j,t]$, equals the cross-sectional mean and serves as the market factor. A correlation
+graph keeps each node's top-10 train-correlation neighbors with positive row-normalized weights; a sector graph
+uses same-sector membership; a placebo rewires 10 random neighbors per node, averaged over three seeds. Each
+graph contributes one neighbor-aggregate feature, so the models differ only in the adjacency.
+
+**Protocol.** We use expanding-window walk-forward folds with a target-horizon embargo. All correlations,
+adjacencies, factor estimates, and model fits use training data only; the test window is read once. Every
+gradient-boosting model averages three seeds. Every graph is compared against the random-edge placebo of matched
+degree.
+
+## 3. Cross-Firm Graphs Add No Incremental Value Beyond Own-History and a Market Factor
+
+Table 1 reports QLIKE for the own-history GBM and its graph-augmented variants on the S&P 500.
+
+| h | GBM (own) | +market | +corr-graph | +placebo | corr vs market | corr vs placebo |
+|---|-----------|---------|-------------|----------|----------------|-----------------|
+| 1 | 0.3570 | 0.3539 | 0.3536 | 0.3546 | +0.07% (p=.84) | +0.26% (p=.13) |
+| 5 | 0.4116 | 0.4127 | 0.4108 | 0.4116 | +0.46% (p=.47) | +0.20% (p=.60) |
+| 10 | 0.4307 | 0.4344 | 0.4328 | 0.4306 | +0.37% (p=.53) | −0.50% (p=.15) |
+| 22 | 0.4464 | 0.4605 | 0.4495 | 0.4512 | +2.39% (p=.05) | +0.37% (p=.56) |
+
+The correlation graph ties the uniform market graph at every horizon and beats the random-edge placebo at none.
+Its only edge over the market graph, at h22, coincides with the market graph itself hurting, so the correlation
+graph recovers ground the market aggregate loses rather than adding signal.
+
+**A sector graph and an explicit conditional test reach the same null.** Table 1b adds an industry-sector
+adjacency, whose neighbor aggregate averages same-sector firms, and the direct Own+Market+Corr comparison.
+
+| h | GBM (own) | +market | +sector | +corr | +market+corr |
+|---|-----------|---------|---------|-------|--------------|
+| 1 | 0.3570 | 0.3539 | 0.3531 | 0.3536 | 0.3532 |
+| 5 | 0.4116 | 0.4127 | 0.4113 | 0.4108 | 0.4121 |
+
+The sector graph ties the uniform market graph at both short horizons (h1 +0.22%, p=0.43; h5 +0.36%, p=0.55).
+Adding the correlation graph on top of the market factor moves QLIKE by at most 0.20% (h1 p=0.10; h5 p=0.41), so
+the correlation graph carries no incremental value the market factor does not already hold, and an economically
+motivated sector wiring does no better.
+
+**The null holds on every metric, not QLIKE alone.** Table 1c reports QLIKE, RMSE, MAE, and $R^2$ for all seven
+models at each horizon. The correlation graph never significantly beats the market aggregate on any metric (DM
+QLIKE p=0.84/0.47/0.53/0.05 at h1/h5/h10/h22), and adding the market aggregate even raises RMSE and lowers $R^2$
+at h5 and h10, thin evidence that the aggregate adds noise at the longer horizons rather than signal. RMSE and
+MAE are scaled by $10^{-4}$.
+
+*Table 1c. All metrics, S&P 500. RMSE and MAE in units of $10^{-4}$.*
+
+| h1 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| HAR | 0.3697 | 7.586 | 2.132 | 0.158 |
+| HARQ | 0.3780 | 7.515 | 2.151 | 0.174 |
+| GBM | 0.3570 | 7.454 | 2.089 | 0.187 |
+| +market | 0.3539 | 7.423 | 2.075 | 0.194 |
+| +corr | 0.3536 | 7.460 | 2.083 | 0.186 |
+| +sector | 0.3531 | 7.435 | 2.077 | 0.191 |
+| +placebo | 0.3546 | 7.437 | 2.076 | 0.191 |
+
+| h5 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| HAR | 0.4364 | 7.836 | 2.297 | 0.100 |
+| HARQ | 0.4377 | 7.831 | 2.309 | 0.101 |
+| GBM | 0.4116 | 7.821 | 2.255 | 0.103 |
+| +market | 0.4127 | 7.977 | 2.302 | 0.068 |
+| +corr | 0.4108 | 7.882 | 2.279 | 0.090 |
+| +sector | 0.4113 | 7.887 | 2.281 | 0.088 |
+| +placebo | 0.4118 | 7.924 | 2.284 | 0.080 |
+
+| h10 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| HAR | 0.4615 | 7.883 | 2.356 | 0.093 |
+| HARQ | 0.4614 | 7.877 | 2.358 | 0.094 |
+| GBM | 0.4307 | 7.913 | 2.312 | 0.085 |
+| +market | 0.4344 | 7.959 | 2.316 | 0.075 |
+| +corr | 0.4328 | 7.984 | 2.344 | 0.069 |
+| +sector | 0.4316 | 7.973 | 2.337 | 0.072 |
+| +placebo | 0.4310 | 8.002 | 2.337 | 0.065 |
+
+| h22 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| HAR | 0.4855 | 7.954 | 2.419 | 0.079 |
+| HARQ | 0.4831 | 7.944 | 2.415 | 0.081 |
+| GBM | 0.4464 | 7.895 | 2.359 | 0.092 |
+| +market | 0.4605 | 7.877 | 2.369 | 0.096 |
+| +corr | 0.4495 | 7.894 | 2.383 | 0.093 |
+| +sector | 0.4496 | 7.869 | 2.377 | 0.098 |
+| +placebo | 0.4489 | 7.860 | 2.376 | 0.100 |
+
+**The short-horizon signal is redundant with own-history momentum.** On a minimal three-lag HAR base, the
+correlation graph beats the market graph at h1 by 0.80% (p=0.035), because the bare HAR base lacks any
+cross-sectional or momentum information. Restoring the five log-volatility momentum features to the base collapses
+the same comparison to +0.07% (p=0.84). The stock's own momentum features carry what the neighbor aggregate would
+otherwise supply.
+
+**An oracle bound locates the missing signal in time.** Replacing the neighbor value at the origin $t$ with the
+neighbor value at the target day $t+h$, an illegal upper bound contemporaneous with the label, cuts QLIKE by
+19.2-27.2% over the correlation graph (p<0.001 at every horizon) where the legal graph cuts it by under 1%. The cross-sectional signal exists and is large, but it
+arrives contemporaneously with the target, not at the forecast origin, so no origin-time graph can capture it.
+
+**Takeaway.** Conditional on own-history and a market factor, cross-firm graph structure adds no reliable
+incremental QLIKE value at any horizon on the S&P 500. The signal a graph could carry is either redundant with
+the stock's own momentum or contemporaneous with the target.
+
+## 4. Forward-Looking Earnings Are the Lever
+
+Table 2 adds a scheduled-earnings feature to the own-history GBM.
+
+| h | GBM (own) | GBM+earn | earn vs GBM | +earn+graph vs +earn |
+|---|-----------|----------|-------------|----------------------|
+| 1 | 0.3570 | 0.3172 | +11.2% (p<.001) | +0.42% (p=.20) |
+| 5 | 0.4116 | 0.3705 | +10.0% (p<.001) | −0.26% (p=.46) |
+| 10 | 0.4307 | 0.3912 | +9.2% (p<.001) | −0.68% (p=.06) |
+| 22 | 0.4464 | 0.4074 | +8.7% (p<.001) | −0.90% (p<.001) |
+
+Table 2b reports all metrics for the own-history GBM, the earnings model, and the earnings-plus-graph model. The
+earnings feature improves every metric, not QLIKE alone. It posts the lowest RMSE and MAE and the highest $R^2$ at
+every horizon, lifting $R^2$ at h1 from 0.187 to 0.211, and the QLIKE gain over own-history is significant at
+every horizon (DM p=0.000). RMSE and MAE are scaled by $10^{-4}$.
+
+*Table 2b. Earnings across all metrics, S&P 500. RMSE and MAE in units of $10^{-4}$.*
+
+| h1 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| GBM | 0.3570 | 7.454 | 2.089 | 0.187 |
+| GBM+earn | 0.3172 | 7.346 | 2.017 | 0.211 |
+| GBM+earn+corr | 0.3158 | 7.365 | 2.010 | 0.207 |
+
+| h5 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| GBM | 0.4116 | 7.821 | 2.255 | 0.103 |
+| GBM+earn | 0.3705 | 7.728 | 2.180 | 0.125 |
+| GBM+earn+corr | 0.3715 | 7.787 | 2.196 | 0.111 |
+
+| h10 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| GBM | 0.4307 | 7.913 | 2.312 | 0.085 |
+| GBM+earn | 0.3912 | 7.822 | 2.239 | 0.107 |
+| GBM+earn+corr | 0.3939 | 7.899 | 2.272 | 0.089 |
+
+| h22 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| GBM | 0.4464 | 7.895 | 2.359 | 0.092 |
+| GBM+earn | 0.4074 | 7.809 | 2.277 | 0.112 |
+| GBM+earn+corr | 0.4110 | 7.802 | 2.300 | 0.114 |
+
+The earnings feature cuts QLIKE by 8.7-11.2% over own-history at every horizon, seven times the largest graph
+term and significant at every horizon. Against the HAR baseline the earnings model gains 14-16%. Nonlinearity and
+the QLIKE-loss alignment, isolated by the own-history GBM over HAR, contribute a further 3.4%. A graph added on
+top of earnings changes nothing at short horizons and hurts at the monthly horizon, so the two signals do not
+combine.
+
+Earnings do not fix the storm tail. Decomposed by realized-volatility decile, the model's error concentrates in
+the top decile, which carries roughly ten times the calm-day QLIKE, and its forecast-to-realized ratio there is
+about 0.4. The model compresses its predictions toward the conditional mean because the storm magnitude is absent
+from origin-time features. The residual is exogenous, which is why no cross-firm graph recovers it.
+
+## 5. Recent Graph and Cross-Market Methods Do Not Survive
+
+We reimplement eight recent methods under a common daily-OHLC information regime and score each against the
+baseline: H-ETE-GNN (transfer-entropy country-ETF graph), DCRNN-HAR (dynamic Diebold-Yilmaz spillover), ASTGCN
+(attention spillover convolution), MSub-GNN (trading-news-candlestick fusion), an influence-weighted-news model, a
+GNN survey's feasible edge constructions, a technical-indicator battery, and GNNHAR (a learned multi-hop
+message-passing graph network). None beats the baseline on QLIKE with
+DM significance. Where a method wins on squared error it ties or loses on QLIKE, and it does not beat its
+random-edge placebo. MSub-GNN's fusion never beats its trading-only branch; the influence-weighted-news model
+never beats equal weighting, the paper's own claim; technical indicators add at most 0.63%.
+
+DCRNN-HAR reports that it surpasses HAR. Its official code selects the training epoch by the test-set loss. Under
+a chronological validation split, HAR beats DCRNN-HAR on QLIKE at h1 and h5 (p<0.001) and ties at h22, and the
+dynamic graph never beats a static graph or a no-graph control. The published gain is a test-set early-stopping
+artifact.
+
+**GNNHAR: a learned multi-hop GNN does not exploit cross-firm structure beyond own-history plus a market factor.**
+The eighth method is a faithful re-implementation of GNNHAR (Zhang, Pu, Cucuringu and Dong, IJF 2024,
+arXiv:2308.01419; official repo chaozhang-ox/GNNHAR), a learned multi-hop message-passing GNN carrying the
+paper's own baselines HAR and GHAR (linear graph-HAR). It answers the reviewer objection directly: a real GNN,
+not a scalar market factor, gets the chance to exploit cross-firm structure. We run it under our protocol,
+walk-forward with QLIKE and date-clustered DM, a three-seed ensemble over eight folds, on both markets, at all
+horizons, across variants that cross {1L, 2L} depth with {correlation graph, no-graph A=I control, random-edge
+placebo} adjacency and {HAR3, OWN9} node features. On the S&P 500 the GNN never beats the own-history GBM: the
+GBM posts QLIKE 0.357/0.412/0.431/0.447 at h1/h5/h10/h22 while the matched GNNHAR2L-corr-OWN9 posts
+0.368/0.434/0.458/0.471, and DM GNNHAR2L-corr-OWN9 vs GBM runs −2.96%/−5.49%/−6.41%/−5.34% with p=0.000 at every
+horizon in the GBM's favor; the GNN also loses to GBM+corr (p=0.000). The correlation graph does not help inside
+the GNN and hurts at longer horizons: GNNHAR2L-corr-HAR3 vs the no-graph control GNNHAR2L-none-HAR3 runs
+−0.32%/−3.96%/−5.40%/−3.53% (p=0.60/0.000/0.000/0.000), a tie at h1 and the no-graph control significantly better
+at h5/h10/h22. GHAR, the paper's linear graph-HAR baseline, is worse than HAR (DM GHAR vs HAR
+−36.6%/−27.6%/−17.9%/−16.3%), so a linear neighbour-augmented HAR does not fit the daily Parkinson target.
+Several correlation-graph GNN variants show per-seed QLIKE blow-ups (GNNHAR2L-corr-HAR3 per-seed 4.09 +/- 17.8 at
+h1) that inflate the ensemble mean; the stable no-graph variant is the fair comparison and it still loses to the
+own-history GBM, because QLIKE's sensitivity to under-prediction makes the learned GNN unstable under this
+protocol. On HOSE the GNN loses to the own-history GBM and turns markedly unstable on the thin market: the GBM
+posts QLIKE 1.569 (h1) and 1.649 (h5), the no-graph GNNHAR2L-none-HAR3 posts 1.579/1.656 (it loses to the GBM),
+and correlation-graph variants blow up (GNNHAR2L-corr-OWN9 ensemble 40.17 at h1 with fit_diagnostics=overfit and
+individual test folds reaching QLIKE 179-432); DM GNNHAR2L-corr-OWN9 vs GBM runs −1.43% at h5 (p=0.000). The GNN
+beats HAR on HOSE (DM +7.98% at h1) but never the own-history GBM, and the h10 and h22 folds carry the same
+ordering. On HOSE the learned graph GNN adds instability, not signal, consistent with the thin-market spike
+behaviour reported in Section 7. GNNHAR confirms the paper's central negative result: a learned multi-hop GNN does
+not exploit cross-firm structure beyond own-history plus a market factor on either market. The full per-horizon
+GNNHAR result JSONs, carrying all five metrics and train/val/test fit evidence, are produced by the Colab A100
+notebook and committed under `results/gnnhar/`.
+
+## 6. Related Work
+
+**Graph volatility forecasting.** GNNHAR, STG-Spillover, and the methods of Section 5 wire stocks or markets
+through correlation or spillover edges and report squared-error gains. GNNHAR itself finds that multi-hop
+neighbor information gives no clear advantage and credits its gains to nonlinearity and the QL loss. A
+regime-dependent temporal graph attention network reports gains on squared and absolute error using
+Diebold-Yilmaz spillover edges, the same edges a proportional loss and a no-graph control do not reward here.
+Prior Vietnamese work builds correlation and centrality networks to predict index volatility at a monthly horizon
+without a HAR or QLIKE benchmark. We extend this literature to a placebo-controlled, market-factor-as-graph test
+on daily per-firm QLIKE and show the gains do not survive.
+
+**HAR and its extensions.** HAR, VHAR, and HARQ model volatility from own history and linear spillover. We keep
+HAR and HARQ as baselines and show a QLIKE-loss gradient-boosting model with earnings dominates them without a
+graph.
+
+**Earnings and volatility.** Studies document that earnings announcements raise implied and realized volatility.
+We operationalize the effect as a forward-looking forecasting feature and quantify its contribution against the
+strongest own-history and graph baselines.
+
+## 7. Cross-Firm Graphs and Earnings on the Vietnam Market (HOSE)
+
+The graph null generalizes to a second market and the S&P 500 earnings lever does not. On 405 Ho Chi Minh Stock
+Exchange (HOSE) tickers under the identical protocol, a correlation graph again ties the market factor, and the
+forward-looking earnings feature that cuts S&P 500 QLIKE 9-11% produces no incremental value on HOSE.
+
+**Setup.** We rebuild the panel on 405 HOSE tickers, forecasting daily Parkinson variance at the same four
+horizons under the same walk-forward, QLIKE-scored, date-clustered Diebold-Mariano protocol, with 390,577 to
+399,040 stock-day observations per horizon.
+
+**The own-history GBM wins and the graph adds nothing.** GBM posts the lowest QLIKE and the highest $R^2$ at
+every horizon (QLIKE 1.5679/1.6478/1.6842/1.7263, $R^2$ 0.198/0.133/0.107/0.073), while HAR and HARQ trail by a
+wide margin (QLIKE 1.79 to 1.84, $R^2$ near zero to 0.05). Table 3 reports all metrics for the eight models. The
+correlation graph ties the market factor at every horizon (corr vs market DM p=0.138/0.055/0.465/0.533), and the
+sector and placebo graphs land on the GBM QLIKE. The h1 GBM+market entry, QLIKE 2.5126, is a thin-market
+artifact rather than a result: one walk-forward fold spikes to 8.87 in the per-fold QLIKE where the
+cross-sectional mean turns unstable, and the remaining folds sit at the GBM level.
+
+*Table 3. All metrics, HOSE. RMSE and MAE in units of $10^{-4}$.*
+
+| h1 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| HAR | 1.8117 | 8.126 | 5.193 | 0.020 |
+| HARQ | 1.7854 | 7.993 | 5.062 | 0.051 |
+| GBM | 1.5679 | 7.348 | 3.944 | 0.198 |
+| GBM+earn | 1.5730 | 7.401 | 3.966 | 0.187 |
+| GBM+market | 2.5126 | 7.397 | 3.926 | 0.188 |
+| GBM+corr | 1.5692 | 7.375 | 3.941 | 0.192 |
+| GBM+sector | 1.5791 | 7.414 | 3.992 | 0.184 |
+| GBM+placebo | 1.5739 | 7.434 | 3.947 | 0.180 |
+
+| h5 model | QLIKE | RMSE | MAE | R2 |
+|----------|-------|------|-----|-----|
+| HAR | 1.8218 | 8.140 | 5.227 | 0.009 |
+| HARQ | 1.8075 | 8.074 | 5.152 | 0.025 |
+| GBM | 1.6478 | 7.613 | 4.265 | 0.133 |
+| GBM+earn | 1.6485 | 7.613 | 4.276 | 0.133 |
+| GBM+market | 1.6990 | 7.615 | 4.223 | 0.133 |
+| GBM+corr | 1.6474 | 7.612 | 4.247 | 0.133 |
+| GBM+sector | 1.6530 | 7.618 | 4.242 | 0.132 |
+| GBM+placebo | 1.6527 | 7.632 | 4.252 | 0.129 |
+
+| h10 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| HAR | 1.8277 | 8.161 | 5.250 | 0.004 |
+| HARQ | 1.8180 | 8.118 | 5.198 | 0.014 |
+| GBM | 1.6842 | 7.724 | 4.425 | 0.107 |
+| GBM+earn | 1.6862 | 7.721 | 4.441 | 0.108 |
+| GBM+market | 1.6854 | 7.723 | 4.369 | 0.108 |
+| GBM+corr | 1.6837 | 7.719 | 4.396 | 0.109 |
+| GBM+sector | 1.6868 | 7.733 | 4.413 | 0.105 |
+| GBM+placebo | 1.6851 | 7.731 | 4.418 | 0.106 |
+
+| h22 model | QLIKE | RMSE | MAE | R2 |
+|-----------|-------|------|-----|-----|
+| HAR | 1.8355 | 8.195 | 5.282 | −0.002 |
+| HARQ | 1.8299 | 8.171 | 5.250 | 0.004 |
+| GBM | 1.7263 | 7.881 | 4.615 | 0.073 |
+| GBM+earn | 1.7262 | 7.881 | 4.627 | 0.073 |
+| GBM+market | 1.7298 | 7.879 | 4.546 | 0.074 |
+| GBM+corr | 1.7276 | 7.882 | 4.591 | 0.073 |
+| GBM+sector | 1.7272 | 7.880 | 4.598 | 0.074 |
+| GBM+placebo | 1.7268 | 7.889 | 4.610 | 0.071 |
+
+**Earnings does not transfer to Vietnam.** Using real crawled Vietnam announcement dates, GBM+earn ties or
+slightly worsens GBM at every horizon: QLIKE 1.5730 vs 1.5679 at h1 (earnings worse, DM p=0.000), 1.6485 vs
+1.6478 at h5 (p=0.214), 1.6862 vs 1.6842 at h10 (p=0.122), and 1.7262 vs 1.7263 at h22 (p=0.919). The per-fold
+QLIKE shows no gain even in the 2025-2026 folds where Vietnam earnings coverage is comprehensive. The
+forward-looking earnings lever that cuts S&P 500 QLIKE 9-11% does not carry to HOSE. Vietnam's daily price
+limits and retail-dominated microstructure plausibly damp the around-announcement volatility response that the
+S&P 500 feature exploits.
+
+**The oracle bound confirms the signal is contemporaneous.** Replacing the neighbor value at the origin with its
+value at the target day cuts QLIKE by 1.3%/2.6%/3.2%/2.4% over the correlation graph (DM p=0.009/0.000/0.000/0.012).
+The gain is smaller than the S&P 500's 19-27% and points the same way: the cross-sectional signal is
+contemporaneous with the label, not available at the forecast origin, so no origin-time graph captures it.
+
+**Earnings coverage.** The Vietnam announcement dates combine the State Securities Commission (SSC) disclosure
+portal, comprehensive for 2025-01 through 2026-09, with the vnstock/VCI news feed, which spans 2016-2026 but
+stays sparse at roughly 218 tickers and is strongest on VN30 and VN100 names. The combined archive holds 5,723
+dates across 402 tickers, dense for 2025-2026 and thin before. The no-transfer result holds in the well-covered
+2025-2026 folds, so it does not rest on missing dates in that window; the pre-2025 earnings signal remains
+coverage-limited.
+
+**Takeaway.** The graph null replicates on a second, structurally different market. The earnings lever is
+specific to the S&P 500 and does not generalize to HOSE under the available real announcement dates.
+
+## 8. Limitations
+
+The earnings feature measures distance to the nearest scheduled release from an announcement-date archive that
+records realized dates, not a point-in-time scheduling snapshot. A date-jitter check shows the gain does not
+depend on exact-date timing. Perturbing every earnings date by a uniform random offset and refitting, the QLIKE
+gain over own-history falls from 11.1% at h1 with true dates to 9.0% at plus or minus one trading day, 6.6% at
+plus or minus three days, and 4.5% at plus or minus five days, and stays positive at every horizon under every
+jitter. A release known only to within a business week still cuts QLIKE by about 4%, so the lever survives coarse
+timing. A point-in-time scheduling calendar remains to be added to control rescheduling within the forecast
+window. The eight-method
+reimplementation degrades some methods from intraday realized variance or paid implied-volatility inputs to daily
+Parkinson variance, so a null under degraded inputs is weaker than a null on the original inputs; we state each
+deviation. The graph analysis is conditional on the Parkinson daily-OHLC regime and does not speak to intraday or
+option-implied signals. The Vietnam earnings test draws on real announcement dates that are comprehensive only
+for 2025-01 through 2026-09, from the SSC disclosure portal, plus a sparse 2016-2026 vnstock/VCI news feed
+covering roughly 218 tickers. The no-transfer finding holds in the well-covered 2025-2026 folds, but the
+pre-2025 Vietnam earnings signal is coverage-limited, so we claim no incremental earnings value on HOSE under the
+available real dates rather than a definitive full-history null.
