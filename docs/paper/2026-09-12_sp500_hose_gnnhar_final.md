@@ -399,3 +399,12 @@ for 2025-01 through 2026-09, from the SSC disclosure portal, plus a sparse 2016-
 covering roughly 218 tickers. The no-transfer finding holds in the well-covered 2025-2026 folds, but the
 pre-2025 Vietnam earnings signal is coverage-limited, so we claim no incremental earnings value on HOSE under the
 available real dates rather than a definitive full-history null.
+
+Regime and shock-detection methods do not transfer to this evaluation. A regime-switching HAR reports MSE gains
+of 8-12% around the COVID period, and change-point detectors flag structural breaks, but our walk-forward test
+begins in July 2022, so the COVID regime sits entirely in the training window and cannot be exploited
+out-of-sample. The reported gains are on squared error rather than QLIKE, and detection lags the break, which
+does not help forecast the onset of the exogenous shocks that fall in the test window, the 2022 bear market and
+the April 2025 tariff shock. A limit-lock hurdle model on VN30 and VN100 did not beat the baseline; winsorized or
+floored QLIKE, not shock detection, is the effective handling of the zero-range limit-lock days that dominate the
+raw loss.
