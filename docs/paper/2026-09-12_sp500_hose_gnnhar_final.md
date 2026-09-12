@@ -357,9 +357,14 @@ cross-sectional mean turns unstable, and the remaining folds sit at the GBM leve
 slightly worsens GBM at every horizon: QLIKE 1.5730 vs 1.5679 at h1 (earnings worse, DM p=0.000), 1.6485 vs
 1.6478 at h5 (p=0.214), 1.6862 vs 1.6842 at h10 (p=0.122), and 1.7262 vs 1.7263 at h22 (p=0.919). The per-fold
 QLIKE shows no gain even in the 2025-2026 folds where Vietnam earnings coverage is comprehensive. The
-forward-looking earnings lever that cuts S&P 500 QLIKE 9-11% does not carry to HOSE. Vietnam's daily price
-limits and retail-dominated microstructure plausibly damp the around-announcement volatility response that the
-S&P 500 feature exploits.
+forward-looking earnings lever that cuts S&P 500 QLIKE 9-11% does not carry to HOSE. A per-stock, per-day
+diagnostic on the HOSE test set locates two compounding causes. First, the feature fires on only 5.6% of test
+observations, and 0.84% before 2025, so it cannot move the pooled metric across most of the panel. Second, where
+it fires the volatility response is muted: realized variance on announcement-proximate days runs 1.1 times the
+baseline, against the pronounced S&P 500 earnings spike, because Vietnam's daily price limits cap the
+informational jump. Where the feature moves the prediction it worsens QLIKE on about 68% of those observations,
+adding variance with no volatility response to exploit. The damage concentrates in low-volatility utilities and in
+the 2025-2026 dense-coverage window.
 
 **The oracle bound confirms the signal is contemporaneous.** Replacing the neighbor value at the origin with its
 value at the target day cuts QLIKE by 1.3%/2.6%/3.2%/2.4% over the correlation graph (DM p=0.009/0.000/0.000/0.012).
