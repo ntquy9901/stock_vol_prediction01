@@ -1,0 +1,34 @@
+{
+  "series": "SP500 (^GSPC)",
+  "built_from": "single source (Yahoo Finance ^GSPC) + FRED cross-check",
+  "output_rows": 6713,
+  "date_start": "2000-01-03",
+  "date_end": "2026-09-11",
+  "sources": [
+    {
+      "name": "Yahoo Finance ^GSPC (yfinance)",
+      "covers": "2000-01-03..2026-09-11",
+      "role": "primary OHLC + Adj Close + volume",
+      "license": "Yahoo terms (research use)"
+    },
+    {
+      "name": "FRED SP500",
+      "covers": "2016-09-12..2026-09-11",
+      "role": "Close cross-check (~10 years)",
+      "license": "public domain (US gov)"
+    }
+  ],
+  "cross_check_close_yahoo_vs_fred": {
+    "overlap_n": 2514,
+    "overlap_start": "2016-09-12",
+    "overlap_end": "2026-09-11",
+    "close_pct_diff_mean": 6.741584524062618e-05,
+    "close_pct_diff_max": 0.11893436495266807,
+    "n_days_gt_0.1pct": 1,
+    "n_days_gt_0.5pct": 0,
+    "worst_day": "2021-08-11",
+    "worst_zenodo_close": 4442.41015625,
+    "worst_vnstock_close": 4447.7
+  },
+  "volume_note": "Index volume is not comparable to a stock/ETF volume; the experiment uses OHLC (Close for the return-volatility target). Volume stored for completeness only."
+}

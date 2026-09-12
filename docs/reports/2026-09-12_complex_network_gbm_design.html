@@ -436,9 +436,10 @@ Section 2.4 directly.</p>
 <td><strong>real VNINDEX</strong>
 (<code>data/raw/prices/_market_index/vnindex.csv</code>, daily OHLC +
 volume, 2000-07-31 to 2026-09-11, 6,361 trading days)</td>
-<td><strong>S&amp;P 500 index</strong> (<code>^GSPC</code> daily close +
-volume; if the feed is unavailable, a cap/equal-weight proxy built from
-the 498-stock panel, documented as a deviation)</td>
+<td><strong>real S&amp;P 500 index <code>^GSPC</code></strong>
+(<code>data/raw/prices/_market_index/gspc.csv</code>, Yahoo Finance,
+daily OHLC + Adj Close + volume, 2000-01-03 to 2026-09-11, 6,713 trading
+days)</td>
 </tr>
 </tbody>
 </table>
@@ -457,6 +458,15 @@ discrepancy check are in
 units differ across sources (tagged in <code>vol_source</code>) and feed
 only the secondary volume target, which is not stitched across the join;
 the headline volatility target is Close-based and unaffected.</p>
+<p>The S&amp;P 500 index target is the real <code>^GSPC</code> (Yahoo
+Finance, 2000-01-03 to 2026-09-11, 6,713 trading days, a single source,
+no stitch). It is cross-checked against the FRED <code>SP500</code>
+series on their 2,514-day overlap: Close agrees to a mean absolute
+difference of 0.00007% and a maximum of 0.12% (no day above 0.5%). Index
+volume is not comparable to a stock or ETF volume, so only OHLC is used
+(Close for the return-volatility target). Provenance in
+<code>data/raw/prices/_market_index/gspc_provenance.json</code> (builder
+<code>scripts/etl_vn_index/build_gspc.py</code>).</p>
 <h3 id="one-supervised-sample-per-window">3.2 One supervised sample per
 window</h3>
 <p>For each window end <code>i</code> (stepping by <code>STEP</code>

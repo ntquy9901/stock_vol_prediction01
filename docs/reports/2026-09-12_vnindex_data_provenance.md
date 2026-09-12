@@ -40,6 +40,19 @@ The two independent sources agree to within 0.29% on every overlapping day and t
 
 The Close/OHLC index points share one scale across both sources (verified in Section 2). The VOLUME display unit differs: the Zenodo "KL" column is in Investing.com display units while the vnstock feed reports raw share counts, a scale gap at the 2024-12-17 boundary. The `vol_source` column tags each row (`zenodo_K_units` before the boundary, `vnstock_raw_shares` after). The experiment's headline target is the future index return-volatility, which is computed from Close and is unaffected. The secondary average-log-volume target must not stitch across the boundary; any window whose feature or target period straddles 2024-12 is excluded for that target.
 
-## 5. Text for the paper (data section)
+## 5. S&P 500 index (^GSPC) target
 
-The VNINDEX daily series (2000-07-31 to 2026-09-11) is stitched from two sources: the Zenodo VN-Index daily dataset (DOI 10.5281/zenodo.21873555, CC BY 4.0) for 2000-2024 and the vnstock VCI feed for the 2025-2026 tail. The two sources overlap on 1,566 trading days, on which the daily Close agrees to a mean absolute difference of 0.0006% and a maximum of 0.29% (no day above 0.5%), so the join introduces no level break; the final session matches the reported market close. Volume display units differ across sources and are used only for the secondary volume target, which is not stitched across the join.
+The US market-index target is the real `^GSPC` (S&P 500 price index), for the multi-market arm of the experiment.
+
+| Field | Value |
+|---|---|
+| Source | Yahoo Finance `^GSPC` (yfinance), daily OHLC + Adj Close + Volume |
+| Coverage | 2000-01-03 to 2026-09-11, 6,713 trading days (single source, no stitch) |
+| Cross-check | FRED `SP500` (public domain), 2,514-day overlap 2016-09-12 to 2026-09-11 |
+| Close agreement | mean 0.00007%, max 0.12% (2021-08-11), 0 days > 0.5% |
+
+Artifact `data/raw/prices/_market_index/gspc.csv`; provenance `gspc_provenance.json`; builder `scripts/etl_vn_index/build_gspc.py`. Index volume is not comparable to a stock or ETF volume, so only OHLC is used (Close for the return-volatility target).
+
+## 6. Text for the paper (data section)
+
+The VNINDEX daily series (2000-07-31 to 2026-09-11) is stitched from two sources: the Zenodo VN-Index daily dataset (DOI 10.5281/zenodo.21873555, CC BY 4.0) for 2000-2024 and the vnstock VCI feed for the 2025-2026 tail. The two sources overlap on 1,566 trading days, on which the daily Close agrees to a mean absolute difference of 0.0006% and a maximum of 0.29% (no day above 0.5%), so the join introduces no level break; the final session matches the reported market close. The S&P 500 index target is the real `^GSPC` (Yahoo Finance, 2000-01-03 to 2026-09-11), cross-checked against the FRED SP500 series on a 2,514-day overlap (mean 0.00007%, max 0.12%). Volume display units differ across sources and are used only for the secondary volume target, which is not stitched across the join.

@@ -61,9 +61,11 @@ This is the paper's actual task on our data. It follows Figure 1 and Section 2.4
 | Role | HOSE | S&P 500 |
 |---|---|---|
 | Network nodes (stocks) | our HOSE processed panel (`daily_return`, `volume_zscore_22`), 300+ tickers | our S&P 500 processed panel, 498 tickers |
-| **Market index (target series)** | **real VNINDEX** (`data/raw/prices/_market_index/vnindex.csv`, daily OHLC + volume, 2000-07-31 to 2026-09-11, 6,361 trading days) | **S&P 500 index** (`^GSPC` daily close + volume; if the feed is unavailable, a cap/equal-weight proxy built from the 498-stock panel, documented as a deviation) |
+| **Market index (target series)** | **real VNINDEX** (`data/raw/prices/_market_index/vnindex.csv`, daily OHLC + volume, 2000-07-31 to 2026-09-11, 6,361 trading days) | **real S&P 500 index `^GSPC`** (`data/raw/prices/_market_index/gspc.csv`, Yahoo Finance, daily OHLC + Adj Close + volume, 2000-01-03 to 2026-09-11, 6,713 trading days) |
 
 The VNINDEX target is real and covers the index's full history back to its inception week, exceeding the paper's 2015-2024 window. It is stitched from two independent sources with a documented cross-check: the Zenodo VN-Index daily dataset (DOI 10.5281/zenodo.21873555, CC BY 4.0) for 2000-07-31 to 2024-12-16, and the vnstock VCI feed for 2024-12-17 to 2026-09-11. The two sources overlap on 1,566 trading days, on which the daily Close agrees to a mean absolute difference of 0.0006% and a maximum of 0.29% (no day above 0.5%); the last session matches the reported market close of 1,795.21 on 2026-09-11. Full provenance and the discrepancy check are in `docs/reports/2026-09-12_vnindex_data_provenance.md` (builder `scripts/etl_vn_index/build_vnindex.py`). Volume display units differ across sources (tagged in `vol_source`) and feed only the secondary volume target, which is not stitched across the join; the headline volatility target is Close-based and unaffected.
+
+The S&P 500 index target is the real `^GSPC` (Yahoo Finance, 2000-01-03 to 2026-09-11, 6,713 trading days, a single source, no stitch). It is cross-checked against the FRED `SP500` series on their 2,514-day overlap: Close agrees to a mean absolute difference of 0.00007% and a maximum of 0.12% (no day above 0.5%). Index volume is not comparable to a stock or ETF volume, so only OHLC is used (Close for the return-volatility target). Provenance in `data/raw/prices/_market_index/gspc_provenance.json` (builder `scripts/etl_vn_index/build_gspc.py`).
 
 ### 3.2 One supervised sample per window
 
