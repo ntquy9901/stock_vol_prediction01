@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>2026-09-12_complex_network_gbm_design</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+</head>
+<body>
+<nav id="TOC" role="doc-toc">
+<ul>
+<li><a href="#complex-network-topology-features-for-the-gamma-gbm-technical-design" id="toc-complex-network-topology-features-for-the-gamma-gbm-technical-design">Complex-Network
+Topology Features for the gamma-GBM: Technical Design</a>
+<ul>
+<li><a href="#purpose-and-the-honest-question" id="toc-purpose-and-the-honest-question">1. Purpose and the honest
+question</a></li>
+<li><a href="#the-papers-exact-method-stated-faithfully" id="toc-the-papers-exact-method-stated-faithfully">2. The paper’s exact
+method (stated faithfully)</a></li>
+<li><a href="#our-application-what-differs-and-why" id="toc-our-application-what-differs-and-why">3. Our application: what
+differs and why</a>
+<ul>
+<li><a href="#target-and-scoring-difference-the-honest-question" id="toc-target-and-scoring-difference-the-honest-question">3.1 Target
+and scoring difference (the honest question)</a></li>
+<li><a href="#window-size-deviation-documented" id="toc-window-size-deviation-documented">3.2 Window-size deviation
+(documented)</a></li>
+</ul></li>
+<li><a href="#graph-construction-matching-the-code" id="toc-graph-construction-matching-the-code">4. Graph construction
+(matching the code)</a></li>
+<li><a href="#the-seven-global-metrics-matching-the-code" id="toc-the-seven-global-metrics-matching-the-code">5. The seven global
+metrics (matching the code)</a></li>
+<li><a href="#feature-integration-matching-the-code" id="toc-feature-integration-matching-the-code">6. Feature integration
+(matching the code)</a></li>
+<li><a href="#evaluation-protocol-matching-the-code" id="toc-evaluation-protocol-matching-the-code">7. Evaluation protocol
+(matching the code)</a></li>
+<li><a href="#leakage-controls-and-honest-prior-expectation" id="toc-leakage-controls-and-honest-prior-expectation">8. Leakage
+controls and honest prior expectation</a></li>
+<li><a href="#pipeline-figure" id="toc-pipeline-figure">9. Pipeline
+figure</a></li>
+<li><a href="#go-no-go-for-the-advisor" id="toc-go-no-go-for-the-advisor">10. Go / no-go for the
+advisor</a></li>
+</ul></li>
+</ul>
+</nav>
+<h1 id="complex-network-topology-features-for-the-gamma-gbm-technical-design">Complex-Network
+Topology Features for the gamma-GBM: Technical Design</h1>
+<p><strong>Date:</strong> 2026-09-12 <strong>Status:</strong>
+DESIGN-BEFORE-RUN (for advisor review; the experiment is NOT yet run)
+<strong>Scope:</strong> How we adapt the Complexity-2026 complex-network
+method as market-level features for our per-stock daily gamma-GBM
+volatility model. <strong>Implementation under review:</strong>
+<code>scripts/eda/complex_network_gbm.py</code> <strong>Pipeline
+figure:</strong>
+<code>docs/paper/figures/fig_complex_network_pipeline.png</code></p>
+<p>Source paper: N-K-K. Nguyen, H-T. Dinh, Q. Nguyen, “Complex Network
+Built From Stock Price Returns and Volumes to Predict Market Volatility
+and Volume,” <em>Complexity</em>, 2026. DOI 10.1155/cplx/5670093.
+Framework figure:
+<code>docs/experement_guide/cplx5670093-fig-0001-m.jpg</code>.</p>
+<hr />
+<h2 id="purpose-and-the-honest-question">1. Purpose and the honest
+question</h2>
+<p>The paper builds time-varying financial networks from combined
+return-and-volume correlations and shows that GLOBAL network-topology
+metrics predict one-month-ahead VNIndex volatility. This document
+specifies how we test whether the SAME topology metrics add incremental
+value to our own per-stock daily gamma-GBM, and it fixes every design
+choice BEFORE running so the advisor can approve or reject the
+protocol.</p>
+<p>The design mirrors the code exactly. Where our application deviates
+from the paper (target, scoring, window sizes), the deviation is stated
+explicitly with its rationale.</p>
+<hr />
+<h2 id="the-papers-exact-method-stated-faithfully">2. The paper’s exact
+method (stated faithfully)</h2>
+<p>Reference: paper Section 2 (Methodology), pages 2-8; framework in
+Figure 1.</p>
+<p><strong>Data.</strong> HOSE (Ho Chi Minh City Stock Exchange), 2015
+to end of 2024, 1750 trading days. Liquidity filter: exclude stocks with
+average daily volume below 10,000 shares or with more than 70%
+trading-day gaps; 279 stocks of 1679 survive. For each stock and day the
+paper records the log return <code>r_it = ln S_it - ln S_{i,t-1}</code>
+and the log volume <code>ln(V_i(t))</code>. VNIndex is the market target
+series.</p>
+<p><strong>Rolling window and network construction (Section
+2.2).</strong> A sliding window spans <code>ΔT = 125</code> trading days
+(approximately 6 months) and is shifted forward by <code>L = 21</code>
+trading days (approximately 1 month). Within each window, for the N
+surviving stocks:</p>
+<ol type="1">
+<li>Compute the return correlation matrix <code>ρ^R</code> and the
+log-volume correlation matrix <code>ρ^V</code> (Pearson).</li>
+<li>Blend them: <code>ρ_mix = α · ρ^R + (1 - α) · ρ^V</code>, with
+<code>α ∈ [0, 1]</code> controlling the return-vs-volume weight. The
+paper’s optimal weight for volatility is <code>α = 0.7</code> (paper eq.
+1).</li>
+<li>Build a network by one of three filters: <strong>Threshold</strong>
+(undirected edge if <code>|ρ_mix| ≥ τ</code>), <strong>MST</strong>
+(Kruskal on distance <code>d_ij = sqrt(2(1 - ρ_ij))</code>), or
+<strong>Top-k</strong> (each node keeps its k highest-correlation
+neighbours, k = 5). The paper reports <strong>Threshold is best for
+volatility</strong>.</li>
+</ol>
+<p><strong>Seven global topology metrics (Section 2.3).</strong> From
+each network the paper extracts a standardized set of seven metrics:
+Density, Average Degree, Average Clustering Coefficient, Average Weight
+(mean <code>|corr|</code> over edges), Diameter (of the largest
+connected component), Average Betweenness Centrality, Average
+Eigenvector Centrality.</p>
+<p><strong>Targets and models (Sections 2.4, 2.5).</strong> Each window
+yields one feature-target pair. The three market-level targets over the
+next <code>L = 21</code> days are: average VNIndex log return, average
+log volume, and the standard deviation of log returns (volatility).
+Models are Linear Regression and Random Forest under walk-forward
+validation, scored by <code>R^2</code> and RMSE.</p>
+<p><strong>Headline result.</strong> Threshold + Random Forest at
+<code>α = 0.7</code> gives volatility <code>R^2 ≈ 0.563</code> and
+volume <code>R^2 ≈ 0.95</code>. Mechanism claim (Section 3.6,
+Discussion): surges in network density and centrality precede heightened
+market volatility, interpreted as market synchronization / a
+systemic-risk regime where idiosyncratic risk is replaced by systemic
+risk.</p>
+<hr />
+<h2 id="our-application-what-differs-and-why">3. Our application: what
+differs and why</h2>
+<h3 id="target-and-scoring-difference-the-honest-question">3.1 Target
+and scoring difference (the honest question)</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Paper (Complexity-2026)</th>
+<th>Our application</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prediction unit</td>
+<td>MARKET-LEVEL (VNIndex), one series</td>
+<td>PER-STOCK, every ticker in the panel</td>
+</tr>
+<tr>
+<td>Horizon / frequency</td>
+<td>one-month-ahead (21-day), one value per window</td>
+<td>daily, <code>h ∈ {1, 5, 10, 22}</code> steps ahead</td>
+</tr>
+<tr>
+<td>Target</td>
+<td>avg return / avg log volume / return std-dev</td>
+<td>Parkinson variance <code>pk_{i,t+h}</code></td>
+</tr>
+<tr>
+<td>Predictors</td>
+<td>7 topology metrics ALONE</td>
+<td>9 own-history features + the 7 topology metrics</td>
+</tr>
+<tr>
+<td>Score</td>
+<td><code>R^2</code>, RMSE</td>
+<td>pooled per-observation QLIKE + date-clustered Diebold-Mariano</td>
+</tr>
+<tr>
+<td>Question</td>
+<td>Do topology features explain market volatility?</td>
+<td>Do topology features add INCREMENTAL QLIKE to own-history GBM?</td>
+</tr>
+</tbody>
+</table>
+<p>The paper answers an explanatory question (“can topology alone
+explain market volatility?”, scored by <code>R^2</code>). We answer a
+different, stricter question: do these market-level topology features,
+broadcast to every stock, beat the model’s own history on our
+loss-of-record (QLIKE) with a significance test that respects
+cross-sectional dependence (date-clustered DM)?</p>
+<p><strong>Why QLIKE + DM incremental test is the honest
+question.</strong> A high <code>R^2</code> for market volatility does
+not imply the features help a strong per-stock forecaster. Our gamma-GBM
+already encodes each stock’s own volatility persistence; the only
+defensible claim is that topology adds signal ON TOP of that. QLIKE is
+our scoring loss of record for volatility (gamma deviance equals QLIKE
+up to a constant, so the GBM trains and is scored on the same
+objective), and the date-clustered DM collapses each day’s cross-section
+to one value before testing so that many tickers sharing a date are not
+counted as independent observations. <code>R^2</code> on a single market
+series cannot make the incremental claim; QLIKE-vs-GBM under DM can.</p>
+<h3 id="window-size-deviation-documented">3.2 Window-size deviation
+(documented)</h3>
+<p>Our implementation uses <code>WIN = 66</code> and
+<code>STEP = 22</code>, NOT the paper’s <code>ΔT = 125</code> /
+<code>L = 21</code>.</p>
+<p>Quoting the code
+(<code>scripts/eda/complex_network_gbm.py</code>):</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/complex_network_gbm.py</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>WIN <span class="op">=</span> <span class="dv">66</span>          <span class="co"># trailing window ΔT = 3 months at 22 trading days/month (our monthly convention;</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#                   paper used 125 ~= 6 months, we align with the project&#39;s month=22 features)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>STEP <span class="op">=</span> <span class="dv">22</span>         <span class="co"># recompute + slide by one month = 22 trading days, forward-fill in between</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>THR <span class="op">=</span> <span class="fl">0.5</span>         <span class="co"># threshold tau on |combined corr| (paper &quot;Threshold&quot; network; best for volatility)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>ALPHA <span class="op">=</span> <span class="fl">0.7</span>       <span class="co"># combined = ALPHA*return-corr + (1-ALPHA)*log-volume-corr (paper&#39;s optimal alpha=0.7)</span></span></code></pre></div>
+<p><strong>Rationale.</strong> The project’s convention is 1 month = 22
+trading days. <code>har_monthly</code> and <code>volume_zscore_22</code>
+both use a 22-day month. We therefore set the trailing correlation
+window to <code>ΔT = 3 months = 66 trading days</code> and recompute /
+slide the network by one month = <code>22 trading days</code>,
+forward-filling the metrics on the days in between. This aligns the
+topology window with the project’s monthly features rather than
+importing the paper’s 125/21 calendar. Everything else
+(<code>α = 0.7</code>, <code>τ = 0.5</code>, the 7 metrics, combined
+return+volume correlation, causal construction, forward-fill) matches
+the paper.</p>
+<hr />
+<h2 id="graph-construction-matching-the-code">4. Graph construction
+(matching the code)</h2>
+<p>Quoting
+<code>scripts/eda/complex_network_gbm.py::build_topo</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/complex_network_gbm.py</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_topo(frames, market):</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    ret <span class="op">=</span> pd.DataFrame({tk: d.set_index(<span class="st">&quot;date&quot;</span>)[<span class="st">&quot;daily_return&quot;</span>] <span class="cf">for</span> tk, d <span class="kw">in</span> frames.items()}).sort_index()</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    vcol <span class="op">=</span> <span class="st">&quot;volume_zscore_22&quot;</span>                                   <span class="co"># log-volume proxy (normalised volume)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    vol <span class="op">=</span> pd.DataFrame({tk: d.set_index(<span class="st">&quot;date&quot;</span>)[vcol] <span class="cf">for</span> tk, d <span class="kw">in</span> frames.items()</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">if</span> vcol <span class="kw">in</span> d.columns}).sort_index()</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    dates <span class="op">=</span> ret.index</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> {}</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(WIN, <span class="bu">len</span>(dates), STEP):</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        d0 <span class="op">=</span> dates[i]</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        Rw <span class="op">=</span> ret.iloc[i <span class="op">-</span> WIN:i].dropna(axis<span class="op">=</span><span class="dv">1</span>, thresh<span class="op">=</span><span class="bu">int</span>(WIN <span class="op">*</span> <span class="fl">0.8</span>))</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        Vw <span class="op">=</span> vol.iloc[i <span class="op">-</span> WIN:i].dropna(axis<span class="op">=</span><span class="dv">1</span>, thresh<span class="op">=</span><span class="bu">int</span>(WIN <span class="op">*</span> <span class="fl">0.8</span>))</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        common <span class="op">=</span> Rw.columns.intersection(Vw.columns)            <span class="co"># same tickers to combine the two matrices</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(common) <span class="op">&lt;</span> <span class="dv">20</span>:</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        rc <span class="op">=</span> np.nan_to_num(Rw[common].corr().to_numpy())<span class="op">;</span> vc <span class="op">=</span> np.nan_to_num(Vw[common].corr().to_numpy())</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        combined <span class="op">=</span> ALPHA <span class="op">*</span> rc <span class="op">+</span> (<span class="dv">1</span> <span class="op">-</span> ALPHA) <span class="op">*</span> vc                <span class="co"># paper: alpha-weighted combined corr matrix</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        rows[d0] <span class="op">=</span> global_feats(combined)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    F <span class="op">=</span> pd.DataFrame.from_dict(rows, orient<span class="op">=</span><span class="st">&quot;index&quot;</span>, columns<span class="op">=</span>TOPO).reindex(dates).ffill()</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> F</span></code></pre></div>
+<p>Construction notes, all matching the paper except the window sizes
+above:</p>
+<ul>
+<li><strong>Two correlation matrices on a common ticker set.</strong>
+The return matrix uses <code>daily_return</code>; the volume matrix uses
+<code>volume_zscore_22</code>. Only tickers present in BOTH windows
+(<code>common</code>) enter the blend, so the two matrices are
+conformable. A window needs at least 20 common tickers or it is
+skipped.</li>
+<li><strong>Volume proxy.</strong> Our stand-in for the paper’s
+log-volume is <code>volume_zscore_22</code> (normalised volume). This is
+a deviation in the volume variable name only; the correlation structure
+it captures is the co-movement of trading activity, which is the paper’s
+intent.</li>
+<li><strong>Blend <code>α = 0.7</code>.</strong>
+<code>combined = ALPHA * rc + (1 - ALPHA) * vc</code>, exactly the
+paper’s eq. (1) with the paper’s optimal <code>α</code> for
+volatility.</li>
+<li><strong>Threshold <code>τ = 0.5</code>.</strong> The network keeps
+an undirected edge wherever <code>|combined| ≥ 0.5</code> (paper’s best
+filter for volatility). MST and Top-k are the paper’s alternatives; this
+design uses Threshold only, as the paper found it best for
+volatility.</li>
+<li><strong>Causal / leakage-safe.</strong> For a network dated
+<code>d0 = dates[i]</code>, every correlation uses only rows
+<code>iloc[i - WIN : i]</code>, i.e. data strictly up to (not including)
+<code>d0</code>. Metrics are then forward-filled (<code>.ffill()</code>)
+to daily so each trading day inherits the most recent past network. No
+future window ever contributes to a day’s features.</li>
+</ul>
+<hr />
+<h2 id="the-seven-global-metrics-matching-the-code">5. The seven global
+metrics (matching the code)</h2>
+<p>Quoting
+<code>scripts/eda/complex_network_gbm.py::global_feats</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/complex_network_gbm.py</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> global_feats(C):</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;The paper&#39;s 7 global topology metrics of the Threshold graph from combined correlation matrix C:</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">    density, average degree, average clustering, average weight, diameter (largest component), average</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">    betweenness centrality, average eigenvector centrality.&quot;&quot;&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> C.shape[<span class="dv">0</span>]</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    absC <span class="op">=</span> np.<span class="bu">abs</span>(C)<span class="op">;</span> np.fill_diagonal(absC, <span class="fl">0.0</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> (absC <span class="op">&gt;</span> THR)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    G <span class="op">=</span> nx.from_numpy_array(A.astype(<span class="bu">float</span>))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    dens <span class="op">=</span> nx.density(G)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    avg_deg <span class="op">=</span> <span class="bu">float</span>(np.mean([d <span class="cf">for</span> _, d <span class="kw">in</span> G.degree()]))</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    clus <span class="op">=</span> nx.average_clustering(G)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    ew <span class="op">=</span> absC[A]</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    avg_w <span class="op">=</span> <span class="bu">float</span>(ew.mean()) <span class="cf">if</span> ew.size <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> G.number_of_edges():</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        H <span class="op">=</span> G.subgraph(<span class="bu">max</span>(nx.connected_components(G), key<span class="op">=</span><span class="bu">len</span>))</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        diam <span class="op">=</span> <span class="bu">float</span>(nx.diameter(H)) <span class="cf">if</span> H.number_of_nodes() <span class="op">&gt;</span> <span class="dv">1</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        diam <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    betw <span class="op">=</span> <span class="bu">float</span>(np.mean(<span class="bu">list</span>(nx.betweenness_centrality(G).values()))) <span class="cf">if</span> n <span class="op">&gt;</span> <span class="dv">2</span> <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        eig <span class="op">=</span> <span class="bu">float</span>(np.mean(<span class="bu">list</span>(nx.eigenvector_centrality_numpy(G).values())))</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span>:</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        eig <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [dens, avg_deg, clus, avg_w, diam, betw, eig]</span></code></pre></div>
+<p><code>TOPO = [&quot;dens&quot;, &quot;avg_deg&quot;, &quot;clus&quot;, &quot;avg_w&quot;, &quot;diam&quot;, &quot;betw&quot;, &quot;eig&quot;]</code>.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature (code)</th>
+<th>Metric</th>
+<th>One-line meaning / formula</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>dens</code></td>
+<td>Density</td>
+<td>actual edges / maximum possible edges; overall interconnectedness
+(market integration).</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>avg_deg</code></td>
+<td>Average Degree</td>
+<td>mean node degree; average number of co-movement links per
+stock.</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>clus</code></td>
+<td>Average Clustering Coefficient</td>
+<td>mean fraction of a node’s neighbours that are themselves linked;
+local herding / sector cohesion.</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>avg_w</code></td>
+<td>Average Weight</td>
+<td>mean <code>|corr|</code> over the edges that pass the threshold;
+average strength of retained links.</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>diam</code></td>
+<td>Diameter</td>
+<td>longest shortest path in the largest connected component; network
+spread / fragmentation.</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>betw</code></td>
+<td>Average Betweenness Centrality</td>
+<td>mean node betweenness; extent to which nodes act as bridges on
+shortest paths (contagion pathways).</td>
+</tr>
+<tr>
+<td>7</td>
+<td><code>eig</code></td>
+<td>Average Eigenvector Centrality</td>
+<td>mean eigenvector centrality; influence of nodes via connection to
+other well-connected nodes (core hubs).</td>
+</tr>
+</tbody>
+</table>
+<p>These seven metrics are GLOBAL: each is a single scalar per day
+describing the whole market network. There is one 7-vector per day, and
+it is broadcast IDENTICALLY to every stock on that day (Section 6).</p>
+<hr />
+<h2 id="feature-integration-matching-the-code">6. Feature integration
+(matching the code)</h2>
+<p>The topology 7-vector is merged onto every ticker frame by date and
+then fed to the GBM alongside the own-history block. Quoting
+<code>scripts/eda/complex_network_gbm.py::main</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/complex_network_gbm.py</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    F <span class="op">=</span> build_topo(frames, market)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    Fr <span class="op">=</span> F.reset_index().rename(columns<span class="op">=</span>{<span class="st">&quot;index&quot;</span>: <span class="st">&quot;date&quot;</span>})</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> tk <span class="kw">in</span> <span class="bu">list</span>(frames):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>        frames[tk] <span class="op">=</span> frames[tk].merge(Fr, on<span class="op">=</span><span class="st">&quot;date&quot;</span>, how<span class="op">=</span><span class="st">&quot;left&quot;</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> h <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">22</span>):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> FM.panel(frames, {}, h)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> c <span class="kw">in</span> TOPO:</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            a[c] <span class="op">=</span> a[c].ffill().fillna(<span class="fl">0.0</span>) <span class="cf">if</span> c <span class="kw">in</span> a <span class="cf">else</span> <span class="fl">0.0</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        embargo <span class="op">=</span> pd.Timedelta(days<span class="op">=</span><span class="bu">int</span>(h <span class="op">*</span> <span class="fl">1.6</span>) <span class="op">+</span> <span class="dv">5</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        models <span class="op">=</span> {<span class="st">&quot;GBM&quot;</span>: FM.OWN, <span class="st">&quot;GBM+topo&quot;</span>: FM.OWN <span class="op">+</span> TOPO}</span></code></pre></div>
+<ul>
+<li><strong>OWN block (9 features).</strong> From
+<code>full_matrix.py</code>:
+<code>OWN = HAR + [&quot;rq&quot;, &quot;mr_change&quot;, &quot;mr_slope5&quot;, &quot;mr_slope10&quot;, &quot;mr_dev5&quot;, &quot;mr_z22&quot;]</code>,
+where <code>HAR = [&quot;har_daily&quot;, &quot;har_weekly&quot;, &quot;har_monthly&quot;]</code>.
+These are own-history only (no market or volume scalar).</li>
+<li><strong>GBM (baseline):</strong> gamma
+<code>HistGradientBoostingRegressor</code> on the 9 OWN features.</li>
+<li><strong>GBM+topo (treatment):</strong> the same GBM on OWN + the 7
+topology features = <strong>16-dim</strong> input. The topology block is
+identical across stocks on a given date; the model must find incremental
+value from a market-level regime signal.</li>
+<li><strong>Ensemble and floor.</strong> Predictions are averaged over 3
+seeds (<code>FM.SEEDS = (0, 1, 2)</code>) and floored at
+<code>FL = QLIKE_FLOOR = 1e-8</code>.</li>
+</ul>
+<p>The estimator, quoted from
+<code>scripts/eda/full_matrix.py::gbm</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/full_matrix.py</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> gbm(tr, te, cols, seed):</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> HistGradientBoostingRegressor(loss<span class="op">=</span><span class="st">&quot;gamma&quot;</span>, max_iter<span class="op">=</span><span class="dv">300</span>, learning_rate<span class="op">=</span><span class="fl">0.05</span>, max_leaf_nodes<span class="op">=</span><span class="dv">31</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                                      l2_regularization<span class="op">=</span><span class="fl">1.0</span>, random_state<span class="op">=</span>seed)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    m.fit(tr[cols].to_numpy(<span class="bu">float</span>), np.maximum(tr[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>), FL))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.maximum(m.predict(te[cols].to_numpy(<span class="bu">float</span>)), FL)</span></code></pre></div>
+<p>The gamma loss is chosen because gamma deviance equals QLIKE up to a
+constant, so the model is trained and scored on the same volatility
+objective.</p>
+<hr />
+<h2 id="evaluation-protocol-matching-the-code">7. Evaluation protocol
+(matching the code)</h2>
+<p>Quoting the walk-forward loop from
+<code>scripts/eda/complex_network_gbm.py::main</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scripts/eda/complex_network_gbm.py</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>        models <span class="op">=</span> {<span class="st">&quot;GBM&quot;</span>: FM.OWN, <span class="st">&quot;GBM+topo&quot;</span>: FM.OWN <span class="op">+</span> TOPO}</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>        preds <span class="op">=</span> {m: [] <span class="cf">for</span> m <span class="kw">in</span> models}<span class="op">;</span> yy, dts <span class="op">=</span> [], []</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(S1.FOLDS) <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>            ts, tend <span class="op">=</span> pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>            tr <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> S1.TRAIN_START) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> ts <span class="op">-</span> embargo)]<span class="op">;</span> te <span class="op">=</span> a[(a.date <span class="op">&gt;=</span> ts) <span class="op">&amp;</span> (a.date <span class="op">&lt;</span> tend)]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="bu">len</span>(te) <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> <span class="bu">len</span>(tr) <span class="op">&lt;</span> min_rows:</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> m, cols <span class="kw">in</span> models.items():</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                preds[m].append(np.mean([FM.gbm(tr, te, cols, s) <span class="cf">for</span> s <span class="kw">in</span> FM.SEEDS], <span class="dv">0</span>))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>            yy.append(te[<span class="st">&quot;y&quot;</span>].to_numpy(<span class="bu">float</span>))<span class="op">;</span> dts.append(te[<span class="st">&quot;date&quot;</span>].to_numpy())</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> np.concatenate(yy)<span class="op">;</span> dates <span class="op">=</span> np.concatenate(dts)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>        e <span class="op">=</span> {m: M.per_obs_qlike(y, np.concatenate(preds[m]), floor<span class="op">=</span>FL) <span class="cf">for</span> m <span class="kw">in</span> models}</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        q <span class="op">=</span> {m: <span class="bu">float</span>(np.mean(e[m])) <span class="cf">for</span> m <span class="kw">in</span> models}</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        p <span class="op">=</span> ST.date_clustered_dm(e[<span class="st">&quot;GBM+topo&quot;</span>], e[<span class="st">&quot;GBM&quot;</span>], dates, h)[<span class="st">&quot;p_value&quot;</span>]</span></code></pre></div>
+<ul>
+<li><strong>Expanding walk-forward folds.</strong> <code>S1.FOLDS</code>
+(from <code>vn_gbm_graph_stage1.py</code>) are semi-annual boundaries
+<code>[&quot;2022-07-01&quot;, &quot;2023-01-01&quot;, ..., &quot;2026-01-01&quot;, &quot;2100-01-01&quot;]</code>;
+training always starts at <code>S1.TRAIN_START = &quot;2015-01-01&quot;</code> and
+expands. Each fold trains on <code>[TRAIN_START, ts - embargo)</code>
+and tests on <code>[ts, tend)</code>.</li>
+<li><strong>Target-horizon embargo.</strong> A gap of
+<code>int(h * 1.6) + 5</code> days is removed at the train/test boundary
+so the shifted target <code>pk_{t+h}</code> from late-train rows cannot
+leak into the test window.</li>
+<li><strong>Minimum train rows.</strong> <code>min_rows = 30000</code>
+(S&amp;P 500) or <code>3000</code> (HOSE); folds with too little history
+or an empty test are skipped.</li>
+<li><strong>Pooled per-observation QLIKE.</strong>
+<code>M.per_obs_qlike</code> (from
+<code>submission/soict_lstm_gat/metrics.py</code>) clamps both
+<code>y</code> and <code>p</code> to the shared floor <code>FL</code>,
+forms <code>r = y / p</code>, and returns <code>r - log(r) - 1</code>
+per observation. The reported number is the mean over all pooled test
+observations.</li>
+<li><strong>Date-clustered Diebold-Mariano.</strong>
+<code>ST.date_clustered_dm</code> (from
+<code>baselines/2026-08-21_har_anchored_residual/code/stats.py</code>)
+collapses each loss series to one cross-sectional mean per unique date,
+then runs the HLN-corrected DM with the HAC lag set to
+<code>h - 1</code>. This removes the cross-sectional dependence of many
+tickers sharing a date. <code>mean_diff &lt; 0</code> favours GBM+topo.
+We report
+<code>gain_pct = (QLIKE_GBM - QLIKE_GBM+topo) / QLIKE_GBM * 100</code>
+and the DM p-value at each <code>h ∈ {1, 5, 10, 22}</code>.</li>
+<li><strong>Markets.</strong> Run on HOSE and S&amp;P 500 (the driver
+takes the market as <code>sys.argv[1]</code>).</li>
+</ul>
+<p>Output is written to
+<code>results/gamma_gbm/complex_network_&lt;market&gt;.json</code>.</p>
+<hr />
+<h2 id="leakage-controls-and-honest-prior-expectation">8. Leakage
+controls and honest prior expectation</h2>
+<p><strong>Leakage controls (each also a review
+checkpoint):</strong></p>
+<ol type="1">
+<li><strong>Causal network windows.</strong> Every correlation matrix
+uses only <code>iloc[i - WIN : i]</code>, strictly before the network
+date; topology is forward-filled, never back-filled.</li>
+<li><strong>Train-only fold boundary.</strong> The GBM trains on
+<code>[TRAIN_START, ts - embargo)</code> and is evaluated on the
+disjoint <code>[ts, tend)</code>; the embargo covers the horizon so the
+shifted target cannot cross the boundary.</li>
+<li><strong>Shared positivity floor.</strong> GBM and GBM+topo are
+scored with the identical <code>FL = 1e-8</code> clamp inside
+<code>per_obs_qlike</code>, so no model gains from a different
+floor.</li>
+<li><strong>Identical basis for DM.</strong> Both loss series are
+aggregated over the SAME <code>dates</code> array before the DM
+test.</li>
+<li><strong>Broadcast is market-level, not cross-sectional
+leakage.</strong> The 7 metrics are the same for every stock on a date
+and are built only from past windows, so a stock never sees its own
+future or another stock’s contemporaneous target.</li>
+</ol>
+<p><strong>Honest prior.</strong> Market-level regime features have NOT
+beaten own-history on our per-stock QLIKE before: the market-factor /
+market-aggregate feature was NO-GO or unstable on HOSE in earlier runs
+(see <code>scripts/eda/full_matrix.py</code>’s <code>GBM+market</code>
+and <code>scripts/eda/vn_gbm_graph_stage1.py</code>’s <code>M1</code>).
+Prior probability that a broadcast market feature helps per-stock QLIKE
+is therefore low. What is new here is the specific combined
+return+volume, time-varying network topology (not a single
+market-volatility scalar): it encodes market synchronization / breadth
+in a way a single aggregate does not, so it is worth a rigorous test.
+The expectation is skeptical, and the outcome (help or NO-GO under DM)
+will be reported honestly after the advisor approves running it.</p>
+<hr />
+<h2 id="pipeline-figure">9. Pipeline figure</h2>
+<p><code>docs/paper/figures/fig_complex_network_pipeline.png</code>
+(generator:
+<code>docs/paper/figures/generate_complex_network_pipeline.py</code>,
+matplotlib, dpi 180) shows the full pipeline:</p>
+<p>Part A (market-level topology, causal): N-stock returns + volume over
+a trailing <code>ΔT = 66</code> day window -&gt; return correlation
+matrix <code>ρ^R</code> and volume correlation matrix <code>ρ^V</code>
+-&gt; blend <code>ρ_mix = α ρ^R + (1 - α) ρ^V</code> with
+<code>α = 0.7</code> -&gt; Threshold network (<code>τ = 0.5</code>)
+-&gt; 7 global metrics -&gt; forward-fill to daily (recompute every
+<code>STEP = 22</code> days) and broadcast identically to all
+stocks.</p>
+<p>Part B (per-stock GBM): the broadcast 7-vector is concatenated with
+the per-stock OWN(9) feature vector to form a 16-dim input -&gt;
+gamma-GBM (3-seed ensemble, floor FL) -&gt; Parkinson-variance forecast
+<code>pk_{i,t+h}</code> for <code>h ∈ {1, 5, 10, 22}</code> -&gt; QLIKE
+and date-clustered DM of GBM+topo vs GBM. The legend states the
+dimensions: GBM uses <code>R^9</code> (OWN); GBM+topo uses
+<code>R^16</code> (OWN plus 7 topology). Both markets (HOSE and S&amp;P
+500) are trained.</p>
+<hr />
+<h2 id="go-no-go-for-the-advisor">10. Go / no-go for the advisor</h2>
+<p>Approve running <code>scripts/eda/complex_network_gbm.py</code> on
+HOSE and S&amp;P 500 if the design above is acceptable, in
+particular:</p>
+<ul>
+<li>the window-size deviation (<code>WIN = 66</code>,
+<code>STEP = 22</code>) aligned to the project’s 22-day month, versus
+the paper’s 125/21;</li>
+<li>the volume proxy <code>volume_zscore_22</code> in place of raw log
+volume;</li>
+<li>Threshold-only network at <code>τ = 0.5</code>,
+<code>α = 0.7</code>;</li>
+<li>the incremental QLIKE + date-clustered DM test (GBM+topo vs GBM) as
+the decision metric, replacing the paper’s <code>R^2</code> on the
+market series.</li>
+</ul>
+<p>The experiment is NOT run in this document; it waits for advisor
+approval.</p>
+</body>
+</html>
