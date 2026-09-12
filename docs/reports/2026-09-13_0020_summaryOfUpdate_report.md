@@ -74,6 +74,44 @@ documented negative result / for the faithful paper replication (Experiment A). 
 (`rq`, `har_weekly` VIF ≈ 127–130) is harmless for the tree model and those features carry real signal (high
 MI), so they are kept.
 
+## 3b. SP500 results and the cross-market contrast
+
+SP500 was run with the same 6-feature pipeline (Exp B, feature screen, diagnostic; Exp A runs separately).
+
+### Experiment B — GBM(own) vs GBM+topo (pooled QLIKE, lower better)
+| Horizon | GBM | GBM+topo | gain % | DM p |
+|---|---|---|---|---|
+| h1  | 0.3570 | 0.3702 | −3.70 | 1.4e-05 (sig **worse**) |
+| h5  | 0.4116 | 0.4275 | −3.85 | 0.0024 (sig worse) |
+| h10 | 0.4307 | 0.4539 | −5.40 | 0.023 (sig worse) |
+| h22 | 0.4464 | 0.4826 | −8.11 | 0.185 |
+
+### Feature screen — graph vs own-history mutual information
+| Horizon | mean MI graph | mean MI own/HAR | ratio |
+|---|---|---|---|
+| h1 | 0.110 | 0.122 | 1.1× |
+| h5 | 0.108 | 0.084 | 0.8× |
+| h10 | 0.110 | 0.072 | 0.7× |
+| h22 | 0.101 | 0.061 | 0.6× |
+
+On SP500 the graph features have **real in-sample association**: MI comparable to (and at h5–h22 above) the
+own-history mean, Pearson 0.1–0.23 and Spearman up to 0.23 (`dens`, `clus`, `betw`, `avg_w`). Diagnostic
+(final fold): adding topology lowers **train** QLIKE (−0.01 to −0.17) but raises **test** QLIKE (+0.005 to
++0.051) at h1/h5/h10 — the overfit signature. `dens`/`avg_deg` VIF ≈ 1900–2000 (near-perfect duplicates).
+
+### Cross-market conclusion
+- **HOSE (thin VN market):** topology is essentially noise — MI 3–5× below own-history, Pearson ≈ 0,
+  Spearman ≤ 0.11. GBM: no horizon benefits (h1 sig worse, h5–h22 ties).
+- **SP500 (large liquid market):** topology carries substantial in-sample association (high MI, Pearson up to
+  0.23), yet adding it **still degrades OOS QLIKE at every horizon and significantly so at h1/h5/h10** — more
+  than on HOSE.
+- **Lesson:** association is not predictive value. The market-level topology metrics (one market-wide series
+  broadcast onto every stock, extreme collinearity VIF≈2000) co-move with volatility regimes in-sample and the
+  tree model fits that, but it adds no generalisable per-stock cross-sectional signal and hurts out of sample.
+  This is precisely why the out-of-sample Diebold–Mariano test — not the mutual-information screen alone — is
+  the deciding criterion. It reinforces the thesis's standing finding that graph/topology features add no OOS
+  value over own-history for volatility forecasting.
+
 ## 4. Artifacts
 - `results/gamma_gbm/complex_network_hose.json` (Exp B), `..._index_hose.json` (Exp A), `..._hose_screen.json`
   (feature screen), `..._hose_diag.json` (permutation importance).
