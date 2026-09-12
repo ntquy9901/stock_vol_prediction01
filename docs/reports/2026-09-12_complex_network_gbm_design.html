@@ -433,20 +433,30 @@ Section 2.4 directly.</p>
 </tr>
 <tr>
 <td><strong>Market index (target series)</strong></td>
-<td><strong>real VNIndex</strong>
-(<code>data/raw/prices/_market_index/vnindex.csv</code>, vnstock VCI,
-daily close + volume, 2017-2024, 2000 trading days)</td>
+<td><strong>real VNINDEX</strong>
+(<code>data/raw/prices/_market_index/vnindex.csv</code>, daily OHLC +
+volume, 2000-07-31 to 2026-09-11, 6,361 trading days)</td>
 <td><strong>S&amp;P 500 index</strong> (<code>^GSPC</code> daily close +
 volume; if the feed is unavailable, a cap/equal-weight proxy built from
 the 498-stock panel, documented as a deviation)</td>
 </tr>
 </tbody>
 </table>
-<p>The VNIndex has already been fetched (2017-01-03 to 2024-12-31, 2000
-rows) so the target series is real, not a proxy. The community vnstock
-feed caps 1-day history at 8 years, so HOSE Experiment A runs on
-2017-2024 (the paper used 2015-2024; the 2 missing years are a
-documented data-availability limit, not a design choice).</p>
+<p>The VNINDEX target is real and covers the index’s full history back
+to its inception week, exceeding the paper’s 2015-2024 window. It is
+stitched from two independent sources with a documented cross-check: the
+Zenodo VN-Index daily dataset (DOI 10.5281/zenodo.21873555, CC BY 4.0)
+for 2000-07-31 to 2024-12-16, and the vnstock VCI feed for 2024-12-17 to
+2026-09-11. The two sources overlap on 1,566 trading days, on which the
+daily Close agrees to a mean absolute difference of 0.0006% and a
+maximum of 0.29% (no day above 0.5%); the last session matches the
+reported market close of 1,795.21 on 2026-09-11. Full provenance and the
+discrepancy check are in
+<code>docs/reports/2026-09-12_vnindex_data_provenance.md</code> (builder
+<code>scripts/etl_vn_index/build_vnindex.py</code>). Volume display
+units differ across sources (tagged in <code>vol_source</code>) and feed
+only the secondary volume target, which is not stitched across the join;
+the headline volatility target is Close-based and unaffected.</p>
 <h3 id="one-supervised-sample-per-window">3.2 One supervised sample per
 window</h3>
 <p>For each window end <code>i</code> (stepping by <code>STEP</code>

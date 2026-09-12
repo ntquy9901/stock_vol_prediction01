@@ -1,0 +1,35 @@
+{
+  "series": "VNINDEX",
+  "built_from": "two stitched sources with overlap cross-check",
+  "output_rows": 6361,
+  "date_start": "2000-07-31",
+  "date_end": "2026-09-11",
+  "stitch_boundary": "2024-12-17",
+  "sources": [
+    {
+      "name": "Zenodo 10.5281/zenodo.21873555 (VN-Index Daily Dataset for Volatility Forecasting 2000-2024)",
+      "license": "CC BY 4.0",
+      "covers": "2000-07-31..2024-12-16",
+      "role": "historical OHLC + volume"
+    },
+    {
+      "name": "vnstock VCI feed",
+      "license": "vnstock community",
+      "covers": "2024-12-17..latest",
+      "role": "recent supplement (community feed ~8-year cap)"
+    }
+  ],
+  "cross_check_close_zenodo_vs_vnstock": {
+    "overlap_n": 1566,
+    "overlap_start": "2018-09-13",
+    "overlap_end": "2024-12-16",
+    "close_pct_diff_mean": 0.0005602692362518938,
+    "close_pct_diff_max": 0.287448099648676,
+    "n_days_gt_0.1pct": 4,
+    "n_days_gt_0.5pct": 0,
+    "worst_day": "2018-11-13",
+    "worst_zenodo_close": 905.38,
+    "worst_vnstock_close": 907.99
+  },
+  "volume_note": "OHLC index points share one scale across sources (verified); volume DISPLAY UNIT differs (Zenodo 'K' vs vnstock raw shares), tagged in vol_source. The avg-log-volume target must not stitch across the boundary; the headline volatility target is Close-based and unaffected."
+}

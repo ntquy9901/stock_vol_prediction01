@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>VNINDEX data provenance and cross-check</title>
+  <style>
+
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+svg {
+height: auto;
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+white-space: pre-wrap;
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+border: none;
+border-top: 1px solid #1a1a1a;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+</style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">VNINDEX data provenance and cross-check</h1>
+</header>
+<h1 id="vnindex-daily-series-two-source-construction-and-cross-check">VNINDEX
+daily series: two-source construction and cross-check</h1>
+<p><strong>Date:</strong> 2026-09-12 <strong>Artifact:</strong>
+<code>data/raw/prices/_market_index/vnindex.csv</code> (6,361 trading
+days, 2000-07-31 to 2026-09-11) <strong>Builder:</strong>
+<code>scripts/etl_vn_index/build_vnindex.py</code> (tests:
+<code>scripts/etl_vn_index/test_build_vnindex.py</code>)
+<strong>Provenance record:</strong>
+<code>data/raw/prices/_market_index/vnindex_provenance.json</code></p>
+<p>This series is the market-index target for the complex-network
+volatility experiment (Complexity-2026 replication, Section 2.4). It is
+stitched from two independent sources and cross-checked on their
+overlap.</p>
+<h2 id="sources">1. Sources</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr>
+<th>Segment</th>
+<th>Source</th>
+<th>Coverage</th>
+<th>License</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Historical</td>
+<td>Zenodo DOI <a href="https://doi.org/10.5281/zenodo.21873555">10.5281/zenodo.21873555</a>,
+“VN-Index Daily Dataset for Volatility Forecasting (2000-2024)” (file
+<code>Dữ liệu Lịch sử VN Index.csv</code>, Investing.com-style
+export)</td>
+<td>2000-07-31 to 2024-12-16</td>
+<td>CC BY 4.0</td>
+</tr>
+<tr>
+<td>Recent supplement</td>
+<td>vnstock VCI feed
+(<code>Quote(symbol=&quot;VNINDEX&quot;, source=&quot;VCI&quot;)</code>)</td>
+<td>2024-12-17 to 2026-09-11</td>
+<td>vnstock community</td>
+</tr>
+</tbody>
+</table>
+<p>The stitch boundary is 2024-12-17: Zenodo supplies all dates before
+it, vnstock from it onward. The vnstock community feed caps 1-day
+history at about 8 years, so it can only fill the recent tail; Zenodo
+supplies the long history back to the index’s inception week (base value
+100 on 2000-07-28; the Zenodo file begins 2000-07-31).</p>
+<h2 id="cross-check-discrepancy-verification">2. Cross-check
+(discrepancy verification)</h2>
+<p><strong>Internal, source-vs-source.</strong> The two feeds overlap on
+1,566 trading days (2018-09-13 to 2024-12-16). Comparing the daily
+Close:</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Statistic</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mean absolute Close difference</td>
+<td>0.00056%</td>
+</tr>
+<tr>
+<td>Max absolute Close difference</td>
+<td>0.2874% (2018-11-13: Zenodo 905.38 vs vnstock 907.99)</td>
+</tr>
+<tr>
+<td>Days with difference &gt; 0.1%</td>
+<td>4 of 1,566</td>
+</tr>
+<tr>
+<td>Days with difference &gt; 0.5%</td>
+<td>0 of 1,566</td>
+</tr>
+</tbody>
+</table>
+<p>The two independent sources agree to within 0.29% on every
+overlapping day and to 0.0006% on average, so the stitch introduces no
+level break in the index-point series.</p>
+<p><strong>External anchor.</strong> The last stitched session
+(2026-09-11) has Close 1,795.21, matching the reported market close of
+1,795.21 that day (<a href="https://en.nhandan.vn/infographic-selling-pressure-spreads-vn-index-falls-below-1800-points-on-september-11-post166516.html">Nhân
+Dân</a>).</p>
+<h2 id="parsing-and-validation">3. Parsing and validation</h2>
+<ul>
+<li>The Zenodo export uses Vietnamese headers
+(<code>Ngày, Lần cuối, Mở, Cao, Thấp, KL, % Thay đổi</code>),
+<code>DD/MM/YYYY</code> dates, and volume in display units
+(<code>538.93K</code>, <code>1.2M</code>, or blank). The builder parses
+dates day-first, prices as floats, and volume via the <code>K/M/B</code>
+suffix into a share count.</li>
+<li><code>validate()</code> fails loud on non-monotonic or duplicate
+dates, non-positive or missing Close, and <code>high &lt; low</code>
+geometry. The stitched output passes all checks.</li>
+</ul>
+<h2 id="known-limitation-volume-display-unit">4. Known limitation:
+volume display unit</h2>
+<p>The Close/OHLC index points share one scale across both sources
+(verified in Section 2). The VOLUME display unit differs: the Zenodo
+“KL” column is in Investing.com display units while the vnstock feed
+reports raw share counts, a scale gap at the 2024-12-17 boundary. The
+<code>vol_source</code> column tags each row
+(<code>zenodo_K_units</code> before the boundary,
+<code>vnstock_raw_shares</code> after). The experiment’s headline target
+is the future index return-volatility, which is computed from Close and
+is unaffected. The secondary average-log-volume target must not stitch
+across the boundary; any window whose feature or target period straddles
+2024-12 is excluded for that target.</p>
+<h2 id="text-for-the-paper-data-section">5. Text for the paper (data
+section)</h2>
+<p>The VNINDEX daily series (2000-07-31 to 2026-09-11) is stitched from
+two sources: the Zenodo VN-Index daily dataset (DOI
+10.5281/zenodo.21873555, CC BY 4.0) for 2000-2024 and the vnstock VCI
+feed for the 2025-2026 tail. The two sources overlap on 1,566 trading
+days, on which the daily Close agrees to a mean absolute difference of
+0.0006% and a maximum of 0.29% (no day above 0.5%), so the join
+introduces no level break; the final session matches the reported market
+close. Volume display units differ across sources and are used only for
+the secondary volume target, which is not stitched across the join.</p>
+</body>
+</html>
