@@ -5,3 +5,4 @@ Traceback (most recent call last):
 ModuleNotFoundError: No module named 'paper_metrics_sp500'
 [checkpoint] wrote garch_sp500.json (1 horizons)
 [checkpoint] wrote full_compare_sp500.json (1 horizons)
+[checkpoint] wrote full_compare_sp500.json (2 horizons)
