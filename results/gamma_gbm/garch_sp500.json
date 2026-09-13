@@ -145,5 +145,54 @@
         "test_qlike": 6.009137039618679
       }
     }
+  },
+  "h22": {
+    "n": 499176,
+    "n_excluded": 2527,
+    "qlike": {
+      "HAR": 0.4849526029227968,
+      "GARCH": 6.410317955008419,
+      "GJR-GARCH": 6.398754454195727
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": -1221.844220728706,
+      "GJR-GARCH": -1219.4597607334406
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 0.009516437360231176,
+        "mean_diff": 5.947124593814382
+      },
+      "GJR-GARCH": {
+        "p_value": 0.009649137321845512,
+        "mean_diff": 5.935512129431774
+      }
+    },
+    "n_fallback": {
+      "GARCH": 59,
+      "GJR-GARCH": 43
+    },
+    "train_metrics": {
+      "HAR": 0.5966273685060082,
+      "GARCH": 0.6435472946535944,
+      "GJR-GARCH": 0.6368019548430267
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 0.5966273685060082,
+        "test_qlike": 0.4849526029227968
+      },
+      "GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.6435472946535944,
+        "test_qlike": 6.410317955008419
+      },
+      "GJR-GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.6368019548430267,
+        "test_qlike": 6.398754454195727
+      }
+    }
   }
 }

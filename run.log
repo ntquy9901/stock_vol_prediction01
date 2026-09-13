@@ -57,3 +57,34 @@ saved results/gamma_gbm/full_compare_sp500.json
 [checkpoint] wrote garch_sp500.json (1 horizons)
 [checkpoint] wrote garch_sp500.json (2 horizons)
 [checkpoint] wrote garch_sp500.json (3 horizons)
+[checkpoint] wrote garch_sp500.json (4 horizons)
+
+=== sp500 h1 (n=509,716, excluded=2,424) ===
+  GARCH      QLIKE 5.8991
+  GJR-GARCH  QLIKE 5.8957
+  HAR        QLIKE 0.3697
+  DM GARCH vs HAR: -1495.44% (p=0.000, mean_diff=+5.55e+00) | fallbacks=62
+  DM GJR-GARCH vs HAR: -1494.52% (p=0.000, mean_diff=+5.55e+00) | fallbacks=48
+
+=== sp500 h5 (n=507,732, excluded=2,420) ===
+  GARCH      QLIKE 0.8956
+  GJR-GARCH  QLIKE 5.9506
+  HAR        QLIKE 0.4362
+  DM GARCH vs HAR: -105.31% (p=0.000, mean_diff=+4.61e-01) | fallbacks=59
+  DM GJR-GARCH vs HAR: -1264.12% (p=0.000, mean_diff=+5.54e+00) | fallbacks=44
+
+=== sp500 h10 (n=505,128, excluded=2,539) ===
+  GARCH      QLIKE 6.0154
+  GJR-GARCH  QLIKE 6.0091
+  HAR        QLIKE 0.4612
+  DM GARCH vs HAR: -1204.16% (p=0.001, mean_diff=+5.57e+00) | fallbacks=50
+  DM GJR-GARCH vs HAR: -1202.82% (p=0.001, mean_diff=+5.57e+00) | fallbacks=43
+
+=== sp500 h22 (n=499,176, excluded=2,527) ===
+  GARCH      QLIKE 6.4103
+  GJR-GARCH  QLIKE 6.3988
+  HAR        QLIKE 0.4850
+  DM GARCH vs HAR: -1221.84% (p=0.010, mean_diff=+5.95e+00) | fallbacks=59
+  DM GJR-GARCH vs HAR: -1219.46% (p=0.010, mean_diff=+5.94e+00) | fallbacks=43
+
+saved results/gamma_gbm/garch_sp500.json
