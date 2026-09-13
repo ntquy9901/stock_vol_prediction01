@@ -141,6 +141,50 @@ trivial linear **time-trend** baseline (single feature = window ordinal, LinearR
 Conclusion: the positive idx_lnvol R² (incl. the SP500 RF +0.331) is a trend artifact, not evidence that
 topology predicts volume; topology adds no material skill on the volatility target on either market.
 
+## 3d. Causal market-index-volatility as a per-stock GBM feature (+ case-level diagnostic)
+
+`code/verify_index_vol_feature.py` builds a CAUSAL market-vol feature — the index's trailing 22-day realized
+volatility (std of its daily log-returns up to day t, known at t) — broadcast onto every stock, and tests
+GBM(own) vs GBM(own+idxvol). Index RETURN is excluded. Same walk-forward / pooled-QLIKE / DM protocol.
+
+| Horizon | HOSE gain% (DM p) | SP500 gain% (DM p) |
+|---|---|---|
+| h1  | −13.37 (0.308) | −0.98 (0.006 sig worse) |
+| h5  | −0.19 (0.009 sig worse) | −2.05 (0.055) |
+| h10 | −0.02 (0.87) | −3.06 (0.011 sig worse) |
+| h22 | +0.30 (0.123) | −7.04 (0.012 sig worse) |
+
+The causal market-vol feature does not help either market (significantly worse at several horizons). Reason:
+the market regime is already embedded in each stock's own HAR history; a market-level series has no
+cross-sectional variation, so it only adds a collinear regime dimension the GBM overfits.
+
+`code/diag_idxvol_cases.py` proves this at the case level (last fold, train-core / held-out validation / test).
+The overfit signature — idxvol's gain decays from train to val to test — is explicit on HOSE:
+
+| Horizon | train gain% | val gain% | test gain% |
+|---|---|---|---|
+| h1  | +0.02 | −0.22 | −0.10 |
+| h5  | +0.27 | +0.06 | −0.06 |
+| h10 | +0.35 | +0.19 | −0.10 |
+| h22 | +0.34 | +0.37 | +0.35 |
+
+Per-(ticker,day) worst cases in each split are in `docs/reports/2026-09-13_complex_network_hose_idxvol_cases.html`.
+
+## 3e. GBM feature audit — which features to keep/drop (per market)
+
+Audit across the screen + permutation + head-to-head JSONs (decided by OOS behaviour, not MI alone):
+- **KEEP both markets:** `har_daily`, `har_weekly`, `har_monthly` (the HAR trio).
+- **DROP both markets:** `rq` (collinear twin of `har_weekly`, VIF 125/21), all 6 topology metrics, and the
+  `idx_rv` market-vol add-on (all hurt or tie OOS).
+- **Market-specific (mean-reversion block `mr_change/mr_slope5/mr_slope10/mr_dev5/mr_z22`):** real signal on
+  **HOSE** (MI 0.05–0.17, low VIF) — keep; near noise-floor on **SP500** (MI 0.001–0.018, screen "drop") — drop.
+- **Collinear clusters:** {dens, avg_deg} VIF≈2000 (SP500) — duplicates; {har_weekly, rq} VIF≈125 (HOSE).
+
+Minimal non-redundant set — **SP500:** `{har_daily, har_weekly, har_monthly}`; **HOSE:** the HAR trio + the 5
+mean-reversion features (= own-history minus `rq`). Caveat: `FM.OWN` is the project-wide canonical feature set;
+these drops should be DM-verified (reduced set vs full own) before any project-wide change — screen MI is a
+filter, the DM test is the verdict (same association≠prediction lesson as topology).
+
 ## 4. Artifacts
 - `results/gamma_gbm/complex_network_hose.json` (Exp B), `..._index_hose.json` (Exp A), `..._hose_screen.json`
   (feature screen), `..._hose_diag.json` (permutation importance).

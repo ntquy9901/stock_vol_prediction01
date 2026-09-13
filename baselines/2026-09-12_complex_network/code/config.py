@@ -38,3 +38,9 @@ SCREEN_VIF_HI = 10.0       # mean VIF above this -> feature information is dupli
 # minimum causal training rows before a fold is screened -- mirrors run_gbm's fold gate so the screened
 # windows are exactly the windows the GBM fits (30000 for the large sp500 panel, 3000 elsewhere).
 SCREEN_MIN_TRAIN_ROWS = {"sp500": 30000, "default": 3000}
+
+# causal market-index volatility feature (trailing realized vol of the index) for the per-stock GBM add-on test
+IDX_RV_WINDOW = 22         # trailing window (days) for the index realized-vol feature = one project-month
+IDX_RV_MIN_PERIODS = 11    # min observations before the trailing index-vol is defined (else NaN, handled by GBM)
+IDXVOL_VAL_FRAC = 0.2      # fraction (by date) of the causal train window held out as validation in the case diag
+IDXVOL_CASE_K = 10         # number of worst/best per-(ticker,day) cases reported per split in the case diag
