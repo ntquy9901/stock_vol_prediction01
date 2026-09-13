@@ -1,0 +1,51 @@
+{
+  "h1": {
+    "n": 509716,
+    "n_excluded": 2424,
+    "qlike": {
+      "HAR": 0.3697454222548399,
+      "GARCH": 5.899066065148989,
+      "GJR-GARCH": 5.895670825987397
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": -1495.439918951362,
+      "GJR-GARCH": -1494.5216549358436
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 1.1239965263922302e-11,
+        "mean_diff": 5.551661464078237
+      },
+      "GJR-GARCH": {
+        "p_value": 1.1544019337589725e-11,
+        "mean_diff": 5.548227634620909
+      }
+    },
+    "n_fallback": {
+      "GARCH": 62,
+      "GJR-GARCH": 48
+    },
+    "train_metrics": {
+      "HAR": 0.3819889479760418,
+      "GARCH": 0.47844334121405085,
+      "GJR-GARCH": 0.47384242841732416
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 0.3819889479760418,
+        "test_qlike": 0.3697454222548399
+      },
+      "GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.47844334121405085,
+        "test_qlike": 5.899066065148989
+      },
+      "GJR-GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.47384242841732416,
+        "test_qlike": 5.895670825987397
+      }
+    }
+  }
+}
