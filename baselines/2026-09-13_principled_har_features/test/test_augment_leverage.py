@@ -26,9 +26,18 @@ def _frames(nt=25, n=195, seed=0):
 
 def test_feature_sets():
     s = A._sets()
-    assert s["own"] == A.FM.OWN
-    assert s["own+semi_neg"] == A.FM.OWN + ["semi_neg"]
-    assert s["own+semi"] == A.FM.OWN + ["semi_neg", "semi_pos"]
+    assert "rq" not in A.OWN and set(A.OWN) == set(A.FM.OWN) - {"rq"}   # rq dropped from baseline
+    assert s["own"] == A.OWN
+    assert s["own+semi_neg"] == A.OWN + ["semi_neg"]
+    assert s["own+semi"] == A.OWN + ["semi_neg", "semi_pos"]
+
+
+def test_own_set_single_source(monkeypatch):
+    """config.own_set drops OWN_DROP and appends OWN_ADD (the one place to edit for add/drop)."""
+    assert config.own_set(["a", "rq", "b"]) == ["a", "b"]              # default drops rq
+    monkeypatch.setattr(config, "OWN_DROP", ("x",))
+    monkeypatch.setattr(config, "OWN_ADD", ("semi_neg",))
+    assert config.own_set(["a", "x", "b"]) == ["a", "b", "semi_neg"]   # drop x, append semi_neg
 
 
 def test_run_smoke(monkeypatch):

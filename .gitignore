@@ -87,6 +87,7 @@ data/features/DEBUG_by_ticker/
 !notebooks/complex_network_sp500_colab.ipynb
 !notebooks/dy_spillover_sp500_colab.ipynb
 !notebooks/principled_har_sp500_colab.ipynb
+!notebooks/sp500_final_models_colab.ipynb
 
 # Colab data bundles (large, Yahoo redistribution-restricted) -- uploaded to Drive, never on git
 colab_bundle_*.zip

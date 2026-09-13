@@ -31,12 +31,13 @@ import stats as ST  # noqa: E402
 
 FL = FM.FL
 BASELINE = "own"
+OWN = config.own_set(FM.OWN)   # single source: baselines... config.OWN_DROP/OWN_ADD
 
 
 def _sets():
-    """Feature sets: baseline own, own+leverage, own+both signed semivariances."""
-    return {"own": FM.OWN, "own+semi_neg": FM.OWN + ["semi_neg"],
-            "own+semi": FM.OWN + ["semi_neg", "semi_pos"]}
+    """Feature sets: baseline own (no rq), own+leverage, own+both signed semivariances."""
+    return {"own": OWN, "own+semi_neg": OWN + ["semi_neg"],
+            "own+semi": OWN + ["semi_neg", "semi_pos"]}
 
 
 def _pooled(a, cols, h, min_rows):

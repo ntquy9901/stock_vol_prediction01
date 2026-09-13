@@ -53,8 +53,9 @@ def test_run_smoke_hose_with_earn(monkeypatch):
     monkeypatch.setattr(config, "MIN_ROWS", {"sp500": 30000, "default": 500})
     out = FC.run("hose", load_fn=lambda m: (_frames(), {}, {}))
     r = out["h1"]
-    assert "principled" in r["metrics"] and "GBM+earn" in r["metrics"]      # earn injected
-    assert set(r["metrics"]["principled"]) == {"mse", "rmse", "mae", "r2", "qlike"}
+    assert "GBM" in r["metrics"] and "GBM+earn" in r["metrics"]              # earn injected
+    assert "principled" not in r["metrics"] and "HARQ" not in r["metrics"]   # dropped
+    assert set(r["metrics"]["GBM"]) == {"mse", "rmse", "mae", "r2", "qlike"}
     ms = list(r["metrics"]); assert len(r["dm_qlike_matrix"]) == len(ms) * (len(ms) - 1) // 2
     json.dumps(out)
 
@@ -65,7 +66,7 @@ def test_run_sp500_path_no_earn(monkeypatch):
     monkeypatch.setattr(config, "MIN_ROWS", {"sp500": 500, "default": 500})
     out = FC.run("sp500", load_fn=lambda m: (_frames(), {}, {}))
     assert "GBM+earn" not in out["h1"]["metrics"]
-    assert "principled" in out["h1"]["metrics"]
+    assert "GBM" in out["h1"]["metrics"]
 
 
 def test_run_hose_earn_file_absent(monkeypatch, tmp_path):

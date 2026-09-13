@@ -28,6 +28,7 @@ import stats as ST  # noqa: E402
 
 FL = FM.FL
 FEATURES = BP.FEATURES
+OWN = config.own_set(FM.OWN)   # single source: baselines... config.OWN_DROP/OWN_ADD
 
 
 def _fold_qlike(tr, cols):
@@ -62,7 +63,7 @@ def run(market, load_fn=None):
     out = {}
     for h in config.HORIZONS:
         a = FM.panel(framed, {}, h)
-        models = {"principled": FEATURES, "own": FM.OWN}
+        models = {"principled": FEATURES, "own": OWN}
         res = {m: _pooled(a, cols, h, min_rows) for m, cols in models.items()}
         if res["principled"] is None or res["own"] is None:
             continue

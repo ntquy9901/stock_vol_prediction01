@@ -22,7 +22,6 @@ for _p in (str(REPO), str(REPO / "scripts" / "eda"),
     if _p not in sys.path:
         sys.path.insert(0, _p)  # pragma: no cover - path bootstrap (conftest pre-seeds paths under pytest)
 import config  # noqa: E402
-import build_panel as BP  # noqa: E402
 import full_matrix as FM  # noqa: E402
 import vn_gbm_graph_stage1 as S1  # noqa: E402
 import metrics as M  # noqa: E402
@@ -30,6 +29,7 @@ import stats as ST  # noqa: E402
 import paper_metrics_sp500 as PM  # noqa: E402  (reuse nb_col / adj_sector / all_metrics verbatim)
 
 FL = FM.FL
+OWN = config.own_set(FM.OWN)   # single source: baselines... config.OWN_DROP/OWN_ADD
 
 
 def dm_matrix(err, dates, h):
@@ -40,8 +40,21 @@ def dm_matrix(err, dates, h):
     return out
 
 
-def run(market, load_fn=None):
-    """Full comparison for a market; returns {h: {metrics, dm_qlike (full matrix), n}}."""
+def _checkpoint(out, out_path):  # pragma: no cover - I/O side effect, exercised only in real runs
+    """Atomically write the accumulated results so a Colab disconnect keeps completed horizons."""
+    if out_path is None:
+        return
+    tmp = Path(str(out_path) + ".tmp")
+    tmp.write_text(json.dumps(out, indent=2))
+    tmp.replace(out_path)
+    print(f"[checkpoint] wrote {out_path.name} ({len(out)} horizons)", flush=True)
+
+
+def run(market, load_fn=None, out_path=None):
+    """Full comparison for a market; returns {h: {metrics, dm_qlike (full matrix), n}}.
+
+    When ``out_path`` is given, the accumulated results are flushed to disk after EACH horizon (crash/disconnect
+    resilience for long Colab runs)."""
     load_fn = load_fn or FM.load
     min_rows = config.MIN_ROWS.get(market, config.MIN_ROWS["default"])
     frames, sect, edates = load_fn(market)
@@ -51,7 +64,6 @@ def run(market, load_fn=None):
             e = pd.read_parquet(ep)
             edates = {tk: np.sort(g["earnings_date"].to_numpy()) for tk, g in e.groupby("ticker")}
     has_earn = bool(edates)
-    frames = BP.feature_frames(frames)                                # add semi_neg/semi_pos per ticker (causal)
     out = {}
     for h in config.HORIZONS:
         a = FM.panel(frames, edates, h)
@@ -59,10 +71,9 @@ def run(market, load_fn=None):
         tickers = sorted(a["ticker"].unique())
         n = len(tickers)
         Wu, Ws = FM._uniform(n), PM.adj_sector(tickers, sect)
-        models = ["HAR", "HARQ", "GBM", "principled", "GBM+market", "GBM+corr", "GBM+sector", "GBM+plac",
-                  "GBM+oracle"]
+        models = ["HAR", "GBM", "GBM+market", "GBM+corr", "GBM+sector", "GBM+plac", "GBM+oracle"]
         if has_earn:
-            models = models[:8] + ["GBM+earn", "GBM+earn+corr"] + models[8:]
+            models = models[:6] + ["GBM+earn", "GBM+earn+corr"] + models[6:]
         preds = {m: [] for m in models}
         yy, dts = [], []
         for k in range(len(S1.FOLDS) - 1):
@@ -85,12 +96,12 @@ def run(market, load_fn=None):
                 fold[c] = fold[c].fillna(0.0)
             trf = fold[(fold.date >= S1.TRAIN_START) & (fold.date < ts - embargo)]
             tef = fold[(fold.date >= ts) & (fold.date < tend)]
-            cols = {"GBM": FM.OWN, "principled": BP.FEATURES, "GBM+market": FM.OWN + ["g_market"],
-                    "GBM+corr": FM.OWN + ["g_corr"], "GBM+sector": FM.OWN + ["g_sector"],
-                    "GBM+plac": FM.OWN + ["g_plac"], "GBM+oracle": FM.OWN + ["g_oracle"]}
+            cols = {"GBM": OWN, "GBM+market": OWN + ["g_market"],
+                    "GBM+corr": OWN + ["g_corr"], "GBM+sector": OWN + ["g_sector"],
+                    "GBM+plac": OWN + ["g_plac"], "GBM+oracle": OWN + ["g_oracle"]}
             if has_earn:
-                cols["GBM+earn"] = FM.OWN + FM.EARN; cols["GBM+earn+corr"] = FM.OWN + FM.EARN + ["g_corr"]
-            preds["HAR"].append(FM._har_ols(trf, tef)); preds["HARQ"].append(FM._harq_ols(trf, tef))
+                cols["GBM+earn"] = OWN + FM.EARN; cols["GBM+earn+corr"] = OWN + FM.EARN + ["g_corr"]
+            preds["HAR"].append(FM._har_ols(trf, tef))
             for m, cc in cols.items():
                 preds[m].append(np.mean([FM.gbm(trf, tef, cc, s) for s in FM.SEEDS], 0))
             yy.append(tef["y"].to_numpy(float)); dts.append(tef["date"].to_numpy())
@@ -100,6 +111,7 @@ def run(market, load_fn=None):
         err = {m: M.per_obs_qlike(y, np.concatenate(preds[m]), floor=FL) for m in models}
         met = {m: PM.all_metrics(y, np.concatenate(preds[m])) for m in models}
         out[f"h{h}"] = {"n": int(len(y)), "metrics": met, "dm_qlike_matrix": dm_matrix(err, dates, h)}
+        _checkpoint(out, out_path)                                    # flush after each horizon
     return out
 
 
@@ -112,10 +124,9 @@ def _print(market, out):  # pragma: no cover - console formatting only
 
 def main():  # pragma: no cover - entry driver: loads real data, writes JSON
     market = sys.argv[1] if len(sys.argv) > 1 else "hose"
-    out = run(market)
-    _print(market, out)
     outp = REPO / "results" / "gamma_gbm" / f"full_compare_{market}.json"
-    outp.write_text(json.dumps(out, indent=2))
+    out = run(market, out_path=outp)                                 # flushes after each horizon (resilient)
+    _print(market, out)
     print(f"\nsaved {outp.relative_to(REPO)}", flush=True)
 
 
