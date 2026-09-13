@@ -54,3 +54,4 @@ ModuleNotFoundError: No module named 'paper_metrics_sp500'
   HAR              QLIKE 0.4855 R2 +0.079
 
 saved results/gamma_gbm/full_compare_sp500.json
+[checkpoint] wrote garch_sp500.json (1 horizons)
