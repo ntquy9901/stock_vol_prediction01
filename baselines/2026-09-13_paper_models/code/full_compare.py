@@ -1,9 +1,11 @@
-"""Full model comparison: ALL models (incl the principled feature set) x 5 metrics + FULL pairwise DM matrix.
+"""Full model comparison: the paper model set (OWN-8 own-history GBM + graph/earn variants + HAR) x 5 metrics
++ FULL pairwise DM matrix.
 
-Extends the paper-metrics harness to add the principled HAR-family GBM as a model and to compute the complete
-Diebold-Mariano matrix (every model pair) from the per-observation QLIKE errors, on one shared walk-forward
-panel. Reuses the exact per-fold graph-feature construction + helpers from ``paper_metrics_sp500`` (PM) so the
-non-principled models reproduce the paper table. Output: results/gamma_gbm/full_compare_<market>.json.
+GBM models use ``OWN`` = ``config.own_set(FM.OWN)`` (the 8 own-history features, rq dropped); the principled
+HAR-family set (``build_panel.FEATURES``) is NOT a model here -- it lives in the retired ``run_har.py`` ablation.
+Computes the complete Diebold-Mariano matrix (every model pair) from the per-observation QLIKE errors, on one
+shared walk-forward panel. Reuses the exact per-fold graph-feature construction + helpers from
+``paper_metrics_sp500`` (PM) so the models reproduce the paper table. Output: results/gamma_gbm/full_compare_<market>.json.
 
 Run: ``python full_compare.py [hose|sp500]``.
 """
