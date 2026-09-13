@@ -96,5 +96,54 @@
         "test_qlike": 5.950581341812271
       }
     }
+  },
+  "h10": {
+    "n": 505128,
+    "n_excluded": 2539,
+    "qlike": {
+      "HAR": 0.46124253885765765,
+      "GARCH": 6.015355728886341,
+      "GJR-GARCH": 6.009137039618679
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": -1204.1632594826033,
+      "GJR-GARCH": -1202.8150123579856
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 0.0006613845815047977,
+        "mean_diff": 5.574991658175407
+      },
+      "GJR-GARCH": {
+        "p_value": 0.0006701769858911263,
+        "mean_diff": 5.568748937216204
+      }
+    },
+    "n_fallback": {
+      "GARCH": 50,
+      "GJR-GARCH": 43
+    },
+    "train_metrics": {
+      "HAR": 0.5213449715497485,
+      "GARCH": 0.5673170697822112,
+      "GJR-GARCH": 0.559913340592345
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 0.5213449715497485,
+        "test_qlike": 0.46124253885765765
+      },
+      "GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.5673170697822112,
+        "test_qlike": 6.015355728886341
+      },
+      "GJR-GARCH": {
+        "verdict": "overfit",
+        "train_qlike": 0.559913340592345,
+        "test_qlike": 6.009137039618679
+      }
+    }
   }
 }
