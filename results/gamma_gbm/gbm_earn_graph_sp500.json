@@ -1,0 +1,52 @@
+{
+  "h1": {
+    "n": 512140,
+    "qlike": {
+      "GBM+earn": 0.31730642436607004,
+      "GBM+earn+corr": 0.3159303029314469,
+      "GBM+earn+graph": 0.31172677200973975,
+      "graph_only": 0.39477333873633047
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 0.002687111284672683,
+      "GBM+earn+graph_vs_GBM+earn+corr": 0.005204198336496452
+    },
+    "err_corr": 0.9429852205333115,
+    "gain_vs_earn_pct": 1.7584429207437529,
+    "gain_vs_corr_pct": 1.3305247653370185,
+    "train_metrics": {
+      "GBM+earn": 0.3192450651025891,
+      "GBM+earn+corr": 0.31337728356309286,
+      "GBM+earn+graph": 0.3038757185959014,
+      "graph_only": 0.37142373859371663
+    },
+    "test_metrics": {
+      "GBM+earn": 0.31730642436607004,
+      "GBM+earn+corr": 0.3159303029314469,
+      "GBM+earn+graph": 0.31172677200973975,
+      "graph_only": 0.39477333873633047
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 0.3192450651025891,
+        "test_qlike": 0.31730642436607004
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 0.31337728356309286,
+        "test_qlike": 0.3159303029314469
+      },
+      "GBM+earn+graph": {
+        "verdict": "ok",
+        "train_qlike": 0.3038757185959014,
+        "test_qlike": 0.31172677200973975
+      },
+      "graph_only": {
+        "verdict": "ok",
+        "train_qlike": 0.37142373859371663,
+        "test_qlike": 0.39477333873633047
+      }
+    }
+  }
+}

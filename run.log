@@ -88,3 +88,4 @@ saved results/gamma_gbm/full_compare_sp500.json
   DM GJR-GARCH vs HAR: -1219.46% (p=0.010, mean_diff=+5.94e+00) | fallbacks=43
 
 saved results/gamma_gbm/garch_sp500.json
+[checkpoint] wrote gbm_earn_graph_sp500.json (1 horizons)
