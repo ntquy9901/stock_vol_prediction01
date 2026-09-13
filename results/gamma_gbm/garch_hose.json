@@ -1,0 +1,198 @@
+{
+  "h1": {
+    "n": 393551,
+    "n_excluded": 5489,
+    "qlike": {
+      "HAR": 1.80798284361824,
+      "GARCH": 1.6539250997900556,
+      "GJR-GARCH": 1.6563791849771687
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": 8.52097376764234,
+      "GJR-GARCH": 8.385237679450164
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 1.2903643318268678e-159,
+        "mean_diff": -0.15428093223789952
+      },
+      "GJR-GARCH": {
+        "p_value": 4.04107306769989e-154,
+        "mean_diff": -0.15183928487119103
+      }
+    },
+    "n_fallback": {
+      "GARCH": 67,
+      "GJR-GARCH": 64
+    },
+    "train_metrics": {
+      "HAR": 2.082819648975834,
+      "GARCH": 1.9596693042482867,
+      "GJR-GARCH": 1.959248191980253
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 2.082819648975834,
+        "test_qlike": 1.80798284361824
+      },
+      "GARCH": {
+        "verdict": "ok",
+        "train_qlike": 1.9596693042482867,
+        "test_qlike": 1.6539250997900556
+      },
+      "GJR-GARCH": {
+        "verdict": "ok",
+        "train_qlike": 1.959248191980253,
+        "test_qlike": 1.6563791849771687
+      }
+    }
+  },
+  "h5": {
+    "n": 391975,
+    "n_excluded": 5453,
+    "qlike": {
+      "HAR": 1.817872803754136,
+      "GARCH": 1.7397038358676518,
+      "GJR-GARCH": 1.7405344790676462
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": 4.300024056966778,
+      "GJR-GARCH": 4.254330915055028
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 2.122947713081451e-30,
+        "mean_diff": -0.0784605569703854
+      },
+      "GJR-GARCH": {
+        "p_value": 5.473230943673976e-29,
+        "mean_diff": -0.07762620405302058
+      }
+    },
+    "n_fallback": {
+      "GARCH": 63,
+      "GJR-GARCH": 54
+    },
+    "train_metrics": {
+      "HAR": 2.095405087402561,
+      "GARCH": 2.019738155308588,
+      "GJR-GARCH": 2.022579720432558
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 2.095405087402561,
+        "test_qlike": 1.817872803754136
+      },
+      "GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.019738155308588,
+        "test_qlike": 1.7397038358676518
+      },
+      "GJR-GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.022579720432558,
+        "test_qlike": 1.7405344790676462
+      }
+    }
+  },
+  "h10": {
+    "n": 390005,
+    "n_excluded": 5408,
+    "qlike": {
+      "HAR": 1.8236419709392737,
+      "GARCH": 1.7802021650005568,
+      "GJR-GARCH": 1.7835880582938326
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": 2.382035872772935,
+      "GJR-GARCH": 2.196369313918082
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 1.2645329817420385e-08,
+        "mean_diff": -0.043690553468315914
+      },
+      "GJR-GARCH": {
+        "p_value": 1.9531465350386026e-07,
+        "mean_diff": -0.0403321470503413
+      }
+    },
+    "n_fallback": {
+      "GARCH": 59,
+      "GJR-GARCH": 58
+    },
+    "train_metrics": {
+      "HAR": 2.1013456075777714,
+      "GARCH": 2.0463331386932686,
+      "GJR-GARCH": 2.0424630699102035
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 2.1013456075777714,
+        "test_qlike": 1.8236419709392737
+      },
+      "GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.0463331386932686,
+        "test_qlike": 1.7802021650005568
+      },
+      "GJR-GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.0424630699102035,
+        "test_qlike": 1.7835880582938326
+      }
+    }
+  },
+  "h22": {
+    "n": 384917,
+    "n_excluded": 5660,
+    "qlike": {
+      "HAR": 1.8323030525887283,
+      "GARCH": 1.8376047905557351,
+      "GJR-GARCH": 1.841449532158822
+    },
+    "gain_vs_HAR_pct": {
+      "GARCH": -0.2893483127431565,
+      "GJR-GARCH": -0.49917941015113937
+    },
+    "dm_vs_HAR": {
+      "GARCH": {
+        "p_value": 0.5889544267050715,
+        "mean_diff": 0.004994534428839325
+      },
+      "GJR-GARCH": {
+        "p_value": 0.3282904484607182,
+        "mean_diff": 0.008846855049044412
+      }
+    },
+    "n_fallback": {
+      "GARCH": 56,
+      "GJR-GARCH": 59
+    },
+    "train_metrics": {
+      "HAR": 2.105036952621032,
+      "GARCH": 2.071526054303695,
+      "GJR-GARCH": 2.071365171462935
+    },
+    "fit_diagnostics": {
+      "HAR": {
+        "verdict": "ok",
+        "train_qlike": 2.105036952621032,
+        "test_qlike": 1.8323030525887283
+      },
+      "GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.071526054303695,
+        "test_qlike": 1.8376047905557351
+      },
+      "GJR-GARCH": {
+        "verdict": "ok",
+        "train_qlike": 2.071365171462935,
+        "test_qlike": 1.841449532158822
+      }
+    }
+  }
+}
