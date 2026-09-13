@@ -1,0 +1,203 @@
+{
+  "h1": {
+    "n": 399040,
+    "qlike": {
+      "GBM+earn": 1.5689602247656198,
+      "GBM+earn+corr": 1.596958046737513,
+      "GBM+earn+graph": 1.6169835390082112,
+      "graph_only": 2.6575487405348284
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 1.2067093877929715e-07,
+      "GBM+earn+graph_vs_GBM+earn+corr": 0.2677182349074229
+    },
+    "err_corr": 0.960801040758394,
+    "gain_vs_earn_pct": -3.060836946950993,
+    "gain_vs_corr_pct": -1.2539773547344597,
+    "train_metrics": {
+      "GBM+earn": 1.8586859982597215,
+      "GBM+earn+corr": 1.8816437464599767,
+      "GBM+earn+graph": 1.910299244546709,
+      "graph_only": 1.95312600905265
+    },
+    "test_metrics": {
+      "GBM+earn": 1.5689602247656198,
+      "GBM+earn+corr": 1.596958046737513,
+      "GBM+earn+graph": 1.6169835390082112,
+      "graph_only": 2.6575487405348284
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 1.8586859982597215,
+        "test_qlike": 1.5689602247656198
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 1.8816437464599767,
+        "test_qlike": 1.596958046737513
+      },
+      "GBM+earn+graph": {
+        "verdict": "ok",
+        "train_qlike": 1.910299244546709,
+        "test_qlike": 1.6169835390082112
+      },
+      "graph_only": {
+        "verdict": "overfit",
+        "train_qlike": 1.95312600905265,
+        "test_qlike": 2.6575487405348284
+      }
+    }
+  },
+  "h5": {
+    "n": 397428,
+    "qlike": {
+      "GBM+earn": 1.648880047409736,
+      "GBM+earn+corr": 1.648734247873824,
+      "GBM+earn+graph": 1.6685381926698533,
+      "graph_only": 1.752625393867745
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 1.7511666862138096e-17,
+      "GBM+earn+graph_vs_GBM+earn+corr": 7.500850917800411e-14
+    },
+    "err_corr": 0.964805573942639,
+    "gain_vs_earn_pct": -1.1922119678140723,
+    "gain_vs_corr_pct": -1.201160515805867,
+    "train_metrics": {
+      "GBM+earn": 1.9340958121628486,
+      "GBM+earn+corr": 1.935407174633522,
+      "GBM+earn+graph": 1.936944835637433,
+      "graph_only": 2.021567003019139
+    },
+    "test_metrics": {
+      "GBM+earn": 1.648880047409736,
+      "GBM+earn+corr": 1.648734247873824,
+      "GBM+earn+graph": 1.6685381926698533,
+      "graph_only": 1.752625393867745
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 1.9340958121628486,
+        "test_qlike": 1.648880047409736
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 1.935407174633522,
+        "test_qlike": 1.648734247873824
+      },
+      "GBM+earn+graph": {
+        "verdict": "ok",
+        "train_qlike": 1.936944835637433,
+        "test_qlike": 1.6685381926698533
+      },
+      "graph_only": {
+        "verdict": "ok",
+        "train_qlike": 2.021567003019139,
+        "test_qlike": 1.752625393867745
+      }
+    }
+  },
+  "h10": {
+    "n": 395413,
+    "qlike": {
+      "GBM+earn": 1.6835255537511433,
+      "GBM+earn+corr": 1.6842012319474127,
+      "GBM+earn+graph": 3.7866103221151644,
+      "graph_only": 3.0142297718579325
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 0.2234519102622174,
+      "GBM+earn+graph_vs_GBM+earn+corr": 0.22355470191061622
+    },
+    "err_corr": 0.9688062828374842,
+    "gain_vs_earn_pct": -124.92146398835693,
+    "gain_vs_corr_pct": -124.83122861374305,
+    "train_metrics": {
+      "GBM+earn": 1.9663239011890667,
+      "GBM+earn+corr": 1.963597523699053,
+      "GBM+earn+graph": 1.9631396865697555,
+      "graph_only": 2.0390258880248964
+    },
+    "test_metrics": {
+      "GBM+earn": 1.6835255537511433,
+      "GBM+earn+corr": 1.6842012319474127,
+      "GBM+earn+graph": 3.7866103221151644,
+      "graph_only": 3.0142297718579325
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 1.9663239011890667,
+        "test_qlike": 1.6835255537511433
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 1.963597523699053,
+        "test_qlike": 1.6842012319474127
+      },
+      "GBM+earn+graph": {
+        "verdict": "overfit",
+        "train_qlike": 1.9631396865697555,
+        "test_qlike": 3.7866103221151644
+      },
+      "graph_only": {
+        "verdict": "overfit",
+        "train_qlike": 2.0390258880248964,
+        "test_qlike": 3.0142297718579325
+      }
+    }
+  },
+  "h22": {
+    "n": 390577,
+    "qlike": {
+      "GBM+earn": 1.7260886563056914,
+      "GBM+earn+corr": 1.7260861921822366,
+      "GBM+earn+graph": 1.730375096879978,
+      "graph_only": 1.79951043366593
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 0.000969159029648534,
+      "GBM+earn+graph_vs_GBM+earn+corr": 0.0003920661668572101
+    },
+    "err_corr": 0.975066200044758,
+    "gain_vs_earn_pct": -0.24833258469242203,
+    "gain_vs_corr_pct": -0.24847569705190276,
+    "train_metrics": {
+      "GBM+earn": 2.000952547543393,
+      "GBM+earn+corr": 1.9979051037901123,
+      "GBM+earn+graph": 2.001121747185376,
+      "graph_only": 2.0599005867994777
+    },
+    "test_metrics": {
+      "GBM+earn": 1.7260886563056914,
+      "GBM+earn+corr": 1.7260861921822366,
+      "GBM+earn+graph": 1.730375096879978,
+      "graph_only": 1.79951043366593
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 2.000952547543393,
+        "test_qlike": 1.7260886563056914
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 1.9979051037901123,
+        "test_qlike": 1.7260861921822366
+      },
+      "GBM+earn+graph": {
+        "verdict": "ok",
+        "train_qlike": 2.001121747185376,
+        "test_qlike": 1.730375096879978
+      },
+      "graph_only": {
+        "verdict": "ok",
+        "train_qlike": 2.0599005867994777,
+        "test_qlike": 1.79951043366593
+      }
+    }
+  },
+  "success": false
+}
