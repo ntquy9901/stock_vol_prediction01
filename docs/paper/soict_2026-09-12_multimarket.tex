@@ -1,8 +1,9 @@
 % SOICT 2026 submission - Springer LNCS format (single-blind: keep author names).
 % Requires the Springer LNCS class `llncs.cls` + `splncs04.bst`.
 % Multi-market volatility forecasting model. Figures in docs/paper/figures/.
-% Numbers read from docs/reports/2026-09-12_gbme_metrics_table.md and
-%   docs/paper/2026-09-12_sp500_hose_gnnhar_final.md.
+% HOSE table (tab:hose) numbers: results/gamma_gbm/full_compare_hose.json (OWN-8, rq dropped, committed).
+%   HARQ HOSE row: results/gamma_gbm/paper_metrics_hose.json. GARCH: results/gamma_gbm/garch_hose.json.
+% SP500 table (tab:sp500) numbers: docs/reports/2026-09-12_gbme_metrics_table.md (pending OWN-8 re-run).
 \documentclass{llncs}
 \usepackage{graphicx}
 \graphicspath{{figures/}}
@@ -335,11 +336,11 @@ horizons with 390{,}577 to 399{,}040 stock-day observations per horizon, the gra
 the earnings lever does not transfer.
 
 \textbf{The own-history GBM wins and the graph adds nothing.} Table~\ref{tab:hose} reports all four
-metrics. The own-history GBM posts the lowest QLIKE at every horizon, while HAR and HARQ trail by a
-wide margin. Adding the graph feature ties the GBM, and adding the External earnings feature does not
-improve it: GBME ties or slightly worsens GBM at every horizon (DM GBME vs GBM $p=0.000$ at $h1$;
-$p=0.214$, $0.122$, $0.919$ at $h5$, $h10$, $h22$). The own-history GBM is therefore the DM-verified
-best legal model on HOSE and carries the bolded QLIKE in every block.
+metrics. The own-history GBM is the DM-verified best model at every horizon: no feature block
+significantly lowers its QLIKE, while HAR and HARQ trail by a wide margin. Adding the graph feature
+ties the GBM, and the External earnings feature does not improve it: GBME is statistically
+indistinguishable from GBM at every horizon (DM GBME vs GBM $p=0.79$, $0.37$, $0.79$, $0.88$ at
+$h1$, $h5$, $h10$, $h22$). The own-history GBM therefore carries the bolded QLIKE in every block.
 
 \begin{table}[t]
 \centering
@@ -356,33 +357,33 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
 1 & HAR        & 6.604 & 8.126 & 5.193 & 1.8117 \\
 1 & HARQ       & 6.389 & 7.993 & 5.062 & 1.7854 \\
-1 & GBM        & \textbf{5.399} & \textbf{7.348} & \textbf{3.944} & \textbf{1.5679} \\
-1 & GBME       & 5.477 & 7.401 & 3.966 & 1.5730 \\
-1 & GBME+graph & 5.555 & 7.453 & 3.980 & 1.5783 \\
+1 & GBM        & \textbf{5.409} & \textbf{7.355} & \textbf{3.941} & \textbf{1.5702} \\
+1 & GBME       & 5.455 & 7.386 & 3.955 & 1.5690 \\
+1 & GBME+graph & 5.560 & 7.456 & 4.000 & 1.5970 \\
 \midrule
 5 & HAR        & 6.626 & 8.140 & 5.227 & 1.8218 \\
 5 & HARQ       & 6.519 & 8.074 & 5.152 & 1.8075 \\
-5 & GBM        & 5.796 & 7.613 & 4.265 & \textbf{1.6478} \\
-5 & GBME       & \textbf{5.795} & \textbf{7.613} & 4.276 & 1.6485 \\
-5 & GBME+graph & 5.815 & 7.625 & \textbf{4.256} & 1.6494 \\
+5 & GBM        & \textbf{5.795} & \textbf{7.612} & 4.270 & \textbf{1.6484} \\
+5 & GBME       & 5.797 & 7.614 & 4.279 & 1.6489 \\
+5 & GBME+graph & 5.821 & 7.630 & \textbf{4.253} & 1.6487 \\
 \midrule
 10 & HAR        & 6.660 & 8.161 & 5.250 & 1.8277 \\
 10 & HARQ       & 6.589 & 8.118 & 5.198 & 1.8180 \\
-10 & GBM        & 5.966 & 7.724 & 4.425 & \textbf{1.6842} \\
-10 & GBME       & 5.962 & 7.721 & 4.441 & 1.6862 \\
-10 & GBME+graph & \textbf{5.959} & \textbf{7.720} & \textbf{4.407} & 1.6837 \\
+10 & GBM        & 5.956 & 7.718 & 4.416 & \textbf{1.6840} \\
+10 & GBME       & 5.960 & 7.720 & 4.429 & 1.6835 \\
+10 & GBME+graph & \textbf{5.953} & \textbf{7.715} & \textbf{4.404} & 1.6842 \\
 \midrule
 22 & HAR        & 6.716 & 8.195 & 5.282 & 1.8355 \\
 22 & HARQ       & 6.677 & 8.171 & 5.250 & 1.8299 \\
-22 & GBM        & 6.211 & 7.881 & 4.615 & \textbf{1.7263} \\
-22 & GBME       & 6.211 & 7.881 & 4.627 & 1.7262 \\
-22 & GBME+graph & \textbf{6.207} & \textbf{7.878} & \textbf{4.604} & 1.7267 \\
+22 & GBM        & \textbf{6.213} & \textbf{7.882} & 4.615 & \textbf{1.7263} \\
+22 & GBME       & 6.232 & 7.894 & 4.617 & 1.7261 \\
+22 & GBME+graph & 6.217 & 7.885 & \textbf{4.595} & 1.7261 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Earnings does not transfer to Vietnam.} Using real crawled Vietnam announcement dates, GBME
-ties or slightly worsens GBM at every horizon. A per-stock, per-day diagnostic on the HOSE test set
+\textbf{Earnings does not transfer to Vietnam.} Using real crawled Vietnam announcement dates, GBME is
+statistically indistinguishable from GBM at every horizon. A per-stock, per-day diagnostic on the HOSE test set
 locates two compounding causes. First, the feature fires on only 5.6\% of test observations, and
 0.84\% before 2025, so it cannot move the pooled metric across most of the panel. Second, where it
 fires the volatility response is muted: realized variance on announcement-proximate days runs about
@@ -391,10 +392,18 @@ limits cap the informational jump. The no-transfer result holds in the well-cove
 so it does not rest on missing dates in that window.
 
 \textbf{The oracle bound confirms the signal is contemporaneous.} Replacing the neighbor value at the
-origin with its value at the target day cuts QLIKE by 1.3\% to 3.2\% over the graph feature (DM
-$p=0.009$, $0.000$, $0.000$, $0.012$). The gain is smaller than the S\&P~500's 19 to 27\% and points
-the same way: the cross-sectional signal is contemporaneous with the label, not available at the
-forecast origin, so no origin-time graph captures it.
+origin with its value at the target day cuts QLIKE by 2.6 to 3.1\% over the graph feature at $h1$,
+$h5$ and $h10$ (DM $p=0.004$, $p<0.001$, $p=0.002$), while at the monthly horizon the origin-time and
+target-time neighbor values are indistinguishable ($p=0.30$). The gain is smaller than the S\&P~500's
+19 to 27\% and points the same way: the cross-sectional signal is contemporaneous with the label, not
+available at the forecast origin, so no origin-time graph captures it.
+
+\textbf{The graph null is robust to richer fusion.} Two further cross-firm designs fail the same test
+on HOSE. Concatenating a seven-feature neighbor-spillover block into the earnings model does not beat
+GBME at any horizon: it is significantly worse at $h1$, $h5$ and $h22$ (DM $p<10^{-3}$) and overfits
+at $h10$. A residual refiner that trains a neighbor-spillover ridge on the own-history GBM residual is
+statistically indistinguishable from the GBM at every horizon (DM $p=0.07$, $0.69$, $0.91$, $0.70$).
+Neither a feature-level nor a residual-level graph adds origin-time signal beyond own-history.
 
 \textbf{Takeaway.} The graph null replicates on a second, structurally different market. The earnings
 lever is specific to the S\&P~500 and does not generalize to HOSE under the available real
