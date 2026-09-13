@@ -1,0 +1,116 @@
+{
+  "h1": {
+    "n": 399040,
+    "GBM": 1.567915266360547,
+    "GBM+spillover": 1.7679710294649893,
+    "gain_pct": -12.759347867618692,
+    "dm_p": 0.0717934613504423,
+    "train_metrics": {
+      "GBM": 1.8563196281207273,
+      "GBM+spillover": 1.8594223378487047
+    },
+    "test_metrics": {
+      "GBM": 1.567915266360547,
+      "GBM+spillover": 1.7679710294649893
+    },
+    "fit_diagnostics": {
+      "GBM": {
+        "verdict": "ok",
+        "train_qlike": 1.8563196281207273,
+        "test_qlike": 1.567915266360547
+      },
+      "GBM+spillover": {
+        "verdict": "ok",
+        "train_qlike": 1.8594223378487047,
+        "test_qlike": 1.7679710294649893
+      }
+    }
+  },
+  "h5": {
+    "n": 397428,
+    "GBM": 1.6477688895027334,
+    "GBM+spillover": 1.8169255699361615,
+    "gain_pct": -10.265801321475157,
+    "dm_p": 0.06818117490210616,
+    "train_metrics": {
+      "GBM": 1.9324513030229868,
+      "GBM+spillover": 1.9425023069463456
+    },
+    "test_metrics": {
+      "GBM": 1.6477688895027334,
+      "GBM+spillover": 1.8169255699361615
+    },
+    "fit_diagnostics": {
+      "GBM": {
+        "verdict": "ok",
+        "train_qlike": 1.9324513030229868,
+        "test_qlike": 1.6477688895027334
+      },
+      "GBM+spillover": {
+        "verdict": "ok",
+        "train_qlike": 1.9425023069463456,
+        "test_qlike": 1.8169255699361615
+      }
+    }
+  },
+  "h10": {
+    "n": 395413,
+    "GBM": 1.6842334634380083,
+    "GBM+spillover": 1.7287270891002589,
+    "gain_pct": -2.6417730456100896,
+    "dm_p": 0.0004958563379050169,
+    "train_metrics": {
+      "GBM": 1.9657245315657115,
+      "GBM+spillover": 1.9633277055070248
+    },
+    "test_metrics": {
+      "GBM": 1.6842334634380083,
+      "GBM+spillover": 1.7287270891002589
+    },
+    "fit_diagnostics": {
+      "GBM": {
+        "verdict": "ok",
+        "train_qlike": 1.9657245315657115,
+        "test_qlike": 1.6842334634380083
+      },
+      "GBM+spillover": {
+        "verdict": "ok",
+        "train_qlike": 1.9633277055070248,
+        "test_qlike": 1.7287270891002589
+      }
+    }
+  },
+  "h22": {
+    "n": 390577,
+    "GBM": 1.7263276212955496,
+    "GBM+spillover": 1.911505952575974,
+    "gain_pct": -10.726720061482565,
+    "dm_p": 0.021623011588398276,
+    "train_metrics": {
+      "GBM": 2.0004372931448735,
+      "GBM+spillover": 1.9813981632342774
+    },
+    "test_metrics": {
+      "GBM": 1.7263276212955496,
+      "GBM+spillover": 1.911505952575974
+    },
+    "fit_diagnostics": {
+      "GBM": {
+        "verdict": "ok",
+        "train_qlike": 2.0004372931448735,
+        "test_qlike": 1.7263276212955496
+      },
+      "GBM+spillover": {
+        "verdict": "ok",
+        "train_qlike": 1.9813981632342774,
+        "test_qlike": 1.911505952575974
+      }
+    }
+  },
+  "diag": {
+    "n_sectors": 15,
+    "n_anchor_windows": 1270,
+    "n_failed_windows": 329
+  },
+  "success": false
+}
