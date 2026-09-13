@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>GBM+earn+corr vs GBM+earn+graph — kiến trúc feature</title>
+<style>
+  :root{--own:#1f77b4;--earn:#2ca02c;--corr:#ff7f0e;--spill:#d62728;--gbm:#6a3d9a;}
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Arial,sans-serif;margin:0;background:#f4f5f7;color:#1a1a1a;line-height:1.5}
+  header{background:#1a1a2e;color:#fff;padding:22px 32px}
+  header h1{margin:0 0 4px;font-size:22px}
+  header p{margin:0;color:#b8b8d0;font-size:14px}
+  .wrap{max-width:1200px;margin:0 auto;padding:26px 32px}
+  .cols{display:flex;gap:26px;flex-wrap:wrap}
+  .card{flex:1;min-width:420px;background:#fff;border:1px solid #dcdfe4;border-radius:12px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .card h2{margin:0 0 2px;font-size:18px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:20px;color:#fff;margin-bottom:12px}
+  .keep{background:#2e7d32}.nogo{background:#c62828}
+  .block{border-radius:9px;padding:10px 12px;margin:9px 0;color:#fff}
+  .block b{font-size:13px;letter-spacing:.3px;text-transform:uppercase;opacity:.95}
+  .chips{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px}
+  .chip{background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.35);border-radius:6px;
+        padding:2px 7px;font-size:12px;font-family:"Consolas",monospace}
+  .b-own{background:var(--own)}.b-earn{background:var(--earn)}.b-corr{background:var(--corr)}
+  .b-spill{background:var(--spill)}
+  .arrow{text-align:center;font-size:26px;color:#888;margin:2px 0}
+  .gbm{background:var(--gbm);color:#fff;text-align:center;border-radius:9px;padding:12px;font-weight:600;font-size:15px}
+  .gbm small{display:block;font-weight:400;opacity:.85;font-size:12px;margin-top:3px}
+  .count{float:right;font-size:13px;color:#555;font-weight:600}
+  .verdict{margin-top:14px;padding:11px 13px;border-radius:8px;font-size:13.5px}
+  .verdict.keep{background:#e8f5e9;border:1px solid #a5d6a7}
+  .verdict.nogo{background:#ffebee;border:1px solid #ef9a9a}
+  table{border-collapse:collapse;width:100%;margin-top:14px;font-size:13.5px;background:#fff}
+  th,td{border:1px solid #dcdfe4;padding:7px 10px;text-align:center}
+  th{background:#eef1f5}
+  td.l{text-align:left}
+  .neg{color:#c62828;font-weight:600}.pos{color:#2e7d32;font-weight:600}
+  .note{background:#fff;border:1px solid #dcdfe4;border-radius:12px;padding:18px 22px;margin-top:22px;font-size:14px}
+  code{background:#eceff4;padding:1px 5px;border-radius:4px;font-family:"Consolas",monospace;font-size:13px}
+  .legend{margin-top:8px;font-size:12.5px;color:#555}
+  .legend span{display:inline-block;margin-right:14px}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>GBM+earn+corr &nbsp;≠&nbsp; GBM+earn+graph</h1>
+  <p>Kiến trúc feature per-stock gamma-GBM · HOSE · Parkinson variance (σ²) target · 2026-09-13</p>
+</header>
+<div class="wrap">
+
+  <p style="font-size:15px;max-width:900px">
+    Cả hai đều là <b>MỘT</b> gamma-GBM per-stock, dùng chung khối own-history (8) + earnings (4).
+    Khác biệt duy nhất: <b>lượng feature graph</b> chèn vào — <b>1 cột</b> (<code>g_corr</code>) so với
+    <b>7 cột</b> khối lan truyền (<code>SPILL_COLS</code>). Đồ thị tương quan <code>Wc</code> giống hệt (train-only, causal).
+  </p>
+
+  <div class="cols">
+
+    <!-- ================= A: +corr ================= -->
+    <div class="card">
+      <h2>GBM+earn+corr <span class="count">13 features</span></h2>
+      <span class="tag keep">GIỮ · model paper (graph nhẹ)</span>
+
+      <div class="block b-own"><b>Own-history</b> <span style="float:right">8</span>
+        <div class="chips">
+          <span class="chip">har_daily</span><span class="chip">har_weekly</span><span class="chip">har_monthly</span>
+          <span class="chip">mr_change</span><span class="chip">mr_slope5</span><span class="chip">mr_slope10</span>
+          <span class="chip">mr_dev5</span><span class="chip">mr_z22</span>
+        </div>
+      </div>
+      <div class="block b-earn"><b>Earnings</b> <span style="float:right">4</span>
+        <div class="chips">
+          <span class="chip">earn_prox</span><span class="chip">earn_soon</span>
+          <span class="chip">earn_pre</span><span class="chip">earn_post</span>
+        </div>
+      </div>
+      <div class="block b-corr"><b>Graph (1 cột)</b> <span style="float:right">1</span>
+        <div class="chips"><span class="chip">g_corr = mean vol hàng xóm</span></div>
+      </div>
+
+      <div class="arrow">▼</div>
+      <div class="gbm">gamma-GBM (một model)<small>OWN + EARN + ["g_corr"] &nbsp;— full_compare.py:103</small></div>
+
+      <div class="verdict keep">
+        <b>Kết quả:</b> graph 1 cột ≈ trung tính — không giúp có ý nghĩa nhưng <b>không blow-up</b>.
+        Giữ trong bảng paper làm bản "graph tối thiểu".
+      </div>
+    </div>
+
+    <!-- ================= B: +graph ================= -->
+    <div class="card">
+      <h2>GBM+earn+graph <span class="count">19 features</span></h2>
+      <span class="tag nogo">NO-GO · ablation (graph nặng)</span>
+
+      <div class="block b-own"><b>Own-history</b> <span style="float:right">8</span>
+        <div class="chips">
+          <span class="chip">har_daily</span><span class="chip">har_weekly</span><span class="chip">har_monthly</span>
+          <span class="chip">mr_change</span><span class="chip">mr_slope5</span><span class="chip">mr_slope10</span>
+          <span class="chip">mr_dev5</span><span class="chip">mr_z22</span>
+        </div>
+      </div>
+      <div class="block b-earn"><b>Earnings</b> <span style="float:right">4</span>
+        <div class="chips">
+          <span class="chip">earn_prox</span><span class="chip">earn_soon</span>
+          <span class="chip">earn_pre</span><span class="chip">earn_post</span>
+        </div>
+      </div>
+      <div class="block b-spill"><b>Graph block lan truyền (7 cột)</b> <span style="float:right">7</span>
+        <div class="chips">
+          <span class="chip">g_nb_vol</span><span class="chip">g_nb_shock</span><span class="chip">g_nb_max</span>
+          <span class="chip">g_nb_disp</span><span class="chip">g_node_minus_nb</span>
+          <span class="chip">g_nb_ret</span><span class="chip">g_nb_volshock</span>
+        </div>
+      </div>
+
+      <div class="arrow">▼</div>
+      <div class="gbm">gamma-GBM (một model)<small>OWN8 + EARN + SPILL_COLS &nbsp;— run_hybrid.py:88</small></div>
+
+      <div class="verdict nogo">
+        <b>Kết quả:</b> 7 feature spillover <b>collinear với own-history</b> (err_corr graph-only vs GBM+earn
+        = 0.96–0.98 → không thêm tín hiệu trực giao), và làm GBM <b>overfit blow-up ở h10</b> (QLIKE 3.79)
+        trên thị trường mỏng. Hại DM-sig ở h1/h5/h22.
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="background:var(--own)"></span>Own-history (Corsi HAR + mean-reversion)</span>
+    <span><span class="sw" style="background:var(--earn)"></span>Earnings (announcement proximity)</span>
+    <span><span class="sw" style="background:var(--corr)"></span>g_corr — 1 cột</span>
+    <span><span class="sw" style="background:var(--spill)"></span>SPILL_COLS — 7 cột</span>
+    <span><span class="sw" style="background:var(--gbm)"></span>gamma-GBM</span>
+  </div>
+
+  <!-- ================= results table ================= -->
+  <div class="note">
+    <h3 style="margin-top:0">HOSE — QLIKE (thấp hơn = tốt hơn), +graph vs +earn (DM date-clustered)</h3>
+    <table>
+      <tr><th>h</th><th>GBM+earn</th><th>GBM+earn+corr<br>(1 cột)</th><th>GBM+earn+graph<br>(7 cột)</th>
+          <th>+graph vs +earn</th><th>err_corr<br>(graph-only)</th><th>fit</th></tr>
+      <tr><td>1</td><td>1.569</td><td>1.597</td><td>1.617</td><td class="neg">−3.06% (p&lt;1e-4)</td><td>0.961</td><td>ok</td></tr>
+      <tr><td>5</td><td>1.649</td><td>1.649</td><td>1.669</td><td class="neg">−1.19% (p&lt;1e-4)</td><td>0.965</td><td>ok</td></tr>
+      <tr><td>10</td><td>1.684</td><td>1.684</td><td class="neg">3.787</td><td class="neg">−124.9% (p=0.22)</td><td>0.969</td><td class="neg">OVERFIT</td></tr>
+      <tr><td>22</td><td>1.726</td><td>1.726</td><td>1.730</td><td class="neg">−0.25% (p=1e-3)</td><td>0.975</td><td>ok</td></tr>
+    </table>
+    <p style="margin-bottom:0;font-size:13px;color:#555">
+      Lưu ý: GBM+earn ở baseline concat dùng OWN8 (bỏ rq) nên QLIKE tuyệt đối không so trực tiếp với bảng paper;
+      nhưng DM trong bảng này hợp lệ (cùng OWN8 cho cả +earn và +graph). Nguồn:
+      <code>results/gamma_gbm/gbm_earn_graph_hose.json</code>.
+    </p>
+  </div>
+
+  <div class="note">
+    <b>Một câu:</b> <code>+corr</code> thêm <b>1</b> cột đồ thị (vol trung bình hàng xóm) — nhẹ, an toàn, giữ làm
+    bản graph tối thiểu trong paper. <code>+graph</code> thêm <b>cả khối 7</b> cột lan truyền — thừa, collinear với
+    own-history, overfit → NO-GO, chỉ giữ làm <b>ablation chứng minh "thêm graph nhiều hơn = hại"</b>.
+  </div>
+
+</div>
+</body>
+</html>
