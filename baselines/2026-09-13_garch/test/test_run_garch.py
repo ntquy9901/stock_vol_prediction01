@@ -46,6 +46,19 @@ def test_run_smoke_structure(monkeypatch):
     json.dumps(out)                                          # JSON-serialisable
 
 
+def test_out_path_checkpoints_each_horizon(monkeypatch, tmp_path):
+    """out_path flushes JSON after every horizon so a Colab disconnect keeps completed horizons."""
+    monkeypatch.setattr(config, "HORIZONS", (1, 5))
+    monkeypatch.setattr(config, "MIN_ROWS", {"sp500": 30000, "default": 200})
+    monkeypatch.setattr(config, "MIN_TRAIN_OBS", 60)
+    monkeypatch.setattr(R.S1, "FOLDS", ["2015-05-01", "2015-08-01", "2015-09-15", "2100-01-01"])
+    outp = tmp_path / "garch_hose.json"
+    out = R.run_garch("hose", load_fn=lambda m: (_frames(), {}, {}), n_jobs=1, out_path=outp)
+    assert outp.exists()                                   # written mid-run, not only at the end
+    on_disk = json.loads(outp.read_text())
+    assert set(on_disk) == set(out) and "h1" in on_disk    # last checkpoint holds every scored horizon
+
+
 class _SerialPool:
     """Stand-in for ThreadPoolExecutor that maps serially -> exercises the n_jobs>1 dispatch branch."""
     def __init__(self, *a, **k):

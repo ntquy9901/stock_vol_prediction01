@@ -152,8 +152,20 @@ def _score(y, dates, preds, h):
     return q, dm
 
 
-def run_garch(market, load_fn=None, n_jobs=1):
-    """GARCH/GJR-vs-HAR walk-forward for a market; returns the JSON-serialisable result dict (no write)."""
+def _checkpoint(out, out_path):  # pragma: no cover - I/O side effect, exercised only in real runs
+    """Atomically write accumulated results so a Colab disconnect keeps completed horizons."""
+    if out_path is None:
+        return
+    tmp = Path(str(out_path) + ".tmp")
+    tmp.write_text(json.dumps(out, indent=2))
+    tmp.replace(out_path)
+    print(f"[checkpoint] wrote {out_path.name} ({len(out)} horizons)", flush=True)
+
+
+def run_garch(market, load_fn=None, n_jobs=1, out_path=None):
+    """GARCH/GJR-vs-HAR walk-forward for a market; returns the JSON-serialisable result dict.
+
+    When ``out_path`` is given, flush accumulated results after EACH horizon (Colab disconnect resilience)."""
     load_fn = load_fn or FM.load
     min_rows = config.MIN_ROWS.get(market, config.MIN_ROWS["default"])
     frames, _, _ = load_fn(market)
@@ -223,6 +235,7 @@ def run_garch(market, load_fn=None, n_jobs=1):
             "fit_diagnostics": {m: {"verdict": "overfit" if q[m] > tr_q[m] * 1.25 else "ok",
                                     "train_qlike": tr_q[m], "test_qlike": q[m]} for m in preds},
         }
+        _checkpoint(out, out_path)                  # flush after each horizon (disconnect-resilient)
     return out
 
 
@@ -240,10 +253,10 @@ def _print(market, out):  # pragma: no cover - console formatting only
 def main():  # pragma: no cover - entry driver: loads real data, writes JSON
     market = sys.argv[1] if len(sys.argv) > 1 else "hose"
     n_jobs = max(1, (os.cpu_count() or 2) - 1)
-    out = run_garch(market, n_jobs=n_jobs)
-    _print(market, out)
     outp = REPO / "results" / "gamma_gbm" / f"garch_{market}.json"
     outp.parent.mkdir(parents=True, exist_ok=True)
+    out = run_garch(market, n_jobs=n_jobs, out_path=outp)
+    _print(market, out)
     outp.write_text(json.dumps(out, indent=2))
     print(f"\nsaved {outp.relative_to(REPO)}", flush=True)
 
