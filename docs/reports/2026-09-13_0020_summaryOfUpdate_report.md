@@ -122,6 +122,25 @@ reported R²≈0.56 for index volatility does **not** replicate out-of-sample on
   the deciding criterion. It reinforces the thesis's standing finding that graph/topology features add no OOS
   value over own-history for volatility forecasting.
 
+## 3c. Verification — the idx_lnvol OOS R² is a secular-volume-trend artifact
+
+`code/verify_lnvol_trend.py` compares, under the same causal walk-forward, the topology RandomForest against a
+trivial linear **time-trend** baseline (single feature = window ordinal, LinearRegression) on both targets.
+
+| Market | idx_lnvol topo_rf | idx_lnvol **time_lr** | idx_lnvol topo+time | idx_vol topo_rf | idx_vol time_lr |
+|---|---|---|---|---|---|
+| HOSE  | 0.282 | **0.618** | 0.883 | 0.152 | −0.051 |
+| SP500 | 0.331 | **0.280** | 0.860 | 0.042 | −0.034 |
+
+- On **idx_lnvol** (future mean log-volume, strongly trending) a trivial time trend alone matches or exceeds
+  topology (HOSE 0.62 > 0.28; SP500 0.28 ≈ 0.33), and `topo+time` jumps to ≈0.86 — the predictability is the
+  secular volume trend, which both the time feature and the slowly-drifting topology metrics proxy.
+- On **idx_vol** (the paper's headline volatility target, trend-free/mean-reverting) the time trend explains
+  nothing (≈0 / negative) and topology is weak (HOSE 0.15, SP500 0.04).
+
+Conclusion: the positive idx_lnvol R² (incl. the SP500 RF +0.331) is a trend artifact, not evidence that
+topology predicts volume; topology adds no material skill on the volatility target on either market.
+
 ## 4. Artifacts
 - `results/gamma_gbm/complex_network_hose.json` (Exp B), `..._index_hose.json` (Exp A), `..._hose_screen.json`
   (feature screen), `..._hose_diag.json` (permutation importance).
