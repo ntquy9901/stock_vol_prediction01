@@ -72,11 +72,22 @@ def _success(out):
     return bool(gains_ok and dm_ok and beats_corr and fit_ok)
 
 
-def run_hybrid(market, load_fn=None):
+def _checkpoint(out, out_path):  # pragma: no cover - I/O side effect, exercised only in real runs
+    """Atomically write accumulated results so a Colab disconnect keeps completed horizons."""
+    if out_path is None:
+        return
+    tmp = Path(str(out_path) + ".tmp")
+    tmp.write_text(json.dumps(out, indent=2))
+    tmp.replace(out_path)
+    print(f"[checkpoint] wrote {out_path.name} ({len([k for k in out if k.startswith('h')])} horizons)", flush=True)
+
+
+def run_hybrid(market, load_fn=None, out_path=None):
     """Walk-forward hybrid comparison for a market; returns the JSON-serialisable result dict.
 
     Raises ``ValueError`` if no earnings dates are available (the hybrid requires the earnings block) or if
-    no fold is ever scored (fail loud rather than write an empty result)."""
+    no fold is ever scored (fail loud rather than write an empty result). When ``out_path`` is given, flush
+    accumulated results after EACH horizon (Colab disconnect resilience)."""
     load_fn = load_fn or FM.load
     min_rows = config.MIN_ROWS.get(market, config.MIN_ROWS["default"])
     frames, _, edates = load_fn(market)
@@ -124,6 +135,7 @@ def run_hybrid(market, load_fn=None):
                         "gain_vs_earn_pct": (q[_EARN] - q[_GRAPH]) / q[_EARN] * 100,
                         "gain_vs_corr_pct": (q[_CORR] - q[_GRAPH]) / q[_CORR] * 100,
                         "train_metrics": train_q, "test_metrics": q, "fit_diagnostics": diags}
+        _checkpoint(out, out_path)                  # flush after each horizon (disconnect-resilient)
     if not [k for k in out if k.startswith("h")]:
         raise ValueError(f"no fold scored for any horizon (min_rows={min_rows}) -- refusing to write an "
                          "empty result")
@@ -150,9 +162,9 @@ def _print(market, out):  # pragma: no cover - console formatting only
 
 def main():  # pragma: no cover - entry driver: loads real data, writes JSON
     market = sys.argv[1] if len(sys.argv) > 1 else "hose"
-    out = run_hybrid(market)
-    _print(market, out)
     outp = REPO / "results" / "gamma_gbm" / f"gbm_earn_graph_{market}.json"
+    out = run_hybrid(market, out_path=outp)
+    _print(market, out)
     outp.write_text(json.dumps(out, indent=2))
     print(f"\nsaved {outp.relative_to(REPO)}", flush=True)
 

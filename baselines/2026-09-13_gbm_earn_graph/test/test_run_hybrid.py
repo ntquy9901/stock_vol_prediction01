@@ -66,6 +66,17 @@ def test_run_hybrid_smoke(monkeypatch, tmp_path):
     json.dumps(out)                                              # JSON-serialisable
 
 
+def test_out_path_checkpoints_each_horizon(monkeypatch, tmp_path):
+    """out_path flushes JSON after every horizon so a Colab disconnect keeps completed horizons."""
+    _shrink(monkeypatch)
+    monkeypatch.setattr(run_hybrid, "EARN_PARQUET", _earn_parquet(tmp_path))
+    monkeypatch.setattr(run_hybrid.S1, "FOLDS", ["2015-06-01", "2015-09-01", "2015-10-01", "2100-01-01"])
+    outp = tmp_path / "gbm_earn_graph_hose.json"
+    out = run_hybrid.run_hybrid("hose", load_fn=lambda m: (_fake_frames(), {}, {}), out_path=outp)
+    assert outp.exists()                                        # written mid-run, not only at the end
+    assert "h1" in json.loads(outp.read_text()) and "h1" in out  # checkpoint holds the scored horizon(s)
+
+
 def test_earn_dates_sp500_keeps_loader_dates():
     ed = {"AAPL": np.array([np.datetime64("2020-01-01")])}
     assert run_hybrid._earn_dates("sp500", ed) is ed             # sp500 branch: untouched
