@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/content/repo/baselines/2026-09-13_paper_models/code/full_compare.py", line 31, in <module>
+    import paper_metrics_sp500 as PM  # noqa: E402  (reuse nb_col / adj_sector / all_metrics verbatim)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'paper_metrics_sp500'
