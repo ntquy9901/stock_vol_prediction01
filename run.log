@@ -7,3 +7,50 @@ ModuleNotFoundError: No module named 'paper_metrics_sp500'
 [checkpoint] wrote full_compare_sp500.json (1 horizons)
 [checkpoint] wrote full_compare_sp500.json (2 horizons)
 [checkpoint] wrote full_compare_sp500.json (3 horizons)
+[checkpoint] wrote full_compare_sp500.json (4 horizons)
+
+=== sp500 h1 (n=512,140) ===
+  GBM+oracle       QLIKE 0.2856 R2 +0.252
+  GBM+earn+corr    QLIKE 0.3159 R2 +0.206
+  GBM+earn         QLIKE 0.3173 R2 +0.210
+  GBM+sector       QLIKE 0.3533 R2 +0.190
+  GBM+corr         QLIKE 0.3538 R2 +0.186
+  GBM+market       QLIKE 0.3547 R2 +0.190
+  GBM+plac         QLIKE 0.3549 R2 +0.191
+  GBM              QLIKE 0.3572 R2 +0.186
+  HAR              QLIKE 0.3697 R2 +0.158
+
+=== sp500 h5 (n=510,152) ===
+  GBM+oracle       QLIKE 0.3066 R2 +0.207
+  GBM+earn         QLIKE 0.3709 R2 +0.126
+  GBM+earn+corr    QLIKE 0.3720 R2 +0.112
+  GBM+corr         QLIKE 0.4112 R2 +0.091
+  GBM+sector       QLIKE 0.4117 R2 +0.090
+  GBM              QLIKE 0.4120 R2 +0.104
+  GBM+market       QLIKE 0.4121 R2 +0.075
+  GBM+plac         QLIKE 0.4122 R2 +0.085
+  HAR              QLIKE 0.4364 R2 +0.100
+
+=== sp500 h10 (n=507,667) ===
+  GBM+oracle       QLIKE 0.3154 R2 +0.192
+  GBM+earn         QLIKE 0.3918 R2 +0.102
+  GBM+earn+corr    QLIKE 0.3946 R2 +0.087
+  GBM              QLIKE 0.4311 R2 +0.082
+  GBM+plac         QLIKE 0.4316 R2 +0.052
+  GBM+sector       QLIKE 0.4318 R2 +0.057
+  GBM+corr         QLIKE 0.4330 R2 +0.063
+  GBM+market       QLIKE 0.4352 R2 +0.076
+  HAR              QLIKE 0.4615 R2 +0.093
+
+=== sp500 h22 (n=501,703) ===
+  GBM+oracle       QLIKE 0.3275 R2 +0.163
+  GBM+earn         QLIKE 0.4078 R2 +0.112
+  GBM+earn+corr    QLIKE 0.4115 R2 +0.114
+  GBM              QLIKE 0.4466 R2 +0.092
+  GBM+plac         QLIKE 0.4491 R2 +0.100
+  GBM+sector       QLIKE 0.4497 R2 +0.099
+  GBM+corr         QLIKE 0.4498 R2 +0.093
+  GBM+market       QLIKE 0.4604 R2 +0.096
+  HAR              QLIKE 0.4855 R2 +0.079
+
+saved results/gamma_gbm/full_compare_sp500.json
