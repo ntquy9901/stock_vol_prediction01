@@ -185,6 +185,33 @@ mean-reversion features (= own-history minus `rq`). Caveat: `FM.OWN` is the proj
 these drops should be DM-verified (reduced set vs full own) before any project-wide change — screen MI is a
 filter, the DM test is the verdict (same association≠prediction lesson as topology).
 
+## 3f. DM verification of the proposed feature drops (reduced vs full own-history)
+
+`code/verify_reduced_features.py` runs the reduced sets head-to-head against the full 9-feature own-history GBM
+(pooled QLIKE + date-clustered DM). This OVERTURNS the screen-based drop recommendation on SP500.
+
+gain% = (own − reduced)/own; negative = reduced is worse.
+
+| | HOSE own−rq | HOSE har3 | SP500 own−rq | SP500 har3 |
+|---|---|---|---|---|
+| h1 | −0.14 (p=0.62) | +0.07 (p=0.43) | −0.06 (**p=9e-8**) | **−0.84 (p=8e-14)** |
+| h5 | −0.04 (**p=0.041**) | −0.06 (**p=0.016**) | −0.10 (**p=1e-5**) | **−1.20 (p=1e-11)** |
+| h10 | +0.02 (p=0.88) | +0.04 (p=0.34) | −0.12 (**p=1e-4**) | **−1.47 (p=0.004)** |
+| h22 | +0.00 (p=0.84) | −0.05 (**p=0.019**) | −0.06 (**p=3e-4**) | −0.28 (p=0.068) |
+
+**Conclusion — do NOT reduce to HAR-3.**
+- **HOSE:** all reductions are economically trivial (|gain| ≤ 0.14%); a couple reach DM-significance only because
+  n≈400k. Dropping rq or the mr_* block costs essentially nothing.
+- **SP500:** dropping the mean-reversion block (har3) costs **0.84–1.47% QLIKE at h1/h5/h10, DM-significant** —
+  economically real. Even dropping rq alone is significantly worse (though ~0.1%).
+- **Key lesson (reverse of the topology case):** the mr_* features have LOW univariate MI on SP500 (0.001–0.018,
+  which is why the screen flagged them "noise") yet REMOVING them measurably hurts OOS. Low univariate MI ≠
+  droppable — the GBM extracts conditional/interaction value the marginal screen cannot see. The DM head-to-head
+  is again the arbiter, in the opposite direction: keep the mean-reversion features.
+
+Recommended GBM feature set: **keep the full 9-feature own-history block** on both markets (at most drop the
+collinear `rq`, which costs ~0.1% on SP500 — borderline, not worth it). Topology and idx_rv remain dropped.
+
 ## 4. Artifacts
 - `results/gamma_gbm/complex_network_hose.json` (Exp B), `..._index_hose.json` (Exp A), `..._hose_screen.json`
   (feature screen), `..._hose_diag.json` (permutation importance).
