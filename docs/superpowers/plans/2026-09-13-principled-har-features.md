@@ -6,7 +6,19 @@
 
 **Architecture:** A new isolated baseline `baselines/2026-09-13_principled_har_features/` that imports read-only from the shared `scripts/eda/full_matrix.py` (FM), `vn_gbm_graph_stage1.py` (S1), `metrics.py` (M), `stats.py` (ST). Daily OHLC → published variance estimators (Parkinson/Garman-Klass/Rogers-Satchell) + realized semivariance (SHAR) + multi-scale HAR aggregates with windows chosen causally from training data; fed to the same gamma-HistGBM + walk-forward + pooled-QLIKE + date-clustered-DM protocol as the sibling `2026-09-12_complex_network` baseline.
 
-**Tech Stack:** Python 3.10 (`.venv_gpu_encode`), numpy, pandas, scikit-learn (HistGradientBoostingRegressor via `FM.gbm`), statsmodels (VAR not needed here; GPH long-memory implemented directly), pytest + pytest-cov + diff-cover.
+**Tech Stack:** Python 3.10 (`.venv_gpu_encode`), numpy, pandas, scikit-learn (HistGradientBoostingRegressor via `FM.gbm`), pytest + pytest-cov + diff-cover.
+
+> **REVISION 2026-09-13 (option A — supersedes the tasks below where they conflict):** The design was
+> simplified. Lag windows are FIXED at the standard Corsi (1, 5, 22) — there is **no data-driven selection**,
+> so **Task 2 (lag_select / GPH / AIC) is REMOVED entirely** and `run_har` uses fixed windows (no
+> `_choose_windows`, no `gph_d`). The GK/RS/YZ estimators are **used from the precomputed enriched columns**
+> (`garman_klass_variance`, `rogers_satchell_variance`, `yang_zhang_n20`) — NOT recomputed from OHLC — so
+> `estimators.py` implements only **realized semivariance**. Net tasks: (1) scaffold + semivariance estimator,
+> (2 ← was Task 3) build_panel over precomputed columns + semivariance at fixed windows, (3 ← was Task 4)
+> DM runner principled-vs-own + leave-one-out (fixed windows), (4 ← was Task 5) HOSE run + Colab + review +
+> gate. Feature set = `[har_daily, har_weekly, har_monthly, garman_klass_variance, rogers_satchell_variance,
+> yang_zhang_n20, semi_neg, semi_pos]` vs `FM.OWN`. Follow the code in Tasks 1/3/4/5 below but drop all GPH/AIC
+> window-selection logic and read GK/RS/YZ from columns.
 
 ## Global Constraints
 

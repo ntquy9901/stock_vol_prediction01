@@ -1,8 +1,13 @@
 # Data-Driven, Causal Selection of HAR Lag Windows
 
-> Paper-ready methodology section for the principled HAR-family feature set
-> (see spec `docs/superpowers/specs/2026-09-13-principled-har-features-design.md`).
-> Verify page/volume numbers against the original sources before submission.
+> **STATUS (2026-09-13): documented alternative — NOT adopted in the final design.**
+> The final principled-HAR baseline keeps the standard Corsi (2009) fixed windows (1, 5, 22) as-is (option A),
+> on the grounds that those windows are theory-justified (heterogeneous-market hypothesis), empirically
+> dominant, and act as a regularizing prior; data-driven window selection risks overfitting the choice for no
+> expected out-of-sample gain. This document is retained as a rigorous description of the GPH + AIC approach
+> that was explored, in case a reviewer asks, but it is NOT part of the implemented pipeline.
+>
+> Paper-ready methodology section (verify page/volume numbers against the original sources before submission).
 
 ## 1. Motivation: long memory in volatility and the HAR model
 

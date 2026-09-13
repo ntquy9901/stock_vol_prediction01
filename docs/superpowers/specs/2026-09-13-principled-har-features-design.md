@@ -37,9 +37,9 @@ Base daily variance estimator stays Parkinson (project-validated). `pk` = Parkin
 σ² = (ln(H/L))² / (4·ln2) (Parkinson 1980). All features are causal (trailing, data ≤ t).
 
 ### A. HAR-RV core (Corsi 2009)
-Multi-scale realized variance: RV⁽ᵈ⁾ = pk_t; RV⁽ʷ⁾ = mean(pk over w_short days); RV⁽ᵐ⁾ = mean(pk over w_long
-days); optional RV⁽ q ⁾ = mean over w_longer. Windows chosen data-drivenly (§4). Captures the long-memory /
-heterogeneous-horizon structure of volatility.
+Multi-scale realized variance at the fixed Corsi horizons: RV⁽ᵈ⁾ = `har_daily` (pk_t), RV⁽ʷ⁾ = `har_weekly`
+(5-day mean), RV⁽ᵐ⁾ = `har_monthly` (22-day mean) — already precomputed in the enriched frames. Captures the
+long-memory / heterogeneous-horizon structure of volatility.
 
 ### B. Leverage — realized semivariance / SHAR (Barndorff-Nielsen et al. 2010; Patton & Sheppard 2015)
 Split realized variance into downside/upside using signed daily log-returns r:
@@ -47,10 +47,13 @@ RS⁻ = Σ r²·𝟙(r<0), RS⁺ = Σ r²·𝟙(r>0), aggregated over the HAR wi
 result: RS⁻ (bad vol) predicts future volatility more strongly (leverage effect). This replaces the ad-hoc
 momentum features with a theory-grounded, cited directional-asymmetry signal.
 
-### C. Multi-estimator range volatility (Garman-Klass 1980; Rogers-Satchell 1991)
-Alternative published OHLC daily variance estimators as complementary daily inputs:
+### C. Multi-estimator range volatility (Garman-Klass 1980; Rogers-Satchell 1991; Yang-Zhang 2000)
+Alternative published OHLC variance estimators as complementary daily inputs — **already precomputed and
+formula-tested** in the enriched frames (`garman_klass_variance`, `rogers_satchell_variance`, `yang_zhang_n20`;
+see `baselines/2026-08-31_enriched_processed`): use the columns directly, do NOT recompute.
 - Garman-Klass: σ²_GK = 0.5·(ln(H/L))² − (2·ln2 − 1)·(ln(C/O))².
 - Rogers-Satchell: σ²_RS = ln(H/C)·ln(H/O) + ln(L/C)·ln(L/O) (drift-independent).
+- Yang-Zhang (windowed, n=20): the published overnight + open-close + Rogers-Satchell combination.
 Candidate features; leave-one-out (§5) prunes any that are not non-inferior-justified.
 
 ### Dropped
@@ -60,19 +63,20 @@ All `mr_*` heuristics and the `rq` proxy.
 True realized quarticity (HARQ), jumps / bipower variation (HAR-CJ), signed jumps — all require **intraday**
 data; only daily OHLC is available. State as a limitation; do not ship a mislabelled proxy.
 
-## 4. Data-driven, causal lag selection
+## 4. Lag windows: fixed Corsi (1, 5, 22) — DECISION (revised 2026-09-13)
 
-Windows are NOT hard-coded to {1,5,22}. They are selected **once** from the training data that precedes the
-first walk-forward test fold (causal — no test data used), then **fixed across all folds** (so every fold's
-feature matrix has identical semantics; avoids per-fold drift and keeps the DM comparison clean):
-1. On the pre-first-test-fold training log-RV, compute the sample ACF/PACF and estimate the long-memory
-   fractional-integration parameter d (GPH estimator) to confirm slowly-decaying memory.
-2. Choose the HAR component windows (w_short, w_long[, w_longer]) by minimising a HAR in-sample criterion
-   (AIC / residual) over a small candidate grid, or by matching the ACF decay knots.
-3. Report the chosen windows per market + the ACF/d evidence. If the data confirms {1,5,22}, the previously
-   arbitrary choice becomes data-justified; if VN differs, use the VN-implied windows.
+The HAR aggregation windows are the **standard Corsi (2009) horizons (1 day / 5 days / 22 days)**, used as-is.
+Rationale (user decision, option A): these are NOT arbitrary heuristics — they follow the heterogeneous-market
+hypothesis (daily/weekly/monthly investor horizons) and are the empirically dominant, well-cited HAR standard;
+the fixed windows act as a regularizing prior that avoids overfitting the window choice. They are already
+precomputed in the enriched frames as `har_daily` (1d), `har_weekly` (5d), `har_monthly` (22d).
 
-All scalers fit on train only; semivariance/estimators computed per-ticker causally.
+Data-driven window selection (GPH long-memory + AIC grid) was designed and then **dropped** — see the
+documented-but-not-adopted alternative in `docs/paper/2026-09-13_har_lag_selection_methodology.md`. There is NO
+`lag_select` module, NO GPH/ACF step, and NO per-fold window choice. This keeps the baseline parsimonious and
+the contribution purely about the FEATURE SET (published estimators + leverage), not window tuning.
+
+All scalers fit on train only; the semivariance feature is computed per-ticker causally.
 
 ## 5. Validation protocol
 
@@ -88,12 +92,13 @@ All scalers fit on train only; semivariance/estimators computed per-ticker causa
 
 `baselines/2026-09-13_principled_har_features/` with the 5 subfolders:
 - `requirements/requirements.md`, `design/design.md` (this spec, adapted).
-- `code/`: config (all constants — windows, grids, seeds), `estimators.py` (Parkinson/GK/RS/semivariance, each
-  formula-exact), `lag_select.py` (causal ACF/GPH + grid), `build_panel.py` (causal feature panel), `run_har.py`
-  (GBM + DM runner), `__init__.py`, sys.path bootstrap.
-- `test/`: formula-exact tests (independent recompute per estimator vs its published formula — MANDATORY per
-  the named-estimator rule), causality/leakage tests, lag-selection test on synthetic long-memory series,
-  DM-runner smoke with stub loaders + patched folds. C0 line = 100%, C1 branch ≥ 95% on changed lines.
+- `code/`: config (constants — fixed windows {1,5,22}, seeds, semivariance window), `estimators.py`
+  (realized **semivariance** only — GK/RS/YZ/Parkinson come from precomputed columns), `build_panel.py`
+  (causal feature panel over the precomputed columns + semivariance, fixed Corsi windows), `run_har.py`
+  (GBM + DM runner + leave-one-out), `__init__.py`, sys.path bootstrap. NO `lag_select.py`.
+- `test/`: formula-exact test for semivariance (independent recompute); a note/test that GK/RS/YZ are used
+  from the (already formula-tested) enriched columns; causality/leakage tests; DM-runner smoke with stub
+  loaders + patched folds. C0 line = 100%, C1 branch ≥ 95% on changed lines.
 - `code_review/`: 3-layer adversarial review, fix HIGH/MEDIUM.
 - A Colab notebook `notebooks/principled_har_sp500_colab.ipynb` (+ `.gitignore` allowlist).
 - Result JSONs under `results/gamma_gbm/`; summary report under `docs/reports/`.
