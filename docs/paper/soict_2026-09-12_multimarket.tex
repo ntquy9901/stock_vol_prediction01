@@ -405,6 +405,13 @@ at $h10$. A residual refiner that trains a neighbor-spillover ridge on the own-h
 statistically indistinguishable from the GBM at every horizon (DM $p=0.07$, $0.69$, $0.91$, $0.70$).
 Neither a feature-level nor a residual-level graph adds origin-time signal beyond own-history.
 
+\textbf{The HOSE result is robust to regime spikes.} The own-history GBM beats HAR in every
+walk-forward fold (per-fold QLIKE 1.37 to 1.83 against HAR's 1.81 to 1.84), and the margin survives
+excluding the COVID (February to April 2020), 2022, and April 2025 tariff shock windows: dropping
+those 57{,}466 observations (14\% of the panel) leaves the $h1$ QLIKE gain over HAR at 13.8\% (from
+13.3\% on the full panel) and keeps every horizon significant (DM $p<10^{-25}$). The GBM advantage is
+a calm-market property, not an artifact of a few crisis days.
+
 \textbf{Takeaway.} The graph null replicates on a second, structurally different market. The earnings
 lever is specific to the S\&P~500 and does not generalize to HOSE under the available real
 announcement dates.
