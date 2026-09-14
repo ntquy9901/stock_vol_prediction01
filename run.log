@@ -148,3 +148,4 @@ loaded market=sp500 device=cuda
 
 saved results/gamma_gbm/gnnhar_sp500_smoke.json
 loaded market=sp500 device=cuda
+  h1: GNNHAR QLIKE 0.3749 vs HAR 0.3697 vs GBM 0.3572 (n=512,140, 8 folds, 840s)
