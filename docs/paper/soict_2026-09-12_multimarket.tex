@@ -102,8 +102,8 @@ dependent.
 \textbf{Model.} The forecasting model is a per-stock GBM (a gamma-loss Gradient Boosting
 Machine~\cite{friedman2001}: scikit-learn HistGradientBoostingRegressor~\cite{pedregosa2011},
 gamma-deviance loss equal to QLIKE up to a constant, 300 iterations, learning rate 0.05, 31 leaves,
-L2=1.0, 3-seed ensemble). Its own-history feature vector is $\mathbb{R}^9$: three HAR
-lags~\cite{corsi2009}, a realized-quarticity proxy, and five log-volatility momentum terms. Two
+L2=1.0, 3-seed ensemble). Its own-history feature vector is $\mathbb{R}^8$: three HAR
+lags~\cite{corsi2009} and five log-volatility momentum terms. Two
 optional feature blocks extend it. The External block (GBME) is $\mathbb{R}^4$ of forward-looking
 scheduled-earnings features, chiefly the distance from the forecast target to the nearest scheduled
 release. The graph block (GBME+graph) is a single cross-firm neighbor aggregate,
@@ -115,7 +115,7 @@ adds a realized-quarticity interaction~\cite{harq2016}. Both share the same targ
 positivity floor as the GBM.
 
 \subsection*{Features}
-\textbf{Own-history block (9 features, used by GBM).} Every own-history feature is observable at the
+\textbf{Own-history block (8 features, used by GBM).} Every own-history feature is observable at the
 forecast origin $t$. The three HAR lags capture short, medium, and long memory of realized variance
 over one day, one trading week ($\mathrm{WK}=5$), and one trading month (22 days):
 \begin{align}
@@ -123,11 +123,6 @@ over one day, one trading week ($\mathrm{WK}=5$), and one trading month (22 days
 \mathrm{har\_weekly} = \frac{1}{5}\sum_{k=0}^{4}\mathrm{pk}_{t-k}, \qquad
 \mathrm{har\_monthly} = \frac{1}{22}\sum_{k=0}^{21}\mathrm{pk}_{t-k}.
 \end{align}
-A realized-quarticity proxy gauges the magnitude and dispersion of recent variance, which lets the
-model down-weight noisy high-variance periods:
-\begin{equation}
-\mathrm{rq}_t = \sqrt{\tfrac{1}{5}\sum_{k=0}^{4}\mathrm{pk}_{t-k}^{2}}.
-\end{equation}
 Five log-volatility momentum terms, built on $\ell_t=\ln(\max(\mathrm{pk}_t,\varepsilon))$ with
 $\varepsilon=10^{-8}$, encode recent trend, multi-scale slope, deviation from the recent mean, and a
 standardized 22-day level:
@@ -191,7 +186,7 @@ across models before scoring.
 \centering
 \includegraphics[width=\textwidth]{fig_architecture.png}
 \caption{Model architecture. A per-stock feature vector combines own-history features
-($\mathbb{R}^9$: three HAR lags, a realized-quarticity proxy, five log-volatility momentum terms), an
+($\mathbb{R}^8$: three HAR lags and five log-volatility momentum terms), an
 External forward-looking scheduled-earnings block ($\mathbb{R}^4$), and one cross-firm graph
 neighbor-aggregate feature ($\mathbb{R}^1$). A gamma-loss gradient-boosting ensemble maps the feature
 vector to the multi-horizon Parkinson-variance forecast.}
@@ -221,27 +216,27 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
 1 & HAR        & 5.754 & 7.586 & 2.132 & 0.3697 \\
 1 & HARQ       & 5.648 & 7.515 & 2.151 & 0.3780 \\
-1 & GBM        & 5.557 & 7.454 & 2.089 & 0.3570 \\
-1 & GBME       & \textbf{5.397} & \textbf{7.346} & 2.017 & \textbf{0.3172} \\
-1 & GBME+graph & 5.424 & 7.365 & \textbf{2.010} & 0.3158 \\
+1 & GBM        & 5.565 & 7.460 & 2.091 & 0.3572 \\
+1 & GBME       & \textbf{5.405} & \textbf{7.352} & 2.018 & \textbf{0.3173} \\
+1 & GBME+graph & 5.428 & 7.367 & \textbf{2.011} & 0.3159 \\
 \midrule
 5 & HAR        & 6.141 & 7.836 & 2.297 & 0.4364 \\
 5 & HARQ       & 6.132 & 7.831 & 2.309 & 0.4377 \\
-5 & GBM        & 6.117 & 7.821 & 2.255 & 0.4116 \\
-5 & GBME       & \textbf{5.972} & \textbf{7.728} & \textbf{2.180} & \textbf{0.3705} \\
-5 & GBME+graph & 6.063 & 7.787 & 2.196 & 0.3715 \\
+5 & GBM        & 6.111 & 7.818 & 2.258 & 0.4120 \\
+5 & GBME       & \textbf{5.962} & \textbf{7.721} & \textbf{2.181} & \textbf{0.3709} \\
+5 & GBME+graph & 6.058 & 7.783 & 2.199 & 0.3720 \\
 \midrule
 10 & HAR        & 6.214 & 7.883 & 2.356 & 0.4615 \\
 10 & HARQ       & 6.205 & 7.877 & 2.358 & 0.4614 \\
-10 & GBM        & 6.262 & 7.913 & 2.312 & 0.4307 \\
-10 & GBME       & \textbf{6.118} & \textbf{7.822} & \textbf{2.239} & \textbf{0.3912} \\
-10 & GBME+graph & 6.240 & 7.899 & 2.272 & 0.3939 \\
+10 & GBM        & 6.287 & 7.929 & 2.319 & 0.4311 \\
+10 & GBME       & \textbf{6.149} & \textbf{7.842} & \textbf{2.247} & \textbf{0.3918} \\
+10 & GBME+graph & 6.255 & 7.909 & 2.277 & 0.3946 \\
 \midrule
 22 & HAR        & 6.327 & 7.954 & 2.419 & 0.4855 \\
 22 & HARQ       & 6.311 & 7.944 & 2.415 & 0.4831 \\
-22 & GBM        & 6.233 & 7.895 & 2.359 & 0.4464 \\
-22 & GBME       & 6.098 & 7.809 & \textbf{2.277} & \textbf{0.4074} \\
-22 & GBME+graph & \textbf{6.087} & \textbf{7.802} & 2.300 & 0.4110 \\
+22 & GBM        & 6.234 & 7.896 & 2.360 & 0.4466 \\
+22 & GBME       & 6.095 & 7.807 & \textbf{2.279} & \textbf{0.4078} \\
+22 & GBME+graph & \textbf{6.085} & \textbf{7.801} & 2.303 & 0.4115 \\
 \bottomrule
 \end{tabular}
 \end{table}
