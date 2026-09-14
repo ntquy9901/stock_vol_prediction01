@@ -111,8 +111,9 @@ $\mathbb{R}^1$, formed by averaging each node's top-10 train-correlation neighbo
 row-normalized weights. Figure~\ref{fig:arch} shows the architecture.
 
 \textbf{Baselines.} HAR~\cite{corsi2009} fits three own-history lags by ordinary least squares. HARQ
-adds a realized-quarticity interaction~\cite{harq2016}. Both share the same target, protocol, and
-positivity floor as the GBM.
+adds a realized-quarticity interaction~\cite{harq2016}. GNNHAR~\cite{gnnhar2024} is a learned graph
+neural network (two graph-convolution layers over the three HAR lags, its best variant); GNNHAR$-g$ is
+its no-graph ablation ($A{=}I$). All share the same target, protocol, and positivity floor as the GBM.
 
 \subsection*{Features}
 \textbf{Own-history block (8 features, used by GBM).} Every own-history feature is observable at the
@@ -195,18 +196,18 @@ vector to the multi-horizon Parkinson-variance forecast.}
 
 \section{Cross-Firm Graphs Add No Incremental Value}\label{sec:graph}
 Table~\ref{tab:sp500} reports all four metrics for the S\&P~500 across HAR, HARQ, the own-history GBM,
-the earnings model GBME, and GBME+graph at every horizon. The own-history GBM already beats HAR and
-HARQ on QLIKE at every horizon. Adding the cross-firm graph feature to the earnings model does not
+the earnings model GBME, GBME+graph, and the learned GNNHAR (with its no-graph ablation) at every
+horizon. The own-history GBM already beats HAR and HARQ on QLIKE at every horizon. Adding the cross-firm graph feature to the earnings model does not
 help: GBME+graph is not distinguishable from GBME on QLIKE at the short horizons and it is worse at
 the two longest horizons. The graph is therefore never the DM-verified best, and it is not bolded in any
 horizon block.
 
 \begin{table}[t]
 \centering
-\caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed GBM ensemble). Lower is better
-on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE unscaled. Bold marks the best
-value in each metric column per horizon; the QLIKE bold additionally requires a significant
-date-clustered Diebold-Mariano test ($p<0.05$).}
+\caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed ensembles). Lower is better
+on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE unscaled. GNNHAR$-g$ is GNNHAR with
+the graph removed ($A{=}I$). Bold marks the best value in each metric column per horizon; the QLIKE bold
+additionally requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:sp500}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -219,24 +220,32 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 1 & GBM        & 5.565 & 7.460 & 2.091 & 0.3572 \\
 1 & GBME       & \textbf{5.405} & \textbf{7.352} & 2.018 & \textbf{0.3173} \\
 1 & GBME+graph & 5.428 & 7.367 & \textbf{2.011} & 0.3159 \\
+1 & GNNHAR     & 5.760 & 7.589 & 2.121 & 0.3749 \\
+1 & GNNHAR$-g$ & 5.657 & 7.521 & 2.054 & 0.3695 \\
 \midrule
 5 & HAR        & 6.141 & 7.836 & 2.297 & 0.4364 \\
 5 & HARQ       & 6.132 & 7.831 & 2.309 & 0.4377 \\
 5 & GBM        & 6.111 & 7.818 & 2.258 & 0.4120 \\
 5 & GBME       & \textbf{5.962} & \textbf{7.721} & \textbf{2.181} & \textbf{0.3709} \\
 5 & GBME+graph & 6.058 & 7.783 & 2.199 & 0.3720 \\
+5 & GNNHAR     & 6.379 & 7.987 & 2.330 & 0.4462 \\
+5 & GNNHAR$-g$ & 6.155 & 7.845 & 2.228 & 0.4251 \\
 \midrule
 10 & HAR        & 6.214 & 7.883 & 2.356 & 0.4615 \\
 10 & HARQ       & 6.205 & 7.877 & 2.358 & 0.4614 \\
 10 & GBM        & 6.287 & 7.929 & 2.319 & 0.4311 \\
 10 & GBME       & \textbf{6.149} & \textbf{7.842} & \textbf{2.247} & \textbf{0.3918} \\
 10 & GBME+graph & 6.255 & 7.909 & 2.277 & 0.3946 \\
+10 & GNNHAR     & 6.601 & 8.124 & 2.426 & 0.4767 \\
+10 & GNNHAR$-g$ & 6.410 & 8.006 & 2.283 & 0.4478 \\
 \midrule
 22 & HAR        & 6.327 & 7.954 & 2.419 & 0.4855 \\
 22 & HARQ       & 6.311 & 7.944 & 2.415 & 0.4831 \\
 22 & GBM        & 6.234 & 7.896 & 2.360 & 0.4466 \\
 22 & GBME       & 6.095 & 7.807 & \textbf{2.279} & \textbf{0.4078} \\
 22 & GBME+graph & \textbf{6.085} & \textbf{7.801} & 2.303 & 0.4115 \\
+22 & GNNHAR     & 6.353 & 7.971 & 2.414 & 0.4761 \\
+22 & GNNHAR$-g$ & 6.246 & 7.903 & 2.339 & 0.4564 \\
 \bottomrule
 \end{tabular}
 \end{table}
