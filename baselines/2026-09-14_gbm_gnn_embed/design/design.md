@@ -87,6 +87,18 @@ would be silently SKIPPED and the evidence never enforced; a per-horizon file ha
 from the full-train (z_test) embedding GNN per seed (representative; the inner-OOF GNNs are not recorded to
 keep the 4× OOF cost down).
 
+## 9. Validity caveat — embedding basis non-identifiability (biases toward NO-GO)
+Neural hidden units are defined only up to a permutation/rotation/sign. The leakage-safe OOF design stitches
+`z_train` from `INNER_K` separately-trained inner GNNs, and `z_test` from a distinct full-train GNN, so
+different train rows — and `z_train` vs `z_test` — can live in **different latent coordinate systems**. A GBM
+split "`z3 > 0.5`" learned on `z_train` need not carry the same meaning on `z_test`. Mitigations applied: a
+**single** embedding seed (no averaging embeddings across differently-initialised seeds, which would shrink
+them in an ill-defined basis); the GBM is still seed-ensembled. The inner-vs-test basis drift is **inherent**
+to leakage-safe cross-fitting of neural features (the alternative — one GNN embedding both its own train rows
+and the test rows — reintroduces the stacking leakage this design exists to prevent). Consequence: a NO-GO
+here is a **lower bound** on graph value (the test could mask a real signal), not proof of none. This is
+stated in the report and must be stated in any paper use.
+
 ## 8. Node features + GNN target (decisions)
 - **GNN node features = OWN-8** (same as the GBM input). The embedding therefore adds only the *graph
   mixing* of own-history features; that marginal graph value is exactly the falsification target.

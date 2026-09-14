@@ -240,6 +240,54 @@ def test_run_hose_perfold_and_spike(monkeypatch, tmp_path):
     assert "gain_pct_ex_spike" in sr and "beats_ex_spike" in sr
 
 
+def test_outer_fold_causality(monkeypatch, tmp_path):
+    """Walk-forward causality: mutating rows AT/AFTER the fold's test end must not change the fold's result
+    (the fold only reads dates < ts-embargo for train and [ts,tend) for test)."""
+    _tiny_min_rows(monkeypatch)
+    frames = _frames()
+    # true future = strictly beyond tend + the h-target reach (test labels y=pk.shift(-h) legitimately read up
+    # to ~tend, so only dates past that margin are genuinely unused by fold 0).
+    cutoff = pd.Timestamp(S1.FOLDS[1]) + pd.Timedelta(days=20)
+    mutated = {}
+    for tk, fr in frames.items():
+        g = fr.copy()
+        post = g["date"] >= cutoff
+        for c in R.OWN + ["parkinson_variance", "logpk"]:      # corrupt genuine-future rows only
+            g.loc[post, c] = g.loc[post, c] * 7.0 + 1.0
+        mutated[tk] = g
+    clean = R.run("sp500", load_fn=lambda m: (frames, {}, {}), out_dir=tmp_path / "a", smoke=True,
+                  trainer=_fake_trainer)
+    dirty = R.run("sp500", load_fn=lambda m: (mutated, {}, {}), out_dir=tmp_path / "b", smoke=True,
+                  trainer=_fake_trainer)
+    assert clean[1]["metrics"] == dirty[1]["metrics"]          # identical -> no future-fold leakage
+
+
+@pytest.mark.smoke
+def test_run_real_embedder_smoke(monkeypatch, tmp_path):
+    """End-to-end happy path with the REAL GNN embedder (trainer=None): exercises the actual torch forward +
+    embed() gather + OOF/test wiring inside the driver (the fake-trainer run tests bypass all of that)."""
+    _tiny_min_rows(monkeypatch)
+    monkeypatch.setattr(C, "EPOCHS_SMOKE", 5)
+    monkeypatch.setattr(C, "INNER_K", 2)
+    monkeypatch.setattr(C, "MIN_EPOCH", 0)
+    docs = R.run("sp500", load_fn=_fake_loader, out_dir=tmp_path, smoke=True, trainer=None)
+    doc = docs[1]
+    for m in (R.BASE, R.LEARNED):
+        assert set(doc["metrics"][m]) == {"mse", "rmse", "mae", "r2", "qlike"}
+    assert doc["fit_diagnostics"][R.LEARNED]["status"] in ("ok", "overfit", "underfit")
+    assert doc["learning_curves"]["fold0"]                     # real per-epoch curves recorded
+
+
+def test_group_z_raises_on_single_train_date(monkeypatch):
+    """_group_z fails loud when an inner-train has <2 dates (cannot hold out a validation date)."""
+    dates = pd.to_datetime(["2021-01-04", "2021-01-05"])
+    rows = [{"date": d, "ticker": tk, "y": 1.0, "logpk": -8.0, "f": 0.5}
+            for d in dates for tk in ("TK0", "TK1")]
+    df = pd.DataFrame(rows)
+    with pytest.raises(ValueError, match=">=2"):
+        E._group_z(df, ("TK0", "TK1"), ["f"], [dates[0]], [dates[1]], 0, (0,), 1, 1, _fake_trainer)
+
+
 def test_run_hose_all_in_spike(monkeypatch, tmp_path):
     """When every test date is inside a spike window (keep.any() False), spike_robustness is omitted."""
     _tiny_min_rows(monkeypatch)
@@ -269,6 +317,8 @@ def test_safe_dm_identical_losses():
     assert r["p_value"] == 1.0 and r["mean_diff"] == 0.0
     r2 = R._safe_dm(e, e + 0.05, dates, 1)                     # non-degenerate -> real DM path
     assert 0.0 <= r2["p_value"] <= 1.0
+    r3 = R._safe_dm(e, e + np.array([0.01, -0.02, 0.03, -0.01]), dates, 9)  # h>=n_dates -> DM raises -> guard
+    assert r3["p_value"] == 1.0
 
 
 def test_load_earn_branches(monkeypatch, tmp_path):

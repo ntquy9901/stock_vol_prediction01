@@ -130,6 +130,8 @@ def _group_z(df, tickers, feats, train_dates, emb_dates, graph_seed, seeds, max_
     W, _Wp = S1.build_graph(df[df["date"].isin(train_dates)], tickers, np.random.default_rng(graph_seed))
     adj = torch.as_tensor(W, dtype=torch.float32, device=DEVICE)
     all_tr = np.where(np.array([is_train_date(d) for d in dts]))[0]
+    if len(all_tr) < 2:                                        # fail loud: cannot hold out a val date and
+        raise ValueError(f"inner-train has {len(all_tr)} date(s); need >=2 to train + validate")  # still train
     vl = _val_len(len(all_tr))
     tr_idx, va_idx = all_tr[:-vl], all_tr[-vl:]
     emb_rows = df[df["date"].isin(emb_dates)]

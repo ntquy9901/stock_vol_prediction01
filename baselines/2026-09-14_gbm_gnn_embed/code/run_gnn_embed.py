@@ -100,12 +100,17 @@ def success(docs):
 
 
 def _safe_dm(err_a, err_b, dates, h):
-    """Date-clustered DM, but return p=1.0 (no detectable difference) when the two loss series are
-    numerically identical. The expected-NO-GO case can leave the tree ignoring `z`, making GBME+z == GBME;
-    the reused DM raises on the resulting zero-variance differential, so guard the degenerate case."""
+    """Date-clustered DM, but return p=1.0 (no detectable difference) for the degenerate cases the reused DM
+    cannot handle: numerically identical loss series (the expected-NO-GO case can leave the tree ignoring
+    `z`, making GBME+z == GBME), a (near-)constant date-level differential (zero long-run variance), or too
+    few surviving dates for the HLN factor (h >= n_dates, e.g. a spike-excluded long-horizon fold)."""
+    degenerate = {"p_value": 1.0, "mean_diff": 0.0, "dm_hln": 0.0, "n_dates": int(np.unique(dates).size)}
     if np.allclose(err_a, err_b):
-        return {"p_value": 1.0, "mean_diff": 0.0, "dm_hln": 0.0, "n_dates": int(np.unique(dates).size)}
-    return ST.date_clustered_dm(err_a, err_b, dates, h)
+        return degenerate
+    try:
+        return ST.date_clustered_dm(err_a, err_b, dates, h)
+    except ValueError:
+        return degenerate
 
 
 def _spike_mask(dates):
@@ -117,7 +122,7 @@ def _spike_mask(dates):
     return m
 
 
-def _pool_doc(h, market, seeds, preds, yy, dts, curves, per_fold, spike):
+def _pool_doc(h, market, emb_seeds, gbm_seeds, preds, yy, dts, curves, per_fold, spike):
     """Build the per-horizon result doc: pooled 5-metric train/val/test for both models, fit_diagnostics for
     the learned model, date-clustered DM + gain + verdict, plus HOSE per-fold/spike robustness."""
     order = [BASE, LEARNED]
@@ -134,7 +139,7 @@ def _pool_doc(h, market, seeds, preds, yy, dts, curves, per_fold, spike):
     gain = (metrics[BASE]["qlike"] - metrics[LEARNED]["qlike"]) / metrics[BASE]["qlike"] * 100.0
     beats = verdict(gain, dm["p_value"])
     doc = {"market": market, "h": h, "n": int(len(y)), "n_folds": len(yy["te"]),
-           "seeds": list(seeds), "inner_k": C.INNER_K,
+           "emb_seeds": list(emb_seeds), "gbm_seeds": list(gbm_seeds), "inner_k": C.INNER_K,
            "metrics": metrics, "train_metrics": train_metrics, "val_metrics": val_metrics,
            "fit_diagnostics": fit,
            "learning_curves": curves,
@@ -171,7 +176,10 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
     checkpoint) and returns {h: doc}. `trainer` injects a GNN embedder (tests use a cheap fake)."""
     load_fn = load_fn or FM.load
     epochs = C.EPOCHS_SMOKE if smoke else C.EPOCHS
-    gnn_seeds = (G.SEEDS[0],) if smoke else G.SEEDS
+    # ONE embedding GNN seed (not a seed-ensemble): neural hidden units are only defined up to a
+    # permutation/rotation/sign, so averaging embeddings across differently-initialised seeds shrinks the
+    # representation toward its mean in an ill-defined basis. The GBM is still seed-ensembled (gbm_seeds).
+    emb_seeds = (G.SEEDS[0],)
     gbm_seeds = (FM.SEEDS[0],) if smoke else FM.SEEDS
     horizons = (C.HORIZONS[0],) if smoke else C.HORIZONS
     fold_cap = 1 if smoke else None
@@ -212,9 +220,9 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
             n_done += 1
             fold = a.loc[(a.date >= S1.TRAIN_START) & (a.date < tend), keep].copy()
             base_seed = S1.RNG_SEED + k
-            z_train = E.oof_train_z(trf[keep], tickers, OWN, gnn_seeds, epochs, C.PATIENCE, base_seed,
+            z_train = E.oof_train_z(trf[keep], tickers, OWN, emb_seeds, epochs, C.PATIENCE, base_seed,
                                     trainer=trainer)
-            z_test, cv = E.test_z(fold, trf[keep], tef[keep], tickers, OWN, gnn_seeds, epochs, C.PATIENCE,
+            z_test, cv = E.test_z(fold, trf[keep], tef[keep], tickers, OWN, emb_seeds, epochs, C.PATIENCE,
                                   base_seed, trainer=trainer)
             curves[f"fold{k}"] = cv
             trf_z = _with_z(trf, z_train, zcols)
@@ -224,8 +232,11 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
             trf_e, vaf = trf_z[~is_val], trf_z[is_val]
             combo = pd.concat([tef_z, trf_e, vaf])
             n_te, n_tr = len(tef_z), len(trf_e)
+            # Fit on trf_e (train MINUS the val slice) so val_metrics is a TRUE hold-out, not in-sample:
+            # the gate-required fit_diagnostics then compares a genuine val->test gap. GBM has no early stop,
+            # so dropping the ~VALID_LEN val dates costs negligible train data on a multi-year window.
             for mdl, cols in ((BASE, cols_base), (LEARNED, cols_z)):
-                p = _gbm_ensemble(trf_z, combo, cols, gbm_seeds)
+                p = _gbm_ensemble(trf_e, combo, cols, gbm_seeds)
                 preds["te"][mdl].append(p[:n_te])
                 preds["tr"][mdl].append(p[n_te:n_te + n_tr])
                 preds["va"][mdl].append(p[n_te + n_tr:])
@@ -238,12 +249,12 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
             if G.DEVICE.type == "cuda":  # pragma: no cover - GPU-only VRAM cleanup, not exercised on CPU CI
                 import torch
                 torch.cuda.empty_cache()
-            doc = _pool_doc(h, market, gnn_seeds, preds, yy, dts, curves, per_fold, spike)
+            doc = _pool_doc(h, market, emb_seeds, gbm_seeds, preds, yy, dts, curves, per_fold, spike)
             _checkpoint(doc, out_path)
             print(f"  h{h} fold {k} ({ts.date()}) done, {time.time()-t0:.0f}s (checkpointed)", flush=True)
         if not yy["te"]:  # pragma: no cover - defensive: a horizon with no eligible walk-forward fold
             continue
-        doc = _pool_doc(h, market, gnn_seeds, preds, yy, dts, curves, per_fold, spike)
+        doc = _pool_doc(h, market, emb_seeds, gbm_seeds, preds, yy, dts, curves, per_fold, spike)
         _checkpoint(doc, out_path)
         v = doc["verdict"]
         print(f"\n== {market} h{h} (n={doc['n']:,}, {doc['n_folds']} folds) ==", flush=True)
