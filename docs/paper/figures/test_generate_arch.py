@@ -20,6 +20,13 @@ def test_box_and_arr_add_patches():
     plt.close(fig)
 
 
+def test_feature_rows_no_graph():
+    rows = GA.feature_rows()
+    assert len(rows) == 12                                  # 8 own-history + 4 external, no graph row
+    assert all("g_{i,t}" not in r and "W_{ij}" not in r for r in rows)   # graph block dropped
+    assert "har_daily" in rows and "earn_prox" in rows
+
+
 def test_main_writes_nonempty_png_and_pdf(monkeypatch):
     root = Path(__file__).resolve().parents[3]        # repo root; main() saves to docs/paper/figures/<...>
     monkeypatch.chdir(root)

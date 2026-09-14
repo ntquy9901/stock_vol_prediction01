@@ -25,16 +25,22 @@ def arr(ax, x1, y1, x2, y2, txt=None, dy=0.18):
         ax.text((x1 + x2) / 2, (y1 + y2) / 2 + dy, txt, ha="center", fontsize=7.4, color="0.3")
 
 
+def feature_rows():
+    """Feature-vector rows shown in the stack, bottom-to-top: 4 external (earnings) then 8 own-history.
+    No cross-firm graph row (the graph contribution was dropped)."""
+    own = ["har_daily", "har_weekly", "har_monthly",
+           "mr_change", "mr_slope5", "mr_slope10", "mr_dev5", "mr_z22"]
+    ext = ["earn_prox", "earn_soon", "earn_pre", "earn_post"]
+    return ext[::-1] + own[::-1]
+
+
 def main():
     fig, ax = plt.subplots(figsize=(12.8, 7.0))
     ax.axis("off"); ax.set_xlim(0, 16); ax.set_ylim(0, 9)
 
-    # ---- central feature-vector stack (12 rows: 8 own + 4 external) ----
+    # ---- central feature-vector stack (12 rows: 8 own + 4 external; no graph block) ----
     vx, vy, cw, ch = 4.5, 1.4, 3.5, 0.46
-    own = ["har_daily", "har_weekly", "har_monthly",
-           "mr_change", "mr_slope5", "mr_slope10", "mr_dev5", "mr_z22"]
-    ext = ["earn_prox", "earn_soon", "earn_pre", "earn_post"]
-    rows = ext[::-1] + own[::-1]                            # external at bottom, own on top
+    rows = feature_rows()                                   # external at bottom, own on top
     for k, lab in enumerate(rows):
         fc = "#fdf3e3" if k < 4 else "#e7f4ea"
         ax.add_patch(Rectangle((vx, vy + k * ch), cw, ch, fc=fc, ec="0.4", lw=0.7))
