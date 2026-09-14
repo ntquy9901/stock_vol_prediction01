@@ -1,0 +1,77 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Design: GBME + GNN-embedding</title><style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:960px;margin:0 auto;padding:32px 28px;line-height:1.6;color:#1a1a1a;background:#fbfbfd}h1{font-size:26px;border-bottom:3px solid #6a3d9a;padding-bottom:8px}h2{font-size:20px;margin-top:28px;color:#33236b;border-bottom:1px solid #ddd;padding-bottom:4px}h3{font-size:16px;color:#444}code{background:#eef1f6;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}pre{background:#1e1e2e;color:#e6e6f0;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:#fff}th,td{border:1px solid #d0d4da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#efeafa}tr:nth-child(even) td{background:#f8f7fc}blockquote{border-left:4px solid #b8a6e0;background:#f3f0fa;margin:12px 0;padding:8px 14px;color:#4a4a5a;font-size:14px}strong{color:#33236b}ol,ul{padding-left:24px}li{margin:3px 0}</style></head><body><h1>Design — GBME ⊕ 2-layer GNN node-embedding (GBM consumes learned GNN features)</h1>
+<blockquote>Status: DESIGN + sample code (scaffold). Build/TDD/gate = follow-up. Pre-registered as a falsification</blockquote>
+<blockquote>(5th distinct graph attempt). Expected NO-GO given the prior four; the point is to close the</blockquote>
+<blockquote>&quot;GNN-embedding-as-feature&quot; door with a controlled, leakage-safe test.</blockquote>
+<h2>1. Idea and how it differs</h2>
+<p>Extract a <strong>learned</strong> node embedding from a 2-layer GNN (GCN or GAT) and <strong>concatenate it as features</strong> into</p>
+<p>the champion <code>GBM+earn</code> tree, instead of a hand-crafted scalar aggregate.</p>
+<pre><code>per fold k (train-only graph Wc):
+   2-layer GNN (GCN/GAT) trained on the vol target  ─►  node embedding  z_{i,t} ∈ R^d
+   GBM(gamma tree)  ⟵  x_{i,t} = [ OWN-8 | EARN-4 | z_{i,t} (d dims) ]</code></pre>
+<table><thead><tr><th>baseline</th><th>graph part</th><th>learned?</th><th>who predicts</th></tr></thead><tbody>
+<tr><td>GBME+graph</td><td>1 scalar <code>g_corr</code></td><td>no</td><td>GBM tree</td></tr>
+<tr><td>concat-7 (NO-GO)</td><td>7 scalar aggregates</td><td>no</td><td>GBM tree</td></tr>
+<tr><td>GNNHAR</td><td>2-layer GCN</td><td>yes</td><td>the GNN (end-to-end)</td></tr>
+<tr><td>residual (NO-GO)</td><td>ridge on neighbour aggregates of GBM residual</td><td>linear</td><td>GBM + ridge</td></tr>
+<tr><td><strong>this</strong></td><td><strong>2-layer GNN embedding</strong></td><td><strong>yes</strong></td><td><strong>GBM tree</strong> (GNN = feature extractor)</td></tr>
+</tbody></table>
+<h2>2. The embedding <code>z</code></h2>
+<p>Reuse the faithful GNNHAR model <code>scripts/eda/gnnhar_sp500.py::GNNHAR</code> read-only. Its forward is</p>
+<p><code>hg = x; for gcn in gcns: hg = relu(gcn(hg, A)); out = relu(linear1(x) + mlp1(hg))</code>. The **embedding is</p>
+<p><code>hg</code> after the two GCN layers, BEFORE <code>mlp1</code>** — an <code>R^{n_hid}</code> (=9) learned representation per node-day.</p>
+<p>We expose it with a thin <code>embed()</code> wrapper (subclass, no edit to the shared model). GAT variant swaps the</p>
+<p><code>GraphConvLayer</code> (fixed <code>A</code>) for an attention layer; GCN first (reuse), GAT as a config flag.</p>
+<h2>3. THE critical decision — avoid stacking leakage (out-of-fold embeddings)</h2>
+<p>If the GNN is trained on the same TRAIN rows the GBM is then trained on, the GBM sees <strong>in-sample</strong> GNN</p>
+<p>representations <code>z_train</code> that are over-optimistic (the GNN fit those exact rows). The tree overfits to <code>z</code>,</p>
+<p>and <code>z_test</code> does not generalise → a spurious in-sample &quot;gain&quot; that dies OOS. This is the same trap the</p>
+<p>residual baseline avoided. <strong>Fix: cross-fitting.</strong></p>
+<p>Within each walk-forward fold&#x27;s train window:</p>
+<ol>
+<li><strong>Inner K-fold (temporal, K=3) over train rows.</strong> For each inner fold: train the GNN on the other K−1</li>
+</ol>
+<p>   inner folds, embed the held-out inner fold → <strong>out-of-fold (OOF) <code>z_train</code></strong>. Every train row gets an</p>
+<p>   embedding produced by a GNN that did NOT see it.</p>
+<ol>
+<li><strong>Test embedding:</strong> train the GNN once on the FULL train window, embed the test rows → <code>z_test</code>.</li>
+<li>The GBM is fit on <code>[OWN-8|EARN|z_train^{OOF}]</code> and predicts <code>[OWN-8|EARN|z_test]</code>.</li>
+</ol>
+<p>The graph <code>Wc</code>, the feature scaler, the GNN, and the GBM all fit on train/inner-train rows only; embargo</p>
+<p>between train and test as elsewhere. A causality test asserts fold-k output is invariant to permuting later</p>
+<p>folds, and that <code>z_test</code> depends only on train-window rows.</p>
+<h2>4. Files</h2>
+<ul>
+<li><code>code/gnn_embed_config.py</code> — tunables: <code>N_GCN=2</code>, <code>N_HID=9</code>, <code>INNER_K=3</code>, <code>ARCH∈{gcn,gat}</code>, epochs, lr,</li>
+</ul>
+<p>  early-stop patience, seeds (reuse GNNHAR&#x27;s where possible; single-source, no literals in pipeline code).</p>
+<ul>
+<li><code>code/embed.py</code> — <code>GNNEmbedder</code> (subclass of <code>G.GNNHAR</code> exposing <code>embed(x,adj)-&gt;R^{n_hid}</code>), plus</li>
+</ul>
+<p>  <code>oof_train_embeddings()</code> (inner-K OOF) and <code>full_train_test_embeddings()</code>.</p>
+<ul>
+<li><code>code/run_gnn_embed.py</code> — walk-forward driver: per fold build Wc, compute OOF <code>z_train</code> + <code>z_test</code>, fit</li>
+</ul>
+<p>  <code>GBM(own8+earn+z)</code> vs <code>GBM(own8+earn)</code> (=GBME baseline), pool, QLIKE + date-clustered DM, per-horizon</p>
+<p>  atomic checkpoint (Colab-resilient), overfit evidence. Output <code>results/gamma_gbm/gnn_embed_&lt;market&gt;.json</code>.</p>
+<ul>
+<li><code>test/</code> — TDD: embed shape (<code>R^{n_hid}</code>), OOF coverage (every train row embedded by a GNN that didn&#x27;t see</li>
+</ul>
+<p>  it), causality (no future-fold leak), signal-recovery on synthetic where z predicts residual, run-structure</p>
+<p>  smoke, verdict logic, checkpoint. Real-data driver <code># pragma: no cover</code>, logic unit-tested.</p>
+<h2>5. Gates (SDD)</h2>
+<ul>
+<li><strong>Simplicity:</strong> one embedder + one driver; reuse GNNHAR + FM.gbm + M/ST. No new abstraction.</li>
+<li><strong>Anti-Abstraction:</strong> subclass the existing GNNHAR; use <code>sklearn</code> GBM + project metrics/stats directly.</li>
+<li><strong>Performance/Batching:</strong> GNN trained batched over dates on GPU (reuse GNNHAR&#x27;s batched loop); GBM is the</li>
+</ul>
+<p>  existing batched seed-averaged fit; the only extra cost is the inner-K OOF (K× GNN trainings/fold). No</p>
+<p>  batch=1. Report the added GPU cost.</p>
+<h2>6. Success / kill criterion (pre-registered)</h2>
+<p><code>success=True</code> only if <code>GBME+z</code> beats <code>GBME</code> (gain&gt;0 AND DM p&lt;0.05) at <strong>both h1 and h5</strong>. Otherwise NO-GO.</p>
+<p>Do NOT chase an in-sample or MAE-only win. Expected outcome, given GNNHAR (its 2-layer graph HURTS) and the</p>
+<p>concat err_corr 0.98: the OOF embedding adds no orthogonal OOS QLIKE value. HOSE spike-robustness applies</p>
+<p>before any positive HOSE claim.</p>
+<h2>7. Overfit evidence (gate-required — learned model)</h2>
+<p>The result JSON carries per horizon/model <code>train</code>/<code>val</code>/<code>test</code> QLIKE + <code>fit_diagnostics</code> + the GNN</p>
+<p><code>learning_curves</code>; name contains no <code>gnn</code> token by accident — set the JSON model key to <code>GNN-embed</code> so the</p>
+<p>pre-push overfit gate treats it as learned and enforces the evidence.</p></body></html>
