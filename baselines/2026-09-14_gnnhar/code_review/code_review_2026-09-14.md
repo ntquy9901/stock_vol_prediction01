@@ -105,3 +105,27 @@ from tracked files only. `gnnhar_config` uses a UNIQUE module name (not `config`
 C1 branch = 96.9% (≥95%; the 2 partials are for-loop continuation edges). ruff `--select F`: clean.
 config-hardcode scan: no BLOCK (2 non-blocking WARN on the `1e-3`/`1e-5` learning-rate/decay in the config
 module, expected).
+
+## Addendum 2026-09-14 — SP500 Colab notebook review (`notebooks/gnnhar_sp500_colab.ipynb`)
+
+**CRITICAL bug found + fixed.** The notebook cells were written with `source` lists whose lines had **no
+trailing newlines**, so Colab concatenated each cell into a single `#`-prefixed line — every statement was
+commented out and nothing would run (user-reported "only comments, no code"). Root cause is the same
+newline-loss class as the earlier notebook incident. Fix: re-added per-line newlines (nbformat) to all 8 code
+cells and stripped a mojibake character. Notebooks are not executed by pytest, which is why the pre-push gate
+did not catch it; added `test/test_notebook_valid.py` (4 tests, gate-enforced) asserting every code cell has
+real newlines, compiles (magics stripped), is ASCII-clean, and drives `run_gnnhar.py sp500` -> reads
+`gnnhar_sp500.json` with the background committer. This closes the gap for this notebook going forward.
+
+**3-lens review of the fixed notebook (no critical/major remaining):**
+- Blind Hunter: cell 8's JSON schema (`d['qlike'][f'{m}_h{h}']`, `d['dm'][...]['gain_pct'/'p_value']`,
+  `d['fit_diagnostics'][...]['status']`) verified to match `run_gnnhar.py` output exactly against the real
+  `gnnhar_hose.json` -> no KeyError on inspect. Unscored-horizon guard (`if f'GNNHAR_h{h}' not in metrics:
+  continue`) protects the loop.
+- Edge Case: bundle path tries both `public_bk/luanvan_data` and `luanvan_data` with an assert; smoke-first
+  (`assert run(smoke=True)==0`) before the full run; committer uses `pull --rebase` then push (no force).
+- Acceptance: clone master -> unpack enriched bundle -> deps -> token -> committer -> smoke+full ->
+  inspect+final commit, mirroring the verified `sp500_final_models_colab.ipynb`; writes per-horizon JSON with
+  train/val/test + fit_diagnostics + learning_curves (overfit-evidence schema).
+- SDD: covered by this baseline's `requirements/` + `design/`; DoD: fixed, tested (4 notebook + 11 driver),
+  reviewed, committed. Fresh-clone import smoke of `run_gnnhar.py` (tracked files only) already clean.
