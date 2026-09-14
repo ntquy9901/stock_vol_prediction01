@@ -91,3 +91,44 @@ saved results/gamma_gbm/garch_sp500.json
 [checkpoint] wrote gbm_earn_graph_sp500.json (1 horizons)
 [checkpoint] wrote gbm_earn_graph_sp500.json (2 horizons)
 [checkpoint] wrote gbm_earn_graph_sp500.json (3 horizons)
+[checkpoint] wrote gbm_earn_graph_sp500.json (4 horizons)
+
+=== sp500 h1 (n=512,140) ===
+  GBM+earn         QLIKE 0.3173
+  GBM+earn+corr    QLIKE 0.3159
+  GBM+earn+graph   QLIKE 0.3117
+  graph_only       QLIKE 0.3948
+  +graph vs +earn : +1.76% (DM p=0.00269)
+  +graph vs +corr : +1.33% (DM p=0.0052)
+  err_corr(earn, graph_only residuals): 0.943
+
+=== sp500 h5 (n=510,152) ===
+  GBM+earn         QLIKE 0.3709
+  GBM+earn+corr    QLIKE 0.3720
+  GBM+earn+graph   QLIKE 0.3714
+  graph_only       QLIKE 0.4668
+  +graph vs +earn : -0.14% (DM p=0.717)
+  +graph vs +corr : +0.17% (DM p=0.749)
+  err_corr(earn, graph_only residuals): 0.954
+
+=== sp500 h10 (n=507,667) ===
+  GBM+earn         QLIKE 0.3918
+  GBM+earn+corr    QLIKE 0.3946
+  GBM+earn+graph   QLIKE 0.3927
+  graph_only       QLIKE 0.4972
+  +graph vs +earn : -0.23% (DM p=0.564)
+  +graph vs +corr : +0.48% (DM p=0.256)
+  err_corr(earn, graph_only residuals): 0.960
+
+=== sp500 h22 (n=501,703) ===
+  GBM+earn         QLIKE 0.4078
+  GBM+earn+corr    QLIKE 0.4115
+  GBM+earn+graph   QLIKE 0.4089
+  graph_only       QLIKE 0.5016
+  +graph vs +earn : -0.29% (DM p=0.458)
+  +graph vs +corr : +0.62% (DM p=0.0472)
+  err_corr(earn, graph_only residuals): 0.980
+
+sp500: success=False  (criterion: every-h gain>=0.3% & DM p<0.05 & beats +corr & no overfit; warn: a tiny 'DM-significant' gain at large n is NOT a real win)
+
+saved results/gamma_gbm/gbm_earn_graph_sp500.json

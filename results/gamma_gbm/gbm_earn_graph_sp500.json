@@ -148,5 +148,56 @@
         "test_qlike": 0.4971933664978869
       }
     }
-  }
+  },
+  "h22": {
+    "n": 501703,
+    "qlike": {
+      "GBM+earn": 0.4077533653980199,
+      "GBM+earn+corr": 0.4114874687670787,
+      "GBM+earn+graph": 0.4089240444615993,
+      "graph_only": 0.5016107748406587
+    },
+    "dm": {
+      "GBM+earn+graph_vs_GBM+earn": 0.45841860846799054,
+      "GBM+earn+graph_vs_GBM+earn+corr": 0.04720506934777851
+    },
+    "err_corr": 0.9802219472036425,
+    "gain_vs_earn_pct": -0.2871046968396432,
+    "gain_vs_corr_pct": 0.6229653391779032,
+    "train_metrics": {
+      "GBM+earn": 0.5192979512057789,
+      "GBM+earn+corr": 0.5149676395296195,
+      "GBM+earn+graph": 0.49030395562929174,
+      "graph_only": 0.5533398233676409
+    },
+    "test_metrics": {
+      "GBM+earn": 0.4077533653980199,
+      "GBM+earn+corr": 0.4114874687670787,
+      "GBM+earn+graph": 0.4089240444615993,
+      "graph_only": 0.5016107748406587
+    },
+    "fit_diagnostics": {
+      "GBM+earn": {
+        "verdict": "ok",
+        "train_qlike": 0.5192979512057789,
+        "test_qlike": 0.4077533653980199
+      },
+      "GBM+earn+corr": {
+        "verdict": "ok",
+        "train_qlike": 0.5149676395296195,
+        "test_qlike": 0.4114874687670787
+      },
+      "GBM+earn+graph": {
+        "verdict": "ok",
+        "train_qlike": 0.49030395562929174,
+        "test_qlike": 0.4089240444615993
+      },
+      "graph_only": {
+        "verdict": "ok",
+        "train_qlike": 0.5533398233676409,
+        "test_qlike": 0.5016107748406587
+      }
+    }
+  },
+  "success": false
 }
