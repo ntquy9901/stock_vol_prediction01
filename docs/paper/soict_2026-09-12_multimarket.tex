@@ -3,7 +3,8 @@
 % Multi-market volatility forecasting model. Figures in docs/paper/figures/.
 % HOSE table (tab:hose) numbers: results/gamma_gbm/full_compare_hose.json (OWN-8, rq dropped, committed).
 %   HARQ HOSE row: results/gamma_gbm/paper_metrics_hose.json. GARCH: results/gamma_gbm/garch_hose.json.
-% SP500 table (tab:sp500) numbers: docs/reports/2026-09-12_gbme_metrics_table.md (pending OWN-8 re-run).
+% SP500 table (tab:sp500) numbers: results/gamma_gbm/full_compare_sp500.json (OWN-8).
+% GNNHAR: results/gamma_gbm/gnnhar_<market>.json. GARCH: results/gamma_gbm/garch_<market>.json (SP500 unstable -> omitted).
 \documentclass{llncs}
 \usepackage{graphicx}
 \graphicspath{{figures/}}
@@ -206,8 +207,10 @@ horizon block.
 \centering
 \caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed ensembles). Lower is better
 on every metric. MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$; QLIKE unscaled. GNNHAR$-g$ is GNNHAR with
-the graph removed ($A{=}I$). Bold marks the best value in each metric column per horizon; the QLIKE bold
-additionally requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
+the graph removed ($A{=}I$). GARCH is a per-stock GARCH(1,1) benchmark (QLIKE only); it is omitted
+(\texttt{--}) on the S\&P~500 owing to an unstable per-stock fit. Bold marks the best value in each metric
+column per horizon; the QLIKE bold additionally requires a significant date-clustered Diebold-Mariano test
+($p<0.05$).}
 \label{tab:sp500}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -215,37 +218,41 @@ additionally requires a significant date-clustered Diebold-Mariano test ($p<0.05
 \toprule
 $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
+1 & GARCH       & -- & -- & -- & -- \\
 1 & HAR         & 0.575 & 0.759 & 0.213 & 0.370 \\
 1 & HARQ        & 0.565 & 0.752 & 0.215 & 0.378 \\
+1 & GNNHAR      & 0.576 & 0.759 & 0.212 & 0.375 \\
+1 & GNNHAR$-g$  & 0.566 & 0.752 & 0.205 & 0.370 \\
 1 & GBM         & 0.557 & 0.746 & 0.209 & 0.357 \\
 1 & GBME        & \textbf{0.540} & \textbf{0.735} & 0.202 & \textbf{0.317} \\
 1 & GBME+graph  & 0.543 & 0.737 & \textbf{0.201} & 0.316 \\
-1 & GNNHAR      & 0.576 & 0.759 & 0.212 & 0.375 \\
-1 & GNNHAR$-g$  & 0.566 & 0.752 & 0.205 & 0.370 \\
 \midrule
+5 & GARCH       & -- & -- & -- & -- \\
 5 & HAR         & 0.614 & 0.784 & 0.230 & 0.436 \\
 5 & HARQ        & 0.613 & 0.783 & 0.231 & 0.438 \\
+5 & GNNHAR      & 0.638 & 0.799 & 0.233 & 0.446 \\
+5 & GNNHAR$-g$  & 0.615 & 0.785 & 0.223 & 0.425 \\
 5 & GBM         & 0.611 & 0.782 & 0.226 & 0.412 \\
 5 & GBME        & \textbf{0.596} & \textbf{0.772} & \textbf{0.218} & \textbf{0.371} \\
 5 & GBME+graph  & 0.606 & 0.778 & 0.220 & 0.372 \\
-5 & GNNHAR      & 0.638 & 0.799 & 0.233 & 0.446 \\
-5 & GNNHAR$-g$  & 0.615 & 0.785 & 0.223 & 0.425 \\
 \midrule
+10 & GARCH       & -- & -- & -- & -- \\
 10 & HAR         & 0.621 & 0.788 & 0.236 & 0.461 \\
 10 & HARQ        & 0.621 & 0.788 & 0.236 & 0.461 \\
+10 & GNNHAR      & 0.660 & 0.812 & 0.243 & 0.477 \\
+10 & GNNHAR$-g$  & 0.641 & 0.801 & 0.228 & 0.448 \\
 10 & GBM         & 0.629 & 0.793 & 0.232 & 0.431 \\
 10 & GBME        & \textbf{0.615} & \textbf{0.784} & \textbf{0.225} & \textbf{0.392} \\
 10 & GBME+graph  & 0.625 & 0.791 & 0.228 & 0.395 \\
-10 & GNNHAR      & 0.660 & 0.812 & 0.243 & 0.477 \\
-10 & GNNHAR$-g$  & 0.641 & 0.801 & 0.228 & 0.448 \\
 \midrule
+22 & GARCH       & -- & -- & -- & -- \\
 22 & HAR         & 0.633 & 0.795 & 0.242 & 0.485 \\
 22 & HARQ        & 0.631 & 0.794 & 0.241 & 0.483 \\
+22 & GNNHAR      & 0.635 & 0.797 & 0.241 & 0.476 \\
+22 & GNNHAR$-g$  & 0.625 & 0.790 & 0.234 & 0.456 \\
 22 & GBM         & 0.623 & 0.790 & 0.236 & 0.447 \\
 22 & GBME        & 0.609 & 0.781 & \textbf{0.228} & \textbf{0.408} \\
 22 & GBME+graph  & \textbf{0.609} & \textbf{0.780} & 0.230 & 0.411 \\
-22 & GNNHAR      & 0.635 & 0.797 & 0.241 & 0.476 \\
-22 & GNNHAR$-g$  & 0.625 & 0.790 & 0.234 & 0.456 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -361,7 +368,9 @@ removing its graph lowers QLIKE by 5.3 to 6.5\%, replicating the S\&P~500 patter
 \centering
 \caption{Multi-market replication, HOSE (405 tickers; 390{,}577 to 399{,}040 stock-day observations per
 horizon). Lower is better on every metric. MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$; QLIKE
-unscaled. GNNHAR$-g$ is GNNHAR without the graph ($A{=}I$); GNNHAR is reported at $h1$ and $h5$. Bold
+unscaled. GNNHAR$-g$ is GNNHAR without the graph ($A{=}I$); GNNHAR is reported at $h1$ and $h5$. GARCH is a
+per-stock GARCH(1,1) benchmark scored on QLIKE over the estimable subset ($\sim$98.6\% of rows); its
+squared-error cells are not comparable and shown as \texttt{--}. Bold
 marks the best value in each metric column per horizon; the QLIKE bold additionally requires a
 significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:hose}
@@ -371,28 +380,32 @@ significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \toprule
 $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
+1 & GARCH       & -- & -- & -- & 1.654 \\
 1 & HAR         & 0.660 & 0.813 & 0.519 & 1.812 \\
 1 & HARQ        & 0.639 & 0.799 & 0.506 & 1.785 \\
+1 & GNNHAR      & 0.585 & 0.765 & 0.438 & 1.682 \\
+1 & GNNHAR$-g$  & 0.542 & 0.736 & 0.402 & 1.580 \\
 1 & GBM         & \textbf{0.541} & \textbf{0.735} & \textbf{0.394} & \textbf{1.570} \\
 1 & GBME        & 0.545 & 0.739 & 0.396 & 1.569 \\
 1 & GBME+graph  & 0.556 & 0.746 & 0.400 & 1.597 \\
-1 & GNNHAR      & 0.585 & 0.765 & 0.438 & 1.682 \\
-1 & GNNHAR$-g$  & 0.542 & 0.736 & 0.402 & 1.580 \\
 \midrule
+5 & GARCH       & -- & -- & -- & 1.740 \\
 5 & HAR         & 0.663 & 0.814 & 0.523 & 1.822 \\
 5 & HARQ        & 0.652 & 0.807 & 0.515 & 1.807 \\
+5 & GNNHAR      & 0.616 & 0.785 & 0.469 & 1.744 \\
+5 & GNNHAR$-g$  & 0.580 & 0.762 & 0.429 & 1.656 \\
 5 & GBM         & \textbf{0.579} & \textbf{0.761} & 0.427 & \textbf{1.648} \\
 5 & GBME        & 0.580 & 0.761 & 0.428 & 1.649 \\
 5 & GBME+graph  & 0.582 & 0.763 & \textbf{0.425} & 1.649 \\
-5 & GNNHAR      & 0.616 & 0.785 & 0.469 & 1.744 \\
-5 & GNNHAR$-g$  & 0.580 & 0.762 & 0.429 & 1.656 \\
 \midrule
+10 & GARCH       & -- & -- & -- & 1.780 \\
 10 & HAR         & 0.666 & 0.816 & 0.525 & 1.828 \\
 10 & HARQ        & 0.659 & 0.812 & 0.520 & 1.818 \\
 10 & GBM         & 0.596 & 0.772 & 0.442 & \textbf{1.684} \\
 10 & GBME        & 0.596 & 0.772 & 0.443 & 1.684 \\
 10 & GBME+graph  & \textbf{0.595} & \textbf{0.772} & \textbf{0.440} & 1.684 \\
 \midrule
+22 & GARCH       & -- & -- & -- & 1.838 \\
 22 & HAR         & 0.672 & 0.820 & 0.528 & 1.835 \\
 22 & HARQ        & 0.668 & 0.817 & 0.525 & 1.830 \\
 22 & GBM         & \textbf{0.621} & \textbf{0.788} & 0.462 & \textbf{1.726} \\
