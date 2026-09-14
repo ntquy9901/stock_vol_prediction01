@@ -4,7 +4,7 @@
 % HOSE table (tab:hose) numbers: results/gamma_gbm/full_compare_hose.json (OWN-8, rq dropped, committed).
 %   HARQ HOSE row: results/gamma_gbm/paper_metrics_hose.json. GARCH: results/gamma_gbm/garch_hose.json.
 % SP500 table (tab:sp500) numbers: results/gamma_gbm/full_compare_sp500.json (OWN-8).
-% GNNHAR: results/gamma_gbm/gnnhar_<market>.json. GARCH: results/gamma_gbm/garch_<market>.json (SP500 unstable -> omitted).
+% GNNHAR: results/gamma_gbm/gnnhar_<market>.json. GARCH: results/gamma_gbm/garch_<market>.json.
 \documentclass{llncs}
 \usepackage{graphicx}
 \graphicspath{{figures/}}
@@ -182,7 +182,7 @@ the feature vector to the multi-horizon Parkinson-variance forecast.}
 \section{Results: The Own-History GBM Beats the Baselines}\label{sec:graph}
 Table~\ref{tab:sp500} reports all four metrics for the S\&P~500 across GARCH, HAR, HARQ, the learned
 GNNHAR, the own-history GBM, and the earnings model GBME at every horizon. The own-history GBM beats
-HAR and HARQ on QLIKE at every horizon, and the learned GNNHAR does not beat it: GNNHAR is worse than
+HAR, HARQ, and GARCH on QLIKE at every horizon, and the learned GNNHAR does not beat it: GNNHAR is worse than
 the GBM at every horizon (QLIKE worse by 5.0 to 10.6\%, DM $p<10^{-10}$) and worse than even linear HAR
 at the three shortest horizons, so a multi-hop graph network recovers nothing the own-history GBM does
 not already capture. The earnings model GBME carries the bolded QLIKE in every block; the next section
@@ -192,9 +192,9 @@ isolates why.
 \centering
 \caption{Main result, S\&P~500 (497 constituents; walk-forward, 3-seed ensembles). Lower is better
 on every metric. MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$; QLIKE unscaled. GARCH is a per-stock
-GARCH(1,1) benchmark (QLIKE only); it is omitted (\texttt{--}) on the S\&P~500 owing to an unstable
-per-stock fit. Bold marks the best value in each metric column per horizon; the QLIKE bold additionally
-requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
+GARCH(1,1) benchmark, QLIKE only; its squared-error cells are shown as \texttt{--}. Bold marks the best
+value in each metric column per horizon; the QLIKE bold additionally requires a significant
+date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:sp500}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -202,28 +202,28 @@ requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \toprule
 $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 \midrule
-1 & GARCH       & -- & -- & -- & -- \\
+1 & GARCH       & -- & -- & -- & 0.465 \\
 1 & HAR         & 0.575 & 0.759 & 0.213 & 0.370 \\
 1 & HARQ        & 0.565 & 0.752 & 0.215 & 0.378 \\
 1 & GNNHAR      & 0.576 & 0.759 & 0.212 & 0.375 \\
 1 & GBM         & 0.557 & 0.746 & 0.209 & 0.357 \\
 1 & GBME        & \textbf{0.540} & \textbf{0.735} & \textbf{0.202} & \textbf{0.317} \\
 \midrule
-5 & GARCH       & -- & -- & -- & -- \\
+5 & GARCH       & -- & -- & -- & 0.508 \\
 5 & HAR         & 0.614 & 0.784 & 0.230 & 0.436 \\
 5 & HARQ        & 0.613 & 0.783 & 0.231 & 0.438 \\
 5 & GNNHAR      & 0.638 & 0.799 & 0.233 & 0.446 \\
 5 & GBM         & 0.611 & 0.782 & 0.226 & 0.412 \\
 5 & GBME        & \textbf{0.596} & \textbf{0.772} & \textbf{0.218} & \textbf{0.371} \\
 \midrule
-10 & GARCH       & -- & -- & -- & -- \\
+10 & GARCH       & -- & -- & -- & 0.522 \\
 10 & HAR         & 0.621 & 0.788 & 0.236 & 0.461 \\
 10 & HARQ        & 0.621 & 0.788 & 0.236 & 0.461 \\
 10 & GNNHAR      & 0.660 & 0.812 & 0.243 & 0.477 \\
 10 & GBM         & 0.629 & 0.793 & 0.232 & 0.431 \\
 10 & GBME        & \textbf{0.615} & \textbf{0.784} & \textbf{0.225} & \textbf{0.392} \\
 \midrule
-22 & GARCH       & -- & -- & -- & -- \\
+22 & GARCH       & -- & -- & -- & 0.544 \\
 22 & HAR         & 0.633 & 0.795 & 0.242 & 0.485 \\
 22 & HARQ        & 0.631 & 0.794 & 0.241 & 0.483 \\
 22 & GNNHAR      & 0.635 & 0.797 & 0.241 & 0.476 \\
