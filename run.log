@@ -132,3 +132,19 @@ saved results/gamma_gbm/garch_sp500.json
 sp500: success=False  (criterion: every-h gain>=0.3% & DM p<0.05 & beats +corr & no overfit; warn: a tiny 'DM-significant' gain at large n is NOT a real win)
 
 saved results/gamma_gbm/gbm_earn_graph_sp500.json
+loaded market=sp500 device=cuda
+  h1: GNNHAR QLIKE 0.3505 vs HAR 0.3213 vs GBM 0.3131 (n=62,230, 1 folds, 75s)
+
+=== sp500 h1 (n=62,230) ===
+  HAR              QLIKE 0.3213
+  GBM              QLIKE 0.3131
+  GNNHAR           QLIKE 0.3505
+  GNNHAR-nograph   QLIKE 0.3220
+  DM GNNHAR vs HAR             : -9.10% (p=0.000)
+  DM GNNHAR vs GBM             : -11.94% (p=0.000)
+  DM GNNHAR vs GNNHAR-nograph  : -8.85% (p=0.000)
+  fit[GNNHAR] = ok
+  fit[GNNHAR-nograph] = ok
+
+saved results/gamma_gbm/gnnhar_sp500_smoke.json
+loaded market=sp500 device=cuda
