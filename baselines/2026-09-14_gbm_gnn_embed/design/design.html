@@ -1,4 +1,64 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Design: GBME + GNN-embedding</title><style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:960px;margin:0 auto;padding:32px 28px;line-height:1.6;color:#1a1a1a;background:#fbfbfd}h1{font-size:26px;border-bottom:3px solid #6a3d9a;padding-bottom:8px}h2{font-size:20px;margin-top:28px;color:#33236b;border-bottom:1px solid #ddd;padding-bottom:4px}h3{font-size:16px;color:#444}code{background:#eef1f6;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}pre{background:#1e1e2e;color:#e6e6f0;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:#fff}th,td{border:1px solid #d0d4da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#efeafa}tr:nth-child(even) td{background:#f8f7fc}blockquote{border-left:4px solid #b8a6e0;background:#f3f0fa;margin:12px 0;padding:8px 14px;color:#4a4a5a;font-size:14px}strong{color:#33236b}ol,ul{padding-left:24px}li{margin:3px 0}</style></head><body><h1>Design — GBME ⊕ 2-layer GNN node-embedding (GBM consumes learned GNN features)</h1>
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Design: GBME + GNN-embedding</title><style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:960px;margin:0 auto;padding:32px 28px;line-height:1.6;color:#1a1a1a;background:#fbfbfd}h1{font-size:26px;border-bottom:3px solid #6a3d9a;padding-bottom:8px}h2{font-size:20px;margin-top:28px;color:#33236b;border-bottom:1px solid #ddd;padding-bottom:4px}h3{font-size:16px;color:#444}code{background:#eef1f6;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}pre{background:#1e1e2e;color:#e6e6f0;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:#fff}th,td{border:1px solid #d0d4da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#efeafa}tr:nth-child(even) td{background:#f8f7fc}blockquote{border-left:4px solid #b8a6e0;background:#f3f0fa;margin:12px 0;padding:8px 14px;color:#4a4a5a;font-size:14px}strong{color:#33236b}ol,ul{padding-left:24px}li{margin:3px 0}</style></head><body>
+<h2>Technical architecture</h2>
+<svg viewBox="0 0 980 560" style="width:100%;max-width:980px;border:1px solid #dcd6ef;border-radius:10px;background:#fff;font-family:Segoe UI,Arial,sans-serif">
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#555"/></marker>
+<marker id="ad" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#a03080"/></marker></defs>
+<style>.b{stroke:#333;stroke-width:1.2}.t{font-size:12.5px;fill:#1a1a1a}.s{font-size:10.5px;fill:#555}.lbl{font-size:11px;fill:#444}.e{stroke:#555;stroke-width:1.4;fill:none}</style>
+<rect class="b" x="18" y="40" width="168" height="60" rx="9" fill="#eaf2fb"/>
+<text class="t" x="102" y="65" text-anchor="middle">OHLCV(i) &#8594; pk(i,t)</text>
+<text class="s" x="102" y="83" text-anchor="middle">ln(H/L)&#178;/(4&#183;ln2)</text>
+<rect class="b" x="18" y="230" width="168" height="86" rx="9" fill="#e7f4ea"/>
+<text class="t" x="102" y="255" text-anchor="middle">node features</text>
+<text class="s" x="102" y="274" text-anchor="middle">OWN-8 (3 HAR + 5 MR)</text>
+<text class="s" x="102" y="292" text-anchor="middle">EARN-4 (earnings prox.)</text>
+<rect class="b" x="18" y="420" width="168" height="66" rx="9" fill="#f6e9f2"/>
+<text class="t" x="102" y="445" text-anchor="middle">graph Wc</text>
+<text class="s" x="102" y="463" text-anchor="middle">top-k corr(log pk),</text>
+<text class="s" x="102" y="478" text-anchor="middle">row-norm, TRAIN-only</text>
+<rect class="b" x="260" y="215" width="210" height="118" rx="9" fill="#e9e9f5"/>
+<text class="t" x="365" y="242" text-anchor="middle">2-layer GNN</text>
+<text class="s" x="365" y="261" text-anchor="middle">GCN / GAT (n_gcn = 2)</text>
+<text class="s" x="365" y="278" text-anchor="middle">h = relu(GConv(h, Wc)) &#215;2</text>
+<text class="s" x="365" y="296" text-anchor="middle">trained on vol (QLIKE)</text>
+<text class="s" x="365" y="314" text-anchor="middle">causal, per fold</text>
+<rect class="b" x="260" y="400" width="210" height="96" rx="9" fill="#fdf3e3" stroke-dasharray="5 3"/>
+<text class="t" x="365" y="424" text-anchor="middle">OOF cross-fit (anti-leak)</text>
+<text class="s" x="365" y="443" text-anchor="middle">inner K-fold over TRAIN:</text>
+<text class="s" x="365" y="459" text-anchor="middle">embed held-out fold &#8594;</text>
+<text class="s" x="365" y="475" text-anchor="middle">honest z_train; z_test from</text>
+<text class="s" x="365" y="491" text-anchor="middle">GNN on full train</text>
+<rect class="b" x="540" y="250" width="150" height="60" rx="9" fill="#e9e9f5"/>
+<text class="t" x="615" y="275" text-anchor="middle">embedding</text>
+<text class="s" x="615" y="294" text-anchor="middle">z(i,t) &#8712; R^d  (d = 9)</text>
+<rect class="b" x="540" y="40" width="180" height="70" rx="9" fill="#eef7f0"/>
+<text class="t" x="630" y="64" text-anchor="middle">concat feature vector</text>
+<text class="s" x="630" y="84" text-anchor="middle">[ OWN-8 | EARN-4 | z ]</text>
+<text class="s" x="630" y="100" text-anchor="middle">R^(12+d)</text>
+<rect class="b" x="770" y="110" width="180" height="110" rx="9" fill="#e9e9f5"/>
+<text class="t" x="860" y="140" text-anchor="middle">gamma-loss GBM</text>
+<text class="s" x="860" y="160" text-anchor="middle">HistGBR, 300 iters,</text>
+<text class="s" x="860" y="176" text-anchor="middle">31 leaves, 3-seed</text>
+<text class="s" x="860" y="196" text-anchor="middle">loss = QLIKE + const</text>
+<rect class="b" x="770" y="300" width="180" height="66" rx="9" fill="#eaf2fb"/>
+<text class="t" x="860" y="328" text-anchor="middle">&#963;&#178;(i,t+h) forecast</text>
+<text class="s" x="860" y="347" text-anchor="middle">h &#8712; {1, 5, 10, 22}</text>
+<path class="e" marker-end="url(#a)" d="M102,100 L102,230"/>
+<path class="e" marker-end="url(#a)" d="M186,270 L258,274"/>
+<text class="lbl" x="205" y="264">node feats</text>
+<path class="e" marker-end="url(#a)" d="M186,450 C230,450 240,300 258,300"/>
+<text class="lbl" x="196" y="360">graph</text>
+<path class="e" marker-end="url(#a)" d="M470,285 L538,282"/>
+<text class="lbl" x="486" y="276">z</text>
+<path class="e" marker-end="url(#ad)" stroke="#a03080" stroke-dasharray="5 3" d="M365,400 L365,333"/>
+<path class="e" marker-end="url(#a)" d="M615,250 C615,180 630,150 630,110"/>
+<text class="lbl" x="622" y="185">z</text>
+<path class="e" marker-end="url(#a)" d="M186,250 C360,150 470,95 538,80"/>
+<text class="lbl" x="300" y="150">OWN-8 | EARN-4</text>
+<path class="e" marker-end="url(#a)" d="M720,80 C750,80 760,140 770,152"/>
+<path class="e" marker-end="url(#a)" d="M860,220 L860,300"/>
+<text x="490" y="532" text-anchor="middle" style="font-size:11.5px;fill:#33236b;font-style:italic">GNN = learned feature extractor  &#183;  GBM = predictor  &#183;  kill-criterion: GBME+z beats GBME (DM p&lt;0.05) at h1 &amp; h5, else NO-GO</text>
+</svg>
+<h1>Design — GBME ⊕ 2-layer GNN node-embedding (GBM consumes learned GNN features)</h1>
 <blockquote>Status: DESIGN + sample code (scaffold). Build/TDD/gate = follow-up. Pre-registered as a falsification</blockquote>
 <blockquote>(5th distinct graph attempt). Expected NO-GO given the prior four; the point is to close the</blockquote>
 <blockquote>&quot;GNN-embedding-as-feature&quot; door with a controlled, leakage-safe test.</blockquote>
