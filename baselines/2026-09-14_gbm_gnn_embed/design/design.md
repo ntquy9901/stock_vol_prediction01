@@ -73,8 +73,27 @@ before any positive HOSE claim.
 
 ## 7. Overfit evidence (gate-required — learned model)
 The result JSON carries per horizon/model `train`/`val`/`test` QLIKE + `fit_diagnostics` + the GNN
-`learning_curves`; name contains no `gnn` token by accident — set the JSON model key to `GNN-embed` so the
-pre-push overfit gate treats it as learned and enforces the evidence.
+`learning_curves`; the learned model key is `GBME+GNN-embed` (contains `gnn`) so `overfit_check.looks_learned`
+treats it as learned and the pre-push overfit gate enforces the evidence.
+
+**Deviation from §4 (output file layout) — ONE JSON PER HORIZON.** §4 named a single
+`gnn_embed_<market>.json`. Changed to **`results/gamma_gbm/gnn_embed_<market>_h<h>.json`** (one per horizon,
+mirroring `scripts/eda/gnnhar_sp500.py`). Reasons: (a) the pre-push overfit gate
+(`check_overfit_evidence.py::_is_masked_rich_result`) only recognises a training result when the TOP-LEVEL
+`metrics` dict holds a learned-model key — a single multi-horizon file nests metrics under `h1/h5/...`, so it
+would be silently SKIPPED and the evidence never enforced; a per-horizon file has top-level
+`metrics={GBME, GBME+GNN-embed}` and IS checked. (b) Atomic per-horizon files give the Colab-resilient
+"each completed horizon is durable + committable" property the run needs. `learning_curves` are captured
+from the full-train (z_test) embedding GNN per seed (representative; the inner-OOF GNNs are not recorded to
+keep the 4× OOF cost down).
+
+## 8. Node features + GNN target (decisions)
+- **GNN node features = OWN-8** (same as the GBM input). The embedding therefore adds only the *graph
+  mixing* of own-history features; that marginal graph value is exactly the falsification target.
+- **GNN target = the `pk` variance `shift(-h)`** (same target, QLIKE loss), so the embedding is trained to be
+  predictive of the very quantity the GBM forecasts.
+- **`ARCH`** config flag reserved for `{gcn,gat}`; only `gcn` (reuse of the faithful `GNNHAR` GraphConvLayer)
+  is implemented — `gat` raises `NotImplementedError` (fail loud, no silent fallback). GCN-first per §5.
 
 ## Why `log pk` for the graph correlation (not raw variance)
 The graph adjacency `Wc` keeps each node's top-k neighbours by **Pearson correlation of `log pk`**, not of raw
