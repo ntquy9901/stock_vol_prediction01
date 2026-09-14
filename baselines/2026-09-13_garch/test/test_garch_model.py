@@ -111,6 +111,74 @@ def test_fit_params_falls_back_when_params_degenerate(monkeypatch):
     assert p.ok is False
 
 
+def _patch_arch(monkeypatch, omega, alpha, beta):
+    """Force arch to return a fixed (omega, alpha, beta) so the post-fit sanity gates can be tested."""
+    import arch
+    import pandas as pd
+
+    class _Res:
+        params = pd.Series({"mu": 0.0, "omega": omega, "alpha[1]": alpha, "beta[1]": beta})
+
+    class _Model:
+        def fit(self, **k):
+            return _Res()
+
+    monkeypatch.setattr(arch, "arch_model", lambda *a, **k: _Model())
+
+
+def test_fit_params_rejects_igarch_collapse_omega_near_zero(monkeypatch):
+    # CEG-style: omega~0, alpha~0, beta~0.9946 -> implied unconditional variance ~1e-9, orders of
+    # magnitude BELOW the ticker's sample variance (~4e-4) -> degenerate -> fallback (not garbage).
+    _patch_arch(monkeypatch, omega=6.8e-8, alpha=5.9e-10, beta=0.9946)
+    r = np.random.default_rng(0).standard_normal(300) * 0.02      # sample variance ~4e-4
+    p = G.fit_params(r, "garch")
+    assert p.ok is False
+    assert p.fallback_var > 0.0
+
+
+def test_fit_params_rejects_explosive_unconditional_variance(monkeypatch):
+    # EXE/PSKY-style: phi ~ 0.99999 with sizeable omega -> unconditional variance explodes to >> sample.
+    _patch_arch(monkeypatch, omega=1000.0, alpha=0.1, beta=0.89999)   # phi = 0.99999 < 1
+    r = np.random.default_rng(1).standard_normal(300) * 0.02
+    p = G.fit_params(r, "garch")
+    assert p.ok is False
+
+
+def test_fit_params_accepts_unconditional_variance_near_sample(monkeypatch):
+    # Sane fit: implied unconditional variance ~ sample variance (~4e-4) -> accepted.
+    r = np.random.default_rng(2).standard_normal(300) * 0.02
+    v_scaled = float(np.var(r * config.SCALE, ddof=1))               # sample variance on the scaled series
+    phi = 0.95
+    _patch_arch(monkeypatch, omega=v_scaled * (1.0 - phi), alpha=0.10, beta=0.85)
+    p = G.fit_params(r, "garch")
+    assert p.ok is True
+    assert G.reversion_persistence(p, "garch") == pytest.approx(phi)
+
+
+def test_fit_params_rejects_when_sample_variance_is_zero(monkeypatch):
+    # Constant returns -> sample variance 0 -> the ratio band is undefined -> reject (never divide-by-zero).
+    _patch_arch(monkeypatch, omega=0.2, alpha=0.1, beta=0.85)
+    p = G.fit_params(np.full(300, 0.01), "garch")
+    assert p.ok is False
+
+
+def test_forecast_clips_collapsed_forecast_up_to_sample_variance_band():
+    # p.ok fit whose conditional variance has collapsed to ~0 -> forecast floored at fallback_var / CAP.
+    fbv = 1e-3
+    p = G.Params(mu=0.0, omega=1e-9, alpha=0.0, gamma=0.0, beta=0.9946, ok=True, fallback_var=fbv)
+    f = G.forecast(np.zeros(300), p, "garch", np.array([250]), h=1)
+    assert float(f[0]) == pytest.approx(fbv / config.VAR_RATIO_CAP)
+
+
+def test_forecast_clips_explosive_forecast_down_to_sample_variance_band():
+    # p.ok fit whose multi-step variance explodes -> forecast capped at fallback_var * CAP.
+    fbv = 1e-3
+    p = G.Params(mu=0.0, omega=1000.0, alpha=0.1, gamma=0.0, beta=0.8999, ok=True, fallback_var=fbv)
+    f = G.forecast(np.full(300, 0.01), p, "garch", np.array([250]), h=22)
+    assert float(f[0]) == pytest.approx(fbv * config.VAR_RATIO_CAP)
+
+
 def test_config_thresholds_are_sane():
     assert config.SCALE == 100.0
     assert 0.0 <= config.PERSIST_LO < config.PERSIST_HI <= 1.0
+    assert config.VAR_RATIO_CAP > 1.0

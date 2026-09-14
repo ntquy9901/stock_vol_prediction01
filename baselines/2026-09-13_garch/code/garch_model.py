@@ -101,7 +101,11 @@ def fit_params(train_returns: np.ndarray, variant: str) -> Params:
     phi = reversion_persistence(p, variant)
     if not (p.omega > 0.0 and config.PERSIST_LO < phi < config.PERSIST_HI):
         return bad          # degenerate / non-stationary fit -> fallback (never emit garbage)
-    return p
+    uncond_orig = (p.omega / (1.0 - phi)) / (config.SCALE ** 2)   # model-implied unconditional variance
+    if not (fallback_var > 0.0
+            and fallback_var / config.VAR_RATIO_CAP <= uncond_orig <= fallback_var * config.VAR_RATIO_CAP):
+        return bad          # near-IGARCH collapse (omega~0 -> uncond~0) or explosion (phi~1 -> uncond huge):
+    return p                # implied unconditional variance is orders of magnitude off the sample variance
 
 
 def forecast(returns: np.ndarray, p: Params, variant: str, test_idx: np.ndarray, h: int) -> np.ndarray:
@@ -113,7 +117,10 @@ def forecast(returns: np.ndarray, p: Params, variant: str, test_idx: np.ndarray,
     if not p.ok:
         return np.full(test_idx.shape[0], p.fallback_var, dtype=float)
     s_next = one_step_next(np.asarray(returns, dtype=float) * config.SCALE, p, variant)
-    return multistep(s_next[test_idx], p, variant, h) / (config.SCALE ** 2)
+    f = multistep(s_next[test_idx], p, variant, h) / (config.SCALE ** 2)
+    # safety net: a variance forecast cannot credibly sit VAR_RATIO_CAP x off the ticker's own sample
+    # variance -- clip transient multi-step explosions / collapses (p.ok fits have fallback_var > 0).
+    return np.clip(f, p.fallback_var / config.VAR_RATIO_CAP, p.fallback_var * config.VAR_RATIO_CAP)
 
 
 def ticker_forecast(returns: np.ndarray, n_train: int, test_idx: np.ndarray, h: int,

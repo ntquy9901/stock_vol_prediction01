@@ -11,3 +11,11 @@ MIN_ROWS = {"sp500": 30000, "default": 3000}   # min pooled train rows per fold 
 MIN_TRAIN_OBS = 250          # min per-ticker train returns to attempt an ML fit (~1 trading year), else fallback
 PERSIST_LO = 0.0             # reversion persistence must satisfy PERSIST_LO < phi < PERSIST_HI (else fallback)
 PERSIST_HI = 1.0
+VAR_RATIO_CAP = 1000.0       # the fit-implied unconditional variance AND every forecast must stay within this
+                             # factor of the ticker's OWN sample return variance; else the fit is degenerate
+                             # (-> fallback) / the forecast is clipped. Guards near-IGARCH fits where arch
+                             # lands on omega~0 (variance collapses to ~1e-9) or phi~1 (unconditional variance
+                             # explodes) — orders of magnitude off the data — which otherwise dominate the
+                             # pooled QLIKE (root cause of the SP500 blow-up). 1000x = 3 orders of magnitude,
+                             # loose enough that a legitimate high-persistence fit (uncond ~ a few x sample
+                             # variance) is untouched, tight enough to reject the 1e5-1e8x pathologies.
