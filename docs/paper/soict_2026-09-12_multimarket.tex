@@ -33,7 +33,7 @@ S\&P~500, adding an External, forward-looking scheduled-earnings feature (GBME) 
 8.7 to 11.2\% over own-history at every horizon (Diebold-Mariano $p<0.001$), roughly seven times the
 size of any graph term. A cross-firm graph feature, by contrast, adds nothing once own-history and the
 firm's own momentum are in the model: it is not distinguishable from the earnings model at the short
-horizons and it hurts at the monthly horizon. We replicate the study on a second, structurally
+horizons and it hurts at the two longest horizons. We replicate the study on a second, structurally
 different market, 405 Vietnam Ho Chi Minh Stock Exchange (HOSE) tickers, under an identical
 leakage-controlled walk-forward protocol scored on QLIKE with date-clustered Diebold-Mariano tests.
 The graph null replicates on HOSE, while the earnings lever does not transfer, which localizes the
@@ -198,7 +198,7 @@ Table~\ref{tab:sp500} reports all four metrics for the S\&P~500 across HAR, HARQ
 the earnings model GBME, and GBME+graph at every horizon. The own-history GBM already beats HAR and
 HARQ on QLIKE at every horizon. Adding the cross-firm graph feature to the earnings model does not
 help: GBME+graph is not distinguishable from GBME on QLIKE at the short horizons and it is worse at
-the monthly horizon. The graph is therefore never the DM-verified best, and it is not bolded in any
+the two longest horizons. The graph is therefore never the DM-verified best, and it is not bolded in any
 horizon block.
 
 \begin{table}[t]
@@ -295,12 +295,12 @@ own-history is exhausted.}
 \end{figure}
 
 \textbf{The earnings feature is the lever.} In Table~\ref{tab:sp500}, the External earnings model GBME
-posts the lowest RMSE, MAE and QLIKE at every horizon. The QLIKE gain over own-history is 8.7 to
+posts the lowest QLIKE at every horizon. The QLIKE gain over own-history is 8.7 to
 11.2\% and is significant at every horizon (DM GBME vs GBM $p<0.001$ at $h1$, $h5$, $h10$, $h22$),
 which is why GBME carries the bolded QLIKE in every block. Against the HAR baseline the earnings model
 gains 14 to 16\%. Nonlinearity and the QLIKE-loss alignment, isolated by the own-history GBM over HAR,
 contribute a further 3.4\%. A graph added on top of earnings changes nothing at short horizons and
-hurts at the monthly horizon, so the two signals do not combine.
+hurts at the two longest horizons, so the two signals do not combine.
 
 \textbf{Earnings do not fix the storm tail.} Decomposed by realized-volatility decile, the model's
 error still concentrates in the top decile, which carries roughly ten times the calm-day QLIKE, and
