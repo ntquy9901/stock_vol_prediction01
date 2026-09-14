@@ -75,3 +75,40 @@ before any positive HOSE claim.
 The result JSON carries per horizon/model `train`/`val`/`test` QLIKE + `fit_diagnostics` + the GNN
 `learning_curves`; name contains no `gnn` token by accident — set the JSON model key to `GNN-embed` so the
 pre-push overfit gate treats it as learned and enforces the evidence.
+
+## Why `log pk` for the graph correlation (not raw variance)
+The graph adjacency `Wc` keeps each node's top-k neighbours by **Pearson correlation of `log pk`**, not of raw
+`pk`. Definitions:
+- **pk** (Parkinson variance) `= ln(H/L)^2 / (4 ln 2)` — a **variance** (sigma^2): always >= 0, heavy
+  right-skew (log-normal), spans orders of magnitude (1e-6 to 1e-2).
+- **log pk** `= ell_t = ln(max(pk_t, eps))`, eps = 1e-8 — the natural log of that variance.
+
+Rationale: Pearson correlation measures **linear** dependence and is meaningful only when the inputs are
+roughly symmetric/Gaussian and on a comparable scale. Realized variance is well modelled as **log-normal**
+(Andersen-Bollerslev-Diebold-Labys 2001), so `log pk` is approximately Gaussian and symmetric, and its
+correlation captures **persistent co-movement**. Correlation on **raw variance** is dominated by a few
+storm days and by high-variance stocks (heteroskedasticity inflates covariance), producing an
+outlier-driven, unstable graph. The spillover literature (Diebold-Yilmaz, GNNHAR, MTGNN) builds graphs on
+**log-RV / log-vol** for the same reason.
+
+**log pk vs pk for the graph:** `log pk` is the principled choice (log-normality of RV). Empirically it is
+close to moot here: the graph adds no OOS value under DM regardless of how the adjacency is built, so
+`corr(log pk)` vs `corr(pk)` does not change the (null) result. **Role split (do not conflate):** `log pk`
+is used only for (a) the graph correlation and (b) the `mr_*` log-volatility momentum features; the
+**forecast target is `pk` (variance)**, and the gamma-loss GBM/GNN predict `pk` directly.
+
+## Choosing node features (what to include besides own-history + earnings)
+Principle: node features must be **stationary and comparable across the ~500 pooled stocks** (the model
+pools all tickers of a market). Raw levels break this.
+
+| Feature | Include? | Why |
+|---|---|---|
+| Raw prices O/H/L/C (level) | **No** | Non-stationary (trending), incomparable scale across stocks, not predictive of variance. |
+| Range estimators from OHLC (Garman-Klass, Rogers-Satchell, Yang-Zhang; overnight gap `ln(O_t/C_{t-1})`, intraday `ln(C_t/O_t)`) | **Maybe** | Stationary, same family as pk. Already tested: only +0.4% (DM-sig h1/h10), small. |
+| Raw volume (level) | **No** | Non-stationary, cross-stock scale differences. |
+| Volume z-score (standardised, 22-day) | **Maybe** | Scale-free; volume-volatility relation; already used in the neighbour block. |
+| Downside semivariance / leverage (`semi_neg`) | **Maybe** | Stationary; own+semi_neg gave +0.42% at h1 (DM-sig), small. |
+
+Net: do **not** add raw price/volume levels. The stationary, scale-free candidates (range estimators,
+volume z-score, downside semivariance) were tried and give only marginal gains -- the own-8 own-history set
+is near-saturated. Any node feature added here should be per-stock standardised or a scale-free ratio.

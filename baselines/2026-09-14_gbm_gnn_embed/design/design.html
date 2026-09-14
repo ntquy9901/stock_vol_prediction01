@@ -134,4 +134,39 @@
 <h2>7. Overfit evidence (gate-required — learned model)</h2>
 <p>The result JSON carries per horizon/model <code>train</code>/<code>val</code>/<code>test</code> QLIKE + <code>fit_diagnostics</code> + the GNN</p>
 <p><code>learning_curves</code>; name contains no <code>gnn</code> token by accident — set the JSON model key to <code>GNN-embed</code> so the</p>
-<p>pre-push overfit gate treats it as learned and enforces the evidence.</p></body></html>
+<p>pre-push overfit gate treats it as learned and enforces the evidence.</p>
+<h2>Why <code>log pk</code> for the graph correlation (not raw variance)</h2>
+<p>The graph adjacency <code>Wc</code> keeps each node&#x27;s top-k neighbours by <strong>Pearson correlation of <code>log pk</code></strong>, not of raw</p>
+<p><code>pk</code>. Definitions:</p>
+<ul>
+<li><strong>pk</strong> (Parkinson variance) <code>= ln(H/L)^2 / (4 ln 2)</code> — a <strong>variance</strong> (sigma^2): always &gt;= 0, heavy</li>
+</ul>
+<p>  right-skew (log-normal), spans orders of magnitude (1e-6 to 1e-2).</p>
+<ul>
+<li><strong>log pk</strong> <code>= ell_t = ln(max(pk_t, eps))</code>, eps = 1e-8 — the natural log of that variance.</li>
+</ul>
+<p>Rationale: Pearson correlation measures <strong>linear</strong> dependence and is meaningful only when the inputs are</p>
+<p>roughly symmetric/Gaussian and on a comparable scale. Realized variance is well modelled as <strong>log-normal</strong></p>
+<p>(Andersen-Bollerslev-Diebold-Labys 2001), so <code>log pk</code> is approximately Gaussian and symmetric, and its</p>
+<p>correlation captures <strong>persistent co-movement</strong>. Correlation on <strong>raw variance</strong> is dominated by a few</p>
+<p>storm days and by high-variance stocks (heteroskedasticity inflates covariance), producing an</p>
+<p>outlier-driven, unstable graph. The spillover literature (Diebold-Yilmaz, GNNHAR, MTGNN) builds graphs on</p>
+<p><strong>log-RV / log-vol</strong> for the same reason.</p>
+<p><strong>log pk vs pk for the graph:</strong> <code>log pk</code> is the principled choice (log-normality of RV). Empirically it is</p>
+<p>close to moot here: the graph adds no OOS value under DM regardless of how the adjacency is built, so</p>
+<p><code>corr(log pk)</code> vs <code>corr(pk)</code> does not change the (null) result. <strong>Role split (do not conflate):</strong> <code>log pk</code></p>
+<p>is used only for (a) the graph correlation and (b) the <code>mr_*</code> log-volatility momentum features; the</p>
+<p><strong>forecast target is <code>pk</code> (variance)</strong>, and the gamma-loss GBM/GNN predict <code>pk</code> directly.</p>
+<h2>Choosing node features (what to include besides own-history + earnings)</h2>
+<p>Principle: node features must be <strong>stationary and comparable across the ~500 pooled stocks</strong> (the model</p>
+<p>pools all tickers of a market). Raw levels break this.</p>
+<table><thead><tr><th>Feature</th><th>Include?</th><th>Why</th></tr></thead><tbody>
+<tr><td>Raw prices O/H/L/C (level)</td><td><strong>No</strong></td><td>Non-stationary (trending), incomparable scale across stocks, not predictive of variance.</td></tr>
+<tr><td>Range estimators from OHLC (Garman-Klass, Rogers-Satchell, Yang-Zhang; overnight gap <code>ln(O_t/C_{t-1})</code>, intraday <code>ln(C_t/O_t)</code>)</td><td><strong>Maybe</strong></td><td>Stationary, same family as pk. Already tested: only +0.4% (DM-sig h1/h10), small.</td></tr>
+<tr><td>Raw volume (level)</td><td><strong>No</strong></td><td>Non-stationary, cross-stock scale differences.</td></tr>
+<tr><td>Volume z-score (standardised, 22-day)</td><td><strong>Maybe</strong></td><td>Scale-free; volume-volatility relation; already used in the neighbour block.</td></tr>
+<tr><td>Downside semivariance / leverage (<code>semi_neg</code>)</td><td><strong>Maybe</strong></td><td>Stationary; own+semi_neg gave +0.42% at h1 (DM-sig), small.</td></tr>
+</tbody></table>
+<p>Net: do <strong>not</strong> add raw price/volume levels. The stationary, scale-free candidates (range estimators,</p>
+<p>volume z-score, downside semivariance) were tried and give only marginal gains -- the own-8 own-history set</p>
+<p>is near-saturated. Any node feature added here should be per-stock standardised or a scale-free ratio.</p></body></html>
