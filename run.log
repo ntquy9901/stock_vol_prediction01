@@ -151,3 +151,50 @@ loaded market=sp500 device=cuda
   h1: GNNHAR QLIKE 0.3749 vs HAR 0.3697 vs GBM 0.3572 (n=512,140, 8 folds, 840s)
   h5: GNNHAR QLIKE 0.4462 vs HAR 0.4364 vs GBM 0.4120 (n=510,152, 8 folds, 834s)
   h10: GNNHAR QLIKE 0.4767 vs HAR 0.4615 vs GBM 0.4311 (n=507,667, 8 folds, 785s)
+  h22: GNNHAR QLIKE 0.4761 vs HAR 0.4855 vs GBM 0.4468 (n=501,703, 8 folds, 533s)
+
+=== sp500 h1 (n=512,140) ===
+  HAR              QLIKE 0.3697
+  GBM              QLIKE 0.3572
+  GNNHAR           QLIKE 0.3749
+  GNNHAR-nograph   QLIKE 0.3695
+  DM GNNHAR vs HAR             : -1.42% (p=0.014)
+  DM GNNHAR vs GBM             : -4.98% (p=0.000)
+  DM GNNHAR vs GNNHAR-nograph  : -1.46% (p=0.027)
+  fit[GNNHAR] = ok
+  fit[GNNHAR-nograph] = ok
+
+=== sp500 h5 (n=510,152) ===
+  HAR              QLIKE 0.4364
+  GBM              QLIKE 0.4120
+  GNNHAR           QLIKE 0.4462
+  GNNHAR-nograph   QLIKE 0.4251
+  DM GNNHAR vs HAR             : -2.25% (p=0.008)
+  DM GNNHAR vs GBM             : -8.31% (p=0.000)
+  DM GNNHAR vs GNNHAR-nograph  : -4.97% (p=0.000)
+  fit[GNNHAR] = ok
+  fit[GNNHAR-nograph] = ok
+
+=== sp500 h10 (n=507,667) ===
+  HAR              QLIKE 0.4615
+  GBM              QLIKE 0.4311
+  GNNHAR           QLIKE 0.4767
+  GNNHAR-nograph   QLIKE 0.4478
+  DM GNNHAR vs HAR             : -3.28% (p=0.018)
+  DM GNNHAR vs GBM             : -10.57% (p=0.000)
+  DM GNNHAR vs GNNHAR-nograph  : -6.45% (p=0.000)
+  fit[GNNHAR] = ok
+  fit[GNNHAR-nograph] = ok
+
+=== sp500 h22 (n=501,703) ===
+  HAR              QLIKE 0.4855
+  GBM              QLIKE 0.4468
+  GNNHAR           QLIKE 0.4761
+  GNNHAR-nograph   QLIKE 0.4564
+  DM GNNHAR vs HAR             : +1.93% (p=0.122)
+  DM GNNHAR vs GBM             : -6.56% (p=0.000)
+  DM GNNHAR vs GNNHAR-nograph  : -4.32% (p=0.000)
+  fit[GNNHAR] = ok
+  fit[GNNHAR-nograph] = ok
+
+saved results/gamma_gbm/gnnhar_sp500.json
