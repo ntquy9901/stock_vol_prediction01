@@ -254,6 +254,15 @@ where the legal graph cuts it by under 1\%. The cross-sectional signal exists an
 arrives contemporaneously with the target, not at the forecast origin, so no origin-time graph can
 capture it.
 
+\textbf{A published learned GNN confirms the null.} To rule out that a single scalar neighbour aggregate
+understates what a purpose-built graph network could extract, we implement GNNHAR~\cite{gnnhar2024} (two
+graph-convolution layers over the three HAR lags with the same train-only correlation graph, its 2-layer
+best variant) and score it under the identical protocol. On the S\&P~500, GNNHAR does not beat the
+own-history GBM at any horizon (QLIKE worse by 5.0 to 10.6\%, DM $p<10^{-10}$) and is worse than even linear
+HAR at the three shortest horizons. Removing its graph (GNNHAR-nograph, $A{=}I$, the paper's own ablation)
+improves it at every horizon (QLIKE lower by 1.5 to 6.5\%, DM $p<0.05$), so the graph hurts inside a learned
+multi-hop network exactly as it does as a GBM feature. The same ordering holds on HOSE at the horizons run.
+
 \textbf{Takeaway.} Conditional on own-history, cross-firm graph structure adds no reliable incremental
 QLIKE value at any horizon on the S\&P~500. The signal a graph could carry is either redundant with
 the stock's own momentum or contemporaneous with the target.
@@ -450,6 +459,7 @@ information and microstructure.
 \bibitem{friedman2001} Friedman, J.H.: Greedy function approximation: a gradient boosting machine. Annals of Statistics \textbf{29}(5), 1189--1232 (2001)
 \bibitem{pedregosa2011} Pedregosa, F., et al.: Scikit-learn: machine learning in Python. J. Machine Learning Research \textbf{12}, 2825--2830 (2011)
 \bibitem{patell1981} Patell, J.M., Wolfson, M.A.: The ex ante and ex post price effects of quarterly earnings announcements reflected in option and stock prices. J. Accounting Research \textbf{19}(2), 434--458 (1981)
+\bibitem{gnnhar2024} Zhang, C., Pu, X., Cucuringu, M., Dong, X.: Graph neural networks for forecasting realized volatility with nonlinear spillover effects. Int. J. Forecasting (2024). arXiv:2308.01419
 \end{thebibliography}
 
 \end{document}
