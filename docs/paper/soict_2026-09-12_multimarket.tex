@@ -353,14 +353,17 @@ metrics. The own-history GBM is the DM-verified best model at every horizon: no 
 significantly lowers its QLIKE, while HAR and HARQ trail by a wide margin. Adding the graph feature
 ties the GBM, and the External earnings feature does not improve it: GBME is statistically
 indistinguishable from GBM at every horizon (DM GBME vs GBM $p=0.79$, $0.37$, $0.79$, $0.88$ at
-$h1$, $h5$, $h10$, $h22$). The own-history GBM therefore carries the bolded QLIKE in every block.
+$h1$, $h5$, $h10$, $h22$). The own-history GBM therefore carries the bolded QLIKE in every block. The
+learned GNNHAR loses to the GBM at $h1$ and $h5$ (QLIKE worse by 5.8 to 7.1\%, DM $p<10^{-80}$), and
+removing its graph lowers QLIKE by 5.3 to 6.5\%, replicating the S\&P~500 pattern.
 
 \begin{table}[t]
 \centering
 \caption{Multi-market replication, HOSE (405 tickers; 390{,}577 to 399{,}040 stock-day observations per
 horizon). Lower is better on every metric. MSE $\times10^{-7}$, RMSE/MAE $\times10^{-4}$; QLIKE
-unscaled. Bold marks the best value in each metric column per horizon; the QLIKE bold additionally
-requires a significant date-clustered Diebold-Mariano test ($p<0.05$).}
+unscaled. GNNHAR$-g$ is GNNHAR without the graph ($A{=}I$); GNNHAR is reported at $h1$ and $h5$. Bold
+marks the best value in each metric column per horizon; the QLIKE bold additionally requires a
+significant date-clustered Diebold-Mariano test ($p<0.05$).}
 \label{tab:hose}
 \footnotesize
 \setlength{\tabcolsep}{6pt}
@@ -373,12 +376,16 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE \\
 1 & GBM        & \textbf{5.409} & \textbf{7.355} & \textbf{3.941} & \textbf{1.5702} \\
 1 & GBME       & 5.455 & 7.386 & 3.955 & 1.5690 \\
 1 & GBME+graph & 5.560 & 7.456 & 4.000 & 1.5970 \\
+1 & GNNHAR     & 5.847 & 7.647 & 4.383 & 1.6823 \\
+1 & GNNHAR$-g$ & 5.420 & 7.362 & 4.024 & 1.5800 \\
 \midrule
 5 & HAR        & 6.626 & 8.140 & 5.227 & 1.8218 \\
 5 & HARQ       & 6.519 & 8.074 & 5.152 & 1.8075 \\
 5 & GBM        & \textbf{5.795} & \textbf{7.612} & 4.270 & \textbf{1.6484} \\
 5 & GBME       & 5.797 & 7.614 & 4.279 & 1.6489 \\
 5 & GBME+graph & 5.821 & 7.630 & \textbf{4.253} & 1.6487 \\
+5 & GNNHAR     & 6.162 & 7.850 & 4.687 & 1.7439 \\
+5 & GNNHAR$-g$ & 5.803 & 7.618 & 4.293 & 1.6560 \\
 \midrule
 10 & HAR        & 6.660 & 8.161 & 5.250 & 1.8277 \\
 10 & HARQ       & 6.589 & 8.118 & 5.198 & 1.8180 \\
