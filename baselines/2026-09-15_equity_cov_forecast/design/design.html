@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><title>Design: Equity conditional-covariance forecasting</title><style>body{font-family:"Segoe UI",Arial,sans-serif;max-width:960px;margin:0 auto;padding:32px 28px;line-height:1.6;color:#1a1a1a;background:#fbfbfd}h1{font-size:26px;border-bottom:3px solid #1f6f54;padding-bottom:8px}h2{font-size:20px;margin-top:28px;color:#12503b;border-bottom:1px solid #ddd;padding-bottom:4px}h3{font-size:16px;color:#444}code{background:#eef1f6;padding:1px 5px;border-radius:4px;font-family:Consolas,monospace;font-size:13px}pre{background:#1e1e2e;color:#e6e6f0;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.45}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;margin:14px 0;font-size:13.5px;background:#fff}th,td{border:1px solid #d0d4da;padding:7px 10px;text-align:left;vertical-align:top}th{background:#e3f2ec}tr:nth-child(even) td{background:#f5faf8}blockquote{border-left:4px solid #8fcdb4;background:#eef8f3;margin:12px 0;padding:8px 14px;color:#3a4a44;font-size:14px}strong{color:#12503b}ol,ul{padding-left:24px}li{margin:3px 0}.win{color:#1f6f54;font-weight:600}.no{color:#a33}</style></head><body>
+<h2>Technical architecture</h2>
+<svg viewBox="0 0 980 580" style="width:100%;max-width:980px;border:1px solid #cfe3d9;border-radius:10px;background:#fff;font-family:Segoe UI,Arial,sans-serif">
+<defs><marker id="a" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#555"/></marker>
+<marker id="ag" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1f6f54"/></marker></defs>
+<style>.b{stroke:#333;stroke-width:1.2}.t{font-size:12.5px;fill:#1a1a1a}.s{font-size:10.5px;fill:#555}.lbl{font-size:11px;fill:#444}.e{stroke:#555;stroke-width:1.4;fill:none}</style>
+<rect class="b" x="16" y="34" width="170" height="70" rx="9" fill="#eaf2fb"/>
+<text class="t" x="101" y="58" text-anchor="middle">daily_return r(i,t)</text>
+<text class="s" x="101" y="76" text-anchor="middle">close-to-close, N stocks</text>
+<text class="s" x="101" y="92" text-anchor="middle">SP500 (adj) / HOSE</text>
+<rect class="b" x="16" y="150" width="170" height="66" rx="9" fill="#fdf3e3" stroke-dasharray="5 3"/>
+<text class="t" x="101" y="174" text-anchor="middle">winsorize</text>
+<text class="s" x="101" y="192" text-anchor="middle">HOSE &#177;7% band /</text>
+<text class="s" x="101" y="208" text-anchor="middle">SP500 &#177;k&#183;MAD (split guard)</text>
+<rect class="b" x="16" y="262" width="170" height="70" rx="9" fill="#e7f4ea"/>
+<text class="t" x="101" y="286" text-anchor="middle">aligned panel R</text>
+<text class="s" x="101" y="304" text-anchor="middle">T &#215; N, point-in-time</text>
+<text class="s" x="101" y="320" text-anchor="middle">membership per fold</text>
+<rect class="b" x="252" y="120" width="232" height="220" rx="9" fill="#e9eff5"/>
+<text class="t" x="368" y="144" text-anchor="middle">covariance ladder (&#931;&#770;_t from R[:t])</text>
+<text class="s" x="266" y="168">1. sample cov (rolling W)</text>
+<text class="s" x="266" y="188">2. EWMA / RiskMetrics</text>
+<text class="s" x="266" y="208" style="font-weight:600;fill:#12503b">3. Ledoit-Wolf shrinkage &#9733; bar</text>
+<text class="s" x="266" y="228">4. DCC-GARCH</text>
+<text class="s" x="266" y="248" style="font-weight:600;fill:#12503b">5. factor rank-k (BFB&#7488;+D)</text>
+<text class="s" x="266" y="268" style="font-weight:600;fill:#1f6f54">6. graph / GNN (end-to-end)</text>
+<line x1="262" y1="282" x2="474" y2="282" stroke="#bcd" stroke-width="1"/>
+<text class="s" x="266" y="300">each &#931;&#770; &#8594; PSD-project + ridge &#949;I</text>
+<text class="s" x="266" y="318">causal: uses only data &lt; t</text>
+<rect class="b" x="556" y="150" width="176" height="76" rx="9" fill="#eef7f0"/>
+<text class="t" x="644" y="176" text-anchor="middle">GMV weights</text>
+<text class="s" x="644" y="196" text-anchor="middle">w = &#931;&#770;&#8315;&#185;1 / 1&#7488;&#931;&#770;&#8315;&#185;1</text>
+<text class="s" x="644" y="212" text-anchor="middle">long-short + long-only</text>
+<rect class="b" x="556" y="270" width="176" height="70" rx="9" fill="#e7f4ea"/>
+<text class="t" x="644" y="294" text-anchor="middle">hold h days (OOS)</text>
+<text class="s" x="644" y="312" text-anchor="middle">r_p(&#964;) = R(&#964;)&#7488;&#183;w_t</text>
+<text class="s" x="644" y="328" text-anchor="middle">&#964; strictly after t</text>
+<rect class="b" x="792" y="150" width="172" height="120" rx="9" fill="#eaf2fb"/>
+<text class="t" x="878" y="176" text-anchor="middle">evaluate</text>
+<text class="s" x="806" y="198">AnnVol = &#8730;252&#183;std(r_p)</text>
+<text class="s" x="806" y="216">DM on r_p&#178; (ELW 2019)</text>
+<text class="s" x="806" y="234">Frobenius / Stein</text>
+<text class="s" x="806" y="252">turnover, cond(&#931;&#770;)</text>
+<path class="e" marker-end="url(#a)" d="M101,104 L101,150"/>
+<path class="e" marker-end="url(#a)" d="M101,216 L101,262"/>
+<path class="e" marker-end="url(#a)" d="M186,297 C215,297 225,240 250,232"/>
+<text class="lbl" x="196" y="255">R[:t]</text>
+<path class="e" marker-end="url(#a)" d="M484,220 C520,220 528,190 554,188"/>
+<text class="lbl" x="498" y="200">&#931;&#770;_t</text>
+<path class="e" marker-end="url(#a)" d="M644,226 L644,270"/>
+<text class="lbl" x="650" y="252">w_t</text>
+<path class="e" marker-end="url(#a)" d="M732,300 C762,300 772,240 790,222"/>
+<text class="lbl" x="742" y="278">r_p</text>
+<text x="490" y="392" text-anchor="middle" style="font-size:11.5px;fill:#12503b;font-style:italic">cross-stock structure is the target (off-diagonals) &#183; metric = OOS min-variance-portfolio vol, no intraday needed &#183; GO iff factor/graph beats Ledoit-Wolf (DM) at &#8805;2 horizons</text>
+<rect x="252" y="424" width="712" height="120" rx="9" fill="#fafafa" stroke="#e0e0e0"/>
+<text class="t" x="268" y="448" style="font-weight:600;fill:#12503b">Decision gate (stop-early)</text>
+<text class="s" x="268" y="470">factor (#5) beats Ledoit-Wolf (#3)?</text>
+<text class="s" x="268" y="492" style="fill:#a33">&#8212; NO &#8594; heavier graph #6 won't either &#8594; report &amp; stop</text>
+<text class="s" x="268" y="514" style="fill:#1f6f54">&#8212; YES &#8594; run graph #6, test network vs factor (DM)</text>
+<text class="s" x="268" y="534">lesson applied: GNN at #6 is END-TO-END (no stitched latent &#8594; no basis drift)</text>
+<rect x="16" y="424" width="212" height="120" rx="9" fill="#fbeef0" stroke="#e6c9cf"/>
+<text class="t" x="122" y="448" text-anchor="middle" style="fill:#a33">why not per-stock variance</text>
+<text class="s" x="30" y="472">own-history + 1 market factor</text>
+<text class="s" x="30" y="490">dominate &#8594; N&#215;N graph redundant</text>
+<text class="s" x="30" y="508">(5&#215; NO-GO). covariance has</text>
+<text class="s" x="30" y="526">O(N&#178;) off-diags own-hist can't give</text>
+</svg>
+<h1>Design + Plan — Equity conditional-covariance forecasting</h1>
+<blockquote>SDD Plan phase. Implements <code>requirements.md</code>. Status: DESIGN (no code yet). Passes the 3 SDD gates (&#167;5). Core idea: test cross-stock structure where it is <strong>intrinsic to the target</strong> (the covariance matrix), judged by the economic OOS metric that needs no intraday data (GMV-portfolio out-of-sample variance).</blockquote>
+<h2>1. Why this can win where per-stock variance could not</h2>
+<p>Per-stock variance forecasting is dominated by own-history AR + a single market factor, so an N&#215;N graph is redundant (proven, 5&#215;). A <strong>covariance matrix</strong> has O(N&#178;) off-diagonal entries that own-history of one stock cannot produce &mdash; cross-stock structure is the target itself. The open question is only whether that structure is <strong>forecastable OOS</strong> better than shrinkage. That is a genuine, unsettled question (ELW 2019 show nonlinear shrinkage and DCC each win in different regimes), so the result is informative whichever way it lands.</p>
+<h2>2. Data flow</h2>
+<pre><code>processed_enriched/&lt;market&gt;/*.csv (daily_return)
+   &#8594; winsorize per stock at band (HOSE &#177;7%, SP500 robust &#177;k&#183;MAD)     [split-artifact guard]
+   &#8594; aligned panel R [T &#215; N], point-in-time membership per fold
+   &#8594; walk-forward over rebalance dates t (expanding/rolling window W):
+        for each model m:  &#931;&#770;_t^m  from R[:t]  only
+        w_t^m = GMV weights (long-short + long-only)
+        hold h days &#8594; realized portfolio returns r_p[t+1 : t+h] = R[t+1:t+h] @ w_t^m
+   &#8594; pool r_p across rebalances per model
+   &#8594; metric: annualized OOS vol(r_p); DM on r_p&#178;; Frobenius/Stein vs ex-post cov; turnover; cond(&#931;&#770;)</code></pre>
+<p>No target <code>shift(-h)</code> leakage risk (covariance, not a shifted scalar); the only guard is <strong>holdout strictly after t</strong> and <strong>&#931;&#770;_t from data &lt; t</strong>.</p>
+<h2>3. Model ladder (ordered &mdash; lesson-applied: NO learned latent embedding first)</h2>
+<table><thead><tr><th>#</th><th>Model</th><th>Cross-stock?</th><th>Learned?</th><th>Role</th></tr></thead><tbody>
+<tr><td>1</td><td>Sample covariance (rolling W)</td><td>full, unregularized</td><td>no</td><td>floor (noisy, may be singular if N&#8819;W)</td></tr>
+<tr><td>2</td><td>EWMA / RiskMetrics cov (&#955;)</td><td>full</td><td>no</td><td>cheap dynamic baseline</td></tr>
+<tr><td>3</td><td><strong>Ledoit-Wolf linear shrinkage</strong> (+ NLS if feasible)</td><td>shrunk</td><td>no</td><td><span class="win">the bar to beat</span></td></tr>
+<tr><td>4</td><td>DCC-GARCH (Engle 2002)</td><td>dynamic corr</td><td>econometric</td><td>medium-N SOTA</td></tr>
+<tr><td>5</td><td><strong>Factor rank-k</strong> (market+sector / PCA / POET): <code>&#931;=BFB&#7488;+D</code></td><td>low-rank</td><td>linear</td><td>&quot;graph as a low-rank prior&quot;</td></tr>
+<tr><td>6</td><td><strong>Graph estimator</strong>: shrink corr toward a graph target, or a GNN emitting corr adjustments end-to-end</td><td>network</td><td>yes (GNN)</td><td>the incremental-network test</td></tr>
+</tbody></table>
+<p>Stop-early rule: if #5 (factor) does not beat #3 (LW), a heavier #6 graph is very unlikely to &mdash; report and stop (don't chase). If #5 beats #3, #6 tests whether the <em>network</em> beats the <em>factor</em>.</p>
+<h2>4. Architecture decisions (avoid the basis-drift trap we just proved)</h2>
+<ul>
+<li><strong>Do NOT</strong> stitch embeddings from separately-trained GNNs into a downstream model (the OOF-neural-feature design produced a 9&#963; basis drift &#8594; 4 observations blew up QLIKE by 100% of the fold's error). If a GNN is used at #6, it must be <strong>end-to-end</strong> (one model produces &#931;&#770; directly) so there is no cross-model latent basis mismatch, and its output is a <strong>correlation matrix</strong> (bounded, PSD-projected) not an unbounded latent.</li>
+<li><strong>PSD + invertibility</strong>: every &#931;&#770; is projected to PSD and ridged (<code>&#931;&#770; + &#949;I</code>) so GMV weights are well-defined; condition number is reported. Shrinkage (#3) handles N&#8819;W; sample cov (#1) may be singular and is expected to.</li>
+<li><strong>Graph target for #6</strong>: correlation-of-returns kNN or sector block &mdash; same families already tried, reused.</li>
+</ul>
+<h2>5. SDD gates</h2>
+<ul>
+<li><strong>Simplicity:</strong> one panel builder + one walk-forward evaluator + a dict of estimator fns; reuse existing screen/DM/robustness utilities. No new framework.</li>
+<li><strong>Anti-Abstraction:</strong> use <code>sklearn</code>/<code>scipy</code>/<code>statsmodels</code> (Ledoit-Wolf = <code>sklearn.covariance.LedoitWolf</code>; DCC via a thin <code>arch</code>/custom); reuse project <code>stats.date_clustered_dm</code>, metrics, spike-window utils.</li>
+<li><strong>Performance/Batching:</strong> covariance ops are small matrix algebra &mdash; batch estimator evaluation across rebalance dates; vectorize GMV over folds; GPU only for the #6 GNN (batched over dates, no batch=1). N&#8776;50&ndash;100 &#8594; matrices tiny; the walk-forward loop is the cost, parallelize estimators per fold.</li>
+</ul>
+<h2>6. Files (planned)</h2>
+<ul>
+<li><code>code/cov_config.py</code> &mdash; single-source tunables: <code>N</code>, window <code>W</code>, <code>rebalance_horizons</code> (5/10/22), shrinkage grid, EWMA &#955;, factor <code>k</code>, GNN epochs/lr/patience/seeds, spike windows, winsor band, ridge &#949;.</li>
+<li><code>code/panel.py</code> &mdash; load <code>daily_return</code>, winsorize, point-in-time aligned panel, liquidity/history screen.</li>
+<li><code>code/estimators.py</code> &mdash; <code>sample_cov</code>, <code>ewma_cov</code>, <code>ledoit_wolf</code>, <code>dcc</code>, <code>factor_rank_k</code>, <code>graph_cov</code> &mdash; each <code>R_train &#8594; &#931;&#770;</code> (PSD-projected, ridged).</li>
+<li><code>code/evaluate.py</code> &mdash; walk-forward GMV eval: weights (long-short + long-only), OOS portfolio returns, pooled annualized vol, DM on r_p&#178;, Frobenius/Stein, turnover, cond number, spike robustness. Atomic checkpoint.</li>
+<li><code>code/run_cov.py</code> &mdash; driver: <code>python run_cov.py [sp500|hose]</code> &#8594; <code>results/cov_forecast/cov_&lt;market&gt;.json</code>.</li>
+<li><code>test/</code> &mdash; panel alignment + winsor; PSD/invertibility of each &#931;&#770;; <strong>GMV-weight causality</strong> (&#931;&#770;_t invariant to future rows); known-answer GMV vol on a synthetic 2-asset case; DM plumbing; real-data-slice smoke; #6 overfit evidence.</li>
+</ul>
+<h2>7. Metric detail (leakage-safe, ELW 2019)</h2>
+<p>For rebalance dates <code>t_1&lt;&#8230;&lt;t_R</code> spaced by <code>h</code>: <code>r_p^m(&#964;) = R&#7488;(&#964;)&#183;w_{t_j}^m</code> for <code>&#964; &#8712; (t_j, t_{j+1}]</code>, using weights fixed at <code>t_j</code> from <code>&#931;&#770;_{t_j}</code> (data &lt;t_j). Pool all <code>r_p^m(&#964;)</code> &#8594; <code>AnnVol_m = &#8730;252 &#183; std(r_p^m)</code>. Best model = lowest AnnVol. DM on <code>(r_p^A)&#178; &#8722; (r_p^B)&#178;</code> with HAC/HLN correction. Long-only repeats with <code>w&#8805;0, &#931;w=1</code> (QP). Turnover = <code>&#931;|w_{t_{j+1}}&#8722;w_{t_j}|</code>.</p>
+<h2>8. Robustness (per HOSE spike rule)</h2>
+<p>Recompute AnnVol + DM <strong>excluding</strong> COVID (2020-02&ndash;04), 2022, and Apr-2025-tariff windows; the winning sign must hold. Report per-regime GMV vol and a storm-decile breakdown. HOSE additionally: sensitivity to the winsor band (&#177;7% vs robust) since unadjusted splits could distort correlations.</p>
+<h2>9. Validity caveats (state in report/paper)</h2>
+<ul>
+<li>Daily-data &quot;conditional covariance&quot;, <strong>not</strong> intraday realized covariance &mdash; named honestly (per the named-estimator rule).</li>
+<li>HOSE not split-adjusted &#8594; residual correlation distortion after winsorization; SP500 is the clean primary.</li>
+<li>GMV long-short can take large offsetting positions; the long-only variant is the realistic economic read.</li>
+<li>Survivorship: point-in-time membership mitigates but VN delisting history may be incomplete.</li>
+</ul>
+<h2>10. Plan (numbered tasks, each verifiable)</h2>
+<ol>
+<li><code>panel.py</code> + winsor + screen &#8594; verify: aligned panel shape, no NaN, band caps applied (test).</li>
+<li><code>estimators.py</code> #1&ndash;#3 (sample/EWMA/LW) &#8594; verify: PSD, invertible, LW matches <code>sklearn</code> on a slice (test).</li>
+<li><code>evaluate.py</code> walk-forward GMV + DM &#8594; verify: causality test + synthetic known-answer GMV vol.</li>
+<li>Run ladder #1&ndash;#3 on SP500 &#8594; verify: LW beats sample (sanity); record baseline AnnVol.</li>
+<li>Add #4 DCC + #5 factor-rank-k &#8594; verify: factor vs LW = the first real question; DM.</li>
+<li>If factor beats LW: add #6 graph (end-to-end, PSD, bounded) + overfit evidence &#8594; verify: DM vs factor.</li>
+<li>HOSE repeat + spike robustness + winsor sensitivity.</li>
+<li><code>/code-review</code> + summary report + push.</li>
+</ol>
+<h2>11. How this closes the thesis narrative (equity + the crypto companion)</h2>
+<p>This baseline supplies the equity half of the 3-regime contrast: (i) crypto (own-history vs BTC-spillover &mdash; where cross-asset should help), (ii) <strong>equity covariance (here) &mdash; where cross-stock structure is intrinsic</strong>, (iii) equity per-stock variance (done, 5&#215; NO-GO &mdash; where own-history dominates). Together they answer <em>when</em> inter-asset relationships carry OOS volatility-forecast value, rather than a single isolated negative.</p>
+</body></html>
