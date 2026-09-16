@@ -32,12 +32,42 @@ import stats as ST  # noqa: E402
 FL = FM.FL
 BASELINE = "own"
 OWN = config.own_set(FM.OWN)   # single source: baselines... config.OWN_DROP/OWN_ADD
+# regime-spike windows (mandatory HOSE robustness): COVID crash / 2022 drawdown / Apr-2025 tariff shock
+SPIKE_WINDOWS = (("2020-02-01", "2020-04-30"), ("2022-01-01", "2022-12-31"), ("2025-04-01", "2025-04-30"))
+N_DECILE = 10
 
 
 def _sets():
     """Feature sets: baseline own (no rq), own+leverage, own+both signed semivariances."""
     return {"own": OWN, "own+semi_neg": OWN + ["semi_neg"],
             "own+semi": OWN + ["semi_neg", "semi_pos"]}
+
+
+def _spike_mask(dates):
+    """Boolean mask of observations inside any regime-spike window."""
+    d = pd.to_datetime(dates)
+    m = np.zeros(len(d), bool)
+    for lo, hi in SPIKE_WINDOWS:
+        m |= (d >= pd.Timestamp(lo)) & (d <= pd.Timestamp(hi))
+    return m
+
+
+def _spike_robust(err_v, err_base, dates, h):
+    """Recompute the variant-vs-own gain + DM EXCLUDING spike windows (verdict sign must survive)."""
+    keep = ~_spike_mask(dates)
+    qb, qv = float(np.mean(err_base[keep])), float(np.mean(err_v[keep]))
+    try:
+        p = float(ST.date_clustered_dm(err_v[keep], err_base[keep], dates[keep], h)["p_value"])
+    except ValueError:  # pragma: no cover - defensive: too few surviving dates for the HLN factor
+        p = 1.0
+    return {"gain_vs_own_pct_ex_spike": (qb - qv) / qb * 100.0, "dm_p_ex_spike": p, "n_ex_spike": int(keep.sum())}
+
+
+def _decile_qlike(y, err_by_model, n=N_DECILE):
+    """Mean per-obs QLIKE by realized-vol decile (0=calm .. n-1=storm) for each model — shows whether the
+    leverage feature reduces the storm-decile UNDER-forecast the error diagnostic flagged."""
+    dec = pd.qcut(pd.Series(y).rank(method="first"), n, labels=False).to_numpy()
+    return {m: {int(d): float(np.mean(err_by_model[m][dec == d])) for d in range(n)} for m in err_by_model}
 
 
 def _pooled(a, cols, h, min_rows):
@@ -57,31 +87,38 @@ def _pooled(a, cols, h, min_rows):
 
 
 def run(market, load_fn=None):
-    """own vs own+semi_neg vs own+semi; returns per-horizon QLIKE + DM(variant vs own) + fit diagnostics."""
+    """own vs own+semi_neg vs own+semi; per-horizon QLIKE + DM(variant vs own) + spike-robustness + storm-decile
+    + fit diagnostics. The baseline `own` is the actual champion: it includes earnings (FM.EARN) when the market
+    provides per-firm dates (SP500), so semi_neg is tested as an augmentation of the true champion."""
     load_fn = load_fn or FM.load
     min_rows = config.MIN_ROWS.get(market, config.MIN_ROWS["default"])
-    frames, _, _ = load_fn(market)
+    frames, _, edates = load_fn(market)
     frames = BP.feature_frames(frames)
-    sets = _sets()
+    has_earn = bool(edates)
+    base = OWN + (FM.EARN if has_earn else [])
+    sets = {"own": base, "own+semi_neg": base + ["semi_neg"], "own+semi": base + ["semi_neg", "semi_pos"]}
     out = {}
     for h in config.HORIZONS:
-        a = FM.panel(frames, {}, h)
+        a = FM.panel(frames, edates, h)
         res = {m: _pooled(a, cols, h, min_rows) for m, cols in sets.items()}
         if any(res[m] is None for m in sets):
             continue
         y, _, dates, last_tr = res[BASELINE]
         err = {m: M.per_obs_qlike(y, res[m][1], floor=FL) for m in sets}
         q = {m: float(np.mean(err[m])) for m in sets}
-        comps = {}
+        comps, spike = {}, {}
         for m in sets:
             if m == BASELINE:
                 continue
             p = float(ST.date_clustered_dm(err[m], err[BASELINE], dates, h)["p_value"])
             comps[m] = {"gain_vs_own_pct": (q[BASELINE] - q[m]) / q[BASELINE] * 100.0, "dm_p": p}
+            spike[m] = _spike_robust(err[m], err[BASELINE], dates, h)
+        decile = _decile_qlike(y, {m: err[m] for m in (BASELINE, "own+semi_neg")})
         tr_q = {m: float(np.mean(M.per_obs_qlike(last_tr["y"].to_numpy(float),
                 np.mean([FM.gbm(last_tr, last_tr, cols, s) for s in FM.SEEDS], 0), floor=FL)))
                 for m, cols in sets.items()}
-        out[f"h{h}"] = {"n": int(len(y)), "qlike": q, "vs_own": comps,
+        out[f"h{h}"] = {"n": int(len(y)), "has_earn": has_earn, "qlike": q, "vs_own": comps,
+                        "spike_robustness": spike, "decile_qlike": decile,
                         "fit_diagnostics": {m: {"verdict": "overfit" if q[m] > tr_q[m] * 1.25 else "ok",
                                                 "train_qlike": tr_q[m], "test_qlike": q[m]} for m in sets}}
     return out

@@ -1,0 +1,254 @@
+{
+  "h1": {
+    "n": 399040,
+    "has_earn": false,
+    "qlike": {
+      "base": 1.561480447618032,
+      "base+comp": 1.5626288463525577,
+      "base+exp": 1.568717403570212,
+      "base+both": 1.5615390746140396
+    },
+    "vs_base": {
+      "base+comp": {
+        "gain_vs_base_pct": -0.07354550844857513,
+        "dm_p": 0.27658889700836736
+      },
+      "base+exp": {
+        "gain_vs_base_pct": -0.46346759981655566,
+        "dm_p": 0.22321722106487013
+      },
+      "base+both": {
+        "gain_vs_base_pct": -0.0037545776571909135,
+        "dm_p": 0.9657921468751974
+      }
+    },
+    "spike_robustness": {
+      "base+comp": {
+        "gain_vs_own_pct_ex_spike": -0.12575282547520394,
+        "dm_p_ex_spike": 0.08675980185390147,
+        "n_ex_spike": 341574
+      },
+      "base+exp": {
+        "gain_vs_own_pct_ex_spike": -0.568804448517878,
+        "dm_p_ex_spike": 0.20401239902605894,
+        "n_ex_spike": 341574
+      },
+      "base+both": {
+        "gain_vs_own_pct_ex_spike": -0.07077514577791309,
+        "dm_p_ex_spike": 0.4079692400986906,
+        "n_ex_spike": 341574
+      }
+    },
+    "fit_diagnostics": {
+      "base": {
+        "verdict": "ok",
+        "train_qlike": 1.8467557194747404,
+        "test_qlike": 1.561480447618032
+      },
+      "base+comp": {
+        "verdict": "ok",
+        "train_qlike": 1.8479868791245175,
+        "test_qlike": 1.5626288463525577
+      },
+      "base+exp": {
+        "verdict": "ok",
+        "train_qlike": 1.848935985438184,
+        "test_qlike": 1.568717403570212
+      },
+      "base+both": {
+        "verdict": "ok",
+        "train_qlike": 1.842484280233758,
+        "test_qlike": 1.5615390746140396
+      }
+    }
+  },
+  "h5": {
+    "n": 397428,
+    "has_earn": false,
+    "qlike": {
+      "base": 1.647391333181207,
+      "base+comp": 1.6456282037698267,
+      "base+exp": 1.6450039824622185,
+      "base+both": 1.6461263112234041
+    },
+    "vs_base": {
+      "base+comp": {
+        "gain_vs_base_pct": 0.10702553642646243,
+        "dm_p": 0.3466823196976665
+      },
+      "base+exp": {
+        "gain_vs_base_pct": 0.14491703767667174,
+        "dm_p": 0.18955379942827175
+      },
+      "base+both": {
+        "gain_vs_base_pct": 0.07678940227031116,
+        "dm_p": 0.497508921214866
+      }
+    },
+    "spike_robustness": {
+      "base+comp": {
+        "gain_vs_own_pct_ex_spike": 0.14682206510715523,
+        "dm_p_ex_spike": 0.27052745690681335,
+        "n_ex_spike": 339962
+      },
+      "base+exp": {
+        "gain_vs_own_pct_ex_spike": 0.17352069729831537,
+        "dm_p_ex_spike": 0.18190612600934417,
+        "n_ex_spike": 339962
+      },
+      "base+both": {
+        "gain_vs_own_pct_ex_spike": 0.12580413820087838,
+        "dm_p_ex_spike": 0.34046026352179615,
+        "n_ex_spike": 339962
+      }
+    },
+    "fit_diagnostics": {
+      "base": {
+        "verdict": "ok",
+        "train_qlike": 1.9301345577411633,
+        "test_qlike": 1.647391333181207
+      },
+      "base+comp": {
+        "verdict": "ok",
+        "train_qlike": 1.9343952272102352,
+        "test_qlike": 1.6456282037698267
+      },
+      "base+exp": {
+        "verdict": "ok",
+        "train_qlike": 1.9324793976059271,
+        "test_qlike": 1.6450039824622185
+      },
+      "base+both": {
+        "verdict": "ok",
+        "train_qlike": 1.934570915538466,
+        "test_qlike": 1.6461263112234041
+      }
+    }
+  },
+  "h10": {
+    "n": 395413,
+    "has_earn": false,
+    "qlike": {
+      "base": 1.6823021336234183,
+      "base+comp": 1.6837715313692243,
+      "base+exp": 1.6824833783103292,
+      "base+both": 1.683003802321413
+    },
+    "vs_base": {
+      "base+comp": {
+        "gain_vs_base_pct": -0.08734446187981444,
+        "dm_p": 0.17281357673983402
+      },
+      "base+exp": {
+        "gain_vs_base_pct": -0.01077361095183116,
+        "dm_p": 0.6294635495537287
+      },
+      "base+both": {
+        "gain_vs_base_pct": -0.0417088395699356,
+        "dm_p": 0.18862973208247624
+      }
+    },
+    "spike_robustness": {
+      "base+comp": {
+        "gain_vs_own_pct_ex_spike": -0.08793274254612916,
+        "dm_p_ex_spike": 0.2360112457790497,
+        "n_ex_spike": 337947
+      },
+      "base+exp": {
+        "gain_vs_own_pct_ex_spike": -0.003226450571996645,
+        "dm_p_ex_spike": 0.8791008943886297,
+        "n_ex_spike": 337947
+      },
+      "base+both": {
+        "gain_vs_own_pct_ex_spike": -0.040687492612356616,
+        "dm_p_ex_spike": 0.23683339885664995,
+        "n_ex_spike": 337947
+      }
+    },
+    "fit_diagnostics": {
+      "base": {
+        "verdict": "ok",
+        "train_qlike": 1.965981845411621,
+        "test_qlike": 1.6823021336234183
+      },
+      "base+comp": {
+        "verdict": "ok",
+        "train_qlike": 1.9638980396752745,
+        "test_qlike": 1.6837715313692243
+      },
+      "base+exp": {
+        "verdict": "ok",
+        "train_qlike": 1.9655311820190093,
+        "test_qlike": 1.6824833783103292
+      },
+      "base+both": {
+        "verdict": "ok",
+        "train_qlike": 1.96475266781997,
+        "test_qlike": 1.683003802321413
+      }
+    }
+  },
+  "h22": {
+    "n": 390577,
+    "has_earn": false,
+    "qlike": {
+      "base": 1.7268571062836207,
+      "base+comp": 1.7261402042042615,
+      "base+exp": 1.725983769941657,
+      "base+both": 1.7264892828379874
+    },
+    "vs_base": {
+      "base+comp": {
+        "gain_vs_base_pct": 0.04151484663962723,
+        "dm_p": 0.21698073191756306
+      },
+      "base+exp": {
+        "gain_vs_base_pct": 0.050573746883044064,
+        "dm_p": 0.10803273365801006
+      },
+      "base+both": {
+        "gain_vs_base_pct": 0.02130016689249042,
+        "dm_p": 0.5618849426559189
+      }
+    },
+    "spike_robustness": {
+      "base+comp": {
+        "gain_vs_own_pct_ex_spike": 0.049324780449751464,
+        "dm_p_ex_spike": 0.15395806768076456,
+        "n_ex_spike": 333114
+      },
+      "base+exp": {
+        "gain_vs_own_pct_ex_spike": 0.06404570804794789,
+        "dm_p_ex_spike": 0.04269344590031484,
+        "n_ex_spike": 333114
+      },
+      "base+both": {
+        "gain_vs_own_pct_ex_spike": 0.05078578121962908,
+        "dm_p_ex_spike": 0.1644667188842377,
+        "n_ex_spike": 333114
+      }
+    },
+    "fit_diagnostics": {
+      "base": {
+        "verdict": "ok",
+        "train_qlike": 2.000120643565649,
+        "test_qlike": 1.7268571062836207
+      },
+      "base+comp": {
+        "verdict": "ok",
+        "train_qlike": 2.000861822577733,
+        "test_qlike": 1.7261402042042615
+      },
+      "base+exp": {
+        "verdict": "ok",
+        "train_qlike": 2.0006493408151003,
+        "test_qlike": 1.725983769941657
+      },
+      "base+both": {
+        "verdict": "ok",
+        "train_qlike": 2.001271127980761,
+        "test_qlike": 1.7264892828379874
+      }
+    }
+  }
+}

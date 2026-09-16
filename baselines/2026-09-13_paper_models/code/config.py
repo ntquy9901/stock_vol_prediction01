@@ -8,6 +8,8 @@ SEMI_WINDOW = 5              # trailing window (days) for realized semivariance 
 SEMI_MIN_PERIODS = 3         # min observations before a trailing semivariance value is defined
 HORIZONS = (1, 5, 10, 22)   # forecast horizons
 MIN_ROWS = {"sp500": 30000, "default": 3000}   # min causal train rows per fold (mirrors run_gbm's gate)
+RANGE_SHORT = 5             # short window for the range-compression (squeeze) feature (weekly, matches Corsi 5)
+RANGE_LONG = 22             # long window for range compression / expansion (monthly, matches Corsi 22)
 
 # --- SINGLE SOURCE OF TRUTH for the paper's own-history baseline (relative to the shared FM.OWN) ---
 # To drop or add a feature later, edit ONLY these two tuples; all runners derive their baseline from own_set().

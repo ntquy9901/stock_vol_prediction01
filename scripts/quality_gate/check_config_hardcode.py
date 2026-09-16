@@ -150,7 +150,7 @@ def _git_diff(base: str, path: str) -> str:  # pragma: no cover - subprocess glu
     try:
         return subprocess.check_output(
             ["git", "diff", "--unified=0", "--no-color", f"{base}..HEAD", "--", path],
-            text=True, stderr=subprocess.DEVNULL)
+            text=True, encoding="utf-8", errors="replace", stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError:
         return ""
 

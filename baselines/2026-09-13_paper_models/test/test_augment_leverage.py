@@ -46,12 +46,38 @@ def test_run_smoke(monkeypatch):
     monkeypatch.setattr(A.S1, "FOLDS", ["2015-02-01", "2015-07-01", "2015-08-01", "2100-01-01"])
     out = A.run("hose", load_fn=lambda m: (_frames(), {}, {}))
     r = out["h1"]
+    assert r["has_earn"] is False
     assert set(r["qlike"]) == {"own", "own+semi_neg", "own+semi"}
     assert set(r["vs_own"]) == {"own+semi_neg", "own+semi"}          # baseline excluded from comparisons
     for m in ("own+semi_neg", "own+semi"):
         assert set(r["vs_own"][m]) == {"gain_vs_own_pct", "dm_p"}
+        assert set(r["spike_robustness"][m]) == {"gain_vs_own_pct_ex_spike", "dm_p_ex_spike", "n_ex_spike"}
+    assert set(r["decile_qlike"]) == {"own", "own+semi_neg"}
+    assert set(r["decile_qlike"]["own"]) == set(range(A.N_DECILE))   # one QLIKE per realized-vol decile
     assert set(r["fit_diagnostics"]["own"]) == {"verdict", "train_qlike", "test_qlike"}
     json.dumps(out)
+
+
+def test_run_with_earnings_uses_earn_base(monkeypatch):
+    """When the market provides earnings dates, the champion baseline includes FM.EARN (SP500 path)."""
+    monkeypatch.setattr(config, "HORIZONS", (1,))
+    monkeypatch.setattr(config, "MIN_ROWS", {"sp500": 500, "default": 500})
+    monkeypatch.setattr(A.S1, "FOLDS", ["2015-02-01", "2015-07-01", "2015-08-01", "2100-01-01"])
+    ed = {f"T{t}": pd.to_datetime(["2015-03-16", "2015-06-15"]).to_numpy() for t in range(25)}
+    out = A.run("hose", load_fn=lambda m: (_frames(), {}, ed))
+    r = out["h1"]
+    assert r["has_earn"] is True
+    assert set(r["qlike"]) == {"own", "own+semi_neg", "own+semi"}    # keys unchanged; cols now include EARN
+
+
+def test_spike_and_decile_helpers():
+    dates = pd.to_datetime(["2019-06-03", "2020-03-16", "2021-05-04", "2022-06-01"]).to_numpy()
+    assert list(A._spike_mask(dates)) == [False, True, False, True]
+    y = np.linspace(1e-5, 1e-2, 100)
+    err = {"own": np.ones(100), "own+semi_neg": np.linspace(0, 2, 100)}
+    dec = A._decile_qlike(y, err, n=A.N_DECILE)
+    assert set(dec) == {"own", "own+semi_neg"} and set(dec["own"]) == set(range(A.N_DECILE))
+    assert dec["own"][0] == 1.0                                       # own err is constant 1.0 per decile
 
 
 def test_run_empty_when_no_fold(monkeypatch):

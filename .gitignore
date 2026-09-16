@@ -173,3 +173,24 @@ results/edge_hmatched/cells/
 
 # qlike_anchor per-cell diagnostic logs (large, regenerable)
 results/qlike_anchor/cells/
+
+# --- cleanup 2026-09-16: keep large/regenerable/external out of git (kept on disk) ---
+# Large price data universes (regenerable from crawl / on Drive; sp500_clean ~1.4GB)
+data/processed/hose/
+data/processed/hnx/
+data/processed_enriched/sp500_clean/
+data/raw/prices/hose_vnstock/
+data/raw/prices/hnx_vnstock/
+data/raw/prices/sp500_clean/
+data/raw/vn_earnings/
+data/raw/vix_cboe.csv
+# External reference clone (MASTER framework); local-only, has its own .git
+_master_ref/
+# Throwaway experiment chain scripts + qg eda temp
+_tmp_*.sh
+.qg_eda.xml
+# Regenerable gate/experiment result dumps (audit evidence kept on disk, not source)
+results/quality_gate/
+results/cryptomamba_*/
+# Per-push gate checklist evidence (audit records kept on disk, not committed)
+scripts/task_dashboard/gate_results/
