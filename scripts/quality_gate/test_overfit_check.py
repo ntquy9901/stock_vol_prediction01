@@ -42,6 +42,8 @@ def test_looks_learned_detects_tree_models():
     # tree learners (XGBoost/CatBoost/LightGBM) have capacity to overfit -> must be fit-evidence-checked
     assert OC.looks_learned("XGB_direct") and OC.looks_learned("HAR-X+XGBresid")
     assert OC.looks_learned("catboost") and OC.looks_learned("lightgbm")
+    # denoising-autoencoder representation models (GBME+DAE) also have capacity to overfit -> checked
+    assert OC.looks_learned("GBME+DAE") and OC.looks_learned("StackAutoencoder")
     assert not OC.looks_learned("HAR-X") and not OC.looks_learned("HAR")
 
 
