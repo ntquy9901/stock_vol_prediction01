@@ -156,6 +156,48 @@ def test_oof_coverage_and_causality(monkeypatch):
     assert not np.isnan(z).any() and z.shape == (len(trf), G.N_HID)
 
 
+def test_frozen_z_single_basis_covers_all_rows(monkeypatch):
+    """Frozen variant trains ONE GNN on burn-in only and embeds EVERY row from it (one shared basis): a single
+    _group_z call whose train_dates == burn-in and emb_dates == all dates; the returned map covers all rows."""
+    dates = pd.bdate_range("2021-01-01", periods=9)
+    rows = [{"date": d, "ticker": tk, "y": 1.0} for tk in ("TK0", "TK1") for d in dates]
+    df = pd.DataFrame(rows)
+    burnin = dates[:6]
+    calls = []
+
+    def rec_group(frame, tickers, feats, train_dates, emb_dates, graph_seed, seeds, me, pat, trainer,
+                  record=False):
+        calls.append((set(pd.to_datetime(train_dates)), set(pd.to_datetime(emb_dates))))
+        er = frame[frame["date"].isin(emb_dates)]
+        return np.zeros((len(er), G.N_HID), np.float32), er.index.to_numpy(), (
+            [{"epoch": 0, "train_qlike": 1.0, "val_qlike": 1.0}] if record else [])
+
+    monkeypatch.setattr(E, "_group_z", rec_group)
+    zmap, curves = E.frozen_z(df, ("TK0", "TK1"), ["y"], burnin, (0,), 1, 1, 123)
+    assert len(calls) == 1                                            # ONE GNN -> one basis (no per-fold refit)
+    train_d, emb_d = calls[0]
+    assert train_d == set(pd.to_datetime(burnin))                     # GNN trained on burn-in only (causal)
+    assert emb_d == set(pd.to_datetime(dates))                        # every date embedded by that one GNN
+    assert set(zmap) == set(int(i) for i in df.index)                 # coverage: every row has an embedding
+    assert next(iter(zmap.values())).shape == (G.N_HID,) and curves   # curves recorded for the gate
+
+
+def test_run_frozen_structure_and_shared_basis(monkeypatch, tmp_path):
+    """Frozen walk-forward on synthetic data with a fake trainer: writes `_frozen` files, carries the
+    gate-required evidence, and records exactly one shared-basis learning curve under key 'frozen'."""
+    _tiny_min_rows(monkeypatch)
+    docs = R.run("sp500", load_fn=_fake_loader, out_dir=tmp_path, smoke=False, trainer=_fake_trainer,
+                 frozen=True)
+    assert set(docs) <= set(C.HORIZONS) and 1 in docs
+    for h, doc in docs.items():
+        assert (tmp_path / f"gnn_embed_sp500_frozen_h{h}.json").exists()
+        assert list(doc["learning_curves"]) == ["frozen"]            # ONE basis, not per-fold curves
+        for m in (R.BASE, R.LEARNED):
+            assert set(doc["metrics"][m]) == {"mse", "rmse", "mae", "r2", "qlike"}
+        _ok, probs = OF.check_result_evidence(doc)
+        assert all("missing" not in p for p in probs), probs
+
+
 def test_oof_raises_on_coverage_gap(monkeypatch):
     trf = pd.DataFrame({"date": pd.bdate_range("2021-01-01", periods=6).tolist() * 1,
                         "ticker": "TK0", "y": 1.0})

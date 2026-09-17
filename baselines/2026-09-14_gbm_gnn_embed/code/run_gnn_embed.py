@@ -171,9 +171,14 @@ def _checkpoint(doc, out_path):
     tmp.replace(out_path)
 
 
-def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
+def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None, frozen=False):
     """Walk-forward GBME vs GBME+GNN-embed for a market. Writes one JSON per horizon (atomic per-fold
-    checkpoint) and returns {h: doc}. `trainer` injects a GNN embedder (tests use a cheap fake)."""
+    checkpoint) and returns {h: doc}. `trainer` injects a GNN embedder (tests use a cheap fake).
+
+    `frozen=True` selects the fixed-basis variant: instead of per-fold OOF/test embeddings (which live in
+    different, ill-posed latent bases and made the long-horizon QLIKE detonate), ONE GNN is trained on the
+    burn-in window (the first eligible fold's causal train window, before every test fold) and frozen; its
+    single-basis embeddings are reused for every fold's train and test rows. Output tag `_frozen`."""
     load_fn = load_fn or FM.load
     epochs = C.EPOCHS_SMOKE if smoke else C.EPOCHS
     # ONE embedding GNN seed (not a seed-ensemble): neural hidden units are only defined up to a
@@ -186,7 +191,7 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
     min_rows = C.MIN_ROWS.get(market, C.MIN_ROWS["default"])
     out_dir = Path(out_dir) if out_dir else (REPO / "results" / "gamma_gbm")
     out_dir.mkdir(parents=True, exist_ok=True)
-    tag = "_smoke" if smoke else ""
+    tag = ("_frozen" if frozen else "") + ("_smoke" if smoke else "")
 
     frames, sect, edates = load_fn(market)
     edates = _load_earn(market, edates)
@@ -209,6 +214,7 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
         yy = {"te": [], "tr": [], "va": []}
         dts, curves = [], {}
         n_done = 0
+        zmap = None                                       # frozen-basis: filled once at the first eligible fold
         for k in range(len(S1.FOLDS) - 1):
             ts, tend = pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k + 1])
             trf = a[(a.date >= S1.TRAIN_START) & (a.date < ts - embargo)]
@@ -218,13 +224,24 @@ def run(market, load_fn=None, out_dir=None, smoke=False, trainer=None):
             if fold_cap is not None and n_done >= fold_cap:
                 break
             n_done += 1
-            fold = a.loc[(a.date >= S1.TRAIN_START) & (a.date < tend), keep].copy()
+            fold = None
             base_seed = S1.RNG_SEED + k
-            z_train = E.oof_train_z(trf[keep], tickers, OWN, emb_seeds, epochs, C.PATIENCE, base_seed,
-                                    trainer=trainer)
-            z_test, cv = E.test_z(fold, trf[keep], tef[keep], tickers, OWN, emb_seeds, epochs, C.PATIENCE,
-                                  base_seed, trainer=trainer)
-            curves[f"fold{k}"] = cv
+            if frozen:
+                if zmap is None:
+                    # burn-in = the first eligible fold's causal train window (before every test fold); one
+                    # GNN, frozen, embeds the whole panel in a single shared basis.
+                    burnin_dates = np.sort(trf["date"].unique())
+                    zmap, curves["frozen"] = E.frozen_z(a[keep], tickers, OWN, burnin_dates, emb_seeds,
+                                                        epochs, C.PATIENCE, S1.RNG_SEED, trainer=trainer)
+                z_train = np.asarray([zmap[int(ix)] for ix in trf.index.to_numpy()], np.float32)
+                z_test = np.asarray([zmap[int(ix)] for ix in tef.index.to_numpy()], np.float32)
+            else:
+                fold = a.loc[(a.date >= S1.TRAIN_START) & (a.date < tend), keep].copy()
+                z_train = E.oof_train_z(trf[keep], tickers, OWN, emb_seeds, epochs, C.PATIENCE, base_seed,
+                                        trainer=trainer)
+                z_test, cv = E.test_z(fold, trf[keep], tef[keep], tickers, OWN, emb_seeds, epochs,
+                                      C.PATIENCE, base_seed, trainer=trainer)
+                curves[f"fold{k}"] = cv
             trf_z = _with_z(trf, z_train, zcols)
             tef_z = _with_z(tef, z_test, zcols)
             val_dates = np.sort(trf_z["date"].unique())[-E._val_len(trf_z["date"].nunique()):]
@@ -272,8 +289,9 @@ def main():  # pragma: no cover - entry driver: loads real data + full training 
     ap = argparse.ArgumentParser()
     ap.add_argument("market", nargs="?", choices=("sp500", "hose"), default="hose")
     ap.add_argument("--smoke", action="store_true", help="1 horizon, 1 fold, 1 seed, few epochs")
+    ap.add_argument("--frozen", action="store_true", help="fixed-basis variant: one burn-in GNN, no per-fold refit")
     args = ap.parse_args()
-    docs = run(args.market, smoke=args.smoke)
+    docs = run(args.market, smoke=args.smoke, frozen=args.frozen)
     print(f"\nPRE-REGISTERED SUCCESS (h1 & h5 both beat): {success(docs)}", flush=True)
 
 

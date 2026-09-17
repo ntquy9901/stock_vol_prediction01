@@ -182,3 +182,24 @@ def test_z(fold, trf, tef, tickers, feats, seeds, max_epochs, patience, base_see
     order = {ix: i for i, ix in enumerate(idx)}
     z_aligned = z[[order[ix] for ix in tef.index.to_numpy()]]
     return z_aligned, curves
+
+
+def frozen_z(df, tickers, feats, burnin_dates, seeds, max_epochs, patience, base_seed, trainer=None):
+    """Frozen-basis embeddings (design section 9 follow-up, the fixed-basis variant).
+
+    Train ONE GNN on `burnin_dates` only -- graph, feature scaler and weights all come from those rows -- then
+    embed EVERY row of `df` with that single frozen model. All folds therefore share ONE latent basis: there is
+    no per-fold refit and hence none of the inner-vs-test embedding basis drift that made the OOF variant's
+    long-horizon QLIKE detonate (a GNN hidden is only defined up to rotation/permutation, so stitching `z` from
+    separately-fitted GNNs is ill-posed; a single frozen GNN removes that ambiguity). Causal iff every
+    downstream test date is strictly AFTER `burnin_dates` (the GNN never sees any test row). This is the
+    standard frozen-feature-extractor setup: test embeddings are out-of-sample to the GNN, train embeddings on
+    later folds are too; only the burn-in fold's own train rows are in-sample to the extractor, which is
+    inherent to transfer learning and carries no label leakage.
+
+    Returns ({int row_index -> z (n_hid,)}, learning_curves)."""
+    trainer = trainer or seed_embed
+    all_dates = np.sort(df["date"].unique())
+    z, idx, curves = _group_z(df, tickers, feats, burnin_dates, all_dates, base_seed, seeds,
+                              max_epochs, patience, trainer, record=True)
+    return {int(ix): row for ix, row in zip(idx, z)}, curves
