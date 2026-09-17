@@ -12,11 +12,11 @@ cannot bias calm-day QLIKE the way an OLS/MSE HAR anchor did.
 | h1 | 1.5719 | 1.5689 | 1.5674 | +0.28% | 0.007 | 0.125 | True | +0.41% / 0.000 |
 | h5 | 1.6479 | 1.6512 | 1.6499 | −0.12% | 0.139 | 0.011 | False | −0.05% / 0.52 |
 | h10 | 1.6856 | 1.6838 | 1.6835 | +0.12% | 0.283 | 0.524 | False | +0.12% / 0.27 |
-| h22 | 1.7974 | 1.7967 | 1.7966 | +0.04% | 0.550 | 0.805 | False | +0.11% / 0.13 |
+| h22 | 1.7270 | 1.7270 | 1.7272 | −0.01% | 0.920 | 0.703 | False | +0.02% / 0.90 |
 
 **Verdict: NO-GO.** Pre-registered success (beat GBME at BOTH h1 and h5) fails at h5. More decisively, the
 **anchor mechanism itself is null**: `GLM+XGB vs plain XGB` (same library, isolates the base margin) is
-non-significant at h1/h10/h22 (p=0.125/0.524/0.805) and only borderline at h5 (p=0.011) with a trivial +0.08%
+non-significant at h1/h10/h22 (p=0.125/0.524/0.703) and only borderline at h5 (p=0.011) with a trivial +0.08%
 (1.6512→1.6499) that does not survive spike exclusion. The small +0.28% h1 win vs GBME is a library artifact
 (XGB≈GBME after matching leaf regularisation; the anchor adds nothing on top of XGB). All four horizons pass the
 over/under-fit gate (fit=ok, test R² +0.13…+0.21).

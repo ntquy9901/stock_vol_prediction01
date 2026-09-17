@@ -77,6 +77,18 @@ def test_xgb_gamma_uses_base_margin_as_link_offset():
     assert (plain > 0).all() and not np.allclose(plain, pred)
 
 
+def test_xgb_gamma_predictions_stay_within_floor_and_cap():
+    # numerical guard (code_review finding 2): even an extreme base margin that would overflow the exp-link
+    # must yield finite predictions clipped to [FL, PRED_CAP].
+    rng = np.random.default_rng(2)
+    tr = pd.DataFrame({"f0": rng.normal(0, 1, 300), "f1": rng.normal(0, 1, 300)})
+    tr["y"] = np.abs(rng.normal(0, 1, 300)) * 1e-4 + 1e-6
+    te = tr.iloc[:40].copy()
+    extreme = np.full(len(tr), 50.0)                           # huge log-margin -> exp overflow without the cap
+    p = GA.xgb_gamma(tr, te, ["f0", "f1"], seed=0, base_margin_tr=extreme, base_margin_co=extreme[:40])
+    assert np.isfinite(p).all() and (p >= GA.FL).all() and (p <= C.PRED_CAP + 1e-12).all()
+
+
 def test_predict_xgb_and_glm_xgb_positive():
     tr, te = _toy()
     combo = pd.concat([te, tr])
