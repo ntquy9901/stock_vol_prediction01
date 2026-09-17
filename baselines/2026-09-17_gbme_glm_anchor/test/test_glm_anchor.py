@@ -86,6 +86,13 @@ def test_predict_xgb_and_glm_xgb_positive():
 
 
 # --------------------------------------------------------------------------- pure logic
+def test_glm_alpha_is_sklearn_default():
+    # regression guard (code_review finding 8): GLM_ALPHA must stay at sklearn GammaRegressor's default (1.0);
+    # a lighter penalty under-regularises the z-scored eta -> over-dispersion -> negative MSE-R2 that trips gate.
+    from sklearn.linear_model import GammaRegressor
+    assert C.GLM_ALPHA == GammaRegressor().alpha == 1.0
+
+
 def test_verdict_and_success():
     assert R.verdict(0.5, 0.01) and not R.verdict(-0.1, 0.01) and not R.verdict(0.5, 0.20)
     assert R.success({1: {"verdict": {"beats": True}}, 5: {"verdict": {"beats": True}}})

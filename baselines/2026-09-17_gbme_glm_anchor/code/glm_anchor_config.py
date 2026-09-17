@@ -13,7 +13,8 @@ XGB_L2 = 1.0                # L2 regularisation (match champion l2_regularizatio
 XGB_MIN_CHILD_WEIGHT = 20   # min hessian per leaf (analog of the champion HGBR min_samples_leaf=20; regularises)
 
 # --- Stage-1 Gamma GLM (log-link, IRLS on the gamma deviance = QLIKE up to constants) ---
-GLM_ALPHA = 1e-4            # light L2 penalty for the gamma GLM (features are z-scored on train)
+GLM_ALPHA = 1.0            # L2 penalty for the gamma GLM = sklearn GammaRegressor default (a lighter penalty
+                          # under-regularises z-scored coefficients -> eta over-disperses -> negative MSE-R2)
 GLM_MAX_ITER = 1000         # IRLS/solver iterations for the GLM
 PRED_CAP = 1.0             # variance ceiling (sigma=100%/day) — numerical guard so a GLM/XGB exp-link on an
                            # extreme z-scored row cannot overflow to +inf; far above any real daily variance
