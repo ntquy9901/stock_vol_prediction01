@@ -33,12 +33,14 @@ def test_regular_cadence_predicts_actual_exactly():
 
 
 def test_prediction_uses_only_prior_gaps_causal():
-    d = _quarterly(4, step=90)
-    d = np.sort(np.append(d, d[-1] + np.timedelta64(400, "D")).astype("datetime64[D]"))  # a reschedule
+    # gaps [30, 90, 90]: causal median(gaps[:i-1])=[30,90]->60d; leaky median(gaps[:i])=[30,90,90]->90d
+    # would need the gap TO event i. This case distinguishes causal from the off-by-one look-ahead leak.
+    base = np.datetime64("2020-01-01")
+    d = np.array([base, base + np.timedelta64(30, "D"), base + np.timedelta64(120, "D"),
+                  base + np.timedelta64(210, "D")], dtype="datetime64[D]")   # gaps 30, 90, 90
     pred = predict_schedule(d)
-    step = int(np.median(np.diff(d[:MIN_HISTORY]).astype(int)))
-    assert pred[MIN_HISTORY] == d[MIN_HISTORY - 1] + np.timedelta64(step, "D")   # uses only prior gaps
-    assert pred[4] != d[4]                                   # the 400-day jump is not foreseen -> differs
+    assert pred[MIN_HISTORY] == d[MIN_HISTORY - 1] + np.timedelta64(60, "D")   # median([30,90]) = strictly prior
+    assert pred[MIN_HISTORY] != d[MIN_HISTORY - 1] + np.timedelta64(90, "D")   # not the leaky median([30,90,90])
 
 
 def test_multiple_tickers_and_list_input():

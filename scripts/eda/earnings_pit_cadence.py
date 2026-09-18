@@ -7,7 +7,11 @@ inter-release gaps. Only past releases enter, so no future information leaks.
 
 Functions:
   * ``predict_schedule``  -- index-aligned PIT prediction for one ticker's date array (pred[i] <-> actual[i]).
-  * ``pit_cadence``       -- dict ticker -> sorted PIT schedule (datetime64[ns]), for the panel builder.
+  * ``pit_cadence``       -- dict ticker -> sorted index-aligned schedule (datetime64[ns]) INCLUDING the
+                             first MIN_HISTORY actual anchors; for discrepancy analysis ONLY. It is NOT
+                             leakage-safe as a panel feature -- the model path uses
+                             ``baselines/2026-09-19_expected_schedule/code/expected_schedule.py::expected_schedule``,
+                             which exposes only the causally-predicted dates (index >= MIN_HISTORY).
   * ``pit_vs_actual``     -- per-(ticker, event) discrepancy table |predicted - actual| in days.
   * ``summarize``         -- per-market summary of the discrepancy distribution.
   * ``main``              -- runs the discrepancy check over ALL HOSE + SP500 tickers/history, writes
@@ -26,7 +30,7 @@ def predict_schedule(dates):
     """Index-aligned strictly-causal PIT prediction for one ticker's release dates.
 
     Returns an array the same length as the sorted input. The first ``MIN_HISTORY`` entries equal the
-    actual dates (no prediction yet); each later entry ``i`` is ``actual[i-1] + median(prior gaps[:i])``,
+    actual dates (no prediction yet); each later entry ``i`` is ``actual[i-1] + median(prior gaps[:i-1])``,
     using only gaps strictly before event ``i`` so the prediction is knowable at the forecast origin.
     ``pred[i]`` corresponds to ``actual[i]`` (no reordering)."""
     d = np.sort(np.asarray(dates).astype("datetime64[D]"))
@@ -34,13 +38,19 @@ def predict_schedule(dates):
     if len(d) > MIN_HISTORY:
         gaps = np.diff(d).astype(int)
         for i in range(MIN_HISTORY, len(d)):
-            step = int(np.median(gaps[:i]))                       # only PRIOR gaps -> causal
+            step = int(np.median(gaps[:i - 1]))                  # gaps BETWEEN releases before event i (excl. gap TO d[i]) -> causal
             preds.append(d[i - 1] + np.timedelta64(step, "D"))
     return np.array(preds, dtype="datetime64[D]")
 
 
 def pit_cadence(edates):
-    """Map ticker -> sorted PIT schedule (``datetime64[ns]``) for ``full_matrix.panel``."""
+    """Map ticker -> sorted index-aligned schedule (``datetime64[ns]``), anchors INCLUDED.
+
+    DISCREPANCY-ANALYSIS ONLY -- do NOT feed this to ``full_matrix.panel``: the first ``MIN_HISTORY``
+    entries are the raw actual dates (anchors), and the panel uses the next scheduled date as a
+    forward-looking feature, so an anchor would leak a future realized date at an earlier origin. The
+    leakage-safe model path is ``expected_schedule`` (baselines/2026-09-19_expected_schedule), which drops
+    the anchors."""
     return {tk: np.sort(predict_schedule(dates)).astype("datetime64[ns]") for tk, dates in edates.items()}
 
 
