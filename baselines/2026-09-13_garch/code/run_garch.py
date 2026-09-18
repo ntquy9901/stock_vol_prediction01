@@ -142,14 +142,18 @@ def _dispatch(series, jobs, n_jobs):
 
 
 def _score(y, dates, preds, h):
-    """Pooled per-obs QLIKE for every model + date-clustered DM of each GARCH variant vs HAR."""
+    """Pooled per-obs QLIKE + squared-error metrics for every model, plus date-clustered DM of each
+    GARCH variant vs HAR. ``pm`` holds MSE/RMSE/MAE on the SAME pooled rows as ``q`` (the estimable
+    subset), so the point-forecast metrics are directly comparable across models within this run."""
     e = {m: M.per_obs_qlike(y, preds[m], floor=FL) for m in preds}
     q = {m: float(np.mean(e[m])) for m in e}
+    pm = {m: {"mse": M.mse(y, preds[m]), "rmse": M.rmse(y, preds[m]), "mae": M.mae(y, preds[m])}
+          for m in preds}
     dm = {}
     for v in VARIANTS:
         r = ST.date_clustered_dm(e[LABEL[v]], e["HAR"], dates, h)
         dm[LABEL[v]] = {"p_value": float(r["p_value"]), "mean_diff": float(r["mean_diff"])}
-    return q, dm
+    return q, pm, dm
 
 
 def _checkpoint(out, out_path):  # pragma: no cover - I/O side effect, exercised only in real runs
@@ -217,7 +221,7 @@ def run_garch(market, load_fn=None, n_jobs=1, out_path=None):
                  "GJR-GARCH": np.concatenate(j_p)}
         if any(np.isnan(v).any() for v in preds.values()):
             raise ValueError(f"unfilled forecast rows at h={h} (ticker/date misalignment)")
-        q, dm = _score(y, dates, preds, h)
+        q, pm, dm = _score(y, dates, preds, h)
 
         tr_last = folds[-1][3]                      # full train rows (HAR is fit on all of them)
         y_tr = tr_scored["y"].to_numpy(float)       # scored on the estimable subset (== g_train order)
@@ -228,6 +232,9 @@ def run_garch(market, load_fn=None, n_jobs=1, out_path=None):
             "n": int(len(y)),
             "n_excluded": int(n_excluded),
             "qlike": q,
+            "mse": {m: pm[m]["mse"] for m in preds},
+            "rmse": {m: pm[m]["rmse"] for m in preds},
+            "mae": {m: pm[m]["mae"] for m in preds},
             "gain_vs_HAR_pct": {LABEL[v]: (q["HAR"] - q[LABEL[v]]) / q["HAR"] * 100.0 for v in VARIANTS},
             "dm_vs_HAR": dm,
             "n_fallback": n_fb,

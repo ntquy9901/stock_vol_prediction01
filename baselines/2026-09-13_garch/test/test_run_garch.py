@@ -33,9 +33,12 @@ def test_run_smoke_structure(monkeypatch):
     out = R.run_garch("hose", load_fn=lambda m: (_frames(), {}, {}), n_jobs=1)
     assert "h1" in out
     r = out["h1"]
-    assert set(r) >= {"n", "n_excluded", "qlike", "gain_vs_HAR_pct", "dm_vs_HAR", "n_fallback",
-                      "train_metrics", "fit_diagnostics"}
+    assert set(r) >= {"n", "n_excluded", "qlike", "mse", "rmse", "mae", "gain_vs_HAR_pct",
+                      "dm_vs_HAR", "n_fallback", "train_metrics", "fit_diagnostics"}
     assert set(r["qlike"]) == {"GARCH", "GJR-GARCH", "HAR"}
+    for key in ("mse", "rmse", "mae"):                       # squared-error metrics on the same pooled rows
+        assert set(r[key]) == {"GARCH", "GJR-GARCH", "HAR"}
+        assert all(np.isfinite(v) and v >= 0 for v in r[key].values())
     assert set(r["dm_vs_HAR"]) == {"GARCH", "GJR-GARCH"}
     assert set(r["dm_vs_HAR"]["GARCH"]) == {"p_value", "mean_diff"}
     assert set(r["n_fallback"]) == {"GARCH", "GJR-GARCH"}
