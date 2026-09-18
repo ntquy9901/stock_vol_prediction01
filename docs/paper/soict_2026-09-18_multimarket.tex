@@ -494,8 +494,15 @@ release from an archive that records realized dates, not a point-in-time schedul
 date-jitter check shows the gain does not depend on exact-date timing: perturbing every S\&P~500
 earnings date by a uniform random offset, the $h1$ QLIKE gain over endogenous falls from 11.1\% with
 true dates to 9.0\% at plus or minus one trading day, 6.6\% at plus or minus three days, and 4.5\% at
-plus or minus five days, and stays positive at every horizon. A point-in-time scheduling calendar
-remains to be added to control rescheduling within the forecast window.
+plus or minus five days, and stays positive at every horizon. As a stronger, strictly leakage-safe
+check, we recompute the gain under a point-in-time schedule in which each release date is predicted from
+the firm's own past reporting cadence (the previous release plus its median inter-release gap, using only
+prior releases, so no exact-date foreknowledge enters). Even under this conservative schedule the
+S\&P~500 earnings gain (XGBoost engine) stays 2.8 to 3.3\% and Diebold-Mariano-significant at every
+horizon ($h1$ 3.3\%, $h5$ 3.2\%, $h10$ 3.1\%, $h22$ 2.8\%; all $p<0.001$), against 8.7 to 11.2\% with the
+archived dates, so the lever is not an artifact of exact-date foreknowledge; the true point-in-time gain
+lies between these bounds, as confirmed release dates are typically known weeks ahead of the cadence guess.
+% PIT-cadence robustness: earnings_pit_sp500.json (SP500, 8-fold x 3-seed) pit_cadence.earn_gain_pct h1 3.29 / h5 3.15 / h10 3.11 / h22 2.78 (dm_p all <1e-4); actual 11.17/9.97/9.18/8.73
 
 \noindent\textbf{Vietnam coverage.} The Vietnam earnings test draws on real announcement dates that
 are comprehensive only for 2025-01 through 2026-09, plus a sparse 2016-2026 news feed covering roughly
