@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaf-graph paper — 4 biến thể (2×2) — Kiến trúc chi tiết</title>
+<style>
+  :root{--bg:#0f1720;--card:#17222e;--ink:#e6edf3;--mut:#9fb0c0;--acc:#4fd1c5;--acc2:#f6ad55;
+        --ok:#68d391;--bad:#fc8181;--line:#2b3a48;--code:#0b1118;--earn:#b794f4;--graph:#f6ad55;--off:#3b4854}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1160px;margin:0 auto;padding:32px 22px 90px}
+  h1{font-size:27px;margin:0 0 4px} h2{font-size:20px;margin:38px 0 10px;color:var(--acc);
+     border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{font-size:16px;margin:20px 0 6px;color:var(--acc2)}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  code,.mono{font-family:ui-monospace,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px;
+             font-size:13px;color:#cbd5e0}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;
+      font-size:13px;line-height:1.5}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:center}
+  th{background:#1d2b38;color:var(--acc)} td.l,th.l{text-align:left}
+  .ok{color:var(--ok);font-weight:600} .bad{color:var(--bad);font-weight:600} .off{color:var(--off)}
+  .pill{display:inline-block;background:#1d2b38;border:1px solid var(--line);border-radius:999px;
+        padding:2px 10px;font-size:12px;color:var(--mut);margin:2px 4px 2px 0}
+  .pill.earn{border-color:var(--earn);color:#d6bcfa} .pill.graph{border-color:var(--graph);color:#fbd38d}
+  ul{margin:6px 0 6px 2px;padding-left:20px} li{margin:4px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .kbd{color:var(--acc2);font-weight:600}
+  .note{border-left:3px solid var(--acc);padding-left:12px;color:var(--mut)}
+  .bad-b{border-left:3px solid var(--bad)} .ok-b{border-left:3px solid var(--ok)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--mut);margin:8px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid var(--line)}
+  .vtitle{font-size:15px;font-weight:700;margin:0} .vh{display:flex;align-items:center;gap:8px}
+  .tag{font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid var(--line)}
+  .tag.on{border-color:var(--ok);color:var(--ok)} .tag.offt{border-color:var(--off);color:var(--off)}
+  @media(max-width:820px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>Leaf-cooccurrence Graph → 4 biến thể (ma trận 2×2)</h1>
+<p class="sub">Baseline <code>2026-09-18_leaf_graph_paper</code> · thị trường HOSE + SP500 · target = Parkinson variance
+σ²(t+h), h ∈ {1,5,10,22} · metric QLIKE + date-clustered Diebold-Mariano · 3 seeds (0,1,2) · so tài liệu-hoá
+<span class="ok">paper-grade</span> (5-metric train/val/test + fit_diagnostics + spike-robust).</p>
+
+<div class="card note">
+<b>Một câu.</b> Cùng một <b>pipeline leaf-graph</b> duy nhất được chạy cho <b>4 cấu hình</b> tạo bởi 2 trục độc lập:
+(trục ngang) <b>có/không làm mượt đồ thị lá</b> và (trục dọc) <b>có/không đặc trưng earnings (EARN-4)</b>.
+Đây là thiết kế <b>2×2 factorial</b>: đọc được đồng thời <i>hiệu ứng biên của graph</i>, <i>hiệu ứng biên của
+earnings</i>, và <i>tương tác</i> giữa chúng. Base prediction XGB được <b>dùng chung</b> giữa cặp no-graph / +graph
+để cô lập đúng tác động của graph; hàng (full vs noearn) là <b>leave-one-out</b> gỡ đúng EARN-4.</p>
+</div>
+
+<div class="legend">
+  <span><span class="sw" style="background:#12303a;border-color:var(--acc)"></span> khối chung / đang bật</span>
+  <span><span class="sw" style="background:#2a2540;border-color:var(--earn)"></span> khối EARN-4</span>
+  <span><span class="sw" style="background:#3a2f1a;border-color:var(--graph)"></span> khối leaf-graph + α</span>
+  <span><span class="sw" style="background:#1a2028;border-color:var(--off)"></span> khối TẮT (greyed / α≡0)</span>
+</div>
+
+<!-- ============================================================ 1 · 2x2 MATRIX -->
+<h2>1 · Tổng quan &amp; ma trận 4 biến thể (2×2)</h2>
+<div class="card">
+<table>
+<tr><th class="l" style="width:22%">&nbsp;</th>
+    <th>Không graph &nbsp;(α ≡ 0 · XGB base)</th>
+    <th>+ leaf-graph &nbsp;(α fit trên val)</th></tr>
+<tr>
+  <th class="l">Full features<br><span class="pill earn">OWN-8</span><span class="pill earn">EARN-4</span></th>
+  <td><b>① XGB</b><br><span class="tag on">EARN ON</span> <span class="tag offt">GRAPH OFF</span><br>
+      <span class="mut">base gamma, không làm mượt</span></td>
+  <td><b>② XGB+leafgraph</b><br><span class="tag on">EARN ON</span> <span class="tag on">GRAPH ON</span><br>
+      <span class="mut">① được làm mượt qua đồ thị lá</span></td></tr>
+<tr>
+  <th class="l">Bỏ earnings<br><span class="pill">OWN-8</span><span class="pill off">EARN-4 (gỡ)</span></th>
+  <td><b>③ XGB−earn</b><br><span class="tag offt">EARN OFF</span> <span class="tag offt">GRAPH OFF</span><br>
+      <span class="mut">leave-one-out: chỉ OWN-8</span></td>
+  <td><b>④ XGB+leafgraph−earn</b><br><span class="tag offt">EARN OFF</span> <span class="tag on">GRAPH ON</span><br>
+      <span class="mut">③ được làm mượt qua đồ thị lá</span></td></tr>
+</table>
+<div class="legend" style="margin-top:12px">
+  <span><b style="color:var(--graph)">Trục ngang (→)</b> = hiệu ứng GRAPH : ②−① và ④−③</span>
+  <span><b style="color:var(--earn)">Trục dọc (↓)</b> = hiệu ứng EARNINGS : ①−③ và ②−④</span>
+  <span><b style="color:var(--acc)">Chéo</b> = tương tác graph×earnings</span>
+</div>
+<p class="note" style="margin-top:10px"><b>Điểm chung của cả 4:</b> cùng walk-forward (8 folds, TRAIN_START=2015,
+embargo = int(1.6·h)+5), cùng XGB gamma (300 cây · lr 0.05 · 31 lá · l2=1 · min_child_weight 20 ·
+<code>objective=reg:gamma</code>), cùng seed-ensemble (0,1,2), cùng floor <code>FL</code> + clip
+<code>[FL, PRED_CAP=1.0]</code>, cùng metric QLIKE + DM. <b>CHỈ khác</b> ở tập feature (<code>cols</code>) và việc
+α = 0 (tắt) hay α val-fit (bật).</p>
+</div>
+
+<!-- ============================================================ 2 · MASTER PIPELINE -->
+<h2>2 · Pipeline tổng thể (dùng chung cho cả 4 biến thể)</h2>
+<p class="sub">Hai công tắc điều khiển 4 biến thể được tô màu: <span style="color:var(--earn)">EARN-4 switch</span>
+(cols = OWN-8 <b>+ EARN-4</b> nếu <code>full</code>, ngược lại chỉ OWN-8) và
+<span style="color:var(--graph)">GRAPH/α switch</span> (α val-fit nếu +leafgraph, α≡0 nếu no-graph).</p>
+<svg viewBox="0 0 1120 900" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="12.5">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#4fd1c5"/></marker>
+    <marker id="arb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f6ad55"/></marker>
+    <marker id="are" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#b794f4"/></marker>
+  </defs>
+  <style>
+    .box{fill:#17222e;stroke:#2b3a48} .hl{fill:#12303a;stroke:#4fd1c5}
+    .amber{fill:#3a2f1a;stroke:#f6ad55} .earn{fill:#2a2540;stroke:#b794f4}
+    .t{fill:#e6edf3} .m{fill:#9fb0c0} .a{fill:#4fd1c5} .g{fill:#f6ad55} .e{fill:#d6bcfa}
+    .ln{stroke:#4fd1c5;stroke-width:1.5;fill:none} .lnb{stroke:#f6ad55;stroke-width:1.5;fill:none}
+    .lne{stroke:#b794f4;stroke-width:1.5;fill:none}
+  </style>
+
+  <!-- data + feature switch -->
+  <rect class="box" x="300" y="10" width="520" height="70" rx="8"/>
+  <text class="t" x="560" y="32" text-anchor="middle">Panel (market ∈ {HOSE, SP500}) — đơn vị mẫu = (cổ phiếu i, ngày t)</text>
+  <text class="m" x="560" y="50" text-anchor="middle">y = Parkinson variance σ²(t+h) = y.shift(−h) · h ∈ {1,5,10,22}</text>
+  <text class="m" x="560" y="67" text-anchor="middle">dropna trên OWN + y → hàng full/noearn GIỐNG hệt (so sánh trực tiếp được)</text>
+
+  <!-- feature columns: OWN-8 + EARN switch -->
+  <line class="ln" x1="560" y1="80" x2="560" y2="104" marker-end="url(#ar)"/>
+  <rect class="hl" x="330" y="106" width="230" height="70" rx="8"/>
+  <text class="a" x="445" y="126" text-anchor="middle">OWN-8 (own-history)</text>
+  <text class="m" x="445" y="143" text-anchor="middle">har_daily/weekly/monthly,</text>
+  <text class="m" x="445" y="158" text-anchor="middle">mr_change, mr_slope5/10,</text>
+  <text class="m" x="445" y="173" text-anchor="middle">mr_dev5, mr_z22</text>
+  <rect class="earn" x="575" y="106" width="215" height="70" rx="8"/>
+  <text class="e" x="682" y="126" text-anchor="middle">EARN-4  ⟵ switch</text>
+  <text class="m" x="682" y="143" text-anchor="middle">earn_prox, earn_soon,</text>
+  <text class="m" x="682" y="158" text-anchor="middle">earn_pre, earn_post</text>
+  <text class="e" x="682" y="173" text-anchor="middle">full=BẬT · noearn=TẮT</text>
+  <text class="m" x="920" y="145" text-anchor="middle">cols = OWN-8</text>
+  <text class="e" x="920" y="162" text-anchor="middle">+ EARN-4 nếu full</text>
+
+  <!-- walk-forward split -->
+  <line class="ln" x1="560" y1="176" x2="560" y2="200" marker-end="url(#ar)"/>
+  <rect class="box" x="300" y="202" width="520" height="120" rx="8"/>
+  <text class="a" x="560" y="222" text-anchor="middle">Walk-forward fold k = 0…7 (S1.FOLDS · TRAIN_START = 2015-01-01)</text>
+  <rect class="hl" x="318" y="236" width="240" height="60" rx="6"/>
+  <text class="t" x="438" y="256" text-anchor="middle">trf_e = TRAIN ∖ VAL</text>
+  <text class="m" x="438" y="272" text-anchor="middle">date &lt; ts − embargo</text>
+  <text class="m" x="438" y="288" text-anchor="middle">bỏ 22 ngày cuối (VALID_LEN)</text>
+  <rect class="amber" x="566" y="236" width="118" height="60" rx="6"/>
+  <text class="g" x="625" y="256" text-anchor="middle">vaf = VAL</text>
+  <text class="m" x="625" y="272" text-anchor="middle">22 ngày cuối</text>
+  <text class="m" x="625" y="288" text-anchor="middle">của train</text>
+  <rect class="box" x="692" y="236" width="112" height="60" rx="6" stroke="#68d391"/>
+  <text class="t" x="748" y="256" text-anchor="middle">tef = TEST</text>
+  <text class="m" x="748" y="272" text-anchor="middle">[ts, tend)</text>
+  <text class="m" x="748" y="288" text-anchor="middle">out-of-sample</text>
+  <text class="m" x="560" y="314" text-anchor="middle">⟵ embargo = int(1.6·h)+5 ngày (chặn chồng lấn target h-step giữa train↔test) ⟶</text>
+
+  <!-- fit XGB -->
+  <line class="ln" x1="438" y1="322" x2="438" y2="352" marker-end="url(#ar)"/>
+  <rect class="box" x="150" y="354" width="360" height="98" rx="8"/>
+  <text class="a" x="330" y="374" text-anchor="middle">FIT XGBoost gamma trên trf_e (chỉ train)</text>
+  <text class="t" x="330" y="393" text-anchor="middle">objective = reg:gamma · seed-ensemble (0,1,2)</text>
+  <text class="m" x="330" y="410" text-anchor="middle">300 trees · lr 0.05 · max_leaves 31 · lossguide</text>
+  <text class="m" x="330" y="426" text-anchor="middle">l2 = 1 · min_child_weight 20 · capacity ≈ champion GBME</text>
+  <text class="m" x="330" y="443" text-anchor="middle">predict combo=[test|train|val] → floor FL, clip [FL, 1.0]</text>
+
+  <!-- XGB base output -->
+  <line class="ln" x1="330" y1="452" x2="330" y2="484" marker-end="url(#ar)"/>
+  <rect class="box" x="150" y="486" width="360" height="52" rx="8" stroke="#68d391"/>
+  <text class="t" x="330" y="508" text-anchor="middle">ŷ_xgb  (base prediction · [n])</text>
+  <text class="m" x="330" y="525" text-anchor="middle">= output biến thể ① / ③ (no-graph) &amp; base cho ② / ④</text>
+
+  <!-- pred_leaf -> leaf matrix -->
+  <line class="lnb" x1="510" y1="400" x2="620" y2="400" marker-end="url(#arb)"/>
+  <rect class="amber" x="620" y="354" width="360" height="98" rx="8"/>
+  <text class="g" x="800" y="374" text-anchor="middle">pred_leaf của booster seed[0] → leaf-matrix</text>
+  <text class="t" x="800" y="393" text-anchor="middle">L ∈ ℤ^(n × T) · T = 300 (= số cây)</text>
+  <text class="m" x="800" y="410" text-anchor="middle">L[i,t] = obs i rơi vào lá nào ở cây t</text>
+  <text class="m" x="800" y="427" text-anchor="middle">re-encode ĐÚNG các feature own-history (0 info mới)</text>
+  <text class="m" x="800" y="444" text-anchor="middle">booster fit trên trf_e → causal</text>
+
+  <!-- per-day graph -->
+  <line class="lnb" x1="800" y1="452" x2="800" y2="484" marker-end="url(#arb)"/>
+  <rect class="amber" x="620" y="486" width="360" height="118" rx="8"/>
+  <text class="g" x="800" y="506" text-anchor="middle">Đồ thị leaf-cooccurrence — MỖI NGÀY TEST</text>
+  <text class="t" x="800" y="525" text-anchor="middle">sim(i,j) = (#cây cùng lá)/T = (S·Sᵀ)/T ∈ [0,1]</text>
+  <text class="t" x="800" y="542" text-anchor="middle">kNN k = 10 · loại self (đường chéo = −∞)</text>
+  <text class="m" x="800" y="559" text-anchor="middle">chỉ dùng cross-section CHÍNH ngày đó (contemporaneous)</text>
+  <text class="m" x="800" y="576" text-anchor="middle">m=1 (singleton) → không hàng xóm → giữ nguyên base</text>
+  <text class="m" x="800" y="593" text-anchor="middle">→ nbr_mean(i) = mean_{j∈kNN(i)} ŷ_xgb(j)</text>
+
+  <!-- alpha fit on VAL -->
+  <line class="lnb" x1="620" y1="545" x2="470" y2="640" marker-end="url(#arb)"/>
+  <line class="ln"  x1="330" y1="538" x2="400" y2="640" marker-end="url(#ar)"/>
+  <rect class="hl" x="270" y="642" width="470" height="82" rx="8"/>
+  <text class="a" x="505" y="662" text-anchor="middle">FIT α trên VAL slice (grid 0.0 … 1.0, bước 0.1)  ⟵ GRAPH switch</text>
+  <text class="t" x="505" y="682" text-anchor="middle">α* = argmin_α  QLIKE_val[ (1−α)·ŷ_xgb + α·nbr_mean ]</text>
+  <text class="m" x="505" y="700" text-anchor="middle">1 vô hướng/fold · đóng băng cho test · ties → α nhỏ hơn</text>
+  <text class="g" x="505" y="717" text-anchor="middle">no-graph ⇒ α ≡ 0 (bỏ qua, không dựng graph) · +leafgraph ⇒ α val-fit</text>
+
+  <!-- apply on test -->
+  <line class="ln" x1="505" y1="724" x2="505" y2="754" marker-end="url(#ar)"/>
+  <rect class="box" x="290" y="756" width="430" height="58" rx="8" stroke="#68d391"/>
+  <text class="t" x="505" y="778" text-anchor="middle">TEST: ŷ_smooth = (1−α*)·ŷ_xgb + α*·nbr_mean  → clip [FL,1.0]</text>
+  <text class="m" x="505" y="796" text-anchor="middle">áp per-day trên tef · self excluded · không dữ liệu tương lai</text>
+
+  <!-- pool + eval -->
+  <line class="ln" x1="505" y1="814" x2="505" y2="842" marker-end="url(#ar)"/>
+  <rect class="box" x="210" y="844" width="590" height="50" rx="8"/>
+  <text class="a" x="505" y="865" text-anchor="middle">Gộp 8 folds → QLIKE/RMSE/MAE/R²/MSE train(streamed)/val/test + fit_diagnostics</text>
+  <text class="m" x="505" y="882" text-anchor="middle">DM date-clustered: leafgraph vs XGB (cô lập graph) · vs GBME (champion) · HOSE spike-robust</text>
+</svg>
+
+<!-- ============================================================ 3 · FOUR PANELS -->
+<h2>3 · Bốn panel chi tiết — highlight cái gì BẬT / TẮT</h2>
+<p class="sub">Mỗi panel là cùng pipeline §2 nhưng tô sáng đúng khối đang hoạt động. Khối
+<span style="color:var(--off)">xám</span> = bị gỡ (EARN-4) hoặc bị tắt (leaf-graph, α≡0).</p>
+
+<div class="grid">
+
+  <!-- VARIANT 1: XGB full -->
+  <div class="card">
+    <div class="vh"><span class="vtitle">① XGB (full)</span>
+      <span class="tag on">EARN ON</span><span class="tag offt">GRAPH OFF (α≡0)</span></div>
+    <svg viewBox="0 0 520 300" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="11.5">
+      <defs><marker id="v1a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#4fd1c5"/></marker></defs>
+      <rect x="150" y="10" width="130" height="40" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="215" y="28" text-anchor="middle" fill="#4fd1c5">OWN-8</text>
+      <text x="215" y="43" text-anchor="middle" fill="#9fb0c0">own-history</text>
+      <rect x="290" y="10" width="130" height="40" rx="6" fill="#2a2540" stroke="#b794f4"/>
+      <text x="355" y="28" text-anchor="middle" fill="#d6bcfa">EARN-4</text>
+      <text x="355" y="43" text-anchor="middle" fill="#9fb0c0">earnings ON</text>
+      <line x1="285" y1="50" x2="285" y2="74" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v1a)"/>
+      <rect x="120" y="76" width="280" height="52" rx="6" fill="#17222e" stroke="#2b3a48"/>
+      <text x="260" y="96" text-anchor="middle" fill="#4fd1c5">XGB gamma · seeds(0,1,2)</text>
+      <text x="260" y="114" text-anchor="middle" fill="#9fb0c0">cols = OWN-8 + EARN-4 (13 feat)</text>
+      <line x1="260" y1="128" x2="260" y2="152" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v1a)"/>
+      <rect x="150" y="154" width="220" height="44" rx="6" fill="#17222e" stroke="#68d391"/>
+      <text x="260" y="174" text-anchor="middle" fill="#e6edf3">ŷ_xgb (base)</text>
+      <text x="260" y="190" text-anchor="middle" fill="#9fb0c0">= OUTPUT (không làm mượt)</text>
+      <!-- greyed graph block -->
+      <rect x="120" y="216" width="280" height="70" rx="6" fill="#1a2028" stroke="#3b4854" stroke-dasharray="5 4"/>
+      <text x="260" y="240" text-anchor="middle" fill="#3b4854">leaf-graph + α  —  TẮT</text>
+      <text x="260" y="258" text-anchor="middle" fill="#3b4854">α ≡ 0 · không dựng đồ thị</text>
+      <text x="260" y="275" text-anchor="middle" fill="#3b4854">smooth_all fast-path = identity</text>
+    </svg>
+    <p class="mut" style="font-size:12.5px;color:var(--mut);margin:6px 0 0">Base gamma đầy đủ feature. Không graph
+    → output chính là ŷ_xgb. Là <b>mốc so sánh</b> cho hiệu ứng graph (② − ①) và earnings (① − ③).</p>
+  </div>
+
+  <!-- VARIANT 2: XGB+leafgraph full -->
+  <div class="card">
+    <div class="vh"><span class="vtitle">② XGB+leafgraph (full)</span>
+      <span class="tag on">EARN ON</span><span class="tag on">GRAPH ON</span></div>
+    <svg viewBox="0 0 520 300" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="11.5">
+      <defs><marker id="v2a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#4fd1c5"/></marker>
+        <marker id="v2b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#f6ad55"/></marker></defs>
+      <rect x="150" y="10" width="130" height="40" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="215" y="28" text-anchor="middle" fill="#4fd1c5">OWN-8</text>
+      <text x="215" y="43" text-anchor="middle" fill="#9fb0c0">own-history</text>
+      <rect x="290" y="10" width="130" height="40" rx="6" fill="#2a2540" stroke="#b794f4"/>
+      <text x="355" y="28" text-anchor="middle" fill="#d6bcfa">EARN-4</text>
+      <text x="355" y="43" text-anchor="middle" fill="#9fb0c0">earnings ON</text>
+      <line x1="285" y1="50" x2="285" y2="70" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v2a)"/>
+      <rect x="120" y="72" width="180" height="48" rx="6" fill="#17222e" stroke="#2b3a48"/>
+      <text x="210" y="91" text-anchor="middle" fill="#4fd1c5">XGB gamma</text>
+      <text x="210" y="108" text-anchor="middle" fill="#9fb0c0">ŷ_xgb (base)</text>
+      <!-- pred_leaf branch -->
+      <line x1="300" y1="96" x2="330" y2="96" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v2b)"/>
+      <rect x="332" y="72" width="176" height="48" rx="6" fill="#3a2f1a" stroke="#f6ad55"/>
+      <text x="420" y="91" text-anchor="middle" fill="#f6ad55">pred_leaf → L</text>
+      <text x="420" y="108" text-anchor="middle" fill="#9fb0c0">ℤ^(n×300)</text>
+      <line x1="420" y1="120" x2="420" y2="140" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v2b)"/>
+      <rect x="300" y="142" width="208" height="54" rx="6" fill="#3a2f1a" stroke="#f6ad55"/>
+      <text x="404" y="162" text-anchor="middle" fill="#f6ad55">graph mỗi ngày · kNN k=10</text>
+      <text x="404" y="179" text-anchor="middle" fill="#9fb0c0">sim=(S·Sᵀ)/T · self excl → nbr_mean</text>
+      <line x1="210" y1="120" x2="210" y2="214" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v2a)"/>
+      <line x1="404" y1="196" x2="300" y2="230" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v2b)"/>
+      <rect x="120" y="214" width="290" height="52" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="265" y="234" text-anchor="middle" fill="#4fd1c5">α* val-fit → smooth</text>
+      <text x="265" y="252" text-anchor="middle" fill="#e6edf3">ŷ=(1−α)ŷ_xgb+α·nbr_mean</text>
+      <line x1="265" y1="266" x2="265" y2="282" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v2a)"/>
+      <text x="265" y="296" text-anchor="middle" fill="#68d391">= OUTPUT (đã làm mượt)</text>
+    </svg>
+    <p class="mut" style="font-size:12.5px;color:var(--mut);margin:6px 0 0">Đầy đủ feature + đồ thị lá làm mượt.
+    Chênh <b>② − ①</b> trên cùng base = <b>hiệu ứng graph</b> (có earnings).</p>
+  </div>
+
+  <!-- VARIANT 3: XGB-earn -->
+  <div class="card">
+    <div class="vh"><span class="vtitle">③ XGB−earn</span>
+      <span class="tag offt">EARN OFF</span><span class="tag offt">GRAPH OFF (α≡0)</span></div>
+    <svg viewBox="0 0 520 300" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="11.5">
+      <defs><marker id="v3a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#4fd1c5"/></marker></defs>
+      <rect x="150" y="10" width="130" height="40" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="215" y="28" text-anchor="middle" fill="#4fd1c5">OWN-8</text>
+      <text x="215" y="43" text-anchor="middle" fill="#9fb0c0">own-history</text>
+      <!-- greyed EARN -->
+      <rect x="290" y="10" width="130" height="40" rx="6" fill="#1a2028" stroke="#3b4854" stroke-dasharray="5 4"/>
+      <text x="355" y="28" text-anchor="middle" fill="#3b4854">EARN-4</text>
+      <text x="355" y="43" text-anchor="middle" fill="#3b4854">GỠ (leave-one-out)</text>
+      <line x1="215" y1="50" x2="215" y2="74" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v3a)"/>
+      <rect x="120" y="76" width="280" height="52" rx="6" fill="#17222e" stroke="#2b3a48"/>
+      <text x="260" y="96" text-anchor="middle" fill="#4fd1c5">XGB gamma · seeds(0,1,2)</text>
+      <text x="260" y="114" text-anchor="middle" fill="#9fb0c0">cols = OWN-8 only (8 feat)</text>
+      <line x1="260" y1="128" x2="260" y2="152" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v3a)"/>
+      <rect x="150" y="154" width="220" height="44" rx="6" fill="#17222e" stroke="#68d391"/>
+      <text x="260" y="174" text-anchor="middle" fill="#e6edf3">ŷ_xgb (base, no-earn)</text>
+      <text x="260" y="190" text-anchor="middle" fill="#9fb0c0">= OUTPUT (không làm mượt)</text>
+      <rect x="120" y="216" width="280" height="70" rx="6" fill="#1a2028" stroke="#3b4854" stroke-dasharray="5 4"/>
+      <text x="260" y="240" text-anchor="middle" fill="#3b4854">leaf-graph + α  —  TẮT</text>
+      <text x="260" y="258" text-anchor="middle" fill="#3b4854">α ≡ 0 · không dựng đồ thị</text>
+      <text x="260" y="275" text-anchor="middle" fill="#3b4854">smooth_all fast-path = identity</text>
+    </svg>
+    <p class="mut" style="font-size:12.5px;color:var(--mut);margin:6px 0 0">Gỡ đúng EARN-4 (hàng giống hệt vì dropna
+    trên OWN+y). Chênh <b>① − ③</b> = <b>hiệu ứng earnings</b> trên base (no-graph).</p>
+  </div>
+
+  <!-- VARIANT 4: XGB+leafgraph-earn -->
+  <div class="card">
+    <div class="vh"><span class="vtitle">④ XGB+leafgraph−earn</span>
+      <span class="tag offt">EARN OFF</span><span class="tag on">GRAPH ON</span></div>
+    <svg viewBox="0 0 520 300" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="11.5">
+      <defs><marker id="v4a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#4fd1c5"/></marker>
+        <marker id="v4b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+        <path d="M0,0 L6,3 L0,6 Z" fill="#f6ad55"/></marker></defs>
+      <rect x="150" y="10" width="130" height="40" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="215" y="28" text-anchor="middle" fill="#4fd1c5">OWN-8</text>
+      <text x="215" y="43" text-anchor="middle" fill="#9fb0c0">own-history</text>
+      <rect x="290" y="10" width="130" height="40" rx="6" fill="#1a2028" stroke="#3b4854" stroke-dasharray="5 4"/>
+      <text x="355" y="28" text-anchor="middle" fill="#3b4854">EARN-4</text>
+      <text x="355" y="43" text-anchor="middle" fill="#3b4854">GỠ (leave-one-out)</text>
+      <line x1="215" y1="50" x2="215" y2="70" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v4a)"/>
+      <rect x="120" y="72" width="180" height="48" rx="6" fill="#17222e" stroke="#2b3a48"/>
+      <text x="210" y="91" text-anchor="middle" fill="#4fd1c5">XGB gamma</text>
+      <text x="210" y="108" text-anchor="middle" fill="#9fb0c0">ŷ_xgb (no-earn)</text>
+      <line x1="300" y1="96" x2="330" y2="96" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v4b)"/>
+      <rect x="332" y="72" width="176" height="48" rx="6" fill="#3a2f1a" stroke="#f6ad55"/>
+      <text x="420" y="91" text-anchor="middle" fill="#f6ad55">pred_leaf → L</text>
+      <text x="420" y="108" text-anchor="middle" fill="#9fb0c0">ℤ^(n×300)</text>
+      <line x1="420" y1="120" x2="420" y2="140" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v4b)"/>
+      <rect x="300" y="142" width="208" height="54" rx="6" fill="#3a2f1a" stroke="#f6ad55"/>
+      <text x="404" y="162" text-anchor="middle" fill="#f6ad55">graph mỗi ngày · kNN k=10</text>
+      <text x="404" y="179" text-anchor="middle" fill="#9fb0c0">sim=(S·Sᵀ)/T · self excl → nbr_mean</text>
+      <line x1="210" y1="120" x2="210" y2="214" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v4a)"/>
+      <line x1="404" y1="196" x2="300" y2="230" stroke="#f6ad55" stroke-width="1.5" marker-end="url(#v4b)"/>
+      <rect x="120" y="214" width="290" height="52" rx="6" fill="#12303a" stroke="#4fd1c5"/>
+      <text x="265" y="234" text-anchor="middle" fill="#4fd1c5">α* val-fit → smooth</text>
+      <text x="265" y="252" text-anchor="middle" fill="#e6edf3">ŷ=(1−α)ŷ_xgb+α·nbr_mean</text>
+      <line x1="265" y1="266" x2="265" y2="282" stroke="#4fd1c5" stroke-width="1.5" marker-end="url(#v4a)"/>
+      <text x="265" y="296" text-anchor="middle" fill="#68d391">= OUTPUT (đã làm mượt)</text>
+    </svg>
+    <p class="mut" style="font-size:12.5px;color:var(--mut);margin:6px 0 0">Chỉ OWN-8 + đồ thị lá làm mượt. Chênh
+    <b>④ − ③</b> = <b>hiệu ứng graph khi KHÔNG có earnings</b> → kiểm tra GO của graph có sống-sót khỏi earnings.</p>
+  </div>
+
+</div>
+
+<!-- ============================================================ 4 · CONFIG TABLE -->
+<h2>4 · So sánh 4 cấu hình (feature / graph) cạnh nhau</h2>
+<table>
+<tr><th class="l">Thuộc tính</th><th>① XGB</th><th>② XGB+leafgraph</th><th>③ XGB−earn</th><th>④ XGB+lg−earn</th></tr>
+<tr><td class="l">Feature set (<code>cols</code>)</td>
+    <td>OWN-8 + EARN-4</td><td>OWN-8 + EARN-4</td>
+    <td class="off">OWN-8</td><td class="off">OWN-8</td></tr>
+<tr><td class="l">EARN-4</td><td class="ok">ON</td><td class="ok">ON</td>
+    <td class="bad">OFF (gỡ)</td><td class="bad">OFF (gỡ)</td></tr>
+<tr><td class="l">Leaf-graph smoothing</td><td class="bad">OFF</td><td class="ok">ON</td>
+    <td class="bad">OFF</td><td class="ok">ON</td></tr>
+<tr><td class="l">α (smoothing weight)</td><td>≡ 0</td><td>val-fit (0…1)</td><td>≡ 0</td><td>val-fit (0…1)</td></tr>
+<tr><td class="l">Run arm (<code>--featureset</code>)</td><td>full</td><td>full</td><td>noearn</td><td>noearn</td></tr>
+<tr><td class="l">XGB gamma capacity</td><td colspan="4">300 trees · lr 0.05 · 31 leaves · l2=1 · min_child_weight 20 · reg:gamma — <b>giống hệt cả 4</b></td></tr>
+<tr><td class="l">Seed-ensemble</td><td colspan="4">(0, 1, 2) — giống hệt cả 4</td></tr>
+<tr><td class="l">Walk-forward / embargo</td><td colspan="4">8 folds · TRAIN_START 2015 · embargo int(1.6·h)+5 · val = 22 ngày cuối — giống hệt</td></tr>
+<tr><td class="l">Floor / clip</td><td colspan="4">floor FL · clip [FL, PRED_CAP=1.0] — giống hệt</td></tr>
+</table>
+<p class="note">Vì hàng dữ liệu (dropna trên OWN+y) <b>đồng nhất</b> giữa full/noearn, và base prediction được
+<b>chia sẻ</b> giữa no-graph/+graph, mọi hiệu ứng đo được là biên (marginal) sạch: chỉ 1 yếu tố đổi mỗi lần.</p>
+
+<!-- ============================================================ 5 · TRAIN/VAL/TEST -->
+<h2>5 · Huấn luyện · Validation · Testing</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Training (trên trf_e)</h3>
+    <ul>
+      <li>Mỗi fold: fit XGBoost gamma trên <span class="kbd">trf_e</span> = train window trừ 22 ngày val.</li>
+      <li><b>Seed-ensemble (0,1,2):</b> trung bình dự báo qua 3 seed → giảm variance.</li>
+      <li>Capacity khớp champion GBME: 300 cây, lr 0.05, 31 lá (lossguide), l2=1, min_child_weight 20.</li>
+      <li><code>objective=reg:gamma</code> (gamma-deviance ≡ QLIKE → loss-aligned với metric).</li>
+      <li>Train metrics <b>streamed</b> (sufficient statistics <code>_Stream</code>) để SP500 5-seed×8-fold không OOM;
+          chỉ val/test arrays được pool (cần cho DM).</li>
+    </ul>
+  </div>
+  <div class="card ok-b">
+    <h3>Validation (fit α — chỉ ② / ④)</h3>
+    <ul>
+      <li><b>Val slice = 22 ngày cuối</b> của train window, tách khỏi trf_e (booster KHÔNG fit trên val).</li>
+      <li>Trên val: dựng leaf-graph (booster train-only), quét α ∈ {0,0.1,…,1.0}, chọn <b>α*</b> min QLIKE_val.</li>
+      <li>α* <b>đóng băng</b>, dùng nguyên cho test → α không nhìn thấy test.</li>
+      <li>Biến thể no-graph (①/③): α ≡ 0 cố định, bỏ hẳn bước này.</li>
+    </ul>
+  </div>
+</div>
+<div class="card">
+  <h3>Testing &amp; đánh giá (trên tef, out-of-sample)</h3>
+  <ul>
+    <li>Áp α* per-day trên <span class="kbd">tef</span>; gộp 8 folds → pooled QLIKE/RMSE/MAE/R²/MSE test.</li>
+    <li><b>Diebold-Mariano date-clustered:</b> leafgraph vs XGB (cô lập graph, primary) &amp; vs GBME (champion, secondary).</li>
+    <li><b>Spike-robustness (bắt buộc HOSE):</b> chạy lại loại 3 cửa sổ shock (COVID 2020-02..04 / 2022 / Apr-2025);
+        dấu &amp; ý nghĩa phải giữ.</li>
+    <li><code>fit_diagnostics</code> so train→val→test cho từng model (overfit_check.classify_fit).</li>
+    <li>Output: <code>results/gamma_gbm/leaf_graph5_&lt;market&gt;_&lt;full|noearn&gt;_h&lt;h&gt;.json</code>,
+        16 file = 2 market × 2 feature-set × 4 horizon, checkpoint atomic sau mỗi fold.</li>
+  </ul>
+</div>
+
+<!-- ============================================================ 6 · LEAKAGE -->
+<h2>6 · Chặn Data Leakage (6 lớp)</h2>
+<div class="card bad-b">
+<table>
+<tr><th class="l">Nguồn leakage tiềm ẩn</th><th class="l">Cách chặn</th></tr>
+<tr><td class="l">1. Future → train</td>
+    <td class="l">Walk-forward: train <code>date &lt; ts − embargo</code>; test <code>[ts, tend)</code>.</td></tr>
+<tr><td class="l">2. Chồng lấn target h-step</td>
+    <td class="l"><b>Embargo</b> = int(1.6·h)+5 ngày giữa train và test (target dùng <code>shift(−h)</code>).</td></tr>
+<tr><td class="l">3. Booster / leaf-matrix thấy test</td>
+    <td class="l">XGB &amp; leaf-matrix đều fit trên <b>trf_e</b> (train ∖ val) — không test, không val.</td></tr>
+<tr><td class="l">4. α overfit / nhìn test</td>
+    <td class="l">α fit trên <b>val hold-out</b> (tách khỏi trf_e), đóng băng trước test.</td></tr>
+<tr><td class="l">5. Trộn thông tin xuyên ngày</td>
+    <td class="l">Graph <b>contemporaneous</b>: mỗi ngày test chỉ dùng cross-section CHÍNH ngày đó — không ngày khác
+        (mỗi date smooth độc lập).</td></tr>
+<tr><td class="l">6. Tự làm mượt chính mình</td>
+    <td class="l">kNN <b>loại self</b> (đường chéo similarity = −∞) → dự báo i không tự trộn vào i.</td></tr>
+</table>
+</div>
+
+<!-- ============================================================ 7 · OVERFIT -->
+<h2>7 · Chống Overfit</h2>
+<div class="card ok-b">
+<ul>
+<li><b>α học trên val, không phải test</b> → thành phần graph không thể overfit test.</li>
+<li>Graph thêm <b>đúng 1 tham số vô hướng α/fold</b> (không phải mạng nơ-ron) → capacity cực nhỏ.</li>
+<li>Booster regularized: l2=1, min_child_weight=20, 31 lá (khớp champion).</li>
+<li>Seed-ensemble (0,1,2) → giảm variance.</li>
+<li><b>Bằng chứng:</b> <code>fit_diagnostics</code> (train→val→test) phải = ok cho XGB &amp; XGB+leafgraph
+    (gate <code>check_overfit_evidence.py</code>; GBME miễn); và HOSE <b>spike-robust</b> (gain giữ dấu khi loại storm).</li>
+</ul>
+</div>
+
+<!-- ============================================================ 8 · WHAT EACH ISOLATES -->
+<h2>8 · Mỗi biến thể cô lập điều gì (đọc 2×2 factorial)</h2>
+<div class="card">
+<svg viewBox="0 0 720 260" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="12">
+  <defs>
+    <marker id="gx" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f6ad55"/></marker>
+    <marker id="ey" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#b794f4"/></marker></defs>
+  <!-- 4 nodes -->
+  <rect x="70" y="40" width="220" height="56" rx="8" fill="#12303a" stroke="#4fd1c5"/>
+  <text x="180" y="64" text-anchor="middle" fill="#e6edf3">① XGB (full)</text>
+  <text x="180" y="82" text-anchor="middle" fill="#9fb0c0">EARN ON · GRAPH OFF</text>
+  <rect x="430" y="40" width="220" height="56" rx="8" fill="#12303a" stroke="#f6ad55"/>
+  <text x="540" y="64" text-anchor="middle" fill="#e6edf3">② XGB+leafgraph (full)</text>
+  <text x="540" y="82" text-anchor="middle" fill="#9fb0c0">EARN ON · GRAPH ON</text>
+  <rect x="70" y="180" width="220" height="56" rx="8" fill="#17222e" stroke="#b794f4"/>
+  <text x="180" y="204" text-anchor="middle" fill="#e6edf3">③ XGB−earn</text>
+  <text x="180" y="222" text-anchor="middle" fill="#9fb0c0">EARN OFF · GRAPH OFF</text>
+  <rect x="430" y="180" width="220" height="56" rx="8" fill="#17222e" stroke="#4fd1c5"/>
+  <text x="540" y="204" text-anchor="middle" fill="#e6edf3">④ XGB+leafgraph−earn</text>
+  <text x="540" y="222" text-anchor="middle" fill="#9fb0c0">EARN OFF · GRAPH ON</text>
+  <!-- horizontal edges = graph effect -->
+  <line x1="290" y1="68" x2="428" y2="68" stroke="#f6ad55" stroke-width="1.8" marker-end="url(#gx)"/>
+  <text x="360" y="58" text-anchor="middle" fill="#f6ad55">graph (có earn)</text>
+  <line x1="290" y1="208" x2="428" y2="208" stroke="#f6ad55" stroke-width="1.8" marker-end="url(#gx)"/>
+  <text x="360" y="198" text-anchor="middle" fill="#f6ad55">graph (không earn)</text>
+  <!-- vertical edges = earnings effect -->
+  <line x1="180" y1="180" x2="180" y2="98" stroke="#b794f4" stroke-width="1.8" marker-end="url(#ey)"/>
+  <text x="150" y="140" text-anchor="middle" fill="#d6bcfa" transform="rotate(-90 150 140)">earnings (no-graph)</text>
+  <line x1="540" y1="180" x2="540" y2="98" stroke="#b794f4" stroke-width="1.8" marker-end="url(#ey)"/>
+  <text x="590" y="140" text-anchor="middle" fill="#d6bcfa" transform="rotate(-90 590 140)">earnings (+graph)</text>
+</svg>
+<ul>
+<li><b>Hiệu ứng GRAPH</b> = ② − ① (có earnings) và ④ − ③ (không earnings). So sánh primary DM(leafgraph vs XGB)
+    trên cùng base → cô lập ĐÚNG đồ thị. Nếu ④−③ vẫn dương &amp; sig ⇒ GO của graph <b>sống-sót</b> khỏi earnings.</li>
+<li><b>Hiệu ứng EARNINGS</b> = ① − ③ (no-graph) và ② − ④ (+graph). Leave-one-out gỡ EARN-4 trên hàng đồng nhất.</li>
+<li><b>Tương tác graph×earnings</b> = (②−①) − (④−③): graph giúp NHIỀU hơn hay ÍT hơn khi có earnings?</li>
+<li>Thiết kế 2×2 cho đọc <b>cả 2 hiệu ứng biên + tương tác</b> từ 4 con số QLIKE, thay vì chỉ 1 so sánh đơn.</li>
+</ul>
+</div>
+
+<p class="sub" style="margin-top:26px">Nguồn code:
+<code>baselines/2026-09-18_leaf_graph_paper/code/{leaf_graph_lib.py, run_leaf_graph_paper.py,
+leaf_graph_paper_config.py}</code> · cơ chế gốc:
+<code>baselines/2026-09-18_gbm_leaf_graph/code/leaf_graph.py</code> · output:
+<code>results/gamma_gbm/leaf_graph5_&lt;market&gt;_&lt;full|noearn&gt;_h&lt;h&gt;.json</code> (16 file).</p>
+
+</div></body></html>
