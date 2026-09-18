@@ -34,3 +34,13 @@ def test_main_writes_nonempty_png_and_pdf(monkeypatch):
     for ext in ("png", "pdf"):
         p = root / "docs" / "paper" / "figures" / f"fig_architecture.{ext}"
         assert p.exists() and p.stat().st_size > 10000
+
+
+def test_architecture_layout_is_vertical_portrait(monkeypatch):
+    import matplotlib.image as mpimg
+    root = Path(__file__).resolve().parents[3]
+    monkeypatch.chdir(root)
+    GA.main()
+    img = mpimg.imread(root / "docs" / "paper" / "figures" / "fig_architecture.png")
+    height, width = img.shape[0], img.shape[1]
+    assert height > width                              # vertical top-to-bottom layout is taller than wide

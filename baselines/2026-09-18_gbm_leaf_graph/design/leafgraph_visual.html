@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Leaf-graph — minh hoạ đồ thị + có phải GNN không?</title>
+<style>
+ :root{--bg:#0f1720;--card:#17222e;--ink:#e6edf3;--mut:#9fb0c0;--acc:#4fd1c5;--acc2:#f6ad55;
+       --lo:#4fd1c5;--hi:#f6866b;--line:#2b3a48;--code:#0b1118}
+ *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+   font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
+ .wrap{max-width:1000px;margin:0 auto;padding:30px 20px 70px}
+ h1{font-size:24px;margin:0 0 4px} h2{font-size:19px;color:var(--acc);border-bottom:1px solid var(--line);
+    padding-bottom:6px;margin:30px 0 10px} h3{color:var(--acc2);font-size:15px;margin:16px 0 6px}
+ .sub{color:var(--mut);margin:0 0 16px}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+ code{font-family:ui-monospace,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px;font-size:13px;color:#cbd5e0}
+ pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;font-size:13px}
+ table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}
+ th,td{border:1px solid var(--line);padding:5px 8px;text-align:center} th{background:#1d2b38;color:var(--acc)}
+ td.l,th.l{text-align:left} .no{color:var(--hi);font-weight:700} .yes{color:var(--lo);font-weight:700}
+ .note{border-left:3px solid var(--acc);padding-left:12px;color:var(--mut)}
+ ul{margin:6px 0 6px 2px;padding-left:20px} li{margin:3px 0}
+</style></head><body><div class="wrap">
+
+<h1>Leaf-cooccurrence Graph — minh hoạ trực quan</h1>
+<p class="sub">Đồ thị mỗi ngày test · smoothing dự báo · <b>KHÔNG phải GNN</b></p>
+
+<h2>1 · Có phải GNN không? → <span class="no">KHÔNG</span></h2>
+<div class="card">
+<p>Đây là <b>graph-based prediction smoothing</b> (họ label-propagation / kNN-averaging / random-forest-proximity
+kernel). Đồ thị chỉ để <b>lấy trung bình dự báo qua hàng xóm</b> — không có mạng nơ-ron nào chạy trên đồ thị.</p>
+<table>
+<tr><th class="l">Tiêu chí</th><th>Leaf-graph smoothing (cái này)</th><th>GNN (baseline đã thử → NO-GO)</th></tr>
+<tr><td class="l">Đồ thị dùng để</td><td>trung bình ŷ qua hàng xóm</td><td>message-passing học node embedding</td></tr>
+<tr><td class="l">Tham số học</td><td><b>1 vô hướng α</b> (fit trên val)</td><td>hàng nghìn trọng số GCN/GAT</td></tr>
+<tr><td class="l">Neural network</td><td class="no">Không</td><td class="yes">Có (GCN 2 lớp)</td></tr>
+<tr><td class="l">Backprop / train NN</td><td class="no">Không</td><td class="yes">Có</td></tr>
+<tr><td class="l">Kết quả HOSE</td><td class="yes">+0.12–0.26% (GO)</td><td class="no">hurt mọi h (NO-GO)</td></tr>
+</table>
+<p class="note">Cạnh nó là baseline <code>2026-09-14_gbm_gnn_embed</code> — cái ĐÓ là GNN thật (GCN học embedding)
+và đã thất bại. Leaf-graph khác hoàn toàn: đồ thị lấy từ <b>lá cây XGB (XGBoost gamma)</b>, chỉ dùng để làm mượt dự báo XGB, học đúng 1 số α.</p>
+</div>
+
+<h2>2 · Đồ thị 1 ngày test (ví dụ 6 mã, T=6 cây)</h2>
+<svg viewBox="0 0 820 430" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="12">
+  <defs><marker id="e" markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto">
+    <path d="M0,0 L6,3 L0,6 Z" fill="#5a6b7a"/></marker></defs>
+  <text x="410" y="22" text-anchor="middle" fill="#9fb0c0">Cạnh = kNN (k=2) theo leaf-similarity · số trên cạnh = sim · loại self</text>
+
+  <!-- edges cluster low (A B C F) -->
+  <g stroke="#4fd1c5" stroke-width="2" opacity="0.55">
+    <line x1="210" y1="150" x2="140" y2="250"/><line x1="210" y1="150" x2="290" y2="250"/>
+    <line x1="140" y1="250" x2="290" y2="250"/><line x1="180" y1="345" x2="210" y2="150"/>
+    <line x1="180" y1="345" x2="140" y2="250"/>
+  </g>
+  <!-- edges cluster high (D E) -->
+  <g stroke="#f6ad55" stroke-width="2" opacity="0.6"><line x1="600" y1="180" x2="660" y2="290"/></g>
+  <!-- weak cross edge D/E -> A (sim 0, kNN ép chọn) -->
+  <g stroke="#5a6b7a" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.7">
+    <line x1="600" y1="180" x2="210" y2="150"/><line x1="660" y1="290" x2="210" y2="150"/></g>
+  <!-- sim labels -->
+  <g fill="#9fb0c0" font-size="11">
+    <text x="165" y="195">.83</text><text x="258" y="195">.83</text><text x="215" y="268">.67</text>
+    <text x="180" y="255">.67</text><text x="640" y="240">.83</text>
+    <text x="400" y="150" fill="#7a8b9a">.00 (ép kNN)</text>
+  </g>
+
+  <!-- nodes: low cluster teal, high cluster amber -->
+  <g>
+    <!-- A -->
+    <circle cx="210" cy="150" r="30" fill="#12303a" stroke="#4fd1c5" stroke-width="2"/>
+    <text x="210" y="147" text-anchor="middle" fill="#e6edf3" font-weight="700">A</text>
+    <text x="210" y="163" text-anchor="middle" fill="#9fb0c0" font-size="10">1.00→1.02</text>
+    <!-- B -->
+    <circle cx="140" cy="250" r="30" fill="#12303a" stroke="#4fd1c5" stroke-width="2"/>
+    <text x="140" y="247" text-anchor="middle" fill="#e6edf3" font-weight="700">B</text>
+    <text x="140" y="263" text-anchor="middle" fill="#9fb0c0" font-size="10">1.20→1.11</text>
+    <!-- C -->
+    <circle cx="290" cy="250" r="30" fill="#12303a" stroke="#4fd1c5" stroke-width="2"/>
+    <text x="290" y="247" text-anchor="middle" fill="#e6edf3" font-weight="700">C</text>
+    <text x="290" y="263" text-anchor="middle" fill="#9fb0c0" font-size="10">0.90→0.97</text>
+    <!-- F -->
+    <circle cx="180" cy="345" r="30" fill="#12303a" stroke="#4fd1c5" stroke-width="2"/>
+    <text x="180" y="342" text-anchor="middle" fill="#e6edf3" font-weight="700">F</text>
+    <text x="180" y="358" text-anchor="middle" fill="#9fb0c0" font-size="10">1.10→1.10</text>
+    <!-- D -->
+    <circle cx="600" cy="180" r="30" fill="#3a2f1a" stroke="#f6866b" stroke-width="2"/>
+    <text x="600" y="177" text-anchor="middle" fill="#e6edf3" font-weight="700">D</text>
+    <text x="600" y="193" text-anchor="middle" fill="#f6ad55" font-size="10">2.50→2.20</text>
+    <!-- E -->
+    <circle cx="660" cy="290" r="30" fill="#3a2f1a" stroke="#f6866b" stroke-width="2"/>
+    <text x="660" y="287" text-anchor="middle" fill="#e6edf3" font-weight="700">E</text>
+    <text x="660" y="303" text-anchor="middle" fill="#f6ad55" font-size="10">2.30→2.11</text>
+  </g>
+  <text x="210" y="405" text-anchor="middle" fill="#4fd1c5" font-size="12">cụm vol THẤP (XGB route giống nhau)</text>
+  <text x="630" y="405" text-anchor="middle" fill="#f6ad55" font-size="12">cụm vol CAO</text>
+  <text x="410" y="425" text-anchor="middle" fill="#9fb0c0" font-size="11">nhãn node: ŷ_xgb → ŷ_smooth (đơn vị ×1e-4), α=0.35</text>
+</svg>
+
+<h2>3 · Cách tính (đúng công thức)</h2>
+<div class="card">
+<h3>Bước 1 — leaf-vector (từ cây XGB / XGBoost gamma đã train)</h3>
+<pre>L_i = [lá ở cây 1, …, cây T]   (T=6 ở ví dụ; thật T=300)
+A=[2,5,1,3,4,2]  B=[2,5,1,3,4,7]  C=[2,5,8,3,4,2]
+D=[9,1,6,0,2,5]  E=[9,1,6,0,2,8]  F=[2,5,1,3,9,9]</pre>
+<h3>Bước 2 — similarity = tỉ lệ cây cùng lá</h3>
+<pre>sim(i,j) = (#cây L_i[t]==L_j[t]) / T = (S·Sᵀ)/T   (S = one-hot của (cây,lá))</pre>
+<table>
+<tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th></tr>
+<tr><th>A</th><td>1.00</td><td>.83</td><td>.83</td><td>.00</td><td>.00</td><td>.67</td></tr>
+<tr><th>B</th><td>.83</td><td>1.00</td><td>.67</td><td>.00</td><td>.00</td><td>.67</td></tr>
+<tr><th>C</th><td>.83</td><td>.67</td><td>1.00</td><td>.00</td><td>.00</td><td>.50</td></tr>
+<tr><th>D</th><td>.00</td><td>.00</td><td>.00</td><td>1.00</td><td>.83</td><td>.00</td></tr>
+<tr><th>E</th><td>.00</td><td>.00</td><td>.00</td><td>.83</td><td>1.00</td><td>.00</td></tr>
+<tr><th>F</th><td>.67</td><td>.67</td><td>.50</td><td>.00</td><td>.00</td><td>1.00</td></tr>
+</table>
+<h3>Bước 3 — kNN (k=2, loại self) → neighbour-mean → smoothing</h3>
+<pre>nbr_mean(i) = mean_{j∈kNN(i)} ŷ_xgb(j)
+ŷ_smooth(i) = (1−α)·ŷ_xgb(i) + α·nbr_mean(i)     α=0.35</pre>
+<table>
+<tr><th>mã</th><th>ŷ_xgb</th><th>kNN (sim)</th><th>nbr_mean</th><th>ŷ_smooth</th></tr>
+<tr><td>A</td><td>1.00</td><td>B(.83), C(.83)</td><td>1.05</td><td>1.018</td></tr>
+<tr><td>B</td><td>1.20</td><td>A(.83), C(.67)</td><td>0.95</td><td>1.113</td></tr>
+<tr><td>C</td><td>0.90</td><td>A(.83), B(.67)</td><td>1.10</td><td>0.970</td></tr>
+<tr><td>D</td><td>2.50</td><td>E(.83), A(.00)</td><td>1.65</td><td>2.202</td></tr>
+<tr><td>E</td><td>2.30</td><td>D(.83), A(.00)</td><td>1.75</td><td>2.107</td></tr>
+<tr><td>F</td><td>1.10</td><td>A(.67), B(.67)</td><td>1.10</td><td>1.100</td></tr>
+</table>
+<p class="note">Cụm vol thấp (A,B,C,F) làm mượt cho nhau → giảm nhiễu idiosyncratic (B từ 1.20→1.11, C từ 0.90→0.97).
+Cụm cao (D,E) neo vào nhau. <b>Đây chính là “cross-sectional denoising”</b> — hiệu ứng dương trên HOSE.</p>
+</div>
+
+<h2>4 · Các quy tắc quan trọng (đúng như code)</h2>
+<div class="card"><ul>
+<li><b>MỖI NGÀY TEST một đồ thị riêng</b> (contemporaneous) — chỉ dùng cross-section chính ngày đó.</li>
+<li><b>Loại self</b> (đường chéo = −∞) — mã i không tự làm mượt nó.</li>
+<li><b>Causal:</b> cây XGB fit trên train window (trf_e); ngày test chỉ áp dụng, không nhìn tương lai/ngày khác.</li>
+<li><b>Singleton</b> (m=1, chỉ 1 mã ngày đó) → không hàng xóm → giữ nguyên base.</li>
+<li><b>α fit trên validation</b> (grid 0..1, min QLIKE), đóng băng cho test → không overfit test.</li>
+<li>Caveat: kNN ép chọn đủ k hàng xóm kể cả sim thấp (vd D chọn A sim=0) → có thể over-smooth mã ở cụm nhỏ;
+đây là lý do lift nhỏ + không phải mọi mã đều lợi.</li>
+</ul></div>
+
+<p class="sub" style="margin-top:24px">Cơ chế trong <code>baselines/2026-09-18_gbm_leaf_graph/code/leaf_graph.py</code>
+(<code>day_similarity</code>, <code>knn_neighbour_mean</code>, <code>smooth_day</code>).</p>
+</div></body></html>
