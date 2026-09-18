@@ -63,13 +63,13 @@ class TestNaTAndUnparseableDates:
 
     def test_raises_on_mixed_tz_aware_and_naive_dates(self):
         """Mirrors the VPB/VRE bug class: one row tz-aware, the rest tz-naive
-        date strings. pd.to_datetime(..., errors='coerce') -- called as the
-        first line of our new validation -- itself raises ValueError for this
-        exact shape ("Mixed timezones detected...") rather than coercing to
-        NaT. That is pandas' own fail-loud behavior propagating through our
-        function; per AUD-018 we don't add tz-normalization logic here (that's
-        parkinson_utils.py's job), we just confirm this doesn't silently
-        misbehave -- and it doesn't: it raises ValueError, unprompted."""
+        date strings. In current pandas, pd.to_datetime(..., errors='coerce')
+        no longer raises for this shape -- it coerces to an OBJECT-dtype series
+        of Timestamps with differing offsets, which would otherwise crash a
+        later sort with a cryptic TypeError. temporal_split_dataframe detects
+        the non-datetime64 dtype and fails loudly with a clear ValueError; per
+        AUD-018 we don't add tz-normalization logic here (that's
+        parkinson_utils.py's job), only confirm it doesn't silently misbehave."""
         df = _make_df(20)
         df["date"] = df["date"].astype(object)
         df.loc[7, "date"] = pd.Timestamp("2024-01-10", tz="Asia/Ho_Chi_Minh")

@@ -16,10 +16,6 @@ Date: 2026-06-19
 
 import numpy as np
 import pandas as pd
-import torch
-from torch.utils.data import Subset
-from typing import Tuple, List, Optional, Union
-from datetime import datetime
 
 
 def temporal_split(dataset, train_ratio=0.7, val_ratio=0.15, test_ratio=0.15):
@@ -99,6 +95,15 @@ def temporal_split_dataframe(df: pd.DataFrame, train_ratio=0.7, val_ratio=0.15,
     # in src/common/parkinson_utils.py). Fail loudly instead of silently
     # sorting/splitting around missing dates.
     parsed_dates = pd.to_datetime(df[date_column], errors='coerce')
+    # Mixed tz-aware/tz-naive values no longer raise at to_datetime in current pandas: they coerce to an
+    # OBJECT-dtype series (Timestamps with differing offsets) instead of a uniform datetime64 column, which
+    # would later crash an unrelated sort with a cryptic TypeError. Fail loudly here with a clear message.
+    if not pd.api.types.is_datetime64_any_dtype(parsed_dates):
+        raise ValueError(
+            f"date_column '{date_column}' has mixed timezone-aware and timezone-naive timestamps "
+            "(pd.to_datetime returned a non-datetime64 dtype instead of a uniform datetime series). "
+            "Normalize timezones before splitting."
+        )
     n_bad = int(parsed_dates.isna().sum())
     if n_bad > 0:
         bad_idx = df.index[parsed_dates.isna()].tolist()
