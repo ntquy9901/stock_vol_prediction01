@@ -1,0 +1,29 @@
+{
+ "comparison": "XGB+E_vs_XGB",
+ "market": "sp500",
+ "note": "SP500 earnings increment (earnings block ON vs OFF) on the XGBoost gamma engine used in the paper; walk-forward 8 folds x 3 seeds, date-clustered Diebold-Mariano. Backs the earnings-lever significance on the paper engine (not the HGBR twin).",
+ "dm_qlike": {
+  "1": 8.546798498570924e-61,
+  "5": 5.008025578094887e-16,
+  "10": 2.3485361538793674e-10,
+  "22": 2.9221019391100715e-14
+ },
+ "dm_sq_err": {
+  "1": 9.170507414725376e-28,
+  "5": 5.0661404674111346e-08,
+  "10": 1.097338676191779e-05,
+  "22": 5.952277260537582e-11
+ },
+ "dm_abs_err": {
+  "1": 2.3653549624468267e-106,
+  "5": 1.4163658070617111e-33,
+  "10": 8.79310714252355e-19,
+  "22": 3.182063707344239e-51
+ },
+ "gain_pct_qlike": {
+  "1": 11.167757754634003,
+  "5": 9.966298854116102,
+  "10": 9.184902253136935,
+  "22": 8.732705149971478
+ }
+}

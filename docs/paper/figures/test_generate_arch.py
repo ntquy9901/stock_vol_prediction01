@@ -44,3 +44,9 @@ def test_architecture_layout_is_vertical_portrait(monkeypatch):
     img = mpimg.imread(root / "docs" / "paper" / "figures" / "fig_architecture.png")
     height, width = img.shape[0], img.shape[1]
     assert height > width                              # vertical top-to-bottom layout is taller than wide
+
+
+def test_no_optional_wording_all_stages_mandatory():
+    import inspect
+    src = inspect.getsource(GA).lower()
+    assert "optional" not in src                       # every stage is mandatory: no "optional" cue anywhere
