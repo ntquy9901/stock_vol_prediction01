@@ -1,0 +1,28 @@
+{
+ "hose": {
+  "schema_ok": true,
+  "n_rows": 5723,
+  "n_tickers": 402,
+  "n_null": 0,
+  "n_dup_rows": 0,
+  "n_dup_pairs": 0,
+  "date_min": "2016-09-21",
+  "date_max": "2026-09-10",
+  "tickers_lt_min_history": 6,
+  "pct_gap_quarterly": 44.70964104491637,
+  "n_gaps": 5321
+ },
+ "sp500": {
+  "schema_ok": true,
+  "n_rows": 43307,
+  "n_tickers": 496,
+  "n_null": 0,
+  "n_dup_rows": 0,
+  "n_dup_pairs": 0,
+  "date_min": "1999-08-02",
+  "date_max": "2026-12-10",
+  "tickers_lt_min_history": 1,
+  "pct_gap_quarterly": 99.12639274952699,
+  "n_gaps": 42811
+ }
+}

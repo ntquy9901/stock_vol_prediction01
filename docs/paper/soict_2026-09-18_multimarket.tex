@@ -109,6 +109,14 @@ Diebold-Mariano statistic~\cite{dm1995} on per-trading-date mean loss, with the
 Harvey-Leybourne-Newbold small-sample correction~\cite{hln1997}, because within-day stock errors are
 dependent.
 
+\textbf{Data sources.} Daily OHLCV for the 497 S\&P~500 constituents is obtained from Yahoo Finance
+(via the \texttt{yfinance} library); the 405 HOSE constituents are obtained from \texttt{vnstock}, a
+Vietnamese market-data feed, with each ticker's full daily history crawled from its exchange listing. The
+Parkinson variance target and all endogenous own-history features are derived from the daily high, low,
+and close prices. The earnings dates and their provenance (Yahoo Finance for the S\&P~500; the State
+Securities Commission disclosure portal together with a \texttt{vnstock} news feed for HOSE) are described
+in the Limitations.
+
 \textbf{Model.} The forecasting model is a per-stock gamma-loss gradient-boosted tree
 ensemble~\cite{friedman2001} (XGBoost~\cite{chen2016} with the \texttt{reg:gamma} objective, whose
 deviance equals QLIKE up to a constant: 300 boosting rounds, learning rate 0.05, at most 31 leaves per
@@ -489,8 +497,10 @@ announcement dates, whereas the leaf-cooccurrence graph is a small but significa
 HOSE market and self-disables on the liquid S\&P~500.
 
 \section{Limitations}
-\noindent\textbf{Earnings dates.} The earnings feature measures distance to the nearest scheduled
-release from an archive that records realized dates, not a point-in-time scheduling snapshot. A
+\noindent\textbf{Earnings dates.} The S\&P~500 earnings dates are announcement dates from Yahoo Finance
+(via yfinance), a single source capped at 100 events per ticker (older quarters are truncated); the
+feature measures distance to the nearest such release from an archive that records realized dates, not a
+point-in-time scheduling snapshot. A
 date-jitter check shows the gain does not depend on exact-date timing: perturbing every S\&P~500
 earnings date by a uniform random offset, the $h1$ QLIKE gain over endogenous falls from 11.1\% with
 true dates to 9.0\% at plus or minus one trading day, 6.6\% at plus or minus three days, and 4.5\% at
@@ -504,10 +514,16 @@ archived dates, so the lever is not an artifact of exact-date foreknowledge; the
 lies between these bounds, as confirmed release dates are typically known weeks ahead of the cadence guess.
 % PIT-cadence robustness: earnings_pit_sp500.json (SP500, 8-fold x 3-seed) pit_cadence.earn_gain_pct h1 3.29 / h5 3.15 / h10 3.11 / h22 2.78 (dm_p all <1e-4); actual 11.17/9.97/9.18/8.73
 
-\noindent\textbf{Vietnam coverage.} The Vietnam earnings test draws on real announcement dates that
-are comprehensive only for 2025-01 through 2026-09, plus a sparse 2016-2026 news feed covering roughly
-218 tickers. We therefore claim no incremental earnings value on HOSE under the available real dates,
-rather than a definitive full-history null.
+\noindent\textbf{Vietnam coverage.} The HOSE earnings dates are real disclosure dates merged from two
+crawlers---the State Securities Commission disclosure portal (dense only for 2025-01 through 2026-09) and
+a sparse 2016-2026 vnstock news feed covering roughly 218 tickers---with no imputation and no
+legal-deadline substitution. Unlike the S\&P~500, each HOSE quarter emits several distinct filings
+(parent, consolidated, and combined statements across quarterly, semi-annual, and annual periods), so a
+firm's disclosure cadence is far more irregular: its own-cadence date is predictable to a median of only
+26 days, against 2 days on the S\&P~500. This irregular, multi-event-type schedule---not a date-accuracy
+defect---makes the scheduled-earnings feature much noisier on HOSE, which is the honest reason the earnings
+lever does not transfer. We therefore claim no incremental earnings value on HOSE under the available real
+dates, rather than a definitive full-history null.
 
 \noindent\textbf{Earnings decomposition.} The S\&P~500 endogenous-to-earnings decomposition (8.7 to
 11.2\% incremental earnings component at every horizon) is measured on the XGBoost engine reported in the
