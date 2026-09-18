@@ -62,6 +62,7 @@ env/
 ENV/
 .venv_gpu_encode/
 .venv_vnstock/
+.test_python_deps/
 
 # Skill install artifacts + scratch/temp dirs (not source)
 .superpowers/
@@ -194,3 +195,5 @@ results/quality_gate/
 results/cryptomamba_*/
 # Per-push gate checklist evidence (audit records kept on disk, not committed)
 scripts/task_dashboard/gate_results/
+# Foundation-model zero-shot forecast cache (regenerable, 71MB)
+results/gamma_gbm/foundation_cache_*.parquet
