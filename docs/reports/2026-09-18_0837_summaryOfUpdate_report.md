@@ -79,3 +79,25 @@ smoothing cost when α>0; seed-0 booster for the graph structure vs seed-ensembl
   for the result (all 4 JSONs are complete 8-fold pools).
 - The marginal short-horizon win is a denoising effect; if pursued, compare against a plain cross-sectional
   mean-shrinkage baseline (no leaf-graph) to confirm the graph structure adds nothing beyond shrinkage.
+
+---
+
+## SP500 cross-market check (added 2026-09-18) — leaf-graph does NOT transfer
+
+Ran the identical leaf-graph pipeline on SP500 (8 folds, val-fit α, per horizon). Result: **NO-GO on SP500** —
+the val-fit α collapses to ~0 (mean 0.00–0.05 vs HOSE's 0.26–0.35), so the graph self-disables; gains are ~0 or
+slightly negative (h1 −0.003% p=0.66, h5 −0.009% p=0.23, h10 −0.036% p=0.014 slightly worse, h22 0.0% p=1.0).
+`results/gamma_gbm/leaf_graph_sp500_h{1,5,10,22}.json`.
+
+**Interpretation:** the leaf-graph is a **thin-market denoising phenomenon**. On HOSE (~400 thin VN stocks) per-stock
+forecasts are noisier, so cross-sectional smoothing over GBM-leaf-similar stocks helps (+0.12–0.26%, DM-sig,
+spike-robust). On the liquid SP500 the GBM forecasts are already low-noise, so smoothing adds nothing and the
+causal α-selection correctly drives α→0 (no overfitting to a useless graph — validates the method's honesty).
+Scope for the paper: the lever is HOSE-specific, not universal.
+
+## v2 RF-GAP / KeRF (added 2026-09-18) — no improvement over the simple v1 kNN
+The principled proximity upgrades (`baselines/2026-09-18_leaf_graph_rfgap`, RF-GAP row-stochastic soft mean +
+KeRF `1/leaf_population` down-weighting) are all significantly WORSE than v1's hard leaf-Hamming top-k kNN at
+every horizon (RF-GAP vs kNN −0.09…−0.27%, DM-sig), and KeRF is NOT more spike-robust (v1 kNN has the lowest
+ex-spike QLIKE). The soft weighted mean over all leaf co-members dilutes more than the hard top-k. **v1's simple
+kNN remains the champion leaf-graph version.**
