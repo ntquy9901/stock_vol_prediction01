@@ -1,0 +1,28 @@
+{
+ "hose": {
+  "n_events": 4527,
+  "n_tickers": 396,
+  "median_abs_days": 26.0,
+  "mean_abs_days": 51.11574994477579,
+  "p90_abs_days": 55.0,
+  "within_1d_pct": 10.912303954053456,
+  "within_2d_pct": 12.96664457698255,
+  "within_3d_pct": 14.844267726971506,
+  "within_5d_pct": 18.135630660481556,
+  "within_7d_pct": 21.294455489286506,
+  "within_14d_pct": 32.31720786392754
+ },
+ "sp500": {
+  "n_events": 41821,
+  "n_tickers": 495,
+  "median_abs_days": 2.0,
+  "mean_abs_days": 6.231845245211736,
+  "p90_abs_days": 16.0,
+  "within_1d_pct": 46.710982520743165,
+  "within_2d_pct": 51.61521723536022,
+  "within_3d_pct": 53.41813921235743,
+  "within_5d_pct": 59.8670524377705,
+  "within_7d_pct": 77.25066354223954,
+  "within_14d_pct": 88.63250520073646
+ }
+}

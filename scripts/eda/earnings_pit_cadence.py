@@ -1,95 +1,107 @@
-"""Strictly point-in-time (PIT) earnings schedule via own-firm reporting cadence.
+"""Strictly point-in-time (PIT) earnings schedule via own-firm reporting cadence + a data-quality check.
 
 Backs the paper's leakage-safe earnings robustness (Limitations): instead of the archived *realized*
 announcement date (which assumes exact-date foreknowledge at the forecast origin), predict each release
 date from the firm's OWN past reporting rhythm -- the previous release plus the median of its PRIOR
-inter-release gaps. Only past releases enter, so no future information leaks. Rebuilding the earnings
-feature from this predicted schedule and re-scoring gives a conservative lower bound on the earnings gain.
+inter-release gaps. Only past releases enter, so no future information leaks.
 
-`pit_cadence` is pure and unit-tested; `main` reproduces `results/gamma_gbm/earnings_pit_sp500.json`
-(actual-vs-PIT earnings QLIKE gain, SP500 walk-forward, per horizon).
+Functions:
+  * ``predict_schedule``  -- index-aligned PIT prediction for one ticker's date array (pred[i] <-> actual[i]).
+  * ``pit_cadence``       -- dict ticker -> sorted PIT schedule (datetime64[ns]), for the panel builder.
+  * ``pit_vs_actual``     -- per-(ticker, event) discrepancy table |predicted - actual| in days.
+  * ``summarize``         -- per-market summary of the discrepancy distribution.
+  * ``main``              -- runs the discrepancy check over ALL HOSE + SP500 tickers/history, writes
+                             ``results/gamma_gbm/earnings_pit_discrepancy_<market>.csv`` + prints a summary.
 """
 from __future__ import annotations
 
 import numpy as np
+import pandas as pd
 
 MIN_HISTORY = 3   # need >=3 prior releases before the cadence median is meaningful
+THRESHOLDS = (1, 2, 3, 5, 7, 14)   # day-tolerances reported by summarize
 
 
-def pit_cadence(edates):
-    """Map each ticker's realized release dates to a strictly-causal PIT-predicted schedule.
+def predict_schedule(dates):
+    """Index-aligned strictly-causal PIT prediction for one ticker's release dates.
 
-    ``edates`` maps ticker -> array-like of release dates. For each event from index ``MIN_HISTORY`` on,
-    the predicted date is ``previous_release + median(prior inter-release gaps)`` (only gaps strictly
-    before that event, so the prediction is knowable at the forecast origin). The first ``MIN_HISTORY``
-    dates and any ticker with fewer than ``MIN_HISTORY + 1`` releases are passed through unchanged.
-    Output arrays are sorted ``datetime64[ns]`` to match the panel builder's expected dtype.
-    """
-    out = {}
-    for tk, dates in edates.items():
-        d = np.sort(np.asarray(dates).astype("datetime64[D]"))
-        if len(d) <= MIN_HISTORY:
-            out[tk] = d.astype("datetime64[ns]")
-            continue
+    Returns an array the same length as the sorted input. The first ``MIN_HISTORY`` entries equal the
+    actual dates (no prediction yet); each later entry ``i`` is ``actual[i-1] + median(prior gaps[:i])``,
+    using only gaps strictly before event ``i`` so the prediction is knowable at the forecast origin.
+    ``pred[i]`` corresponds to ``actual[i]`` (no reordering)."""
+    d = np.sort(np.asarray(dates).astype("datetime64[D]"))
+    preds = list(d[:MIN_HISTORY])
+    if len(d) > MIN_HISTORY:
         gaps = np.diff(d).astype(int)
-        preds = list(d[:MIN_HISTORY])
         for i in range(MIN_HISTORY, len(d)):
             step = int(np.median(gaps[:i]))                       # only PRIOR gaps -> causal
             preds.append(d[i - 1] + np.timedelta64(step, "D"))
-        out[tk] = np.sort(np.array(preds, dtype="datetime64[D]")).astype("datetime64[ns]")
+    return np.array(preds, dtype="datetime64[D]")
+
+
+def pit_cadence(edates):
+    """Map ticker -> sorted PIT schedule (``datetime64[ns]``) for ``full_matrix.panel``."""
+    return {tk: np.sort(predict_schedule(dates)).astype("datetime64[ns]") for tk, dates in edates.items()}
+
+
+def pit_vs_actual(edates):
+    """Per-(ticker, event) discrepancy between the PIT-predicted and the actual release date.
+
+    Only events from index ``MIN_HISTORY`` on are emitted (the first three are anchors with no
+    prediction). Columns: ticker, event_index, actual_date, predicted_date, abs_err_days, signed_err_days
+    (predicted - actual)."""
+    rows = []
+    for tk, dates in edates.items():
+        d = np.sort(np.asarray(dates).astype("datetime64[D]"))
+        if len(d) <= MIN_HISTORY:
+            continue
+        pred = predict_schedule(d)
+        for i in range(MIN_HISTORY, len(d)):
+            signed = int((pred[i] - d[i]).astype("timedelta64[D]").astype(int))
+            rows.append({"ticker": tk, "event_index": i,
+                         "actual_date": d[i].astype("datetime64[D]"),
+                         "predicted_date": pred[i].astype("datetime64[D]"),
+                         "abs_err_days": abs(signed), "signed_err_days": signed})
+    return pd.DataFrame(rows, columns=["ticker", "event_index", "actual_date", "predicted_date",
+                                       "abs_err_days", "signed_err_days"])
+
+
+def summarize(disc):
+    """Summary of the discrepancy distribution: n events/tickers, coverage within each day-tolerance,
+    and central tendency. Returns a dict."""
+    if len(disc) == 0:
+        return {"n_events": 0, "n_tickers": 0}
+    err = disc["abs_err_days"].to_numpy()
+    out = {"n_events": int(len(err)), "n_tickers": int(disc["ticker"].nunique()),
+           "median_abs_days": float(np.median(err)), "mean_abs_days": float(err.mean()),
+           "p90_abs_days": float(np.percentile(err, 90))}
+    for t in THRESHOLDS:
+        out[f"within_{t}d_pct"] = float(100.0 * np.mean(err <= t))
     return out
 
 
-def main():  # pragma: no cover - data-driven driver (needs full_matrix + enriched panels)
-    import json
-    import sys
+def _load_edates(market):  # pragma: no cover - thin data loader (reads the crawled earnings parquet)
     from pathlib import Path
-
     repo = Path(__file__).resolve().parents[2]
-    for p in (str(repo / "baselines" / "2026-09-18_gbm_leaf_graph" / "code"), str(repo / "scripts" / "eda"),
-              str(repo / "baselines" / "2026-08-21_har_anchored_residual" / "code"),
-              str(repo / "baselines" / "2026-09-13_paper_models" / "code")):
-        if p not in sys.path:
-            sys.path.insert(0, p)
-    import full_matrix as FM
-    import leaf_graph as LG
-    import metrics as M
-    import stats as ST
-    import vn_gbm_graph_stage1 as S1
-    import config as PMC
+    fn = "hose_earnings_combined.parquet" if market == "hose" else "sp500_earnings.parquet"
+    e = pd.read_parquet(repo / "results" / "gamma_gbm" / fn)
+    e["earnings_date"] = pd.to_datetime(e["earnings_date"])
+    return {tk: g["earnings_date"].to_numpy() for tk, g in e.groupby("ticker")}
 
-    own = PMC.own_set(FM.OWN)
-    frames, _sect, ed = FM.load("sp500")
-    ed_pit = pit_cadence(ed)
-    res = {}
-    for h in (1, 5, 10, 22):
-        res[str(h)] = {}
-        for tag, edx in (("actual", ed), ("pit_cadence", ed_pit)):
-            import pandas as pd
-            a = FM.panel(frames, edx, h)
-            emb = pd.Timedelta(days=int(h * 1.6) + 5)
-            eo, ee, dts = [], [], []
-            for k in range(len(S1.FOLDS) - 1):
-                ts, te = pd.Timestamp(S1.FOLDS[k]), pd.Timestamp(S1.FOLDS[k + 1])
-                trf = a[(a.date >= S1.TRAIN_START) & (a.date < ts - emb)]
-                tef = a[(a.date >= ts) & (a.date < te)]
-                if len(tef) == 0 or len(trf) < 30000:
-                    continue
-                po = LG.predict_xgb(trf, tef, own, FM.SEEDS)
-                pe = LG.predict_xgb(trf, tef, own + FM.EARN, FM.SEEDS)
-                y = tef["y"].to_numpy(float)
-                eo.append(M.per_obs_qlike(y, po, floor=FM.FL))
-                ee.append(M.per_obs_qlike(y, pe, floor=FM.FL))
-                dts.append(tef["date"].to_numpy())
-            eo, ee, dd = np.concatenate(eo), np.concatenate(ee), np.concatenate(dts)
-            qo, qe = float(eo.mean()), float(ee.mean())
-            try:
-                pval = float(ST.date_clustered_dm(ee, eo, dd, h)["p_value"])
-            except Exception:
-                pval = None
-            res[str(h)][tag] = {"xgb_qlike": qo, "xgbE_qlike": qe,
-                                "earn_gain_pct": (qo - qe) / qo * 100, "dm_p": pval}
-    (repo / "results" / "gamma_gbm" / "earnings_pit_sp500.json").write_text(json.dumps(res, indent=1))
+
+def main():  # pragma: no cover - data-driven driver over the full crawled history
+    import json
+    from pathlib import Path
+    repo = Path(__file__).resolve().parents[2]
+    summary = {}
+    for market in ("hose", "sp500"):
+        disc = pit_vs_actual(_load_edates(market))
+        out_csv = repo / "results" / "gamma_gbm" / f"earnings_pit_discrepancy_{market}.csv"
+        disc.to_csv(out_csv, index=False)
+        summary[market] = summarize(disc)
+        print(f"{market}: {summary[market]}", flush=True)
+        print(f"  wrote {out_csv} ({len(disc)} rows)", flush=True)
+    (repo / "results" / "gamma_gbm" / "earnings_pit_discrepancy_summary.json").write_text(json.dumps(summary, indent=1))
 
 
 if __name__ == "__main__":  # pragma: no cover
