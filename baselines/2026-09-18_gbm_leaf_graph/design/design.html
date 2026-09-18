@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaf-graph → smoothing — Detailed Design & Architecture</title>
+<style>
+  :root{--bg:#0f1720;--card:#17222e;--ink:#e6edf3;--mut:#9fb0c0;--acc:#4fd1c5;--acc2:#f6ad55;
+        --ok:#68d391;--bad:#fc8181;--line:#2b3a48;--code:#0b1118}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 22px 80px}
+  h1{font-size:26px;margin:0 0 4px} h2{font-size:20px;margin:34px 0 10px;color:var(--acc);
+     border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{font-size:16px;margin:20px 0 6px;color:var(--acc2)}
+  .sub{color:var(--mut);margin:0 0 18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
+  code,.mono{font-family:ui-monospace,Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px;
+             font-size:13px;color:#cbd5e0}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;
+      font-size:13px;line-height:1.5}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:center}
+  th{background:#1d2b38;color:var(--acc)} td.l,th.l{text-align:left}
+  .ok{color:var(--ok);font-weight:600} .bad{color:var(--bad);font-weight:600}
+  .pill{display:inline-block;background:#1d2b38;border:1px solid var(--line);border-radius:999px;
+        padding:2px 10px;font-size:12px;color:var(--mut);margin:2px 4px 2px 0}
+  ul{margin:6px 0 6px 2px;padding-left:20px} li{margin:4px 0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .kbd{color:var(--acc2);font-weight:600}
+  .note{border-left:3px solid var(--acc);padding-left:12px;color:var(--mut)}
+  .bad-b{border-left:3px solid var(--bad)} .ok-b{border-left:3px solid var(--ok)}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+
+<h1>Leaf-cooccurrence Graph → Prediction Smoothing + GBME</h1>
+<p class="sub">Baseline <code>2026-09-18_gbm_leaf_graph</code> · HOSE · target = Parkinson variance σ² ·
+metric QLIKE + date-clustered Diebold-Mariano · <span class="ok">GO — lever dương đầu tiên</span></p>
+
+<div class="card note">
+<b>Ý tưởng một câu.</b> Xây một <b>đồ thị target-aware</b> từ chính <b>lá của các cây</b> trong GBM đã huấn luyện:
+hai cổ phiếu cùng ngày là "hàng xóm" nếu GBM <i>định tuyến chúng vào cùng lá</i> ở nhiều cây → dùng đồ thị đó
+<b>làm mượt (smooth)</b> dự báo per-stock. Đây là <i>random-forest proximity / leaf-incidence kernel</i>
+(RF-GAP lineage) áp cho cross-section. Kết quả: nhỏ nhưng <b>DM-significant + spike-robust</b> ở h1/h5/h10.
+</div>
+
+<h2>1 · Kiến trúc tổng thể (pipeline)</h2>
+<svg viewBox="0 0 1000 720" width="100%" font-family="ui-monospace,Consolas,monospace" font-size="12.5">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#4fd1c5"/></marker>
+    <marker id="arb" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#f6ad55"/></marker>
+  </defs>
+  <style>
+    .box{fill:#17222e;stroke:#2b3a48;rx:8} .hl{fill:#12303a;stroke:#4fd1c5}
+    .amber{fill:#3a2f1a;stroke:#f6ad55} .t{fill:#e6edf3} .m{fill:#9fb0c0} .a{fill:#4fd1c5}
+    .ln{stroke:#4fd1c5;stroke-width:1.5;fill:none} .lnb{stroke:#f6ad55;stroke-width:1.5;fill:none}
+  </style>
+
+  <!-- data -->
+  <rect class="box" x="330" y="12" width="340" height="58"/>
+  <text class="t" x="500" y="32" text-anchor="middle">Panel HOSE (per stock, per day)</text>
+  <text class="m" x="500" y="50" text-anchor="middle">X = OWN-8 (HAR d/w/m + mr_*) + EARN-4 · y = σ²(t+h)</text>
+  <line class="ln" x1="500" y1="70" x2="500" y2="96" marker-end="url(#ar)"/>
+
+  <!-- walk-forward split -->
+  <rect class="box" x="250" y="98" width="500" height="94"/>
+  <text class="a" x="500" y="118" text-anchor="middle">Walk-forward fold k  (S1.FOLDS, TRAIN_START=2015)</text>
+  <rect class="hl" x="270" y="130" width="215" height="48" rx="6"/>
+  <text class="t" x="377" y="150" text-anchor="middle">trf_e = TRAIN∖val</text>
+  <text class="m" x="377" y="167" text-anchor="middle">date &lt; ts − embargo, bỏ 22 ngày cuối</text>
+  <rect class="amber" x="495" y="130" width="120" height="48" rx="6"/>
+  <text class="t" x="555" y="150" text-anchor="middle">vaf = VAL</text>
+  <text class="m" x="555" y="167" text-anchor="middle">22 ngày cuối train</text>
+  <rect class="box" x="625" y="130" width="105" height="48" rx="6" stroke="#68d391"/>
+  <text class="t" x="677" y="150" text-anchor="middle">tef = TEST</text>
+  <text class="m" x="677" y="167" text-anchor="middle">[ts, tend)</text>
+
+  <!-- embargo note -->
+  <text class="m" x="500" y="206" text-anchor="middle">⟵ embargo = int(1.6·h)+5 ngày (chặn overlap target h-step) ⟶</text>
+
+  <!-- train boosters -->
+  <line class="ln" x1="377" y1="192" x2="377" y2="232" marker-end="url(#ar)"/>
+  <rect class="box" x="120" y="234" width="300" height="86"/>
+  <text class="a" x="270" y="254" text-anchor="middle">FIT trên trf_e (chỉ train)</text>
+  <text class="t" x="270" y="274" text-anchor="middle">GBME = HGBR gamma  (champion)</text>
+  <text class="t" x="270" y="292" text-anchor="middle">XGB = XGBoost gamma  (base, khớp GBME)</text>
+  <text class="m" x="270" y="309" text-anchor="middle">300 trees · lr .05 · 31 leaves · l2=1 · mcw=20</text>
+
+  <!-- predict combo -->
+  <line class="ln" x1="270" y1="320" x2="270" y2="352" marker-end="url(#ar)"/>
+  <rect class="box" x="120" y="354" width="300" height="52"/>
+  <text class="t" x="270" y="378" text-anchor="middle">Dự báo combo = [test | train | val]</text>
+  <text class="m" x="270" y="395" text-anchor="middle">seed-ensemble (0,1,2) · floor FL · clip [FL, 1.0]</text>
+
+  <!-- leaf matrix -->
+  <line class="lnb" x1="420" y1="277" x2="600" y2="277" marker-end="url(#arb)"/>
+  <rect class="amber" x="600" y="234" width="300" height="86"/>
+  <text class="a" x="750" y="254" text-anchor="middle">pred_leaf của XGB → leaf-matrix</text>
+  <text class="t" x="750" y="275" text-anchor="middle">L ∈ ℤ^(n × T)  (T=300 lá-index)</text>
+  <text class="m" x="750" y="294" text-anchor="middle">“mỗi obs rơi vào lá nào ở từng cây”</text>
+  <text class="m" x="750" y="311" text-anchor="middle">booster fit trên trf_e → causal</text>
+
+  <!-- per-day graph -->
+  <line class="lnb" x1="750" y1="320" x2="750" y2="352" marker-end="url(#arb)"/>
+  <rect class="amber" x="600" y="354" width="300" height="104"/>
+  <text class="a" x="750" y="374" text-anchor="middle">Đồ thị leaf-cooccurrence (MỖI NGÀY)</text>
+  <text class="t" x="750" y="393" text-anchor="middle">sim_ij = (#cây cùng lá)/T = (S·Sᵀ)/T</text>
+  <text class="t" x="750" y="410" text-anchor="middle">kNN k=10 (loại self) trên cùng ngày</text>
+  <text class="m" x="750" y="429" text-anchor="middle">chỉ dùng cross-section ngày đó</text>
+  <text class="m" x="750" y="446" text-anchor="middle">→ neighbour_mean(ŷ_xgb)</text>
+
+  <!-- alpha fit on val -->
+  <line class="lnb" x1="600" y1="406" x2="470" y2="470" marker-end="url(#arb)"/>
+  <line class="ln"  x1="270" y1="406" x2="400" y2="470" marker-end="url(#ar)"/>
+  <rect class="hl" x="300" y="472" width="400" height="70"/>
+  <text class="a" x="500" y="492" text-anchor="middle">FIT α trên VAL slice (grid 0…1)</text>
+  <text class="t" x="500" y="512" text-anchor="middle">α* = argmin QLIKE_val[(1−α)ŷ_xgb + α·nbr_mean]</text>
+  <text class="m" x="500" y="530" text-anchor="middle">α đóng băng cho test · 1 vô hướng/fold (không thêm tham số)</text>
+
+  <!-- apply on test -->
+  <line class="ln" x1="500" y1="542" x2="500" y2="572" marker-end="url(#ar)"/>
+  <rect class="box" x="300" y="574" width="400" height="58" stroke="#68d391"/>
+  <text class="t" x="500" y="596" text-anchor="middle">TEST: ŷ_smooth = (1−α*)·ŷ_xgb + α*·nbr_mean</text>
+  <text class="m" x="500" y="614" text-anchor="middle">áp per-day trên tef · self excluded · không dữ liệu tương lai</text>
+
+  <!-- pool + eval -->
+  <line class="ln" x1="500" y1="632" x2="500" y2="660" marker-end="url(#ar)"/>
+  <rect class="box" x="230" y="662" width="540" height="50"/>
+  <text class="a" x="500" y="683" text-anchor="middle">Gộp 8 folds → QLIKE/RMSE/MAE/R² + DM + spike-robust + fit_diagnostics</text>
+  <text class="m" x="500" y="700" text-anchor="middle">DM: leafgraph vs XGB (cô lập graph) · vs GBME (champion)</text>
+</svg>
+
+<h2>2 · Dữ liệu &amp; đặc trưng</h2>
+<div class="card">
+<ul>
+<li><b>Đơn vị mẫu:</b> (cổ phiếu i, ngày t). Panel HOSE ~400 mã.</li>
+<li><b>Feature X (13):</b> OWN-8 = <code>har_daily, har_weekly, har_monthly, mr_change, mr_slope5,
+mr_slope10, mr_dev5, mr_z22</code> (single-sourced từ config paper_models) + EARN-4 =
+<code>earn_prox, earn_soon, earn_pre, earn_post</code> (ngày công bố BCTC VN thật, 402 mã).</li>
+<li><b>Target y:</b> Parkinson variance σ² ở <b>h ngày phía trước</b> (<code>shift(-h)</code>), h ∈ {1,5,10,22}.</li>
+<li><b>Loss:</b> QLIKE (chính) — gamma-deviance ≡ QLIKE nên GBM dùng <code>loss="gamma"</code> là loss-aligned.</li>
+</ul>
+</div>
+
+<h2>3 · Ba mô hình so sánh</h2>
+<table>
+<tr><th class="l">Model</th><th>Engine</th><th>Vai trò</th></tr>
+<tr><td class="l"><b>GBME</b></td><td>HistGradientBoosting <code>loss=gamma</code></td>
+    <td>Champion đang triển khai (own-history + earnings)</td></tr>
+<tr><td class="l"><b>XGB</b></td><td>XGBoost <code>reg:gamma</code></td>
+    <td>Bản tái tạo GBME bằng XGBoost (khớp ≈ GBME) — <b>để lộ leaf-index</b> qua <code>pred_leaf</code></td></tr>
+<tr><td class="l"><b>XGB+leafgraph</b></td><td>XGB + graph-smoothing</td>
+    <td>Dự báo XGB được làm mượt qua đồ thị lá; α fit trên val</td></tr>
+</table>
+<p class="note">So sánh <b>chính</b> = XGB+leafgraph vs <b>XGB</b> (cùng base prediction → cô lập đúng tác động của
+graph). So sánh phụ = vs GBME (champion thực dụng). Dùng XGB thay HGBR vì HGBR không expose leaf-index.</p>
+
+<h2>4 · Cơ chế leaf-graph (chi tiết toán)</h2>
+<div class="card">
+<h3>Bước 1 — Leaf-vector</h3>
+<p>Fit XGBoost gamma trên <span class="kbd">trf_e</span>. Với mỗi obs, <code>pred_leaf=True</code> cho vector
+lá <b>L<sub>i</sub> ∈ ℤ<sup>T</sup></b> (T=300 cây): "obs i rơi vào lá nào ở từng cây".</p>
+<h3>Bước 2 — Độ tương tự leaf-Hamming (mỗi ngày)</h3>
+<pre>sim(i,j) = (1/T) · #{cây t : L_i[t] == L_j[t]}     ∈ [0,1]
+         = (S · Sᵀ)[i,j] / T   với S = one-hot của (tree, leaf)-id toàn cục (sparse)</pre>
+<p>Giống nhau hoàn toàn → 1.0; rời rạc → 0.0. Tính bằng tích trong one-hot thưa (nhanh, không lặp cặp).</p>
+<h3>Bước 3 — kNN + smoothing</h3>
+<pre>nbr_mean(i) = mean_{ j ∈ top-k(sim_i), j≠i } ŷ_xgb(j)      (k=10, loại chính nó)
+ŷ_smooth(i) = (1 − α) · ŷ_xgb(i) + α · nbr_mean(i)</pre>
+<p>α ∈ {0, 0.1, …, 1.0} <b>chọn trên VAL</b> (min QLIKE), đóng băng cho test. α=0 ⇒ graph vô hiệu (base).
+α_mean thực nghiệm ≈ 0.26–0.35 ⇒ graph <i>thực sự được dùng</i>.</p>
+</div>
+
+<h2>5 · Huấn luyện (Training)</h2>
+<div class="card">
+<ul>
+<li>Với mỗi fold k: fit GBME (HGBR) và XGB (XGBoost) trên <span class="kbd">trf_e</span> = train window trừ
+22 ngày val. Capacity khớp champion: 300 cây, lr 0.05, 31 lá, l2=1, min_child_weight 20 (≈ min_samples_leaf).</li>
+<li><b>Seed-ensemble:</b> trung bình dự báo qua seeds (0,1,2) → giảm variance.</li>
+<li>Graph <b>không có tham số học</b> ngoài 1 vô hướng α/fold — không train mạng, không basis-drift (khác GNN-embed).</li>
+<li>Positivity floor <code>FL</code> + clip <code>[FL, 1.0]</code> (guard exp-link overflow của XGB gamma).</li>
+</ul>
+</div>
+
+<h2>6 · Validation (fit α)</h2>
+<div class="card ok-b">
+<ul>
+<li><b>Val slice = 22 ngày cuối</b> của train window, <b>tách khỏi trf_e</b> (booster KHÔNG fit trên val).</li>
+<li>Trên val: dựng leaf-graph (booster train-only), quét α trên lưới, chọn <b>α*</b> tối thiểu QLIKE_val.</li>
+<li>α* <b>đóng băng</b>, dùng nguyên cho test. Vì val là hold-out thật → α không nhìn thấy test.</li>
+<li>fit_diagnostics so train→val→test: cả 3 model <b>fit=ok</b> mọi horizon (val→test gap &lt; 5%).</li>
+</ul>
+</div>
+
+<h2>7 · Testing &amp; đánh giá</h2>
+<div class="card">
+<ul>
+<li>Áp α* per-day trên <span class="kbd">tef</span> (out-of-sample). Gộp 8 folds → pooled QLIKE/RMSE/MAE/R².</li>
+<li><b>Diebold-Mariano date-clustered</b>: leafgraph vs XGB (cô lập graph) &amp; vs GBME.</li>
+<li><b>Spike-robustness (bắt buộc HOSE):</b> chạy lại loại 3 cửa sổ shock (COVID-2020 / 2022 / Apr-2025);
+dấu &amp; ý nghĩa phải giữ. Kết quả: giữ sig ở h1/h5/h10.</li>
+<li>Pre-registered kill: thắng XGB ở <b>cả h1 VÀ h5</b> (gain&gt;0, DM p&lt;0.05) → ĐẠT.</li>
+</ul>
+</div>
+
+<h2>8 · Chặn Data Leakage (nhiều lớp)</h2>
+<div class="card bad-b">
+<table>
+<tr><th class="l">Nguồn leakage tiềm ẩn</th><th class="l">Cách chặn</th></tr>
+<tr><td class="l">Future → train</td><td class="l">Walk-forward: train <code>date &lt; ts − embargo</code>; test <code>[ts, tend)</code>.</td></tr>
+<tr><td class="l">Chồng lấn target h-step</td><td class="l"><b>Embargo</b> = int(1.6·h)+5 ngày giữa train và test.</td></tr>
+<tr><td class="l">Booster/graph thấy test</td><td class="l">GBME, XGB, leaf-matrix đều fit trên <b>trf_e</b> (train∖val) — không test, không val.</td></tr>
+<tr><td class="l">α overfit / nhìn test</td><td class="l">α fit trên <b>val hold-out</b> (tách khỏi trf_e), đóng băng trước test.</td></tr>
+<tr><td class="l">Trộn thông tin xuyên ngày</td><td class="l">Graph <b>contemporaneous</b>: mỗi ngày test chỉ dùng cross-section CHÍNH ngày đó (leaf-vector từ booster train-only). Không ngày khác.</td></tr>
+<tr><td class="l">Tự làm mượt chính mình</td><td class="l">kNN <b>loại self</b> (đường chéo = −∞) → dự báo i không tự trộn vào i.</td></tr>
+</table>
+</div>
+
+<h2>9 · Chống Overfit</h2>
+<div class="card ok-b">
+<ul>
+<li><b>α học trên val, không phải test</b> → thành phần graph không thể overfit test.</li>
+<li>Graph thêm <b>đúng 1 tham số vô hướng α/fold</b> (không phải mạng nơ-ron) → capacity cực nhỏ, gần như không overfit được. (Đối lập: DTW-feature ở baseline anh em <b>overfit</b> vì thêm feature high-variance.)</li>
+<li>Booster regularized: l2=1, min_child_weight=20, 31 lá (khớp champion).</li>
+<li>Seed-ensemble (3 seeds) → giảm variance.</li>
+<li><b>Bằng chứng:</b> <code>fit_diagnostics</code> = ok mọi horizon (train→val→test không phân kỳ); và
+<b>spike-robust</b> (gain giữ khi loại storm) → hiệu ứng không phải do vài ngày bất thường.</li>
+</ul>
+</div>
+
+<h2>10 · Kết quả (HOSE, 8 folds, val-fit α)</h2>
+<table>
+<tr><th>h</th><th>GBME</th><th>XGB (base)</th><th>XGB+leafgraph</th><th>gain vs XGB</th><th>DM p</th>
+    <th>ex-spike p</th><th>α_mean</th><th>beats</th></tr>
+<tr><td>1</td><td>1.5719</td><td>1.5689</td><td>1.5650</td><td class="ok">+0.25%</td><td class="ok">0.0004</td>
+    <td class="ok">0.0014</td><td>0.35</td><td class="ok">✔</td></tr>
+<tr><td>5</td><td>1.6479</td><td>1.6512</td><td>1.6469</td><td class="ok">+0.26%</td><td class="ok">3e-5</td>
+    <td class="ok">0.0002</td><td>0.29</td><td class="ok">✔</td></tr>
+<tr><td>10</td><td>1.6856</td><td>1.6838</td><td>1.6817</td><td class="ok">+0.12%</td><td class="ok">0.0046</td>
+    <td class="ok">0.0074</td><td>0.26</td><td class="ok">✔</td></tr>
+<tr><td>22</td><td>1.7270</td><td>1.7270</td><td>1.7264</td><td>+0.03%</td><td class="bad">0.34</td>
+    <td class="bad">0.49</td><td>0.28</td><td class="bad">✘</td></tr>
+</table>
+<p class="note"><b>Đọc trung thực:</b> lever <b>DƯƠNG</b> đầu tiên — DM-significant + spike-robust ở 3/4 horizon,
+có grounding lý thuyết (RF proximity / leaf-incidence kernel). Nhưng lift <b>nhỏ</b> (+0.1–0.26%), teo về 0 ở
+h22; cơ chế là <b>cross-sectional denoising</b> dự báo (không thêm thông tin own-history-independent mới).
+So với GBME: thắng rõ h1 (p=1.6e-7) + h10 (p=0.013), hòa h5/h22.</p>
+
+<p class="sub" style="margin-top:26px">Nguồn code: <code>baselines/2026-09-18_gbm_leaf_graph/code/{leaf_graph.py, run_leaf_graph.py,
+leaf_graph_config.py}</code> · kết quả: <code>results/gamma_gbm/leaf_graph_hose_h{1,5,10,22}.json</code> ·
+commit <code>947296f1</code>.</p>
+
+</div></body></html>
