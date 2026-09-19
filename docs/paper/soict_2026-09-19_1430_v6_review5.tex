@@ -277,7 +277,7 @@ day's tickers.
 cross-section across the training span---HOSE's broad listing and its earnings coverage are comparatively
 recent, so an earlier start (e.g.\ 2000) would leave the Vietnamese panel sparse. We use an expanding-window walk-forward
 with eight semi-annual test folds starting 2022-07-01, 2023-01-01, 2023-07-01, 2024-01-01, 2024-07-01,
-2025-01-01, 2025-07-01, and 2026-01-01, each spanning the following six months. For fold start $F_k$ and
+2025-01-01, 2025-07-01, and 2026-01-01, each spanning the following six months, except the last fold, which runs to the end of the available data. For fold start $F_k$ and
 horizon $h$, training uses all data from 2015-01-01 up to $F_k$ minus an embargo of
 $g_h=\lfloor 1.6h\rfloor+5$ calendar days. The embargo grows with the horizon $h$ because a longer-horizon
 target reaches further past the fold boundary; removing these rows stops any training row whose
