@@ -299,7 +299,7 @@ rounds, learning rate 0.05, at most 31 leaves per tree under \texttt{grow\_polic
 (\texttt{max\_depth}~0, leaf count controls capacity), L2 penalty $\lambda=1.0$, minimum child weight 20,
 \texttt{tree\_method=hist}, and no row/column subsampling
 ($\texttt{subsample}=\texttt{colsample\_bytree}=1.0$). XGBoost is effectively deterministic under this
-no-subsampling configuration; repeated seeds (0, 1, 2, averaged) were used only as an implementation-stability
+no-subsampling configuration; repeated seeds were used only as an implementation-stability
 check, not independent stochastic replications.
 
 \textbf{Metrics and statistical tests.} QLIKE is the primary loss~\cite{patton2011}, with MSE, RMSE and
@@ -469,7 +469,7 @@ at forecast time.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.50\linewidth]{fig_earnings_event_study.pdf}
+\includegraphics[width=0.80\linewidth]{fig_earnings_event_study.pdf}
 \caption{Ex-post event study: mean and median realized Parkinson variance, normalised by each ticker's
 median, around realized earnings dates (panel-specific $y$-scales; S\&P~500 $n{=}42{,}780$ announcement
 events, HOSE $n{=}5{,}256$ announcement events). The S\&P~500 median rises to about 2.75 times baseline on the announcement day and returns
@@ -489,8 +489,7 @@ horizon ($p<0.001$)---while the endogenous model does most of the work.
 % earnings-increment DM (point-in-time cadence, headline XGBoost pipeline): results/gamma_gbm/expected_schedule/earnings_dm_sp500.json dm_p all <0.001 (~3% QLIKE gain over ~500k obs)
 
 \subsection{Cross-Market Analysis: S\&P 500 versus HOSE}\label{sec:hose}
-\textbf{The endogenous model wins on HOSE too.} On HOSE under the identical protocol
-(390{,}577 to 399{,}040 stock-day observations per horizon), the endogenous XGBoost model is again the
+\textbf{The endogenous model wins on HOSE too.} On HOSE under the identical protocol, the endogenous XGBoost model is again the
 DM-verified best non-graph model at every horizon, HAR trails widely, and the earnings feature does not
 improve it, consistent with the flat HOSE event study. The learned GNNHAR again loses at
 every horizon (QLIKE worse by 4.9 to 7.3\%, DM $p<0.001$).
@@ -499,8 +498,7 @@ every horizon (QLIKE worse by 4.9 to 7.3\%, DM $p<0.001$).
 \textbf{Earnings does not transfer to Vietnam.} Using the point-in-time expected schedule, XGB+E is within
 0.02\% of XGB at every horizon. The HOSE earnings event study (Fig.~\ref{fig:eventstudy}) shows no
 announcement-day spike, unlike the S\&P~500; one possible explanation, not directly tested here, is that
-Vietnam's daily price limits may delay or dampen the announcement-day adjustment. The result holds in the
-well-covered 2025-2026 folds, so it does not rest on missing dates.
+Vietnam's daily price limits may delay or dampen the announcement-day adjustment.
 
 \subsection{Practical Interpretation}
 No external feature is universally useful for daily volatility forecasting: earnings help the
@@ -521,21 +519,13 @@ several distinct filings (parent, consolidated, and combined statements across q
 annual periods); taking the earliest disclosure per fiscal quarter gives an own-cadence schedule whose
 median prediction error is 3 days, close to the 2 days on the S\&P~500, though with a heavier tail from a
 minority of firms with irregular filing gaps. The lever's failure to transfer therefore reflects the muted
-announcement-day volatility response on HOSE (Fig.~\ref{fig:eventstudy}) rather than a noisy schedule;
-given the limited disclosure coverage we still claim only no incremental earnings value under the available
-HOSE dates, not a definitive full-history null.
+announcement-day volatility response on HOSE (Fig.~\ref{fig:eventstudy}) rather than a noisy schedule.
 
 \noindent\textbf{Leaf-graph scope.} The graph is a small market-specific lever---cross-sectional denoising
 of the model's own forecasts, not new outside information---whose gains, though significant, are a few
 tenths of a percent and associational rather than causal.
 
-\noindent\textbf{Design and evaluation caveats.} The two markets use different constituent construction
-(present-membership S\&P~500 versus listing-based HOSE); the leaf-graph weight $\alpha$ is selected on a short 22-date validation slice; no explicit
-liquidity statistic supports the market interpretation, which is therefore descriptive; and the XGBoost
-seeds are not independent replications, as the model is effectively deterministic under the no-subsampling
-configuration. The spike-robustness stress windows were pre-specified (fixed before evaluation) and lie
-within the 2022-onward test period. The GNNHAR comparison reflects the validation-selected variant.
-Individual $p$-values warrant multiple-comparison caution beyond the primary tests. Genuine point-in-time
+\noindent\textbf{Design and evaluation caveats.} Genuine point-in-time
 earnings calendars were unavailable, so the earnings gain is bracketed by the cadence-based estimate and a
 realized-date upper bound. The analysis covers two markets, and its conclusions are limited to daily
 OHLC-based Parkinson variance and may not transfer to volatility measured from intraday prices or implied by option prices.
