@@ -187,6 +187,7 @@ a per-day leaf-cooccurrence graph then smooths the horizon-specific Parkinson-va
 the cross-section.}
 \label{fig:arch}
 \end{figure}
+\FloatBarrier
 
 \subsection{Competing Baselines}
 
@@ -318,9 +319,11 @@ learned GNNHAR never beats it and is worse than even linear HAR at $h1$ on the S
 \begin{table}[!t]
 \centering
 \caption{External-baseline comparison: three baselines (GARCH, HAR, GNNHAR) versus VolTree at
-$h\in\{1,5,10,22\}$ (S\&P~500 left, HOSE right; lower is better). MSE $\times10^{-6}$, RMSE/MAE
-$\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:detail}). Bold marks the full-precision column
-minimum among these four models; the component variants are in Table~\ref{tab:detail}.}
+$h\in\{1,5,10,22\}$ (S\&P~500 left, HOSE right). All four metrics are lower-is-better and are computed as
+the mean loss over all test stock-day observations pooled across the eight walk-forward folds, separately
+per market and horizon. MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$, QLIKE unscaled (as in
+Table~\ref{tab:detail}). Bold marks the best (minimum) value in each market--horizon column among these
+four models; the component variants are in Table~\ref{tab:detail}.}
 \label{tab:summary}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -364,10 +367,11 @@ and $h5$) with VolTree closely tracking it.
 \begin{table}[!t]
 \centering
 \caption{Component ablation of the four XGB-family variants (S\&P~500 left; HOSE
-right; walk-forward; seeds averaged as a stability check, not independent replications; lower is
-better). XGB is endogenous-only, XGB+E adds earnings, XGB+LG adds leaf-graph smoothing, VolTree adds both.
+right; walk-forward; seeds averaged as a stability check, not independent replications; all metrics
+lower-is-better, aggregated as in Table~\ref{tab:summary}). XGB is endogenous-only, XGB+E adds earnings,
+XGB+LG adds leaf-graph smoothing, and VolTree adds both (the full model).
 MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:summary}). Bold marks
-the per-horizon column minimum. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): XGB+E
+the best (minimum) value in each market--horizon column. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): XGB+E
 and XGB+LG are each tested against XGB; VolTree is tested against XGB+E and XGB+LG separately. $^{\dagger}$
 marks a numerical improvement over XGB that is not statistically significant, and no marker is shown
 when the full model does not improve either component. Tests use unrounded losses; baselines are in
