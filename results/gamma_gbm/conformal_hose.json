@@ -1,0 +1,25 @@
+{
+ "market": "hose",
+ "alpha": 0.1,
+ "target_coverage": 0.9,
+ "horizons": {
+  "1": {
+   "n_test": 399040,
+   "n_spike": 57466,
+   "split": {
+    "coverage": 0.8054405573376102,
+    "mean_width": 0.0013155548367649317,
+    "median_width": 0.0011497047962620854,
+    "coverage_spike": 0.7900497685587999,
+    "coverage_calm": 0.8080298851786143
+   },
+   "cqr": {
+    "coverage": 0.8248145549318364,
+    "mean_width": 0.0016254492802545428,
+    "median_width": 0.001361499191261828,
+    "coverage_spike": 0.8103922319284447,
+    "coverage_calm": 0.8272409492525777
+   }
+  }
+ }
+}

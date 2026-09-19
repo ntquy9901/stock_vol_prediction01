@@ -85,8 +85,14 @@ tree-based model and where the paper currently says nothing.**
 1. **Exp 1 — TreeSHAP explainability of VolTree** (running): global mean|SHAP| per market/horizon,
    HAR/momentum/earnings group shares, ranking. Rigorous alternative to placebo-prone permutation.
    Smoke (HOSE h1): HAR 85.8% (weekly 46 / monthly 26 / daily 14), momentum 13.2%, earnings 1.1%.
-2. **Exp 2 — Conformal intervals (split + CQR)** (running): 90% coverage, width, per-regime coverage,
-   leak-safe val-calibration. NEW calibrated-uncertainty axis.
+2. **Exp 2 — Conformal intervals (split + CQR)** (DONE, h1, train-capped 250k for speed): target 90%.
+   **SP500 CQR = 89.9% coverage (near-nominal!)**, split 87.6% (under, expected for constant-width on
+   heteroscedastic vol); per-regime CQR spike 88% / calm 90%. **HOSE under-covers: CQR 82.5%, split
+   80.5%** (thin/fat-tailed VN market breaks exchangeability more; calibration on 22 val dates misses the
+   tails) — an honest finding that MOTIVATES adaptive/online conformal (ACI/PID) as the HOSE fix. CQR is
+   adaptively wider than split (SP500 7.5e-4 vs 5.6e-4). NEW calibrated-uncertainty axis works on SP500;
+   VN needs adaptive conformal. (Train-cap is a speed subsample; conformal coverage is model-agnostic so
+   the cap does not explain the HOSE gap — exchangeability does.)
 3. **Exp 3 (fast follow)** — gamma-quantile CRPS/pinball extraction (near-free); optionally rough/Hurst
    feature falsification with spike-robustness.
 4. **Deferred (build/GPU/API):** iTransformer+SOFTS residual-panel probe; LLM feature-discovery agent.

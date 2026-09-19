@@ -59,6 +59,13 @@ def test_cov_width():
     assert mw == pytest.approx(2.0) and mdw == pytest.approx(2.0)
 
 
+def test_cap_rows():
+    import pandas as pd
+    df = pd.DataFrame({"a": range(100)})
+    assert len(CF._cap_rows(df, 50)) == 50              # subsampled to cap
+    assert len(CF._cap_rows(df, 200)) == 100            # unchanged when already below cap
+
+
 def test_fit_quantile_and_pred():
     import pandas as pd
     rng = np.random.default_rng(3)

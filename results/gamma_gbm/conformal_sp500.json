@@ -1,0 +1,25 @@
+{
+ "market": "sp500",
+ "alpha": 0.1,
+ "target_coverage": 0.9,
+ "horizons": {
+  "1": {
+   "n_test": 512140,
+   "n_spike": 72667,
+   "split": {
+    "coverage": 0.8755359862537587,
+    "mean_width": 0.0005599172436632216,
+    "median_width": 0.0005293790018185973,
+    "coverage_spike": 0.8701198618354962,
+    "coverage_calm": 0.876431544144919
+   },
+   "cqr": {
+    "coverage": 0.8987112898816729,
+    "mean_width": 0.0007452918216586113,
+    "median_width": 0.0005056679947301745,
+    "coverage_spike": 0.8800968802895399,
+    "coverage_calm": 0.9017891884143053
+   }
+  }
+ }
+}

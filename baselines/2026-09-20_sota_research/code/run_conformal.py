@@ -37,7 +37,10 @@ FL = FM.FL
 ALPHA = 0.10                    # target 90% intervals
 Q_LO, Q_HI = 0.05, 0.95        # pinball quantiles for CQR
 QUANTILE_ROUNDS = 200          # boosting rounds for the two quantile heads (interval endpoints; < the 300 point)
-DEMO_HORIZONS = (1, 5)         # representative horizons for the overnight conformal demo (full = C.HORIZONS)
+DEMO_HORIZONS = (1,)           # representative horizon for the overnight conformal demo (full = C.HORIZONS)
+TRAIN_CAP = 250_000            # overnight speed: cap per-fold train rows for the base+quantile fits. Conformal
+#                               coverage is model-AGNOSTIC (valid for any base predictor), so a train
+#                               subsample only speeds fitting; the paper-grade run would drop this cap.
 
 
 def _fit_quantile(trf, cols, q, seed=0):
@@ -52,6 +55,13 @@ def _fit_quantile(trf, cols, q, seed=0):
 
 def _pred(bst, X):
     return bst.predict(xgb.DMatrix(np.asarray(X, float)))
+
+
+def _cap_rows(df, cap, seed=0):
+    """Deterministic row subsample to at most ``cap`` rows (overnight speed cap for the base+quantile
+    fits). Returns df unchanged when already <= cap. Conformal coverage is model-agnostic, so this only
+    affects fitting speed, not interval validity."""
+    return df.sample(n=cap, random_state=seed) if len(df) > cap else df
 
 
 def cqr_band(y_cal, lo_cal, hi_cal, lo_te, hi_te, alpha):
@@ -108,6 +118,7 @@ def run_market(market, horizons=None):  # pragma: no cover - data-driven walk-fo
             val_dates = np.sort(trf["date"].unique())[-C.VALID_LEN:]
             is_val = trf["date"].isin(val_dates)
             trf_e, vaf = trf[~is_val], trf[is_val]
+            trf_e = _cap_rows(trf_e, TRAIN_CAP)           # overnight speed cap (helper; conformal is model-agnostic)
             Xva, Xte = vaf[cols].to_numpy(float), tef[cols].to_numpy(float)
             yva, yte = vaf["y"].to_numpy(float), tef["y"].to_numpy(float)
             gbm = LG.fit_booster(trf_e, cols, seed=0)
