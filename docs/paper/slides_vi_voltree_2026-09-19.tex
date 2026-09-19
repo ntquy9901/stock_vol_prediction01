@@ -1,0 +1,184 @@
+% !TEX program = pdflatex
+% Beamer slide deck (Vietnamese) summarizing the VolTree paper for the advisor.
+% Numbers taken verbatim from soict_2026-09-19_1230_v4_review4.tex. Do NOT invent numbers.
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{Metropolis}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T5,T1]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{amsmath}
+
+% Keep it clean; avoid navigation clutter.
+\setbeamertemplate{navigation symbols}{}
+
+\title{VolTree}
+\subtitle{Dự báo biến động cổ phiếu bằng Gradient Boosting nhận biết earnings + làm mượt Leaf-Graph}
+\author{Thanh-Quy Nguyen \and Trung-Hoang Le \and Duy-Hoang Tran}
+\institute{University of Science, VNU-HCM \\ \textit{Tóm tắt cho phản biện}}
+\date{2026-09-19}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% 2. Problem & motivation
+\begin{frame}{Bài toán \& động lực}
+  \begin{itemize}
+    \item Mục tiêu: dự báo \textbf{Parkinson variance} theo ngày (phương sai từ biên độ high--low), cho từng cổ phiếu, ở các horizon $h \in \{1,5,10,22\}$ ngày.
+    \item Biến động là thước đo rủi ro chuẩn: chi phối \textbf{định giá quyền chọn}, yêu cầu vốn và ngân sách rủi ro danh mục.
+    \item Loss chính: \textbf{QLIKE} (chuẩn học thuật cho biến động); báo cáo thêm MSE, RMSE, MAE.
+    \item Kiểm định ý nghĩa thống kê: \textbf{Diebold-Mariano} (HAC Newey-West, hiệu chỉnh HLN small-sample).
+    \item Câu hỏi nghiên cứu: model own-history mạnh tới đâu, và \emph{thông tin bên ngoài nào} thực sự giúp thêm?
+  \end{itemize}
+\end{frame}
+
+% 3. VolTree idea
+\begin{frame}{Ý tưởng VolTree}
+  \begin{itemize}
+    \item Lõi: \textbf{pooled stock-day gamma-loss XGBoost} (\texttt{reg:gamma}) trên \textbf{8 đặc trưng own-history} (3 HAR lag + 5 log-vol momentum).
+    \item Mô hình dùng \textbf{cả 2} thành phần bên ngoài; đóng góp mỗi thành phần đặc thù theo thị trường:
+      \begin{itemize}
+        \item \textbf{Earnings block} (+4 đặc trưng): khoảng cách tới ngày công bố earnings gần nhất.
+        \item \textbf{Leaf-graph smoothing}: làm mượt dự báo theo lát cắt cùng ngày, xây từ chính lá cây (leaf) của booster.
+      \end{itemize}
+    \item 4 biến thể để ablation:
+      \begin{itemize}
+        \item \textbf{XGB} = chỉ own-history
+        \item \textbf{XGB+E} = own-history + earnings
+        \item \textbf{XGB+LG} = own-history + leaf-graph
+        \item \textbf{VolTree} = đầy đủ (earnings + leaf-graph)
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% 4. Data & protocol
+\begin{frame}{Dữ liệu \& giao thức}
+  \begin{itemize}
+    \item Hai thị trường khác biệt cấu trúc:
+      \begin{itemize}
+        \item \textbf{S\&P~500}: 497 tickers (OHLCV daily, Yahoo Finance).
+        \item \textbf{HOSE}: 405 tickers (vnstock, crawl toàn bộ lịch sử từ ngày niêm yết).
+      \end{itemize}
+    \item Chỉ dùng \textbf{daily OHLC} (intraday bị hạn chế/tính phí); Parkinson tái tạo biên độ trong ngày từ high--low.
+    \item \textbf{Walk-forward} expanding window, \textbf{8 fold} bán niên từ 2022-07-01; validation = 22 ngày cuối train.
+    \item \textbf{Leak-free}: earnings dùng \emph{lịch cadence dự đoán tại forecast origin} (median khoảng cách các lần công bố trước), không dùng ngày thực tế (ex-post).
+    \item Embargo theo horizon; dự báo floor $10^{-8}$, cap $1.0$ đồng nhất mọi model.
+  \end{itemize}
+\end{frame}
+
+% 5. Result 1: endogenous strong
+\begin{frame}{Kết quả 1 --- Model own-history mạnh}
+  VolTree thắng GARCH, HAR và GNNHAR trên \textbf{QLIKE ở mọi horizon} (Table 1, trích).
+  \begin{center}
+  \footnotesize
+  \begin{tabular}{l cc cc}
+    \toprule
+     & \multicolumn{2}{c}{\textbf{S\&P~500 QLIKE}} & \multicolumn{2}{c}{\textbf{HOSE QLIKE}} \\
+    \cmidrule(lr){2-3}\cmidrule(lr){4-5}
+    Model & $h1$ & $h22$ & $h1$ & $h22$ \\
+    \midrule
+    GARCH   & 0.465 & 0.544 & 1.656 & 1.837 \\
+    HAR     & 0.370 & 0.485 & 1.812 & 1.835 \\
+    GNNHAR  & 0.375 & 0.476 & 1.682 & 1.810 \\
+    \textbf{VolTree} & \textbf{0.346} & \textbf{0.434} & \textbf{1.564} & \textbf{1.725} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item GNNHAR (graph học) không thắng: thua ở mọi horizon; ở $h1$ S\&P~500 còn thua cả HAR (0.375 vs 0.370).
+    \item Trên HOSE, own-history vượt HAR $\approx$ \textbf{13.5\%} QLIKE ở $h1$ (1.568 vs 1.812).
+  \end{itemize}
+\end{frame}
+
+% 6. Result 2: earnings modest on SP500
+\begin{frame}{Kết quả 2 --- Earnings: đòn bẩy khiêm tốn (chỉ S\&P~500)}
+  \begin{itemize}
+    \item Trên \textbf{S\&P~500}, earnings cắt thêm QLIKE \textbf{2.7--3.2\%} so với model own-history, ở mọi horizon:
+      \begin{itemize}
+        \item $h1$: 3.2\%, \; $h5$: 3.1\%, \; $h10$: 3.0\%, \; $h22$: 2.7\% \; (DM $p<0.001$ tất cả).
+      \end{itemize}
+    \item Là đòn bẩy \emph{đáng tin nhưng nhỏ} --- own-history vẫn làm phần lớn công việc.
+    \item \textbf{KHÔNG chuyển sang HOSE}: XGB+E nằm trong \textbf{0.02\%} của XGB (inert), khớp event study phẳng.
+    \item Nguyên nhân HOSE: earnings chỉ kích hoạt \textbf{5.6\%} quan sát test (0.84\% trước 2025) và phản ứng bị dập ($\approx$1.1$\times$ baseline).
+  \end{itemize}
+\end{frame}
+
+% 7. Result 3: leaf-graph helps HOSE
+\begin{frame}{Kết quả 3 --- Leaf-graph giúp HOSE}
+  \begin{itemize}
+    \item Trên \textbf{HOSE}, leaf-graph làm mượt lát cắt cùng ngày, giảm QLIKE ở horizon ngắn:
+      \begin{itemize}
+        \item $h1$: \textbf{+0.22\%} (DM $p<0.001$); \; $h5$: \textbf{+0.11\%} (DM $p<0.001$).
+        \item $h10$: 0.02\% ($p=0.48$), \; $h22$: 0.01\% ($p=0.85$) --- không ý nghĩa.
+      \end{itemize}
+    \item \textbf{Spike-robust}: loại các cửa sổ shock (COVID, 2022, tariff 04/2025) vẫn giữ ý nghĩa --- ex-spike $h1$ 0.23\%, $h5$ 0.09\% ($p<0.001$).
+    \item Trên \textbf{S\&P~500}: trọng số $\alpha \to 0$ (mean 0.00--0.10) $\Rightarrow$ graph \textbf{không đóng góp}.
+    \item Bản chất: khử nhiễu cross-sectional \emph{đặc thù thị trường mỏng}, không phải cơ chế graph phổ quát.
+  \end{itemize}
+\end{frame}
+
+% 8. Ablation 2x2
+\begin{frame}{Ablation 2$\times$2 (Table 2 --- tóm gọn)}
+  \begin{center}
+  \renewcommand{\arraystretch}{1.3}
+  \begin{tabular}{l|c|c}
+     & \textbf{S\&P~500} & \textbf{HOSE} \\
+    \hline
+    \textbf{Earnings (XGB+E)} & \cellcolor{green!15} đóng góp (2.7--3.2\%) & inert ($\approx$0.02\%) \\
+    \hline
+    \textbf{Leaf-graph (XGB+LG)} & $\alpha\to0$ (không giúp) & \cellcolor{green!15} giúp $h1$/$h5$ (sig) \\
+  \end{tabular}
+  \end{center}
+  \vspace{1em}
+  \begin{itemize}
+    \item S\&P~500: earnings đóng góp, leaf-graph $\alpha\to0$ (không giúp).
+    \item HOSE: earnings inert, leaf-graph là thành phần duy nhất giảm QLIKE.
+    \item Hai thành phần \textbf{bổ trợ theo thị trường}, không cộng dồn phổ quát.
+  \end{itemize}
+\end{frame}
+
+% 9. Why (discussion)
+\begin{frame}{Vì sao? (Discussion)}
+  \begin{itemize}
+    \item \textbf{Event study earnings}: median variance ngày công bố S\&P~500 tăng $\approx$\textbf{2.75$\times$} baseline; HOSE gần như \textbf{phẳng} ($\approx$1.1$\times$) --- lý giải vì sao earnings chỉ giúp S\&P~500 (giới hạn biên độ giá VN có thể dập phản ứng).
+    \item \textbf{Under-forecast vùng storm}: decile storm D9 chiếm \textbf{43\%} tổng QLIKE test; tỉ lệ forecast/realized rơi dưới 1 đúng ở vùng storm.
+    \item \textbf{HAR lags chi phối}: permutation importance xếp 3 HAR lag cao vượt trội mọi momentum/auxiliary term $\Rightarrow$ earnings là đòn bẩy tự nhiên cho phần dư own-history không chạm tới.
+  \end{itemize}
+\end{frame}
+
+% 10. Honesty & limitations
+\begin{frame}{Tính trung thực \& Limitations}
+  \begin{itemize}
+    \item VolTree là \textbf{framework hợp nhất}, giữ số gần bằng biến thể tốt nhất theo từng thị trường (không vượt trội thêm).
+    \item Earnings dùng \textbf{cadence-estimated} (leak-free); ngày thực tế chỉ cho \emph{upper bound} 8.7--11.2\% --- không point-in-time.
+    \item HOSE cadence rất nhiễu: sai số dự đoán ngày median \textbf{32 ngày} (S\&P~500 chỉ 2 ngày) $\Rightarrow$ chỉ khẳng định "không có giá trị earnings tăng thêm dưới dữ liệu hiện có", không phải null tuyệt đối.
+    \item GARCH chấm trên subset nhỏ hơn ($\sim$99.5\% S\&P~500, $\sim$98.6\% HOSE).
+    \item Chỉ \textbf{2 thị trường}, chỉ daily OHLC (Parkinson) --- có thể không chuyển sang intraday/implied vol.
+    \item Diagnostics regime: single split/seed (exploratory).
+  \end{itemize}
+\end{frame}
+
+% 11. Conclusion
+\begin{frame}{Kết luận}
+  \begin{itemize}
+    \item Model \textbf{own-history} (gamma-XGBoost) là baseline mạnh, minh bạch: thắng HAR, GARCH, GNNHAR trên QLIKE ở mọi horizon, cả 2 thị trường.
+    \item \textbf{Earnings} và \textbf{leaf-graph} mang lợi ích \textbf{ĐẶC THÙ THEO THỊ TRƯỜNG}, không phổ quát:
+      \begin{itemize}
+        \item Earnings $\to$ S\&P~500 (2.7--3.2\%); Leaf-graph $\to$ HOSE ($h1$ +0.22\%, $h5$ +0.11\%).
+      \end{itemize}
+    \item Thông điệp: một model endogenous mạnh + \emph{tín hiệu bên ngoài phù hợp thị trường} là yếu tố quyết định.
+    \item Đúng chuẩn định dạng SOICT (Springer LNCS, A4).
+  \end{itemize}
+  \vspace{0.5em}
+  \begin{center}
+    \textit{Hướng tương lai: mở rộng ngoài 2 thị trường, sang tín hiệu intraday / option-implied.}
+  \end{center}
+\end{frame}
+
+\end{document}
