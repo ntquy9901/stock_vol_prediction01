@@ -64,3 +64,7 @@ def test_fit_and_figures(tmp_path, monkeypatch):
     imp = B.fig_importance(te, bst, 5)
     assert len(imp) == len(B.OWN) == 8 and np.isfinite(imp).all()
     assert (tmp_path / "fig_feature_importance.pdf").exists()
+    qh2, qg2, contrib2, bg2, imp2 = B.fig_combined(te, bst, 5)          # 2x2 combined panel
+    assert len(qh2) == len(qg2) == len(contrib2) == len(bg2) == 10 and len(imp2) == 8
+    assert sum(contrib2) == pytest.approx(100.0, abs=1e-6)
+    assert (tmp_path / "fig_diagnostics_2x2.pdf").exists()

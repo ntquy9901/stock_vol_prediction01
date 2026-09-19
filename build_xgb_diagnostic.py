@@ -155,6 +155,46 @@ def fig_importance(te, bst, h):
     return imp
 
 
+def fig_combined(te, bst, h):
+    """Single 2x2 diagnostic panel for the restructured paper (Discussion): (a) per-decile QLIKE,
+    (b) loss share, (c) forecast bias, (d) permutation importance. Same quantities as the three separate
+    figures, one figure to save space."""
+    decs = range(10)
+    qh = [qlike(te[te.dec == d].y.values, te[te.dec == d].har.values).mean() for d in decs]
+    qg = [qlike(te[te.dec == d].y.values, te[te.dec == d].xgb.values).mean() for d in decs]
+    contrib = [q / sum(qg) * 100 for q in qg]
+    bg = [np.median(te[te.dec == d].xgb.values / np.maximum(te[te.dec == d].y.values, FL)) for d in decs]
+    sub = te.sample(min(20000, len(te)), random_state=0)
+    X = sub[OWN].to_numpy(float); y = np.maximum(sub["y"].to_numpy(float), FL)
+    base = _gamma_deviance(y, LG.predict_booster(bst, X)); rng = np.random.RandomState(0)
+    imp = np.zeros(len(OWN))
+    for j in range(len(OWN)):
+        reps = [_gamma_deviance(y, LG.predict_booster(bst, _perm(X, j, rng))) - base for _ in range(3)]
+        imp[j] = float(np.mean(reps))
+    order = np.argsort(imp)
+    fig, ax = plt.subplots(2, 2, figsize=(13, 8.4))
+    ax[0, 0].bar([x - 0.2 for x in decs], qh, 0.4, label=HAR_LABEL, color="tab:gray")
+    ax[0, 0].bar([x + 0.2 for x in decs], qg, 0.4, label=XGB_LABEL, color="tab:red")
+    ax[0, 0].set_xticks(list(decs)); ax[0, 0].set_xlabel("realized-vol decile (D0 calm .. D9 storm)")
+    ax[0, 0].set_ylabel("QLIKE"); ax[0, 0].legend(); ax[0, 0].set_title(f"(a) h{h} per-decile QLIKE")
+    ax[0, 1].bar(list(decs), contrib, color=["tab:red" if c > 12 else "tab:blue" for c in contrib])
+    ax[0, 1].set_xticks(list(decs)); ax[0, 1].set_xlabel("decile")
+    ax[0, 1].set_ylabel(f"% of {XGB_LABEL} total QLIKE"); ax[0, 1].set_title("(b) where the remaining error is")
+    ax[1, 0].plot(list(decs), bg, "o-", color="tab:red"); ax[1, 0].axhline(1, color="k", lw=.8)
+    ax[1, 0].set_yscale("log"); ax[1, 0].set_xticks(list(decs)); ax[1, 0].set_xlabel("decile")
+    ax[1, 0].set_ylabel("median forecast / realized"); ax[1, 0].set_title("(c) forecast bias by decile")
+    ax[1, 1].barh([OWN[i] for i in order], imp[order], color="tab:green")
+    ax[1, 1].set_xlabel("permutation importance (gamma deviance)"); ax[1, 1].set_title("(d) feature importance")
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "fig_diagnostics_2x2.png", dpi=110, bbox_inches="tight")
+    fig.savefig(FIGDIR / "fig_diagnostics_2x2.pdf", bbox_inches="tight"); plt.close(fig)
+    return qh, qg, contrib, bg, imp
+
+
+def _perm(X, j, rng):
+    Xs = X.copy(); Xs[:, j] = rng.permutation(Xs[:, j]); return Xs
+
+
 def main():  # pragma: no cover - entry driver: fits on the full S&P 500 panel and writes the three figures
     h = 5
     te, bst = fit("sp500_clean", h)
@@ -164,6 +204,7 @@ def main():  # pragma: no cover - entry driver: fits on the full S&P 500 panel a
     qh, qg, contrib = fig_decile(te, h)
     bg = fig_bias(te, h)
     imp = fig_importance(te, bst, h)
+    fig_combined(te, bst, h)                                 # 2x2 combined panel for the restructured paper
 
     print("\nPer-decile QLIKE (D0 calm .. D9 storm):")
     print("  decile :", " ".join(f"{d:>8d}" for d in range(10)))
