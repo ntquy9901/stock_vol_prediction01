@@ -66,7 +66,6 @@ def main():  # pragma: no cover - entry driver: builds both curves and writes th
     for ax, (mean, med, n, name) in zip(axs, [(sp_mean, sp_med, sp_n, "S&P 500"), (ho_mean, ho_med, ho_n, "HOSE")]):
         ax.plot(x, mean, "-o", ms=3, color="tab:red", label="mean")
         ax.plot(x, med, "-o", ms=3, color="tab:blue", label="median")
-        ax.axhline(1.0, color="0.6", lw=0.8, ls="--", label="baseline (ticker median)")
         ax.axvline(0, color="0.3", lw=1.0)
         for xv in (-5, 10):                                # green dotted lines mark the pre=5 / post=10 windows
             ax.axvline(xv, color="green", lw=0.8, ls=":")

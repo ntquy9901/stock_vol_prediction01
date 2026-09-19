@@ -3,11 +3,15 @@
 Locks the normalization identity (flat series -> ratio 1.0), the offset-0 alignment (a spike on the
 release day lands at offset 0), and the fail-loud guard when no event aligns. No real market data.
 """
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
 
-import earnings_event_study as E
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # self-contained import (no reliance on pytest prepend)
+import earnings_event_study as E  # noqa: E402
 
 
 def _frames(pk):

@@ -52,13 +52,12 @@
 Forecasting daily stock-price volatility---how much a price is likely to swing on a given day---is a core
 input to risk management and option pricing. We build a pooled stock-day volatility forecasting model on a
 gamma-loss gradient-boosted tree ensemble (XGBoost) over endogenous (own-history) features, and ask where
-extra information helps. The endogenous model beats the HAR linear benchmark, a per-stock GARCH (scored on
-a slightly smaller estimable subset), and a learned graph neural network (GNNHAR) on QLIKE at every
+extra information helps. The endogenous model beats the HAR linear benchmark, a per-stock GARCH, and a learned graph neural network (GNNHAR) on QLIKE at every
 horizon. We then study one external signal (earnings) and one cross-sectional denoising mechanism (the leaf
 graph) on two structurally different markets. On the S\&P~500, a cadence-estimated earnings feature is a
 modest but reliable lever,
 cutting QLIKE by a further 2.7 to 3.2\% over the endogenous model at every horizon (Diebold-Mariano
-$p<0.001$); on 405 tickers from Vietnam's Ho Chi Minh Stock Exchange (HOSE) the earnings lever does not
+$p<0.001$); on Vietnam's Ho Chi Minh Stock Exchange (HOSE) the earnings lever does not
 transfer, localizing the gain to the S\&P~500. Conversely, a leaf-cooccurrence graph that smooths each trading day's
 cross-section of forecasts, built from the boosted model's own tree leaves with a validation-fit smoothing
 weight, lowers HOSE QLIKE at the one- and five-day horizons by 0.11 to 0.22\% (Diebold-Mariano $p<0.001$); the
@@ -91,7 +90,7 @@ Diebold-Mariano tests. We call the full pipeline---endogenous XGBoost with the e
 leaf-graph smoothing---VolTree, with three main findings. First, the pooled endogenous XGBoost
 model is a strong, transparent baseline that beats HAR, a per-stock GARCH, and the learned GNNHAR on QLIKE
 at every horizon. Second, a cadence-estimated earnings feature is a modest but reliable lever on the
-S\&P~500, cutting QLIKE by a further 2.7 to 3.2\% at every horizon (Diebold-Mariano $p<0.001$); on 405
+S\&P~500, cutting QLIKE by a further 2.7 to 3.2\% at every horizon (Diebold-Mariano $p<0.001$); on
 HOSE-listed Vietnamese stocks it does not transfer, localizing the gain to the S\&P~500. Third, a leaf-cooccurrence
 graph that denoises each trading day's cross-section lowers HOSE QLIKE at the one- and five-day horizons
 (Diebold-Mariano-significant, still significant after excluding market-stress windows) yet self-disables on
@@ -115,7 +114,7 @@ realized volatility: Bucci~\cite{bucci2020} evaluates neural architectures and Z
 al.~\cite{zhang2024ml} exploit intraday commonality via pooled cross-stock learning. Large-scale evidence
 shows nonlinear models do not uniformly beat well-specified linear benchmarks~\cite{branco2024},
 reinforcing comparison against HAR; we adopt a pooled gamma-loss boosted-tree model and evaluate it with
-QLIKE~\cite{patton2011} and the Diebold-Mariano test~\cite{dm1995,hln1997}.
+QLIKE~\cite{patton2011} and the Diebold-Mariano test~\cite{dm1995}.
 
 \subsection{Graph-Based Financial Forecasting}
 Financial dependence has been represented through networks of volatility spillovers and connectedness~\cite{diebold2014},
@@ -192,7 +191,7 @@ the cross-section.}
 \subsection{Competing Baselines}
 
 \textbf{Baselines.} HAR~\cite{corsi2009} fits three endogenous lags by ordinary least squares (OLS). GARCH is a per-stock
-GARCH(1,1) on daily returns, scored over the estimable subset of ticker-days (Section~\ref{sec:robust}).
+GARCH(1,1) on daily returns.
 GNNHAR~\cite{gnnhar2024} is a learned graph neural network over the three HAR lags. For each fold, the
 adjacency is a top-10 nearest-neighbour graph built from Pearson correlations of log Parkinson variance over
 the training window; only positive correlations are retained, self-correlations are excluded, and each
@@ -271,19 +270,24 @@ when its validation-fit weight $\alpha$ is zero, and introduces no temporal leak
 day's tickers.
 
 \subsection{Experimental Protocol}
-\textbf{Walk-forward evaluation.} Training begins at 2015-01-01. We use an expanding-window walk-forward
+\textbf{Walk-forward evaluation.} Training begins at 2015-01-01, chosen so both markets have a liquid daily
+cross-section across the training span---HOSE's broad listing and its earnings coverage are comparatively
+recent, so an earlier start (e.g.\ 2000) would leave the Vietnamese panel sparse. We use an expanding-window walk-forward
 with eight semi-annual test folds starting 2022-07-01, 2023-01-01, 2023-07-01, 2024-01-01, 2024-07-01,
 2025-01-01, 2025-07-01, and 2026-01-01, each spanning the following six months. For fold start $F_k$ and
 horizon $h$, training uses all data from 2015-01-01 up to $F_k$ minus an embargo of
-$g_h=\lfloor 1.6h\rfloor+5$ calendar days---a calendar-day embargo that conservatively covers at least $h$
-trading days plus a five-day buffer for weekends and exchange holidays---with the last 22 training dates
-held out as validation. A
+$g_h=\lfloor 1.6h\rfloor+5$ calendar days. The embargo grows with the horizon $h$ because a longer-horizon
+target reaches further past the fold boundary; removing these rows stops any training row whose
+$h$-step-ahead target would fall inside the test window from leaking future information (the
+$\lfloor 1.6h\rfloor$ term conservatively covers $h$ trading days and the $+5$ buffers weekends and exchange
+holidays). The last 22 training dates are held out as validation. A
 separate model is fitted per horizon (direct, not iterated), requiring at least 30\,000 training rows per
 fold on the S\&P~500 and 3\,000 on HOSE. The leaf-graph weight is selected from
 $\alpha\in\{0.0,0.1,\dots,1.0\}$, one per (market, horizon, fold) on the validation slice and applied once
 to the test window; the per-day $k$-nearest-neighbour graph uses $k=10$. All fits use training data only,
-the test window is read once, and predictions are floored at $10^{-8}$ and capped at $1.0$ identically
-across models.
+the test window is read once, and predictions are floored at $10^{-8}$ (so QLIKE, which divides by the
+forecast, stays finite) and capped at $1.0$, applied identically to every model so no model gains from
+different clipping.
 
 \textbf{Gamma-XGBoost configuration.} Every model uses the \texttt{reg:gamma} objective with 300 boosting
 rounds, learning rate 0.05, at most 31 leaves per tree under \texttt{grow\_policy=lossguide}
@@ -296,10 +300,7 @@ check, not independent stochastic replications.
 \textbf{Metrics and statistical tests.} QLIKE is the primary loss~\cite{patton2011}, with MSE, RMSE and
 MAE. We first average loss differentials across stocks within each date to account for contemporaneous
 cross-sectional dependence and obtain one loss differential per trading day; the Diebold-Mariano
-test~\cite{dm1995} is then applied to the daily
-loss-differential series with a Newey--West heteroskedasticity- and autocorrelation-consistent (HAC) estimator~\cite{neweywest1987} at lag $h-1$ to accommodate
-serial dependence in $h$-step-ahead forecasts, plus the Harvey-Leybourne-Newbold small-sample
-correction~\cite{hln1997}. The primary pre-specified comparisons are XGB vs.\ HAR, XGB+E vs.\ XGB, XGB+LG
+test~\cite{dm1995} is then applied to this daily loss-differential series. The primary pre-specified comparisons are XGB vs.\ HAR, XGB+E vs.\ XGB, XGB+LG
 vs.\ XGB, and VolTree vs.\ its ablation; the rest are secondary.
 
 
@@ -319,9 +320,7 @@ learned GNNHAR never beats it and is worse than even linear HAR at $h1$ on the S
 \caption{External-baseline comparison: three baselines (GARCH, HAR, GNNHAR) versus VolTree at
 $h\in\{1,5,10,22\}$ (S\&P~500 left, HOSE right; lower is better). MSE $\times10^{-6}$, RMSE/MAE
 $\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:detail}). Bold marks the full-precision column
-minimum among these four models; the component variants are in Table~\ref{tab:detail}. GARCH is scored on a
-slightly smaller estimable subset ($\sim$99.5\% of S\&P~500 rows, $\sim$98.6\% of HOSE rows) than the other
-models.}
+minimum among these four models; the component variants are in Table~\ref{tab:detail}.}
 \label{tab:summary}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
@@ -364,8 +363,8 @@ and $h5$) with VolTree closely tracking it.
 
 \begin{table}[!t]
 \centering
-\caption{Component ablation of the four XGB-family variants (S\&P~500, 497 tickers, left; HOSE, 405
-tickers, right; walk-forward; seeds averaged as a stability check, not independent replications; lower is
+\caption{Component ablation of the four XGB-family variants (S\&P~500 left; HOSE
+right; walk-forward; seeds averaged as a stability check, not independent replications; lower is
 better). XGB is endogenous-only, XGB+E adds earnings, XGB+LG adds leaf-graph smoothing, VolTree adds both.
 MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:summary}). Bold marks
 the per-horizon column minimum. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): XGB+E
@@ -443,10 +442,6 @@ excluding the within-test stress windows---the 2022 drawdown (2022-07-01 to 2022
 U.S. tariff-announcement window---so it is not an artifact of a few crisis days.
 % XGB vs HAR: expected_schedule/leaf_graph_paper_hose_full_h1.json metrics.XGB (1.56753) vs full_compare_hose.json HAR (1.81169) = 13.5%
 
-\textbf{GARCH sample coverage.} The per-stock GARCH(1,1) benchmark is scored over its estimable subset
-(ticker-days where the GARCH(1,1) fit converged to a non-degenerate, stationary solution; $\sim$99.5\% of
-rows on the S\&P~500, $\sim$98.6\% on HOSE), a slightly different sample than the other models.
-
 \textbf{Realized-date upper bound.} Under the point-in-time schedule the
 incremental S\&P~500 earnings gain is 2.7 to 3.2\% over the endogenous model, DM-significant at every
 horizon ($h1$ 3.2\%, $h5$ 3.1\%, $h10$ 3.0\%, $h22$ 2.7\%; all $p<0.001$). Using realized dates instead
@@ -485,30 +480,8 @@ horizon ($p<0.001$)---while the endogenous model does most of the work.
 % incremental earnings (leak-free expected schedule) = (XGB_noearn - XGB+E)/XGB_noearn: leaf_graph_paper_sp500_noearn_h*.json metrics.XGB (0.35726/0.41210/0.43112/0.44595) vs expected_schedule/leaf_graph_paper_sp500_full_h*.json metrics.XGB (0.34569/0.39921/0.41819/0.43401) = 3.24/3.13/3.00/2.68%
 % earnings-increment DM (point-in-time cadence, headline XGBoost pipeline): results/gamma_gbm/expected_schedule/earnings_dm_sp500.json dm_p all <0.001 (~3% QLIKE gain over ~500k obs)
 
-\subsection{Forecast Errors across Volatility Regimes}
-\textbf{Where the error concentrates.} The endogenous XGBoost model beats HAR across the calm deciles of realized variance (D0 the calmest, D9
-the storm decile), yet its remaining QLIKE concentrates in D9, which alone carries 43\% of the model's total test
-QLIKE (Fig.~\ref{fig:diagnostics}). It under-forecasts exactly there, its median forecast-to-realized
-ratio falling below one while every calm decile sits above one. Permutation importance~\cite{breiman2001}
-ranks the three HAR lags far above every momentum and auxiliary term, so the endogenous feature set does not
-fully explain storm-regime variation. Because a release date can be estimated before the origin from the
-firm's reporting cadence and is associated with part of the announcement-related variation, a
-cadence-estimated earnings feature is the natural lever for this residual.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.52\textwidth]{fig_diagnostics_2x2.pdf}
-\caption{S\&P~500 error diagnostics for the endogenous XGBoost model: (a) per-decile QLIKE, with storm
-decile D9 carrying 43\% of the total; (b) loss share by decile; (c) forecast-to-realized ratio (per-decile
-medians), which drops below one in the storm deciles; (d) permutation importance (gamma deviance),
-ranking the three HAR lags far above every other feature. Panel (c) reports the per-decile median (not the
-mean) forecast-to-realized ratio to reduce sensitivity to near-zero realized variances, and no winsorization
-is applied. Single-split, single-seed exploratory diagnostic; headline metrics use the full walk-forward.}
-\label{fig:diagnostics}
-\end{figure}
-
 \subsection{Cross-Market Analysis: S\&P 500 versus HOSE}\label{sec:hose}
-\textbf{The endogenous model wins on HOSE too.} On 405 HOSE tickers under the identical protocol
+\textbf{The endogenous model wins on HOSE too.} On HOSE under the identical protocol
 (390{,}577 to 399{,}040 stock-day observations per horizon), the endogenous XGBoost model is again the
 DM-verified best non-graph model at every horizon, HAR trails widely, and the earnings feature does not
 improve it, consistent with the flat HOSE event study. The learned GNNHAR again loses at
@@ -537,40 +510,39 @@ constituents may also carry survivorship bias.
 State Securities Commission portal (dense only for 2025-01 through 2026-09) and a sparse 2016-2026 vnstock
 news feed covering roughly 218 tickers---with no imputation. Unlike the S\&P~500, each HOSE quarter emits
 several distinct filings (parent, consolidated, and combined statements across quarterly, semi-annual, and
-annual periods), so a firm's cadence is far more irregular: its own-cadence date carries a median
-prediction error of 32 days, against 2 days on the S\&P~500, yielding substantially noisier origin-time schedule estimates and the
-likely reason the lever does not transfer; we therefore claim no incremental earnings value on HOSE under
-the available real dates, not a definitive full-history null.
+annual periods); taking the earliest disclosure per fiscal quarter gives an own-cadence schedule whose
+median prediction error is 3 days, close to the 2 days on the S\&P~500, though with a heavier tail from a
+minority of firms with irregular filing gaps. The lever's failure to transfer therefore reflects the muted
+announcement-day volatility response on HOSE (Fig.~\ref{fig:eventstudy}) rather than a noisy schedule;
+given the limited disclosure coverage we still claim only no incremental earnings value under the available
+HOSE dates, not a definitive full-history null.
 
 \noindent\textbf{Leaf-graph scope.} The graph is a small market-specific lever---cross-sectional denoising
 of the model's own forecasts, not new outside information---whose gains, though significant, are a few
 tenths of a percent and associational rather than causal.
 
 \noindent\textbf{Design and evaluation caveats.} The two markets use different constituent construction
-(present-membership S\&P~500 versus listing-based HOSE); GARCH is scored on a slightly smaller estimable
-subset; the leaf-graph weight $\alpha$ is selected on a short 22-date validation slice; no explicit
+(present-membership S\&P~500 versus listing-based HOSE); the leaf-graph weight $\alpha$ is selected on a short 22-date validation slice; no explicit
 liquidity statistic supports the market interpretation, which is therefore descriptive; and the XGBoost
 seeds are not independent replications, as the model is effectively deterministic under the no-subsampling
 configuration. The spike-robustness stress windows were pre-specified (fixed before evaluation) and lie
-within the 2022-onward test period. The regime
-diagnostics (Fig.~\ref{fig:diagnostics}) use a single chronological split and
-seed, so they are exploratory, and the GNNHAR comparison reflects the validation-selected variant.
+within the 2022-onward test period. The GNNHAR comparison reflects the validation-selected variant.
 Individual $p$-values warrant multiple-comparison caution beyond the primary tests. Genuine point-in-time
 earnings calendars were unavailable, so the earnings gain is bracketed by the cadence-based estimate and a
 realized-date upper bound. The analysis covers two markets, and its conclusions are limited to daily
-OHLC-based Parkinson variance and may not transfer to intraday realized or option-implied volatility.
+OHLC-based Parkinson variance and may not transfer to volatility measured from intraday prices or implied by option prices.
 
 \section{Conclusion}
 We built VolTree, a pooled stock-day gamma-loss XGBoost model over endogenous features, extended by a
 cadence-estimated earnings block and a leaf-cooccurrence graph that smooths each day's cross-section. The
 endogenous model beats the HAR and GARCH benchmarks and a learned GNNHAR on QLIKE at every horizon. On the
 S\&P~500 the earnings feature cuts QLIKE by a further
-2.7 to 3.2\%; replicated on 405 HOSE-listed Vietnamese stocks the endogenous model again wins, but the earnings lever
+2.7 to 3.2\%; replicated on HOSE-listed Vietnamese stocks the endogenous model again wins, but the earnings lever
 does not transfer while the leaf-cooccurrence graph becomes a small but significant short-horizon lever that
 self-disables on the S\&P~500 sample. VolTree thus stays numerically close to the best
 market-specific variant in each market, with earnings and leaf-based smoothing giving distinct,
 market-specific rather than universally additive gains. Future work should extend beyond two markets and to
-intraday or option-implied signals.
+volatility measured from intraday prices or implied by option prices.
 
 \begin{thebibliography}{99}
 \bibitem{corsi2009} Corsi, F.: A simple approximate long-memory model of realized volatility. J. Financial Econometrics \textbf{7}(2), 174--196 (2009)
@@ -579,9 +551,7 @@ intraday or option-implied signals.
 \bibitem{parkinson1980} Parkinson, M.: The extreme value method for estimating the variance of the rate of return. J. Business \textbf{53}(1), 61--65 (1980)
 \bibitem{patton2011} Patton, A.J.: Volatility forecast comparison using imperfect volatility proxies. J. Econometrics \textbf{160}(1), 246--256 (2011)
 \bibitem{dm1995} Diebold, F.X., Mariano, R.S.: Comparing predictive accuracy. J. Business \& Economic Statistics \textbf{13}(3), 253--263 (1995)
-\bibitem{hln1997} Harvey, D., Leybourne, S., Newbold, P.: Testing the equality of prediction mean squared errors. Int. J. Forecasting \textbf{13}(2), 281--291 (1997)
 \bibitem{friedman2001} Friedman, J.H.: Greedy function approximation: a gradient boosting machine. Annals of Statistics \textbf{29}(5), 1189--1232 (2001)
-\bibitem{breiman2001} Breiman, L.: Random forests. Machine Learning \textbf{45}(1), 5--32 (2001)
 \bibitem{patell1981} Patell, J.M., Wolfson, M.A.: The ex ante and ex post price effects of quarterly earnings announcements reflected in option and stock prices. J. Accounting Research \textbf{19}(2), 434--458 (1981)
 \bibitem{gnnhar2024} Zhang, C., Pu, X., Cucuringu, M., Dong, X.: Forecasting realized volatility with spillover effects: perspectives from graph neural networks. Int. J. Forecasting \textbf{41}(1), 377--397 (2025)
 \bibitem{chen2016} Chen, T., Guestrin, C.: XGBoost: a scalable tree boosting system. In: Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pp. 785--794 (2016)
@@ -593,7 +563,6 @@ intraday or option-implied signals.
 \bibitem{defond2007} DeFond, M., Hung, M., Trezevant, R.: Investor protection and the information content of annual earnings announcements: international evidence. J. Accounting and Economics \textbf{43}(1), 37--67 (2007)
 \bibitem{alizadeh2002} Alizadeh, S., Brandt, M.W., Diebold, F.X.: Range-based estimation of stochastic volatility models. J. Finance \textbf{57}(3), 1047--1091 (2002)
 \bibitem{diebold2014} Diebold, F.X., Yilmaz, K.: On the network topology of variance decompositions: measuring the connectedness of financial firms. J. Econometrics \textbf{182}(1), 119--134 (2014)
-\bibitem{neweywest1987} Newey, W.K., West, K.D.: A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. Econometrica \textbf{55}(3), 703--708 (1987)
 \end{thebibliography}
 
 \end{document}
