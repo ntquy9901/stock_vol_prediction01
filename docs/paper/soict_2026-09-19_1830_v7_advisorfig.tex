@@ -26,24 +26,28 @@
 \usepackage{amssymb}
 \usepackage{placeins}
 \usepackage[utf8]{inputenc}
-\usepackage[T1,T5]{fontenc}
+\usepackage[T1]{fontenc}
 \setlength{\emergencystretch}{3em}   % absorb tight justified lines instead of overflowing the margin
 \pdfpagewidth=210mm \pdfpageheight=297mm   % A4 physical page (LNCS/CCIS text block unchanged)
-% Tighten spacing around floats to fit the page budget (typographic only; no content/number change).
-\setlength{\textfloatsep}{5pt plus 1pt minus 1pt}
-\setlength{\floatsep}{5pt plus 1pt minus 1pt}
-\setlength{\intextsep}{5pt plus 1pt minus 1pt}
-\setlength{\abovecaptionskip}{3pt}
-\setlength{\belowcaptionskip}{0pt}
+% % Tighten spacing around floats to fit the page budget (typographic only; no content/number change).
+% \setlength{\textfloatsep}{5pt plus 1pt minus 1pt}
+% \setlength{\floatsep}{5pt plus 1pt minus 1pt}
+% \setlength{\intextsep}{5pt plus 1pt minus 1pt}
+% \setlength{\abovecaptionskip}{3pt}
+% \setlength{\belowcaptionskip}{0pt}
 
 \begin{document}
 
-\title{VolTree: Earnings-Aware Gradient Boosting with Leaf-Graph Smoothing for Stock Volatility Forecasting}
+\title{VolTree: 
+Earnings-Aware Gradient Boosting with Leaf-Graph Smoothing for Stock Volatility Forecasting}
 \titlerunning{VolTree: Earnings-Aware Gradient Boosting}
 
 \author{Thanh-Quy Nguyen \and Trung-Hoang Le \and Duy-Hoang Tran}
 \authorrunning{T.-Q. Nguyen et al.}
-\institute{University of Science, Vietnam National University Ho Chi Minh City, Ho Chi Minh City, Vietnam \\ \email{lthoang@hcmus.edu.vn}}
+
+\institute{Faculty of Information Technology, University of Science, Ho Chi Minh City, Vietnam \and Vietnam National University, Ho Chi Minh City, Vietnam
+\email{24C12031@student.hcmus.edu.vn,  \{lthoang,tdhoang\}@fit.hcmus.edu.vn}
+}
 
 \maketitle
 \pagestyle{empty}\thispagestyle{empty}   % SOICT submission: no page numbers
@@ -370,11 +374,10 @@ and $h5$) with VolTree closely tracking it.
 
 \begin{table}[!t]
 \centering
-\caption{Component ablation of VolTree on the S\&P~500 (left) and HOSE (right), evaluated using
-walk-forward validation and averaged over three seeds (a stability check). VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
+\caption{Component ablation of VolTree on the S\&P~500 and HOSE, evaluated using
+walk-forward validation and averaged over three seeds. VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
 \emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
-excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGB baseline (these
-three variants are XGB+LG, XGB+E, and XGB in the text). MSE is reported in $10^{-6}$, RMSE and MAE in
+excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGB baseline. MSE is reported in $10^{-6}$, RMSE and MAE in
 $10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. Bold values indicate the minimum in each
 market--horizon column. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
 statistically significant improvement ($p<0.05$), whereas $^{\dagger}$ indicates a numerical but
