@@ -22,6 +22,12 @@ def test_offset_window_covers_pre5_post10_marks():
     assert E.OFFS == list(range(E.OFFS[0], E.OFFS[-1] + 1))   # contiguous day offsets, no gaps
 
 
+def test_event_figure_style_is_wide_and_large_font():
+    # Advisor: wide chart + large on-chart fonts. Single-sourced constants keep this testable.
+    assert E.EVENT_FONT >= 18
+    assert E.EVENT_FIGSIZE[0] > E.EVENT_FIGSIZE[1]           # wider than tall (2-panel layout)
+
+
 def _frames(pk):
     dates = pd.bdate_range("2023-01-02", periods=len(pk))
     df = pd.DataFrame({"date": dates.to_numpy(), "parkinson_variance": np.asarray(pk, float)})

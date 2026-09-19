@@ -20,6 +20,11 @@ import full_matrix as FM  # noqa: E402
 
 OFFS = list(range(-10, 16))
 
+# Figure styling (single-sourced so tweaks are testable, not buried in the pragma-only driver):
+# a wide 2-panel event-study canvas with large, print-legible on-chart fonts.
+EVENT_FIGSIZE = (21, 6.8)
+EVENT_FONT = 22
+
 
 def event_curve(market):
     frames, sect, edates = FM.load(market)
@@ -62,20 +67,20 @@ def main():  # pragma: no cover - entry driver: builds both curves and writes th
     sp_mean, sp_med, sp_n = event_curve("sp500")
     ho_mean, ho_med, ho_n = event_curve("hose")
     x = np.array(OFFS)
-    fig, axs = plt.subplots(1, 2, figsize=(17, 6.0))
+    fig, axs = plt.subplots(1, 2, figsize=EVENT_FIGSIZE)
     for ax, (mean, med, n, name) in zip(axs, [(sp_mean, sp_med, sp_n, "S&P 500"), (ho_mean, ho_med, ho_n, "HOSE")]):
         # Black-and-white safe: both series black, distinguished by line style + marker shape.
-        ax.plot(x, mean, color="black", linestyle="-", marker="o", ms=8, lw=2.5, label="mean")
-        ax.plot(x, med, color="black", linestyle="--", marker="s", ms=8, lw=2.5, label="median")
-        ax.axvline(0, color="black", lw=1.4)
+        ax.plot(x, mean, color="black", linestyle="-", marker="o", ms=9, lw=2.8, label="mean")
+        ax.plot(x, med, color="black", linestyle="--", marker="s", ms=9, lw=2.8, label="median")
+        ax.axvline(0, color="black", lw=1.5)
         for xv in (-5, 10):                                # dotted lines mark the pre=5 / post=10 feature windows
-            ax.axvline(xv, color="0.55", lw=1.2, ls=":")
-        ax.set_title(f"{name}  (n={n:,} earnings events)", fontsize=20)
-        ax.set_ylabel("pk / ticker-median (>1 = elevated)", fontsize=20)
-        ax.tick_params(axis="both", labelsize=18)
-        ax.legend(fontsize=20, framealpha=0.9, loc="upper right"); ax.grid(alpha=0.25)
+            ax.axvline(xv, color="0.55", lw=1.3, ls=":")
+        ax.set_title(f"{name}  (n={n:,} earnings events)", fontsize=EVENT_FONT)
+        ax.set_ylabel("pk / ticker-median (>1 = elevated)", fontsize=EVENT_FONT)
+        ax.tick_params(axis="both", labelsize=EVENT_FONT)
+        ax.legend(fontsize=EVENT_FONT, framealpha=0.9, loc="upper right"); ax.grid(alpha=0.25)
     # One shared x-label spanning both panels (full width) so it stays legible at large font.
-    fig.supxlabel("Trading days relative to announcement (0 = release)", fontsize=20)
+    fig.supxlabel("Trading days relative to announcement (0 = release)", fontsize=EVENT_FONT)
     plt.tight_layout()
     fig.savefig(REPO / "docs" / "paper" / "figures" / "fig_earnings_event_study.pdf", bbox_inches="tight")
     b64 = png(fig)
