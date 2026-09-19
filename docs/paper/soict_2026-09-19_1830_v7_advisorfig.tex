@@ -182,7 +182,7 @@ quantifies each one's contribution, which is market-specific.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.62\textwidth]{fig_architecture.pdf}
+\includegraphics[width=1\textwidth]{fig_architecture.pdf}
 \caption{VolTree architecture. Endogenous features ($\mathbb{R}^8$) and a cadence-estimated
 earnings block ($\mathbb{R}^4$) feed a gamma-loss gradient-boosted tree ensemble (XGBoost);
 a per-day leaf-cooccurrence graph then smooths the horizon-specific Parkinson-variance forecast across
@@ -370,17 +370,19 @@ and $h5$) with VolTree closely tracking it.
 
 \begin{table}[!t]
 \centering
-\caption{Leave-one-out ablation of VolTree (S\&P~500 left; HOSE
-right; walk-forward; seeds averaged as a stability check, not independent replications; all metrics
-lower-is-better, aggregated as in Table~\ref{tab:summary}). VolTree is the full model;
-\emph{VolTree w/o E} ($=$ XGB+LG in the text) removes the earnings block, \emph{VolTree w/o LG} ($=$ XGB+E)
-removes leaf-graph smoothing, and \emph{VolTree w/o E and LG} ($=$ XGB) is the endogenous-only model.
-MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:summary}). Bold marks
-the best (minimum) value in each market--horizon column. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): \emph{VolTree w/o LG}
-(earnings) and \emph{VolTree w/o E} (leaf-graph) are each tested against \emph{VolTree w/o E and LG}; VolTree is tested against \emph{VolTree w/o E} and \emph{VolTree w/o LG} separately. $^{\dagger}$
-marks a numerical improvement over the endogenous base that is not statistically significant, and no marker is shown
-when the full model does not improve either component. Tests use unrounded losses; baselines are in
-Table~\ref{tab:summary}.}
+\caption{Component ablation of VolTree on the S\&P~500 (left) and HOSE (right), evaluated using
+walk-forward validation and averaged over three seeds (a stability check: the gamma-loss XGBoost is
+effectively deterministic under the no-subsampling configuration, so the seeds coincide up to negligible
+variation). VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
+\emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
+excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGB baseline (these
+three variants are XGB+LG, XGB+E, and XGB in the text). MSE is reported in $10^{-6}$, RMSE and MAE in
+$10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. Bold values indicate the minimum in each
+market--horizon column. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
+statistically significant improvement ($p<0.05$), whereas $^{\dagger}$ indicates a numerical but
+statistically non-significant improvement over the endogenous-only baseline. Each single-component variant
+is compared with the endogenous-only baseline, while the full VolTree model is compared separately with the
+E-only and LG-only variants.}
 \label{tab:detail}
 \scriptsize
 \setlength{\tabcolsep}{3pt}
