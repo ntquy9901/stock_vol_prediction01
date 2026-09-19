@@ -104,6 +104,7 @@ def test_build_report_writes_html():
     assert out.exists()
     txt = out.read_text(encoding="utf-8")
     assert "Overnight SOTA research" in txt and "TreeSHAP" in txt
+    assert "Conclusions" in txt and "calibrated + interpretable" in txt   # synthesis section present
 
 
 def test_report_sections_both_branches():
