@@ -1,0 +1,356 @@
+{
+ "market": "hose",
+ "features": [
+  "har_daily",
+  "har_weekly",
+  "har_monthly",
+  "mr_change",
+  "mr_slope5",
+  "mr_slope10",
+  "mr_dev5",
+  "mr_z22",
+  "earn_prox",
+  "earn_soon",
+  "earn_pre",
+  "earn_post"
+ ],
+ "use_earn": true,
+ "horizons": {
+  "1": {
+   "n_test_rows": 48000,
+   "importance": {
+    "har_daily": {
+     "mean_abs": 0.12409696727991104,
+     "share": 0.13688238891852908,
+     "mean_signed": -0.05323158344253898
+    },
+    "har_weekly": {
+     "mean_abs": 0.4191048927605152,
+     "share": 0.4622842941770268,
+     "mean_signed": -0.2638310521724634
+    },
+    "har_monthly": {
+     "mean_abs": 0.23433717526495457,
+     "share": 0.2584803888908543,
+     "mean_signed": -0.11224574875086546
+    },
+    "mr_change": {
+     "mean_abs": 0.026277059223502874,
+     "share": 0.028984323461778965,
+     "mean_signed": 0.00019392920876271091
+    },
+    "mr_slope5": {
+     "mean_abs": 0.01842774194665253,
+     "share": 0.020326309299262935,
+     "mean_signed": -0.003921706127584912
+    },
+    "mr_slope10": {
+     "mean_abs": 0.01635327225085348,
+     "share": 0.018038111820112807,
+     "mean_signed": -0.010713290132116526
+    },
+    "mr_dev5": {
+     "mean_abs": 0.02591613680124283,
+     "share": 0.02858621604258811,
+     "mean_signed": -0.006391871604137123
+    },
+    "mr_z22": {
+     "mean_abs": 0.03234631544910371,
+     "share": 0.035678881026953116,
+     "mean_signed": -0.011161562753841281
+    },
+    "earn_prox": {
+     "mean_abs": 0.0037550415290752426,
+     "share": 0.004141914716003799,
+     "mean_signed": 0.0013250003539724275
+    },
+    "earn_soon": {
+     "mean_abs": 0.0,
+     "share": 0.0,
+     "mean_signed": 0.0
+    },
+    "earn_pre": {
+     "mean_abs": 0.0025352893135277554,
+     "share": 0.0027964942692961,
+     "mean_signed": 0.00012959081232111203
+    },
+    "earn_post": {
+     "mean_abs": 0.0034456772700650617,
+     "share": 0.003800677377594005,
+     "mean_signed": 0.0004683085026044864
+    }
+   },
+   "ranking": [
+    "har_weekly",
+    "har_monthly",
+    "har_daily",
+    "mr_z22",
+    "mr_change",
+    "mr_dev5",
+    "mr_slope5",
+    "mr_slope10",
+    "earn_prox",
+    "earn_post",
+    "earn_pre",
+    "earn_soon"
+   ],
+   "group_share": {
+    "HAR": 0.8574127443134785,
+    "momentum": 0.1319119909312576,
+    "earnings": 0.010675271652871743
+   }
+  },
+  "5": {
+   "n_test_rows": 48000,
+   "importance": {
+    "har_daily": {
+     "mean_abs": 0.07400613464415073,
+     "share": 0.10021454290494089,
+     "mean_signed": -0.03324896970298141
+    },
+    "har_weekly": {
+     "mean_abs": 0.12547018099576235,
+     "share": 0.16990398021935252,
+     "mean_signed": -0.04685289040207863
+    },
+    "har_monthly": {
+     "mean_abs": 0.4285414330661297,
+     "share": 0.580304376617579,
+     "mean_signed": -0.2506499132141471
+    },
+    "mr_change": {
+     "mean_abs": 0.02226840751245618,
+     "share": 0.030154503958519197,
+     "mean_signed": -0.001430120893928688
+    },
+    "mr_slope5": {
+     "mean_abs": 0.017193406471051276,
+     "share": 0.023282250569634913,
+     "mean_signed": -0.003512106071866583
+    },
+    "mr_slope10": {
+     "mean_abs": 0.011674128123559058,
+     "share": 0.015808384255461907,
+     "mean_signed": -0.003993743972387165
+    },
+    "mr_dev5": {
+     "mean_abs": 0.024917722214013338,
+     "share": 0.033742042520079174,
+     "mean_signed": -0.014651804231107235
+    },
+    "mr_z22": {
+     "mean_abs": 0.020137896644882858,
+     "share": 0.02726949754959787,
+     "mean_signed": -0.008749650500249118
+    },
+    "earn_prox": {
+     "mean_abs": 0.0048482151760254055,
+     "share": 0.006565153957930499,
+     "mean_signed": 0.001986086652323138
+    },
+    "earn_soon": {
+     "mean_abs": 0.0,
+     "share": 0.0,
+     "mean_signed": 0.0
+    },
+    "earn_pre": {
+     "mean_abs": 0.002717405470320955,
+     "share": 0.0036797428808440576,
+     "mean_signed": 0.0009372366439492907
+    },
+    "earn_post": {
+     "mean_abs": 0.006702066122670658,
+     "share": 0.00907552456605994,
+     "mean_signed": 0.0025487239254289307
+    }
+   },
+   "ranking": [
+    "har_monthly",
+    "har_weekly",
+    "har_daily",
+    "mr_dev5",
+    "mr_change",
+    "mr_z22",
+    "mr_slope5",
+    "mr_slope10",
+    "earn_post",
+    "earn_prox",
+    "earn_pre",
+    "earn_soon"
+   ],
+   "group_share": {
+    "HAR": 0.8505015540868044,
+    "momentum": 0.13035335391759872,
+    "earnings": 0.01914509729249403
+   }
+  },
+  "10": {
+   "n_test_rows": 48000,
+   "importance": {
+    "har_daily": {
+     "mean_abs": 0.07300262153148651,
+     "share": 0.1095548490854014,
+     "mean_signed": -0.02465800325444434
+    },
+    "har_weekly": {
+     "mean_abs": 0.0661074360832572,
+     "share": 0.09920726176114608,
+     "mean_signed": -0.03296720125945285
+    },
+    "har_monthly": {
+     "mean_abs": 0.4292892962694168,
+     "share": 0.6442333587498562,
+     "mean_signed": -0.23413143306970596
+    },
+    "mr_change": {
+     "mean_abs": 0.017402202589437366,
+     "share": 0.026115441314900012,
+     "mean_signed": -0.005278234282741323
+    },
+    "mr_slope5": {
+     "mean_abs": 0.016694385092705488,
+     "share": 0.025053221391728872,
+     "mean_signed": -0.010878998786211014
+    },
+    "mr_slope10": {
+     "mean_abs": 0.01256564015056938,
+     "share": 0.018857224322599713,
+     "mean_signed": 0.0012116986690671183
+    },
+    "mr_dev5": {
+     "mean_abs": 0.01837835693731904,
+     "share": 0.027580353670411936,
+     "mean_signed": -0.009450654673855752
+    },
+    "mr_z22": {
+     "mean_abs": 0.016834396752528846,
+     "share": 0.02526333653472451,
+     "mean_signed": -0.0009488194664299954
+    },
+    "earn_prox": {
+     "mean_abs": 0.006245966855203733,
+     "share": 0.009373306627339834,
+     "mean_signed": 0.0027796852300525643
+    },
+    "earn_soon": {
+     "mean_abs": 0.0,
+     "share": 0.0,
+     "mean_signed": 0.0
+    },
+    "earn_pre": {
+     "mean_abs": 0.0025637740327510983,
+     "share": 0.003847449192300235,
+     "mean_signed": 0.0006727901518388535
+    },
+    "earn_post": {
+     "mean_abs": 0.0072727499064058065,
+     "share": 0.010914197349591141,
+     "mean_signed": 0.0029914007973275147
+    }
+   },
+   "ranking": [
+    "har_monthly",
+    "har_daily",
+    "har_weekly",
+    "mr_dev5",
+    "mr_change",
+    "mr_z22",
+    "mr_slope5",
+    "mr_slope10",
+    "earn_post",
+    "earn_prox",
+    "earn_pre",
+    "earn_soon"
+   ],
+   "group_share": {
+    "HAR": 0.8531633457168937,
+    "momentum": 0.12298817560076714,
+    "earnings": 0.02384848201472778
+   }
+  },
+  "22": {
+   "n_test_rows": 48000,
+   "importance": {
+    "har_daily": {
+     "mean_abs": 0.04464808339253068,
+     "share": 0.07802712759880018,
+     "mean_signed": -0.01150105423585046
+    },
+    "har_weekly": {
+     "mean_abs": 0.06046998919919133,
+     "share": 0.10567753875707708,
+     "mean_signed": -0.03622090685530566
+    },
+    "har_monthly": {
+     "mean_abs": 0.3667128346860409,
+     "share": 0.6408684756432855,
+     "mean_signed": -0.1850467473268509
+    },
+    "mr_change": {
+     "mean_abs": 0.014847692218609154,
+     "share": 0.025947872501128278,
+     "mean_signed": -0.006329950439976528
+    },
+    "mr_slope5": {
+     "mean_abs": 0.019840033957734704,
+     "share": 0.03467250425006316,
+     "mean_signed": -0.005263570317765698
+    },
+    "mr_slope10": {
+     "mean_abs": 0.011720198555849493,
+     "share": 0.020482254975216482,
+     "mean_signed": -0.005893816007301211
+    },
+    "mr_dev5": {
+     "mean_abs": 0.01962596969678998,
+     "share": 0.03429840489049533,
+     "mean_signed": -0.010632963385432959
+    },
+    "mr_z22": {
+     "mean_abs": 0.016430585645139217,
+     "share": 0.02871414191254551,
+     "mean_signed": -0.0023916301176996058
+    },
+    "earn_prox": {
+     "mean_abs": 0.006187578430399299,
+     "share": 0.010813431059778006,
+     "mean_signed": 0.0030027590728423093
+    },
+    "earn_soon": {
+     "mean_abs": 0.0,
+     "share": 0.0,
+     "mean_signed": 0.0
+    },
+    "earn_pre": {
+     "mean_abs": 0.0036802358081331477,
+     "share": 0.0064315913959907675,
+     "mean_signed": 0.0011380952164472546
+    },
+    "earn_post": {
+     "mean_abs": 0.008049114388995804,
+     "share": 0.014066657015619679,
+     "mean_signed": 0.003127669006062206
+    }
+   },
+   "ranking": [
+    "har_monthly",
+    "har_weekly",
+    "har_daily",
+    "mr_slope5",
+    "mr_dev5",
+    "mr_z22",
+    "mr_change",
+    "mr_slope10",
+    "earn_post",
+    "earn_prox",
+    "earn_pre",
+    "earn_soon"
+   ],
+   "group_share": {
+    "HAR": 0.8249477306380868,
+    "momentum": 0.14429118460975587,
+    "earnings": 0.030761097732465714
+   }
+  }
+ }
+}
