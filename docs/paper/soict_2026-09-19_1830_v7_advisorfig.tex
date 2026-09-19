@@ -178,11 +178,13 @@ per-day leaf-cooccurrence graph then smooths the forecasts across each day's cro
 (Figure~\ref{fig:arch}: features $\rightarrow$ gamma-XGBoost $\rightarrow$ leaf similarity $\rightarrow$
 graph smoothing $\rightarrow$ forecast).
 
-The ablation design isolates each component through four variants: \textbf{XGB} uses the endogenous
-block only; \textbf{XGB+E} adds the earnings block; \textbf{XGB+LG} adds leaf-graph smoothing to the
-endogenous model (no earnings, isolating the graph); and \textbf{VolTree}, the full proposed model,
-adds both the earnings block and leaf-graph smoothing. VolTree uses both components; the ablation
-quantifies each one's contribution, which is market-specific.
+The ablation follows a leave-one-out design from the full model, matching the rows of
+Table~\ref{tab:detail}: \textbf{VolTree} uses both the earnings block and leaf-graph smoothing;
+\textbf{VolTree w/o E} removes the earnings block (endogenous features and leaf-graph only);
+\textbf{VolTree w/o LG} removes leaf-graph smoothing (endogenous features and earnings only); and
+\textbf{VolTree w/o E and LG} is the endogenous-only model. We call the two single-component variants the
+\emph{earnings variant} (VolTree w/o LG) and the \emph{leaf-graph variant} (VolTree w/o E). The ablation
+quantifies each component's contribution, which is market-specific.
 
 \begin{figure}[t]
 \centering
@@ -208,11 +210,11 @@ trained with Adam (learning rate $10^{-3}$, weight decay $10^{-5}$, gradient cli
 20 and at most 120 epochs with early stopping on validation QLIKE (patience 15), run as a three-seed
 ensemble; we report the validation-selected variant, with remaining settings following the published
 implementation. The XGBoost hyperparameters were pre-specified (not tuned per fold).
-All baselines share the XGBoost model's target, protocol, and positivity floor. The XGB, XGB+E, and XGB+LG variants (Section~\ref{sec:voltree}) are ablations of VolTree, not
+All baselines share the XGBoost model's target, protocol, and positivity floor. The three ablation variants (Section~\ref{sec:voltree}) are reduced forms of VolTree, not
 external baselines.
 
 \subsection{Feature Construction}
-\textbf{Endogenous features (8 features, used by XGB).} Every endogenous feature is observable at the
+\textbf{Endogenous features (8 features, used by all variants).} Every endogenous feature is observable at the
 forecast origin $t$. The three HAR lags capture short, medium, and long memory of realized variance
 over one day, one trading week (5 trading days), and one trading month (22 days):
 \begin{align}
@@ -233,7 +235,7 @@ standardized 22-day level:
 where $\mu_{22},\sigma_{22}$ are the trailing 22-day mean and standard deviation of $\ell_i$, together
 summarizing the stock's short-run acceleration and regime level.
 
-\textbf{Cadence-estimated earnings features (4 features, used by XGB+E).} Each earnings feature is evaluated
+\textbf{Cadence-estimated earnings features (4 features, used by the earnings-bearing variants).} Each earnings feature is evaluated
 at the target day $t+h$ from a cadence-estimated earnings schedule; any release between $t$ and $t+h$ that
 the feature uses is a predicted (origin-time) date, never a realized future date. For the headline results
 the release date is a point-in-time estimate predicted at the forecast origin from the firm's own past
@@ -255,7 +257,7 @@ $\mathrm{dist}=\min(\mathrm{nxt},\mathrm{prv})$:
 \mathrm{earn\_post} &= \max\!\Big(0,\,1-\tfrac{\mathrm{prv}}{10}\Big).
 \end{align}
 These give a symmetric triangular proximity, a sharp $\pm 3$-day flag, a pre-announcement run-up, and a
-longer post-announcement decay. Away from any release all four are zero, so XGB+E reduces to XGB on ordinary
+longer post-announcement decay. Away from any release all four are zero, so the earnings block is inactive on ordinary
 days and activates only in a local window of 5 calendar days before to 10 calendar days after the expected
 release (about 15 calendar days).
 
@@ -271,7 +273,7 @@ mean over its neighbours. The graph is a directed $k$-NN---each stock keeps its 
 same-day peers and is excluded from its own neighbour set---and is not symmetrized. The leaf indices come
 from a single fitted booster (the first seed) and the smoothed base forecast is the seed-averaged
 prediction; the booster is effectively deterministic, so the two coincide up to negligible seed variation. The weight $\alpha\in[0,1]$ is selected from a grid on the validation slice only,
-one value per (market, horizon, fold), and applied once to the test window; XGB+LG and VolTree each fit
+one value per (market, horizon, fold), and applied once to the test window; the two leaf-graph variants (VolTree and VolTree w/o E) each fit
 their own $\alpha$ on their respective base forecast. The graph is therefore causal, adds no smoothing
 when its validation-fit weight $\alpha$ is zero, and introduces no temporal leakage since it spans only the same
 day's tickers.
@@ -309,8 +311,7 @@ check, not independent stochastic replications.
 \textbf{Metrics and statistical tests.} QLIKE is the primary loss~\cite{patton2011}, with MSE, RMSE and
 MAE. We first average loss differentials across stocks within each date to account for contemporaneous
 cross-sectional dependence and obtain one loss differential per trading day; the Diebold-Mariano
-test~\cite{dm1995} is then applied to this daily loss-differential series. The primary pre-specified comparisons are XGB vs.\ HAR, XGB+E vs.\ XGB, XGB+LG
-vs.\ XGB, and VolTree vs.\ its ablation; the rest are secondary.
+test~\cite{dm1995} is then applied to this daily loss-differential series. The primary pre-specified comparisons are the endogenous model vs.\ HAR, the earnings increment and the leaf-graph increment over the endogenous model, and VolTree vs.\ its single-component ablations; the rest are secondary.
 
 
 \section{Empirical Results}
@@ -319,7 +320,7 @@ vs.\ XGB, and VolTree vs.\ its ablation; the rest are secondary.
 Table~\ref{tab:summary} summarises the headline metrics. Against the three external baselines in
 Table~\ref{tab:summary} (GARCH, HAR, GNNHAR), VolTree achieves the lowest QLIKE at every horizon in
 both markets. The component ablation (Table~\ref{tab:detail}), however, shows that the market-specific
-variants XGB+E (S\&P~500) and XGB+LG (HOSE) attain marginally lower QLIKE than the full model. VolTree also posts the best value on all four metrics
+single-component variants---the earnings variant on the S\&P~500 and the leaf-graph variant on HOSE---attain marginally lower QLIKE than the full model. VolTree also posts the best value on all four metrics
 everywhere except the S\&P~500 ten-day horizon, where linear HAR edges it on the squared-error metrics; the
 learned GNNHAR never beats it and is worse than even linear HAR at $h1$ on the S\&P~500 (QLIKE 0.375 against
 0.370). Table~\ref{tab:detail} then isolates which component drives this.
@@ -365,11 +366,11 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 \end{table}
 
 \subsection{Component Ablation}
-Table~\ref{tab:detail} isolates the four XGB-family variants. The endogenous XGB already beats HAR and
-GARCH on QLIKE at every horizon. On the S\&P~500 the earnings block drives the further improvement---XGB+E
-carries the bolded QLIKE in every block---while leaf-graph smoothing self-disables. On HOSE the pattern
-reverses: the earnings block is inert (XGB+E indistinguishable from XGB) and the leaf-graph is the only
-component that lowers QLIKE, so XGB+LG attains the lowest HOSE QLIKE at every horizon (significantly at $h1$
+Table~\ref{tab:detail} isolates each component. The endogenous model (VolTree w/o E and LG) already beats HAR and
+GARCH on QLIKE at every horizon. On the S\&P~500 the earnings block drives the further improvement---the
+earnings variant carries the bolded QLIKE in every block---while leaf-graph smoothing self-disables. On HOSE the pattern
+reverses: the earnings block is inert (the earnings variant is indistinguishable from the endogenous model) and the leaf-graph is the only
+component that lowers QLIKE, so the leaf-graph variant attains the lowest HOSE QLIKE at every horizon (significantly at $h1$
 and $h5$) with VolTree closely tracking it.
 
 \begin{table}[!t]
@@ -377,7 +378,7 @@ and $h5$) with VolTree closely tracking it.
 \caption{Component ablation of VolTree on the S\&P~500 and HOSE, evaluated using
 walk-forward validation and averaged over three seeds. VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
 \emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
-excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGB baseline. MSE is reported in $10^{-6}$, RMSE and MAE in
+excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGBoost model. MSE is reported in $10^{-6}$, RMSE and MAE in
 $10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. Bold values indicate the minimum in each
 market--horizon column. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
 statistically significant improvement ($p<0.05$), whereas $^{\dagger}$ indicates a numerical but
@@ -429,9 +430,9 @@ lowers HOSE QLIKE relative to the unsmoothed model at the one- and five-day
 horizons: the gain is 0.22\% ($h1$, DM $p<0.001$) and 0.11\% ($h5$, DM $p<0.001$), and is not
 significant at $h10$ (0.02\%, DM $p=0.48$) or $h22$ (0.01\%, DM $p=0.85$).
 % gains + DM: expected_schedule/leaf_graph_paper_hose_full_h{1,5,10,22}.json gain_pct / dm.XGB+leafgraph_vs_XGB
-The lever is endogenous denoising, not earnings: the no-earnings ablation XGB+LG (leaf-graph on the
-endogenous model, Table~\ref{tab:detail}) gains 0.22\% at $h1$ and 0.12\% at $h5$ (both DM $p<0.001$) over
-XGB, matching the rounded VolTree values at $h1$ and $h5$ because the HOSE earnings block is effectively
+The lever is endogenous denoising, not earnings: the no-earnings ablation (the leaf-graph variant, VolTree w/o E in
+Table~\ref{tab:detail}) gains 0.22\% at $h1$ and 0.12\% at $h5$ (both DM $p<0.001$) over
+the endogenous model, matching the rounded VolTree values at $h1$ and $h5$ because the HOSE earnings block is effectively
 inert.
 % no-earn: leaf_graph_paper_hose_noearn_h{1,5}.json gain_pct / dm
 The weight $\alpha$ varies by fold: the mean validation-selected $\alpha$ ranges 0.22 to 0.35 across
@@ -482,11 +483,11 @@ on the S\&P~500.}
 \label{fig:eventstudy}
 \end{figure}
 
-\textbf{The earnings feature is the lever.} In Table~\ref{tab:detail}, XGB+E posts the lowest S\&P~500
+\textbf{The earnings feature is the lever.} In Table~\ref{tab:detail}, the earnings variant posts the lowest S\&P~500
 QLIKE at every horizon, gaining 6.5 to 10.6\% over HAR ($h1$ 6.5\%, $h5$ 8.5\%, $h10$ 9.4\%, $h22$ 10.6\%),
 % XGB+E QLIKE (leaf_graph_paper_sp500_full_h*.json) vs HAR (full_compare_sp500.json)
-decomposing into an endogenous-nonlinearity component (XGB over HAR: $h1$ 3.4\%, $h5$ 5.6\%, $h10$ 6.6\%,
-$h22$ 8.1\%, the horizon-growing share) and an incremental earnings component (XGB+E over XGB: $h1$ 3.2\%,
+decomposing into an endogenous-nonlinearity component (the endogenous model over HAR: $h1$ 3.4\%, $h5$ 5.6\%, $h10$ 6.6\%,
+$h22$ 8.1\%, the horizon-growing share) and an incremental earnings component (adding earnings to the endogenous model: $h1$ 3.2\%,
 $h5$ 3.1\%, $h10$ 3.0\%, $h22$ 2.7\%). Earnings are a reliable but modest lever---DM-significant at every
 horizon ($p<0.001$)---while the endogenous model does most of the work.
 % incremental earnings (leak-free expected schedule) = (XGB_noearn - XGB+E)/XGB_noearn: leaf_graph_paper_sp500_noearn_h*.json metrics.XGB (0.35726/0.41210/0.43112/0.44595) vs expected_schedule/leaf_graph_paper_sp500_full_h*.json metrics.XGB (0.34569/0.39921/0.41819/0.43401) = 3.24/3.13/3.00/2.68%
@@ -499,8 +500,8 @@ improve it, consistent with the flat HOSE event study. The learned GNNHAR again 
 every horizon (QLIKE worse by 4.9 to 7.3\%, DM $p<0.001$).
 % GNNHAR (gnnhar_hose.json) vs XGB+E (leaf_graph_paper_hose_full_h{1,22}.json): (1.68233-1.56753)/1.56753=7.3%, (1.81018-1.72533)/1.72533=4.9%
 
-\textbf{Earnings does not transfer to Vietnam.} Using the point-in-time expected schedule, XGB+E is within
-0.02\% of XGB at every horizon. The HOSE earnings event study (Fig.~\ref{fig:eventstudy}) shows no
+\textbf{Earnings does not transfer to Vietnam.} Using the point-in-time expected schedule, the earnings variant is within
+0.02\% of the endogenous model at every horizon. The HOSE earnings event study (Fig.~\ref{fig:eventstudy}) shows no
 announcement-day spike, unlike the S\&P~500; one possible explanation, not directly tested here, is that
 Vietnam's daily price limits may delay or dampen the announcement-day adjustment.
 
