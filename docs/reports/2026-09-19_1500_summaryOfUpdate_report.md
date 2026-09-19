@@ -83,5 +83,23 @@ run was informational E702 semicolons = house style, not a blocking F-code.)
 - Paper: 14 pages, body <= 12, 0 Overfull, 0 undefined refs/citations, 18 bibitems all cited,
   0 residual HAC/Newey-West/HLN. Slides: 11 pages, compiles clean.
 
+## Layout + caption pass (pushed 06ee30ea)
+11. **Figure 1 no longer splits a sentence.** The architecture figure ([t]) had floated into §3.4 and
+    split the GNNHAR sentence ("...Pearson correlations of log Parkinson" | "variance over the training
+    window"). Added `\FloatBarrier` after the figure block / before §3.4 so the figure resolves before
+    the GNNHAR paragraph (placeins already loaded). Fig 1 lands on page 5; body still <= 12.
+12. **Table 1 caption made self-contained:** metrics are lower-is-better; aggregation stated (mean loss
+    over all test stock-day observations pooled across the eight folds, per market and horizon); bold =
+    best (minimum) value in each market-horizon column.
+13. **Table 2 caption:** variant definitions were already present (XGB / +E / +LG / VolTree); tied
+    "VolTree adds both (the full model)" and aligned the bold wording to per market-horizon, so a
+    reviewer need not consult Fig 1 to decode +E / +LG / full.
+
+## Push log (this session)
+- aae93f12 — review-5 advisor fixes + earnings-DM regression test.
+- 77d07cdb — §5.2/Fig3 removal, single-source ticker counts, Fig 2 baseline, cadence 32->3d,
+  GARCH-subset + HAC/HLN removal, walk-forward clarifications, event-study test fix, slide subtitle.
+- 06ee30ea — Fig 1 FloatBarrier + Table 1/2 caption self-containment.
+
 ## Follow-ups (low priority)
-- Independent visual PDF QA of Fig 2 (baseline removed) before EasyChair upload.
+- Independent visual PDF QA of Fig 1 (no sentence split) and Fig 2 (baseline removed) before EasyChair upload.
