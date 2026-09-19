@@ -370,15 +370,14 @@ and $h5$) with VolTree closely tracking it.
 
 \begin{table}[!t]
 \centering
-\caption{Leave-one-out ablation of VolTree (S\&P~500 left; HOSE
+\caption{Component ablation of the four XGB-family variants (S\&P~500 left; HOSE
 right; walk-forward; seeds averaged as a stability check, not independent replications; all metrics
-lower-is-better, aggregated as in Table~\ref{tab:summary}). Rows are VolTree (the full model) and its three
-leave-one-out ablations: \emph{w/o E} ($=$ XGB+LG, leaf-graph only), \emph{w/o LG} ($=$ XGB+E, earnings
-only), and \emph{w/o E and LG} ($=$ XGB, endogenous-only).
+lower-is-better, aggregated as in Table~\ref{tab:summary}). XGB is endogenous-only, XGB+E adds earnings,
+XGB+LG adds leaf-graph smoothing, and VolTree adds both (the full model).
 MSE $\times10^{-6}$, RMSE/MAE $\times10^{-3}$, QLIKE unscaled (as in Table~\ref{tab:summary}). Bold marks
-the best (minimum) value in each market--horizon column. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): \emph{w/o LG}
-(earnings) and \emph{w/o E} (leaf-graph) are each tested against \emph{w/o E and LG}; VolTree is tested against \emph{w/o E} and \emph{w/o LG} separately. $^{\dagger}$
-marks a numerical improvement over the endogenous base that is not statistically significant, and no marker is shown
+the best (minimum) value in each market--horizon column. For QLIKE significance ($^{*}$, $p<0.05$, Section~\ref{sec:robust}): XGB+E
+and XGB+LG are each tested against XGB; VolTree is tested against XGB+E and XGB+LG separately. $^{\dagger}$
+marks a numerical improvement over XGB that is not statistically significant, and no marker is shown
 when the full model does not improve either component. Tests use unrounded losses; baselines are in
 Table~\ref{tab:summary}.}
 \label{tab:detail}
@@ -393,25 +392,25 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 % Table 2 ablation rows: QLIKE to 4 dp; bold = numerical column min; ^* = DM-significant improvement over
 % the ablation base (earnings for XGB+E, leaf-graph for XGB+LG/VolTree); ^\dagger = numerical min, not sig.
 % Source: leaf_graph_paper_{mkt}_noearn (XGB, XGB+LG) + expected_schedule/leaf_graph_paper_{mkt}_full (XGB+E, VolTree).
-1 & VolTree       & 0.555 & 0.745 & \textbf{0.207} & 0.3458 & \textbf{0.533} & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640} \\
-1 & w/o E         & 0.557 & 0.746 & 0.209 & 0.3573 & 0.534 & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640$^{*}$} \\
-1 & w/o LG        & \textbf{0.554} & \textbf{0.744} & 0.208 & \textbf{0.3457$^{*}$} & 0.534 & 0.731 & 0.392 & 1.5675 \\
-1 & w/o E and LG  & 0.558 & 0.747 & 0.209 & 0.3573 & 0.534 & 0.731 & 0.392 & 1.5675 \\
+1 & XGB      & 0.558 & 0.747 & 0.209 & 0.3573 & 0.534 & 0.731 & 0.392 & 1.5675 \\
+1 & XGB+E    & \textbf{0.554} & \textbf{0.744} & 0.208 & \textbf{0.3457$^{*}$} & 0.534 & 0.731 & 0.392 & 1.5675 \\
+1 & XGB+LG   & 0.557 & 0.746 & 0.209 & 0.3573 & 0.534 & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640$^{*}$} \\
+1 & VolTree  & 0.555 & 0.745 & \textbf{0.207} & 0.3458 & \textbf{0.533} & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640} \\
 \midrule
-5 & VolTree       & 0.612 & \textbf{0.782} & \textbf{0.225} & 0.3995 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455} \\
-5 & w/o E         & 0.613 & 0.783 & 0.226 & 0.4122 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455$^{*}$} \\
-5 & w/o LG        & \textbf{0.611} & \textbf{0.782} & \textbf{0.225} & \textbf{0.3992$^{*}$} & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
-5 & w/o E and LG  & 0.613 & 0.783 & 0.226 & 0.4121 & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
+5 & XGB      & 0.613 & 0.783 & 0.226 & 0.4121 & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
+5 & XGB+E    & \textbf{0.611} & \textbf{0.782} & \textbf{0.225} & \textbf{0.3992$^{*}$} & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
+5 & XGB+LG   & 0.613 & 0.783 & 0.226 & 0.4122 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455$^{*}$} \\
+5 & VolTree  & 0.612 & \textbf{0.782} & \textbf{0.225} & 0.3995 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455} \\
 \midrule
-10 & VolTree       & 0.629 & \textbf{0.793} & \textbf{0.231} & 0.4184 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & 1.6815 \\
-10 & w/o E         & 0.631 & 0.794 & 0.232 & 0.4312 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & \textbf{1.6814$^{\dagger}$} \\
-10 & w/o LG        & \textbf{0.628} & \textbf{0.793} & \textbf{0.231} & \textbf{0.4182$^{*}$} & 0.595 & \textbf{0.771} & 0.439 & 1.6818 \\
-10 & w/o E and LG  & 0.631 & 0.794 & 0.232 & 0.4311 & 0.595 & \textbf{0.771} & 0.439 & 1.6816 \\
+10 & XGB      & 0.631 & 0.794 & 0.232 & 0.4311 & 0.595 & \textbf{0.771} & 0.439 & 1.6816 \\
+10 & XGB+E    & \textbf{0.628} & \textbf{0.793} & \textbf{0.231} & \textbf{0.4182$^{*}$} & 0.595 & \textbf{0.771} & 0.439 & 1.6818 \\
+10 & XGB+LG   & 0.631 & 0.794 & 0.232 & 0.4312 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & \textbf{1.6814$^{\dagger}$} \\
+10 & VolTree  & 0.629 & \textbf{0.793} & \textbf{0.231} & 0.4184 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & 1.6815 \\
 \midrule
-22 & VolTree       & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340} & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & 1.7252 \\
-22 & w/o E         & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & \textbf{1.7250$^{\dagger}$} \\
-22 & w/o LG        & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340$^{*}$} & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7253 \\
-22 & w/o E and LG  & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7251 \\
+22 & XGB      & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7251 \\
+22 & XGB+E    & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340$^{*}$} & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7253 \\
+22 & XGB+LG   & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & \textbf{1.7250$^{\dagger}$} \\
+22 & VolTree  & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340} & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & 1.7252 \\
 \bottomrule
 \end{tabular}
 \end{table}
