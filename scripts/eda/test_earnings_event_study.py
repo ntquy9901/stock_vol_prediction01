@@ -19,6 +19,7 @@ def test_offset_window_covers_pre5_post10_marks():
     and contain no duplicate offsets."""
     assert E.OFFS[0] <= -5 and E.OFFS[-1] >= 10
     assert 0 in E.OFFS and len(E.OFFS) == len(set(E.OFFS))
+    assert E.OFFS == list(range(E.OFFS[0], E.OFFS[-1] + 1))   # contiguous day offsets, no gaps
 
 
 def _frames(pk):
