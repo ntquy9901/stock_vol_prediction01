@@ -368,7 +368,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 \subsection{Component Ablation}
 Table~\ref{tab:detail} isolates each component. The endogenous model (VolTree w/o E and LG) already beats HAR and
 GARCH on QLIKE at every horizon. On the S\&P~500 the earnings block drives the further improvement---the
-earnings variant carries the bolded QLIKE in every block---while leaf-graph smoothing self-disables. On HOSE the pattern
+earnings variant has the lowest QLIKE in every block---while leaf-graph smoothing self-disables. On HOSE the pattern
 reverses: the earnings block is inert (the earnings variant is indistinguishable from the endogenous model) and the leaf-graph is the only
 component that lowers QLIKE, so the leaf-graph variant attains the lowest HOSE QLIKE at every horizon (significantly at $h1$
 and $h5$) with VolTree closely tracking it.
@@ -379,8 +379,7 @@ and $h5$) with VolTree closely tracking it.
 walk-forward validation and averaged over three seeds. VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
 \emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
 excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGBoost model. MSE is reported in $10^{-6}$, RMSE and MAE in
-$10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. Bold values indicate the minimum in each
-market--horizon column. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
+$10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
 statistically significant improvement ($p<0.05$), whereas $^{\dagger}$ indicates a numerical but
 statistically non-significant improvement over the endogenous-only baseline. Each single-component variant
 is compared with the endogenous-only baseline, while the full VolTree model is compared separately with the
@@ -397,25 +396,25 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 % Table 2 ablation rows: QLIKE to 4 dp; bold = numerical column min; ^* = DM-significant improvement over
 % the ablation base (earnings for XGB+E, leaf-graph for XGB+LG/VolTree); ^\dagger = numerical min, not sig.
 % Source: leaf_graph_paper_{mkt}_noearn (XGB, XGB+LG) + expected_schedule/leaf_graph_paper_{mkt}_full (XGB+E, VolTree).
-1 & VolTree              & 0.555 & 0.745 & \textbf{0.207} & 0.3458 & \textbf{0.533} & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640} \\
-1 & VolTree w/o E        & 0.557 & 0.746 & 0.209 & 0.3573 & 0.534 & \textbf{0.730} & \textbf{0.390} & \textbf{1.5640$^{*}$} \\
-1 & VolTree w/o LG       & \textbf{0.554} & \textbf{0.744} & 0.208 & \textbf{0.3457$^{*}$} & 0.534 & 0.731 & 0.392 & 1.5675 \\
+1 & VolTree              & 0.555 & 0.745 & 0.207 & 0.3458 & 0.533 & 0.730 & 0.390 & 1.5640 \\
+1 & VolTree w/o E        & 0.557 & 0.746 & 0.209 & 0.3573 & 0.534 & 0.730 & 0.390 & 1.5640$^{*}$ \\
+1 & VolTree w/o LG       & 0.554 & 0.744 & 0.208 & 0.3457$^{*}$ & 0.534 & 0.731 & 0.392 & 1.5675 \\
 1 & VolTree w/o E and LG & 0.558 & 0.747 & 0.209 & 0.3573 & 0.534 & 0.731 & 0.392 & 1.5675 \\
 \midrule
-5 & VolTree              & 0.612 & \textbf{0.782} & \textbf{0.225} & 0.3995 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455} \\
-5 & VolTree w/o E        & 0.613 & 0.783 & 0.226 & 0.4122 & \textbf{0.578} & \textbf{0.760} & \textbf{0.423} & \textbf{1.6455$^{*}$} \\
-5 & VolTree w/o LG       & \textbf{0.611} & \textbf{0.782} & \textbf{0.225} & \textbf{0.3992$^{*}$} & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
-5 & VolTree w/o E and LG & 0.613 & 0.783 & 0.226 & 0.4121 & \textbf{0.578} & \textbf{0.760} & 0.425 & 1.6474 \\
+5 & VolTree              & 0.612 & 0.782 & 0.225 & 0.3995 & 0.578 & 0.760 & 0.423 & 1.6455 \\
+5 & VolTree w/o E        & 0.613 & 0.783 & 0.226 & 0.4122 & 0.578 & 0.760 & 0.423 & 1.6455$^{*}$ \\
+5 & VolTree w/o LG       & 0.611 & 0.782 & 0.225 & 0.3992$^{*}$ & 0.578 & 0.760 & 0.425 & 1.6474 \\
+5 & VolTree w/o E and LG & 0.613 & 0.783 & 0.226 & 0.4121 & 0.578 & 0.760 & 0.425 & 1.6474 \\
 \midrule
-10 & VolTree              & 0.629 & \textbf{0.793} & \textbf{0.231} & 0.4184 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & 1.6815 \\
-10 & VolTree w/o E        & 0.631 & 0.794 & 0.232 & 0.4312 & \textbf{0.594} & \textbf{0.771} & \textbf{0.438} & \textbf{1.6814$^{\dagger}$} \\
-10 & VolTree w/o LG       & \textbf{0.628} & \textbf{0.793} & \textbf{0.231} & \textbf{0.4182$^{*}$} & 0.595 & \textbf{0.771} & 0.439 & 1.6818 \\
-10 & VolTree w/o E and LG & 0.631 & 0.794 & 0.232 & 0.4311 & 0.595 & \textbf{0.771} & 0.439 & 1.6816 \\
+10 & VolTree              & 0.629 & 0.793 & 0.231 & 0.4184 & 0.594 & 0.771 & 0.438 & 1.6815 \\
+10 & VolTree w/o E        & 0.631 & 0.794 & 0.232 & 0.4312 & 0.594 & 0.771 & 0.438 & 1.6814$^{\dagger}$ \\
+10 & VolTree w/o LG       & 0.628 & 0.793 & 0.231 & 0.4182$^{*}$ & 0.595 & 0.771 & 0.439 & 1.6818 \\
+10 & VolTree w/o E and LG & 0.631 & 0.794 & 0.232 & 0.4311 & 0.595 & 0.771 & 0.439 & 1.6816 \\
 \midrule
-22 & VolTree              & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340} & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & 1.7252 \\
-22 & VolTree w/o E        & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & \textbf{0.458} & \textbf{1.7250$^{\dagger}$} \\
-22 & VolTree w/o LG       & \textbf{0.621} & \textbf{0.788} & \textbf{0.234} & \textbf{0.4340$^{*}$} & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7253 \\
-22 & VolTree w/o E and LG & 0.623 & 0.789 & 0.236 & 0.4459 & \textbf{0.621} & \textbf{0.788} & 0.459 & 1.7251 \\
+22 & VolTree              & 0.621 & 0.788 & 0.234 & 0.4340 & 0.621 & 0.788 & 0.458 & 1.7252 \\
+22 & VolTree w/o E        & 0.623 & 0.789 & 0.236 & 0.4459 & 0.621 & 0.788 & 0.458 & 1.7250$^{\dagger}$ \\
+22 & VolTree w/o LG       & 0.621 & 0.788 & 0.234 & 0.4340$^{*}$ & 0.621 & 0.788 & 0.459 & 1.7253 \\
+22 & VolTree w/o E and LG & 0.623 & 0.789 & 0.236 & 0.4459 & 0.621 & 0.788 & 0.459 & 1.7251 \\
 \bottomrule
 \end{tabular}
 \end{table}
