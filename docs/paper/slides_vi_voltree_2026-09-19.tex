@@ -1,6 +1,6 @@
 % !TEX program = pdflatex
 % Beamer slide deck (Vietnamese) summarizing the VolTree paper for the advisor.
-% Numbers taken verbatim from soict_2026-09-19_1230_v4_review4.tex. Do NOT invent numbers.
+% Numbers taken verbatim from soict_2026-09-19_1430_v6_review5.tex. Do NOT invent numbers.
 \documentclass[aspectratio=169]{beamer}
 
 \usetheme{Metropolis}
@@ -33,7 +33,7 @@
     \item Mục tiêu: dự báo \textbf{Parkinson variance} theo ngày (phương sai từ biên độ high--low), cho từng cổ phiếu, ở các horizon $h \in \{1,5,10,22\}$ ngày.
     \item Biến động là thước đo rủi ro chuẩn: chi phối \textbf{định giá quyền chọn}, yêu cầu vốn và ngân sách rủi ro danh mục.
     \item Loss chính: \textbf{QLIKE} (chuẩn học thuật cho biến động); báo cáo thêm MSE, RMSE, MAE.
-    \item Kiểm định ý nghĩa thống kê: \textbf{Diebold-Mariano} (HAC Newey-West, hiệu chỉnh HLN small-sample).
+    \item Kiểm định ý nghĩa thống kê: \textbf{Diebold-Mariano} (date-clustered theo ngày giao dịch).
     \item Câu hỏi nghiên cứu: model own-history mạnh tới đâu, và \emph{thông tin bên ngoài nào} thực sự giúp thêm?
   \end{itemize}
 \end{frame}
@@ -68,7 +68,7 @@
     \item Chỉ dùng \textbf{daily OHLC} (intraday bị hạn chế/tính phí); Parkinson tái tạo biên độ trong ngày từ high--low.
     \item \textbf{Walk-forward} expanding window, \textbf{8 fold} bán niên từ 2022-07-01; validation = 22 ngày cuối train.
     \item \textbf{Leak-free}: earnings dùng \emph{lịch cadence dự đoán tại forecast origin} (median khoảng cách các lần công bố trước), không dùng ngày thực tế (ex-post).
-    \item Embargo theo horizon; dự báo floor $10^{-8}$, cap $1.0$ đồng nhất mọi model.
+    \item Embargo tăng theo horizon (chống leakage); floor $10^{-8}$ (giữ QLIKE hữu hạn) và cap $1.0$ áp \textbf{đồng nhất} mọi model.
   \end{itemize}
 \end{frame}
 
@@ -105,7 +105,7 @@
       \end{itemize}
     \item Là đòn bẩy \emph{đáng tin nhưng nhỏ} --- own-history vẫn làm phần lớn công việc.
     \item \textbf{KHÔNG chuyển sang HOSE}: XGB+E nằm trong \textbf{0.02\%} của XGB (inert), khớp event study phẳng.
-    \item Nguyên nhân HOSE: earnings chỉ kích hoạt \textbf{5.6\%} quan sát test (0.84\% trước 2025) và phản ứng bị dập ($\approx$1.1$\times$ baseline).
+    \item Nguyên nhân HOSE: event study cho thấy \textbf{không có spike ngày công bố} (median $\approx$1.08$\times$ baseline, phẳng), khác hẳn S\&P~500 --- giới hạn biên độ giá VN có thể dập phản ứng.
   \end{itemize}
 \end{frame}
 
@@ -146,21 +146,20 @@
 % 9. Why (discussion)
 \begin{frame}{Vì sao? (Discussion)}
   \begin{itemize}
-    \item \textbf{Event study earnings}: median variance ngày công bố S\&P~500 tăng $\approx$\textbf{2.75$\times$} baseline; HOSE gần như \textbf{phẳng} ($\approx$1.1$\times$) --- lý giải vì sao earnings chỉ giúp S\&P~500 (giới hạn biên độ giá VN có thể dập phản ứng).
-    \item \textbf{Under-forecast vùng storm}: decile storm D9 chiếm \textbf{43\%} tổng QLIKE test; tỉ lệ forecast/realized rơi dưới 1 đúng ở vùng storm.
-    \item \textbf{HAR lags chi phối}: permutation importance xếp 3 HAR lag cao vượt trội mọi momentum/auxiliary term $\Rightarrow$ earnings là đòn bẩy tự nhiên cho phần dư own-history không chạm tới.
+    \item \textbf{Event study earnings}: median variance ngày công bố S\&P~500 tăng $\approx$\textbf{2.75$\times$} baseline; HOSE gần như \textbf{phẳng} ($\approx$1.08$\times$) --- lý giải vì sao earnings chỉ giúp S\&P~500 (giới hạn biên độ giá VN có thể dập phản ứng).
+    \item \textbf{Leaf-graph} giúp HOSE (khử nhiễu cross-sectional ở thị trường mỏng) nhưng $\alpha\to0$ trên S\&P~500 (không đóng góp).
+    \item Thông điệp: tín hiệu bên ngoài chỉ giúp khi \textbf{khớp cấu trúc thị trường} --- không có cơ chế phổ quát; own-history đã ở frontier QLIKE.
   \end{itemize}
 \end{frame}
 
 % 10. Honesty & limitations
 \begin{frame}{Tính trung thực \& Limitations}
   \begin{itemize}
-    \item VolTree là \textbf{framework hợp nhất}, giữ số gần bằng biến thể tốt nhất theo từng thị trường (không vượt trội thêm).
+    \item VolTree là \textbf{mô hình hợp nhất}, giữ số gần bằng biến thể tốt nhất theo từng thị trường (không vượt trội thêm).
     \item Earnings dùng \textbf{cadence-estimated} (leak-free); ngày thực tế chỉ cho \emph{upper bound} 8.7--11.2\% --- không point-in-time.
-    \item HOSE cadence rất nhiễu: sai số dự đoán ngày median \textbf{32 ngày} (S\&P~500 chỉ 2 ngày) $\Rightarrow$ chỉ khẳng định "không có giá trị earnings tăng thêm dưới dữ liệu hiện có", không phải null tuyệt đối.
-    \item GARCH chấm trên subset nhỏ hơn ($\sim$99.5\% S\&P~500, $\sim$98.6\% HOSE).
-    \item Chỉ \textbf{2 thị trường}, chỉ daily OHLC (Parkinson) --- có thể không chuyển sang intraday/implied vol.
-    \item Diagnostics regime: single split/seed (exploratory).
+    \item Lịch earnings HOSE: sai số dự đoán ngày median \textbf{3 ngày} (S\&P~500 2 ngày; đuôi nặng hơn) --- lịch \textbf{không nhiễu}; earnings không transfer là do phản ứng ngày công bố bị dập, không phải lịch xấu. Chỉ khẳng định "không có giá trị earnings tăng thêm dưới dữ liệu hiện có", không phải null tuyệt đối.
+    \item Chỉ \textbf{2 thị trường}, chỉ daily OHLC (Parkinson) --- có thể không chuyển sang biến động từ giá intraday hoặc từ giá quyền chọn.
+    \item Cửa sổ stress (spike-robustness) là kiểm định độ nhạy pre-specified, không phải test chính.
   \end{itemize}
 \end{frame}
 
@@ -177,7 +176,7 @@
   \end{itemize}
   \vspace{0.5em}
   \begin{center}
-    \textit{Hướng tương lai: mở rộng ngoài 2 thị trường, sang tín hiệu intraday / option-implied.}
+    \textit{Hướng tương lai: mở rộng ngoài 2 thị trường, sang biến động từ giá intraday hoặc từ giá quyền chọn.}
   \end{center}
 \end{frame}
 
