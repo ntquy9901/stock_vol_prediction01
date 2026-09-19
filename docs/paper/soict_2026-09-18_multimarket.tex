@@ -304,8 +304,9 @@ walk-forward, 3-seed ensembles). Lower is better on every metric. MSE $\times10^
 $\times10^{-3}$; QLIKE unscaled (same scaling as Table~\ref{tab:summary}). GARCH is a per-stock
 GARCH(1,1) benchmark; all its metrics (including the squared-error columns) are scored over its
 estimable subset ($\sim$99.5\% of rows on the S\&P~500, $\sim$98.6\% on HOSE), a slightly different
-sample than the other models. XGB is the endogenous model, XGB+E adds the earnings block, and
-VolTree adds leaf-graph smoothing. Bold marks the best value in each metric column per horizon within
+sample than the other models. XGB is the endogenous model, XGB+E adds the earnings block, XGB+LG adds leaf-graph smoothing to the
+endogenous model (no earnings, isolating the graph from earnings), and VolTree adds both. Bold marks the
+best value in each metric column per horizon within
 each market; the QLIKE bold additionally requires a significant date-clustered Diebold-Mariano test
 ($p<0.05$). Where the column-minimum QLIKE is not a DM-significant improvement, the bold falls back to the
 lowest DM-significant model, so a numerically lower but non-significant value (HOSE VolTree at $h10$/$h22$)
@@ -323,6 +324,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 1 & HAR      & 0.575 & 0.759 & 0.213 & 0.370 & 0.660 & 0.813 & 0.519 & 1.812 \\ % SP500 full_compare_sp500.json h1 metrics.HAR (mse 5.7541e-7, rmse 7.5856e-4, mae 2.1318e-4, qlike 0.36970) | HOSE full_compare_hose.json h1 metrics.HAR (mse 6.6038e-7, rmse 8.1264e-4, mae 5.1928e-4, qlike 1.81169)
 1 & GNNHAR   & 0.576 & 0.759 & 0.212 & 0.375 & 0.585 & 0.765 & 0.438 & 1.682 \\ % SP500 gnnhar_sp500.json metrics.GNNHAR_h1 (mse 5.7598e-7, rmse 7.5893e-4, mae 2.1209e-4, qlike 0.37494) | HOSE gnnhar_hose.json metrics.GNNHAR_h1 (mse 5.8472e-7, rmse 7.6467e-4, mae 4.3832e-4, qlike 1.68233)
 1 & XGB      & 0.558 & 0.747 & 0.209 & 0.357 & 0.534 & 0.731 & 0.392 & 1.568 \\ % SP500 leaf_graph_paper_sp500_noearn_h1.json metrics.XGB (n_folds=8; mse 5.5753e-7, rmse 7.4668e-4, mae 2.0927e-4, qlike 0.35726) | HOSE leaf_graph_paper_hose_noearn_h1.json metrics.XGB
+1 & XGB+LG   & 0.557 & 0.746 & 0.209 & 0.357 & 0.534 & 0.730 & 0.390 & 1.564 \\ % SP500 leaf_graph_paper_sp500_noearn_h1.json metrics.XGB+leafgraph (leaf on endogenous only; SP500 inert DM p=0.70) | HOSE leaf_graph_paper_hose_noearn_h1.json metrics.XGB+leafgraph (DM +0.224% p=2.1e-4, spike-robust; == VolTree since HOSE earnings inert)
 1 & XGB+E    & 0.541 & 0.736 & 0.202 & \textbf{0.317} & 0.535 & 0.731 & 0.393 & 1.569 \\ % SP500 leaf_graph_sp500_h1.json metrics.XGB | HOSE leaf_graph_hose_h1.json metrics.XGB
 1 & VolTree & \textbf{0.541} & \textbf{0.735} & \textbf{0.202} & 0.317 & \textbf{0.534} & \textbf{0.731} & \textbf{0.391} & \textbf{1.565} \\ % SP500 leaf_graph_sp500_h1.json metrics.XGB+leafgraph (leaf inert, DM p=0.66) | HOSE leaf_graph_hose_h1.json metrics.XGB+leafgraph (DM +0.25% p=3.6e-4, spike-robust)
 \midrule
@@ -330,6 +332,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 5 & HAR      & 0.614 & 0.784 & 0.230 & 0.436 & 0.663 & 0.814 & 0.523 & 1.822 \\ % SP500 full_compare_sp500.json h5 metrics.HAR (mse 6.1406e-7, rmse 7.8362e-4, mae 2.2967e-4, qlike 0.43635) | HOSE full_compare_hose.json h5 metrics.HAR (mse 6.6264e-7, rmse 8.1403e-4, mae 5.2273e-4, qlike 1.82180)
 5 & GNNHAR   & 0.638 & 0.799 & 0.233 & 0.446 & 0.616 & 0.785 & 0.469 & 1.744 \\ % SP500 gnnhar_sp500.json metrics.GNNHAR_h5 (mse 6.3789e-7, rmse 7.9868e-4, mae 2.3298e-4, qlike 0.44618) | HOSE gnnhar_hose.json metrics.GNNHAR_h5 (mse 6.1615e-7, rmse 7.8495e-4, mae 4.6865e-4, qlike 1.74387)
 5 & XGB      & 0.613 & 0.783 & 0.226 & 0.412 & 0.578 & 0.760 & 0.425 & 1.647 \\ % SP500 leaf_graph_paper_sp500_noearn_h5.json metrics.XGB (n_folds=8; mse 6.1307e-7, rmse 7.8299e-4, mae 2.2620e-4, qlike 0.41210) | HOSE leaf_graph_paper_hose_noearn_h5.json metrics.XGB
+5 & XGB+LG   & 0.613 & 0.783 & 0.226 & 0.412 & 0.578 & 0.760 & 0.423 & 1.646 \\ % SP500 leaf_graph_paper_sp500_noearn_h5.json metrics.XGB+leafgraph (SP500 inert DM p=0.14) | HOSE leaf_graph_paper_hose_noearn_h5.json metrics.XGB+leafgraph (DM +0.116% p=6.4e-5, spike-robust; == VolTree)
 5 & XGB+E    & \textbf{0.599} & \textbf{0.774} & 0.219 & \textbf{0.371} & 0.579 & 0.761 & 0.426 & 1.651 \\ % SP500 leaf_graph_sp500_h5.json metrics.XGB | HOSE leaf_graph_hose_h5.json metrics.XGB
 5 & VolTree & 0.599 & 0.774 & \textbf{0.218} & 0.371 & \textbf{0.578} & \textbf{0.760} & \textbf{0.424} & \textbf{1.647} \\ % SP500 leaf_graph_sp500_h5.json metrics.XGB+leafgraph | HOSE leaf_graph_hose_h5.json metrics.XGB+leafgraph (DM +0.26% p=3.1e-5, spike-robust)
 \midrule
@@ -337,6 +340,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 10 & HAR      & 0.621 & 0.788 & 0.236 & 0.461 & 0.666 & 0.816 & 0.525 & 1.828 \\ % SP500 full_compare_sp500.json h10 metrics.HAR (mse 6.2137e-7, rmse 7.8827e-4, mae 2.3561e-4, qlike 0.46150) | HOSE full_compare_hose.json h10 metrics.HAR (mse 6.6598e-7, rmse 8.1607e-4, mae 5.2496e-4, qlike 1.82766)
 10 & GNNHAR   & 0.660 & 0.812 & 0.243 & 0.477 & 0.628 & 0.792 & 0.483 & 1.767 \\ % SP500 gnnhar_sp500.json metrics.GNNHAR_h10 (mse 6.6005e-7, rmse 8.1244e-4, mae 2.4258e-4, qlike 0.47666) | HOSE gnnhar_hose.json metrics.GNNHAR_h10 (mse 6.2772e-7, rmse 7.9229e-4, mae 4.8264e-4, qlike 1.76702)
 10 & XGB      & 0.631 & 0.794 & 0.232 & 0.431 & 0.595 & 0.771 & \textbf{0.439} & \textbf{1.682} \\ % SP500 leaf_graph_paper_sp500_noearn_h10.json metrics.XGB (n_folds=8; mse 6.3082e-7, rmse 7.9424e-4, mae 2.3245e-4, qlike 0.43112) | HOSE leaf_graph_paper_hose_noearn_h10.json metrics.XGB (n_folds=8; mse 5.9463e-7, rmse 7.711e-4, mae 4.389e-4=0.438897 min, qlike 1.6816=1.681571 min)
+10 & XGB+LG   & 0.631 & 0.794 & 0.232 & 0.431 & 0.594 & 0.771 & 0.438 & 1.681 \\ % SP500 leaf_graph_paper_sp500_noearn_h10.json metrics.XGB+leafgraph (SP500 inert) | HOSE leaf_graph_paper_hose_noearn_h10.json metrics.XGB+leafgraph (DM +0.011% p=0.61 NS)
 10 & XGB+E    & \textbf{0.616} & \textbf{0.785} & 0.225 & \textbf{0.392} & 0.595 & 0.771 & 0.441 & 1.684 \\ % SP500 leaf_graph_sp500_h10.json metrics.XGB | HOSE leaf_graph_hose_h10.json metrics.XGB
 10 & VolTree & 0.617 & 0.786 & \textbf{0.225} & 0.392 & \textbf{0.595} & \textbf{0.771} & 0.439 & 1.682 \\ % SP500 leaf_graph_sp500_h10.json metrics.XGB+leafgraph | HOSE leaf_graph_hose_h10.json metrics.XGB+leafgraph (mse 5.9462e-7/rmse 7.7111e-4 min; MAE 0.439102>XGB 0.438897 so MAE bold=XGB; leaf DM vs XGB+E +0.12% p=4.6e-3, spike-robust)
 \midrule
@@ -344,6 +348,7 @@ $h$ & Model & MSE & RMSE & MAE & QLIKE & MSE & RMSE & MAE & QLIKE \\
 22 & HAR      & 0.633 & 0.795 & 0.242 & 0.485 & 0.672 & 0.820 & 0.528 & 1.835 \\ % SP500 full_compare_sp500.json h22 metrics.HAR (mse 6.3273e-7, rmse 7.9544e-4, mae 2.4189e-4, qlike 0.48549) | HOSE full_compare_hose.json h22 metrics.HAR (mse 6.7162e-7, rmse 8.1952e-4, mae 5.2816e-4, qlike 1.83547)
 22 & GNNHAR   & 0.635 & 0.797 & 0.241 & 0.476 & 0.655 & 0.809 & 0.507 & 1.810 \\ % SP500 gnnhar_sp500.json metrics.GNNHAR_h22 (mse 6.3530e-7, rmse 7.9706e-4, mae 2.4143e-4, qlike 0.47614) | HOSE gnnhar_hose.json metrics.GNNHAR_h22 (mse 6.5453e-7, rmse 8.0903e-4, mae 5.0689e-4, qlike 1.81018)
 22 & XGB      & 0.623 & 0.789 & 0.236 & 0.446 & 0.621 & 0.788 & \textbf{0.459} & \textbf{1.725} \\ % SP500 leaf_graph_paper_sp500_noearn_h22.json metrics.XGB (n_folds=8; mse 6.2256e-7, rmse 7.8903e-4, mae 2.3593e-4, qlike 0.44595) | HOSE leaf_graph_paper_hose_noearn_h22.json metrics.XGB (n_folds=8; mse 6.2128e-7, rmse 7.882e-4, mae 4.591e-4, qlike 1.7251) -- endogenous is min QLIKE/MAE at h22 (earnings inert)
+22 & XGB+LG   & 0.623 & 0.789 & 0.236 & 0.446 & 0.621 & 0.788 & 0.458 & 1.725 \\ % SP500 leaf_graph_paper_sp500_noearn_h22.json metrics.XGB+leafgraph (SP500 inert) | HOSE leaf_graph_paper_hose_noearn_h22.json metrics.XGB+leafgraph (DM +0.005% p=0.85 NS)
 22 & XGB+E    & \textbf{0.609} & \textbf{0.780} & \textbf{0.228} & \textbf{0.407} & 0.622 & 0.789 & 0.461 & 1.727 \\ % SP500 leaf_graph_sp500_h22.json metrics.XGB (leaf alpha=0, identical) | HOSE leaf_graph_hose_h22.json metrics.XGB
 22 & VolTree & 0.609 & 0.780 & 0.228 & 0.407 & \textbf{0.621} & \textbf{0.788} & 0.460 & 1.726 \\ % SP500 leaf_graph_sp500_h22.json metrics.XGB+leafgraph (alpha=0) | HOSE leaf_graph_hose_h22.json metrics.XGB+leafgraph (leaf gain ns, DM p=0.34)
 \bottomrule
@@ -436,8 +441,10 @@ The gains survive the spike-robustness screen: excluding the COVID, 2022, and Ap
 (57{,}466 observations), the leaf-graph still beats the unsmoothed model at $h1$, $h5$, and $h10$
 (ex-spike gain 0.25\%, 0.20\%, and 0.12\%; DM $p<0.01$).
 % ex-spike: leaf_graph_hose_h{1,5,10}.json spike_robustness.gain_pct_ex_spike / dm_p_ex_spike
-The lever is endogenous denoising, not an earnings effect: it survives the no-earnings ablation, where
-VolTree over the endogenous XGB gains 0.22\% at $h1$ (DM $p<0.001$) and 0.12\% at $h5$ (DM $p<0.001$).
+The lever is endogenous denoising, not an earnings effect: the no-earnings ablation XGB+LG (leaf-graph on
+the endogenous model, Table~\ref{tab:detail}) gains 0.22\%
+at $h1$ (DM $p<0.001$) and 0.12\% at $h5$ (DM $p<0.001$) over the endogenous XGB --- matching VolTree,
+because HOSE earnings are inert (XGB+E $=$ XGB).
 % no-earn: leaf_graph_paper_hose_noearn_h{1,5}.json gain_pct / dm
 The smoothing weight $\alpha$, fit per fold on validation, averages about 0.26 to 0.35 on HOSE, so the
 graph is materially active there. Applying the same smoothing to the alternative HistGradientBoosting
