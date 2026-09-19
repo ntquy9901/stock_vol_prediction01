@@ -282,8 +282,10 @@ target reaches further past the fold boundary; removing these rows stops any tra
 $h$-step-ahead target would fall inside the test window from leaking future information (the
 $\lfloor 1.6h\rfloor$ term conservatively covers $h$ trading days and the $+5$ buffers weekends and exchange
 holidays). The last 22 training dates are held out as validation. A
-separate model is fitted per horizon (direct, not iterated), requiring at least 30\,000 training rows per
-fold on the S\&P~500 and 3\,000 on HOSE. The leaf-graph weight is selected from
+separate model is fitted per horizon (direct forecasting: each horizon is predicted from the origin
+rather than by iterating a one-step model), so each market has one model per horizon. A fold-horizon is
+skipped only if its training block falls below a small per-market row floor; every fold's training block
+runs to hundreds of thousands of stock-days and comfortably clears this guard. The leaf-graph weight is selected from
 $\alpha\in\{0.0,0.1,\dots,1.0\}$, one per (market, horizon, fold) on the validation slice and applied once
 to the test window; the per-day $k$-nearest-neighbour graph uses $k=10$. All fits use training data only,
 the test window is read once, and predictions are floored at $10^{-8}$ (so QLIKE, which divides by the
