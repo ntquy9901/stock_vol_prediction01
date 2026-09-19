@@ -14,6 +14,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # self-contained impor
 import earnings_event_study as E  # noqa: E402
 
 
+def test_offset_window_covers_pre5_post10_marks():
+    """The event window must span the pre=5 / post=10 feature windows the figure marks, include day 0,
+    and contain no duplicate offsets."""
+    assert E.OFFS[0] <= -5 and E.OFFS[-1] >= 10
+    assert 0 in E.OFFS and len(E.OFFS) == len(set(E.OFFS))
+
+
 def _frames(pk):
     dates = pd.bdate_range("2023-01-02", periods=len(pk))
     df = pd.DataFrame({"date": dates.to_numpy(), "parkinson_variance": np.asarray(pk, float)})

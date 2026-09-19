@@ -62,19 +62,20 @@ def main():  # pragma: no cover - entry driver: builds both curves and writes th
     sp_mean, sp_med, sp_n = event_curve("sp500")
     ho_mean, ho_med, ho_n = event_curve("hose")
     x = np.array(OFFS)
-    fig, axs = plt.subplots(1, 2, figsize=(13, 5.2))
+    fig, axs = plt.subplots(1, 2, figsize=(13.5, 5.8))
     for ax, (mean, med, n, name) in zip(axs, [(sp_mean, sp_med, sp_n, "S&P 500"), (ho_mean, ho_med, ho_n, "HOSE")]):
-        # Black-and-white safe: distinguish the two series by line style + marker shape, not colour alone.
-        ax.plot(x, mean, color="black", linestyle="-", marker="o", ms=6, lw=2.0, label="mean")
-        ax.plot(x, med, color="0.4", linestyle="--", marker="s", ms=6, lw=2.0, label="median")
+        # Black-and-white safe: both series black, distinguished by line style + marker shape.
+        ax.plot(x, mean, color="black", linestyle="-", marker="o", ms=7, lw=2.2, label="mean")
+        ax.plot(x, med, color="black", linestyle="--", marker="s", ms=7, lw=2.2, label="median")
         ax.axvline(0, color="black", lw=1.3)
         for xv in (-5, 10):                                # dotted lines mark the pre=5 / post=10 feature windows
             ax.axvline(xv, color="0.55", lw=1.1, ls=":")
-        ax.set_title(f"{name}  (n={n:,} earnings events)", fontsize=15)
-        ax.set_xlabel("trading days relative to announcement (0 = release)", fontsize=14)
-        ax.set_ylabel("pk / ticker-median (>1 = elevated)", fontsize=14)
-        ax.tick_params(axis="both", labelsize=13)
-        ax.legend(fontsize=14, framealpha=0.9, loc="upper right"); ax.grid(alpha=0.25)
+        ax.set_title(f"{name}  (n={n:,} earnings events)", fontsize=18)
+        ax.set_ylabel("pk / ticker-median (>1 = elevated)", fontsize=18)
+        ax.tick_params(axis="both", labelsize=16)
+        ax.legend(fontsize=18, framealpha=0.9, loc="upper right"); ax.grid(alpha=0.25)
+    # One shared x-label spanning both panels (full width) so it stays legible at fontsize 18.
+    fig.supxlabel("Trading days relative to announcement (0 = release)", fontsize=18)
     plt.tight_layout()
     fig.savefig(REPO / "docs" / "paper" / "figures" / "fig_earnings_event_study.pdf", bbox_inches="tight")
     b64 = png(fig)
