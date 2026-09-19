@@ -8,6 +8,7 @@ import pytest
 import xgboost as xgb
 
 import run_conformal as CF
+import run_crps as CR
 import run_xai as XAI
 
 
@@ -59,6 +60,27 @@ def test_cov_width():
     assert mw == pytest.approx(2.0) and mdw == pytest.approx(2.0)
 
 
+def test_gamma_calibration_helpers():
+    rng = np.random.default_rng(4)
+    k = 4.0; mu = np.full(6000, 2.0)
+    y = rng.gamma(k, mu / k)                             # perfectly-calibrated gamma sample
+    assert CR.gamma_shape(y, mu) == pytest.approx(k, rel=0.15)   # method-of-moments recovers k
+    pit = CR.pit_values(y, mu, k)
+    assert 0.45 <= pit.mean() <= 0.55                    # PIT ~ Uniform[0,1] when calibrated
+    assert CR.pit_ece(pit) < 0.03                        # low calibration error
+    # a mis-specified (too-small) mean skews PIT high and raises ECE
+    pit_bad = CR.pit_values(y, mu * 0.5, k)
+    assert CR.pit_ece(pit_bad) > CR.pit_ece(pit)
+
+
+def test_pinball_loss():
+    y = np.array([1.0, 2.0, 3.0])
+    # at the median, pinball(0.5) = 0.5 * mean|y-q|
+    assert CR.pinball(y, np.full(3, 2.0), 0.5) == pytest.approx(0.5 * (1 + 0 + 1) / 3)
+    # over-prediction penalised less at a high quantile than a low one
+    assert CR.pinball(y, np.full(3, 4.0), 0.95) < CR.pinball(y, np.full(3, 4.0), 0.05)
+
+
 def test_cap_rows():
     import pandas as pd
     df = pd.DataFrame({"a": range(100)})
@@ -100,6 +122,10 @@ def test_report_sections_both_branches():
         "cqr": {"coverage": 0.9, "mean_width": 1e-4, "median_width": 1e-4,
                 "coverage_spike": None, "coverage_calm": None}}}}   # exercises the None-marker branch
     assert "coverage" in BR._conf_section("hose", conf_d)
+    assert "not available" in BR._calib_section("sp500", None)   # missing-data branch
+    calib_d = {"horizons": {"1": {"n_test": 100, "gamma_ece": 0.1, "pit_mean": 0.55,
+                                  "central90_coverage": 0.88, "pinball": {"0.05": 1e-4, "0.5": 2e-4, "0.95": 1e-4}}}}
+    assert "ECE" in BR._calib_section("hose", calib_d)          # data branch
 
 
 def test_shap_global_shares_sum_to_one():
