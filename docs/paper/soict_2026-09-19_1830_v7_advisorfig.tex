@@ -178,13 +178,7 @@ per-day leaf-cooccurrence graph then smooths the forecasts across each day's cro
 (Figure~\ref{fig:arch}: features $\rightarrow$ gamma-XGBoost $\rightarrow$ leaf similarity $\rightarrow$
 graph smoothing $\rightarrow$ forecast).
 
-The ablation follows a leave-one-out design from the full model, matching the rows of
-Table~\ref{tab:detail}: \textbf{VolTree} uses both the earnings block and leaf-graph smoothing;
-\textbf{VolTree w/o E} removes the earnings block (endogenous features and leaf-graph only);
-\textbf{VolTree w/o LG} removes leaf-graph smoothing (endogenous features and earnings only); and
-\textbf{VolTree w/o E and LG} is the endogenous-only model. We call the two single-component variants the
-\emph{earnings variant} (VolTree w/o LG) and the \emph{leaf-graph variant} (VolTree w/o E). The ablation
-quantifies each component's contribution, which is market-specific.
+We start with the full VolTree model and remove one or both components, as shown in Table~\ref{tab:detail}. \textbf{VolTree} includes both earnings features and leaf-graph smoothing. \textbf{VolTree w/o E} removes the earnings block and retains the endogenous features and leaf graph. \textbf{VolTree w/o LG} removes leaf-graph smoothing and retains the endogenous and earnings features. Finally, \textbf{VolTree w/o E and LG} removes both components and serves as the endogenous-only baseline. For brevity, we refer to VolTree w/o LG as the \emph{earnings variant} and VolTree w/o E as the \emph{leaf-graph variant}. This ablation evaluates the contribution of each component and shows how its effect differs between markets.
 
 \begin{figure}[t]
 \centering
@@ -376,7 +370,7 @@ and $h5$) with VolTree closely tracking it.
 \begin{table}[!t]
 \centering
 \caption{Component ablation of VolTree on the S\&P~500 and HOSE, evaluated using
-walk-forward validation and averaged over three seeds. VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
+walk-forward validation. VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
 \emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
 excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGBoost model. MSE is reported in $10^{-6}$, RMSE and MAE in
 $10^{-3}$, and QLIKE is unscaled; all metrics are lower-is-better. For the QLIKE comparisons (Section~\ref{sec:robust}), $^{*}$ indicates a
@@ -463,7 +457,7 @@ tabulated), an optimistic upper bound because the realized date is unknown at th
 % Earnings DM (headline pipeline, XGBoost): expected_schedule/earnings_dm_sp500.json earn_gain_pct 3.24/3.13/3.00/2.68 dm_p 1.0e-25/3.7e-7/8.2e-5/3.6e-6 (all <1e-3). Upper bound (actual dates, XGBoost): leaf_graph_paper_sp500_{noearn,full}_h* = 11.16/9.98/9.13/8.71% over noearn (14-16% over HAR).
 
 
-\section{Analysis and Discussion}
+\section{Discussion}
 
 \subsection{Earnings Effects on the S\&P 500}\label{sec:earn}
 The ex-post event study (Fig.~\ref{fig:eventstudy}) shows that realized S\&P~500 earnings announcements are
