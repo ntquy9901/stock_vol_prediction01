@@ -5,7 +5,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="title" value="XGB (endogenous)&#160;&#160;&#183;&#160;&#160;+E (earnings)&#160;&#160;&#183;&#160;&#160;+LG (leaf-graph) = VolTree" style="text;html=1;align=center;fontSize=13;fontStyle=2;" vertex="1" parent="1">
+        <mxCell id="title" value="Evaluated variants: XGB &#183; XGB+E &#183; XGB+LG &#183; VolTree" style="text;html=1;align=center;fontSize=13;fontStyle=2;" vertex="1" parent="1">
           <mxGeometry x="70" y="15" width="560" height="26" as="geometry" />
         </mxCell>
 
@@ -25,7 +25,7 @@
           <mxGeometry x="380" y="150" width="250" height="70" as="geometry" />
         </mxCell>
 
-        <mxCell id="xgb" value="&lt;b&gt;Gamma-loss XGBoost&lt;/b&gt;&lt;br&gt;300 trees &#183; 31 leaves &#183; reg:gamma (QLIKE-equivalent) &#183; 3-seed" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
+        <mxCell id="xgb" value="&lt;b&gt;Gamma-loss XGBoost&lt;/b&gt;&lt;br&gt;300 trees &#183; 31 leaves &#183; reg:gamma (QLIKE-equivalent) &#183; deterministic fit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
           <mxGeometry x="130" y="270" width="440" height="72" as="geometry" />
         </mxCell>
 
