@@ -150,9 +150,11 @@ loss~\cite{patton2011}, with MSE, RMSE and MAE; for realized target $y$ and fore
 \textbf{Data sources.} Daily open-high-low-close-volume (OHLCV) data for the 497 S\&P~500 tickers are obtained from Yahoo Finance; the 405 HOSE
 tickers are from \texttt{vnstock}, a Vietnamese market-data feed, with each ticker's full daily history
 crawled from its listing. The Parkinson target and all endogenous features derive from daily high, low,
-and close prices. We use daily OHLC rather than intraday data (minute-level histories are paid or
-vendor-restricted for the S\&P~500 and largely unavailable for HOSE) because the range-based Parkinson
-estimator recovers a day's intraday range from the freely available high and low. Earnings dates and their
+and close prices. We use daily OHLC rather than intraday data primarily because daily
+open-high-low-close is freely and readily available for both markets at no cost, whereas minute-level
+histories are paid or vendor-restricted for the S\&P~500 and largely unavailable for HOSE; moreover, the
+range-based Parkinson estimator recovers a day's intraday range from the freely available high and low, so
+little information is lost by staying at daily frequency. Earnings dates and their
 provenance (Yahoo Finance for the S\&P~500; the State
 Securities Commission portal plus a \texttt{vnstock} news feed for HOSE) are detailed in the Limitations.
 On both markets, headline forecasts use only a point-in-time cadence-based expected schedule constructed
