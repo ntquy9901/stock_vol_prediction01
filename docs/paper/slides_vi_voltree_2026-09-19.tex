@@ -65,7 +65,7 @@
         \item \textbf{S\&P~500}: 497 tickers (OHLCV daily, Yahoo Finance).
         \item \textbf{HOSE}: 405 tickers (vnstock, crawl toàn bộ lịch sử từ ngày niêm yết).
       \end{itemize}
-    \item Chỉ dùng \textbf{daily OHLC} (intraday bị hạn chế/tính phí); Parkinson tái tạo biên độ trong ngày từ high--low.
+    \item Dùng \textbf{daily OHLC} vì \textbf{dễ có, miễn phí} cho cả 2 thị trường (intraday bị tính phí/hạn chế/khó có); Parkinson tái tạo biên độ trong ngày từ high--low nên ít mất mát.
     \item \textbf{Walk-forward} expanding window, \textbf{8 fold} bán niên từ 2022-07-01; validation = 22 ngày cuối train.
     \item \textbf{Leak-free}: earnings dùng \emph{lịch cadence dự đoán tại forecast origin} (median khoảng cách các lần công bố trước), không dùng ngày thực tế (ex-post).
     \item Embargo tăng theo horizon (chống leakage); floor $10^{-8}$ (giữ QLIKE hữu hạn) và cap $1.0$ áp \textbf{đồng nhất} mọi model.
