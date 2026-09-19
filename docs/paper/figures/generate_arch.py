@@ -104,8 +104,10 @@ def main():
             fontsize=FS_ANNOT, color="0.25")
     arr(ax, px + 3.0, py + 1.55, tx - 1.9, py + 1.70)      # glyph -> blend formula
 
+    # Fallback preview only: the embedded fig_architecture.{pdf} is the hand-designed diagram
+    # (docs/paper/figures/fig_architecture.drawio), so this writes fig_architecture_mpl.* and never clobbers it.
     for ext_ in ("png", "pdf"):
-        fig.savefig(f"docs/paper/figures/fig_architecture.{ext_}", dpi=190, bbox_inches="tight")
+        fig.savefig(f"docs/paper/figures/fig_architecture_mpl.{ext_}", dpi=190, bbox_inches="tight")
 
 
 if __name__ == "__main__":  # pragma: no cover - CLI entry (main() is covered by the test directly)

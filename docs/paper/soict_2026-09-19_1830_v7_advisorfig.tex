@@ -371,9 +371,7 @@ and $h5$) with VolTree closely tracking it.
 \begin{table}[!t]
 \centering
 \caption{Component ablation of VolTree on the S\&P~500 (left) and HOSE (right), evaluated using
-walk-forward validation and averaged over three seeds (a stability check: the gamma-loss XGBoost is
-effectively deterministic under the no-subsampling configuration, so the seeds coincide up to negligible
-variation). VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
+walk-forward validation and averaged over three seeds (a stability check). VolTree denotes the full model with both earnings features (E) and leaf-graph smoothing (LG);
 \emph{VolTree w/o E} retains LG but excludes earnings features; \emph{VolTree w/o LG} retains E but
 excludes leaf-graph smoothing; and \emph{VolTree w/o E and LG} is the endogenous-only XGB baseline (these
 three variants are XGB+LG, XGB+E, and XGB in the text). MSE is reported in $10^{-6}$, RMSE and MAE in

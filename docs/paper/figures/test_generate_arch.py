@@ -31,12 +31,13 @@ def test_graph_glyph_adds_nodes():
 
 
 def test_main_writes_nonempty_png_and_pdf(monkeypatch):
-    # main() writes the embedded figure fig_architecture.{png,pdf} (this script is the single source).
+    # main() is a fallback preview: it writes fig_architecture_mpl.{png,pdf} and never clobbers the
+    # embedded fig_architecture.{pdf}, which is exported from fig_architecture.drawio.
     root = Path(__file__).resolve().parents[3]        # repo root; main() saves to docs/paper/figures/<...>
     monkeypatch.chdir(root)
     GA.main()
     for ext in ("png", "pdf"):
-        p = root / "docs" / "paper" / "figures" / f"fig_architecture.{ext}"
+        p = root / "docs" / "paper" / "figures" / f"fig_architecture_mpl.{ext}"
         assert p.exists() and p.stat().st_size > 10000
 
 
@@ -45,7 +46,7 @@ def test_architecture_layout_is_portrait(monkeypatch):
     root = Path(__file__).resolve().parents[3]
     monkeypatch.chdir(root)
     GA.main()
-    img = mpimg.imread(root / "docs" / "paper" / "figures" / "fig_architecture.png")
+    img = mpimg.imread(root / "docs" / "paper" / "figures" / "fig_architecture_mpl.png")
     height, width = img.shape[0], img.shape[1]
     assert height > width                              # vertical top-to-bottom layout is taller than wide
 

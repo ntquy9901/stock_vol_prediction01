@@ -1,74 +1,111 @@
-<mxfile host="app.diagrams.net" type="device">
-  <diagram name="architecture" id="arch-v">
-    <mxGraphModel dx="900" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="700" pageHeight="690" math="1" shadow="0">
+<mxfile host="app.diagrams.net" version="24.0.0">
+  <diagram id="voltree-arch" name="VolTree">
+    <mxGraphModel dx="980" dy="960" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="980" pageHeight="960" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="title" value="Evaluated variants: XGB &#183; XGB+E &#183; XGB+LG &#183; VolTree" style="text;html=1;align=center;fontSize=13;fontStyle=2;" vertex="1" parent="1">
-          <mxGeometry x="70" y="15" width="560" height="26" as="geometry" />
+        <mxCell id="title" value="VolTree" style="text;html=1;align=left;verticalAlign=middle;fontSize=34;fontStyle=1;fontColor=#111111;" vertex="1" parent="1">
+          <mxGeometry x="40" y="22" width="320" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="Volatility forecasting with earnings-aware boosting and leaf-graph refinement" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#777777;" vertex="1" parent="1">
+          <mxGeometry x="42" y="70" width="640" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="rule" style="endArrow=none;html=1;strokeColor=#dddddd;strokeWidth=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="40" y="102" as="sourcePoint" />
+            <mxPoint x="940" y="102" as="targetPoint" />
+          </mxGeometry>
         </mxCell>
 
-        <mxCell id="ohlcv" value="OHLCV (ticker i)&lt;br&gt;&#8594; pk&lt;sub&gt;i,t&lt;/sub&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="90" y="55" width="220" height="58" as="geometry" />
+        <mxCell id="badge1" value="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontColor=#ffffff;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="126" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl1" value="INPUTS" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#8a8a8a;" vertex="1" parent="1">
+          <mxGeometry x="78" y="127" width="220" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="market" value="&lt;b style=&quot;font-size:17px&quot;&gt;Market data&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;color:#666666&quot;&gt;OHLCV &#8594; Parkinson variance&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#c8c8c8;strokeWidth=1.5;arcSize=10;align=left;verticalAlign=middle;spacingLeft=60;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="96" y="152" width="372" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="dbicon" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=8;fillColor=#ffffff;strokeColor=#444444;" vertex="1" parent="1">
+          <mxGeometry x="118" y="182" width="30" height="36" as="geometry" />
+        </mxCell>
+        <mxCell id="chipInt" value="INTERNAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=none;arcSize=45;fontSize=10;fontColor=#555555;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="370" y="164" width="84" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="earn" value="&lt;b style=&quot;font-size:17px&quot;&gt;Earnings dates&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;color:#666666&quot;&gt;External release dates&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#c8c8c8;strokeWidth=1.5;arcSize=10;align=left;verticalAlign=middle;spacingLeft=60;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="536" y="152" width="372" height="94" as="geometry" />
+        </mxCell>
+        <mxCell id="calicon" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#444444;arcSize=18;" vertex="1" parent="1">
+          <mxGeometry x="558" y="182" width="34" height="34" as="geometry" />
+        </mxCell>
+        <mxCell id="chipExt" value="EXTERNAL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=none;arcSize=45;fontSize=10;fontColor=#555555;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="810" y="164" width="84" height="22" as="geometry" />
         </mxCell>
 
-        <mxCell id="earncal" value="earnings calendar&lt;br&gt;(external)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdf3e3;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="390" y="55" width="220" height="58" as="geometry" />
+        <mxCell id="badge2" value="2" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontColor=#ffffff;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="286" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl2" value="FEATURE ENGINEERING" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#8a8a8a;" vertex="1" parent="1">
+          <mxGeometry x="78" y="287" width="260" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="endo" value="&lt;b style=&quot;font-size:16px&quot;&gt;Endogenous features&lt;/b&gt;&#160;&#160;&lt;span style=&quot;color:#999999;font-size:11px&quot;&gt;8 variables&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;color:#666666&quot;&gt;HAR lags &#183; momentum &#183; Parkinson vol.&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4f4f4;strokeColor=#c8c8c8;strokeWidth=1.5;arcSize=10;align=left;verticalAlign=middle;spacingLeft=18;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="96" y="312" width="372" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="earnfeat" value="&lt;b style=&quot;font-size:16px&quot;&gt;Earnings features&lt;/b&gt;&#160;&#160;&lt;span style=&quot;color:#999999;font-size:11px&quot;&gt;4 variables&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;color:#666666&quot;&gt;Distance to release &#183; event window&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4f4f4;strokeColor=#c8c8c8;strokeWidth=1.5;arcSize=10;align=left;verticalAlign=middle;spacingLeft=18;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="536" y="312" width="372" height="82" as="geometry" />
         </mxCell>
 
-        <mxCell id="own" value="&lt;b&gt;endogenous&#160;&#8477;&#8312;&lt;/b&gt;&lt;br&gt;(HAR lags + momentum)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="70" y="150" width="250" height="70" as="geometry" />
+        <mxCell id="badge3" value="3" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontColor=#ffffff;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="28" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl3" value="BASE LEARNER" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#8a8a8a;" vertex="1" parent="1">
+          <mxGeometry x="78" y="441" width="220" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="xgb" value="&lt;b style=&quot;font-size:19px&quot;&gt;Gamma-loss XGBoost&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;color:#555555&quot;&gt;300 trees &#183; 31 leaves &#183; reg:gamma &#8776; QLIKE&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f4f4f4;strokeColor=#666666;strokeWidth=2;arcSize=8;align=left;verticalAlign=middle;spacingLeft=64;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="180" y="466" width="636" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="chipPos" value="POSITIVE FORECAST" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=none;arcSize=45;fontSize=10;fontColor=#555555;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="640" y="480" width="150" height="24" as="geometry" />
         </mxCell>
 
-        <mxCell id="ext" value="&lt;b&gt;earnings&#160;&#8477;&#8308;&lt;/b&gt;&lt;br&gt;(distance to release)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fdf3e3;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="380" y="150" width="250" height="70" as="geometry" />
+        <mxCell id="forecast" value="&lt;b style=&quot;font-size:16px&quot;&gt;Per-stock variance forecast&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;color:#666666&quot;&gt;&#963;&#178;&lt;sub&gt;i,t+h&lt;/sub&gt; &#183; h &#8712; {1, 5, 10, 22}&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#c8c8c8;strokeWidth=1.5;arcSize=10;align=left;verticalAlign=middle;spacingLeft=18;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="300" y="612" width="400" height="82" as="geometry" />
+        </mxCell>
+        <mxCell id="chipAll" value="ALL STOCKS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=none;arcSize=45;fontSize=10;fontColor=#555555;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="600" y="624" width="92" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="yhat" value="&#375;&lt;sub&gt;i&lt;/sub&gt; across stocks" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#999999;" vertex="1" parent="1">
+          <mxGeometry x="708" y="700" width="150" height="18" as="geometry" />
         </mxCell>
 
-        <mxCell id="xgb" value="&lt;b&gt;Gamma-loss XGBoost&lt;/b&gt;&lt;br&gt;300 trees &#183; 31 leaves &#183; reg:gamma (QLIKE-equivalent) &#183; deterministic fit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="130" y="270" width="440" height="72" as="geometry" />
+        <mxCell id="badge4" value="4" style="ellipse;whiteSpace=wrap;html=1;fillColor=#333333;strokeColor=none;fontColor=#ffffff;fontSize=13;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="744" width="28" height="28" as="geometry" />
         </mxCell>
+        <mxCell id="lbl4" value="GRAPH REFINEMENT" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontStyle=1;fontColor=#8a8a8a;" vertex="1" parent="1">
+          <mxGeometry x="78" y="745" width="240" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="leaf" value="&lt;b style=&quot;font-size:19px&quot;&gt;Leaf-cooccurrence graph smoothing&lt;/b&gt;&lt;br&gt;&lt;span style=&quot;color:#555555&quot;&gt;kNN on shared terminal leaves &#183; k = 10&lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;font-size:15px&quot;&gt;&#375;&lt;sup&gt;sm&lt;/sup&gt;&lt;sub&gt;i&lt;/sub&gt; = (1&#8722;&#945;) &#375;&lt;sub&gt;i&lt;/sub&gt; + &#945; &#563;&lt;sub&gt;kNN(i)&lt;/sub&gt;&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#666666;strokeWidth=2;arcSize=6;align=left;verticalAlign=middle;spacingLeft=110;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="60" y="770" width="848" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="chipAlpha" value="&#945; FIT ON VALIDATION" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e6e6e6;strokeColor=none;arcSize=45;fontSize=10;fontColor=#555555;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="716" y="856" width="168" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" style="ellipse;html=1;fillColor=#e0e0e0;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="92" y="812" width="16" height="16" as="geometry" /></mxCell>
+        <mxCell id="g2" style="ellipse;html=1;fillColor=#e0e0e0;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="132" y="800" width="16" height="16" as="geometry" /></mxCell>
+        <mxCell id="g3" style="ellipse;html=1;fillColor=#ffffff;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="150" y="838" width="16" height="16" as="geometry" /></mxCell>
+        <mxCell id="g4" style="ellipse;html=1;fillColor=#ffffff;strokeColor=#333333;" vertex="1" parent="1"><mxGeometry x="104" y="852" width="16" height="16" as="geometry" /></mxCell>
+        <mxCell id="ge1" style="endArrow=none;html=1;strokeColor=#666666;" edge="1" parent="1" source="g1" target="g2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ge2" style="endArrow=none;html=1;strokeColor=#666666;" edge="1" parent="1" source="g1" target="g3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ge3" style="endArrow=none;html=1;strokeColor=#666666;" edge="1" parent="1" source="g1" target="g4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ge4" style="endArrow=none;html=1;strokeColor=#666666;" edge="1" parent="1" source="g2" target="g3"><mxGeometry relative="1" as="geometry" /></mxCell>
 
-        <mxCell id="fcast" value="&lt;b&gt;per-stock forecast&#160;&#160;&#963;&#770;&lt;sup&gt;2&lt;/sup&gt;&lt;sub&gt;i,t+h&lt;/sub&gt;&lt;/b&gt;&lt;br&gt;h &#8712; {1, 5, 10, 22}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf2fb;strokeColor=#404040;fontSize=12;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="210" y="390" width="280" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="lgpanel" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#404040;verticalAlign=top;" vertex="1" parent="1">
-          <mxGeometry x="55" y="495" width="590" height="180" as="geometry" />
-        </mxCell>
-        <mxCell id="lgtitle" value="&lt;b&gt;leaf-cooccurrence graph smoothing&lt;/b&gt;" style="text;html=1;align=center;fontSize=13;fontColor=#404040;" vertex="1" parent="1">
-          <mxGeometry x="75" y="507" width="550" height="24" as="geometry" />
-        </mxCell>
-
-        <mxCell id="glyph" value="kNN on shared&lt;br&gt;leaves (k = 10)" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f2f2f2;strokeColor=#404040;fontSize=11;verticalAlign=middle;" vertex="1" parent="1">
-          <mxGeometry x="120" y="553" width="170" height="100" as="geometry" />
-        </mxCell>
-
-        <mxCell id="blend" value="&#375;&lt;sup&gt;sm&lt;/sup&gt;&lt;sub&gt;i&lt;/sub&gt; = (1 &#8722; &#945;) &#375;&lt;sub&gt;i&lt;/sub&gt; + &#945; &#183; mean&lt;sub&gt;kNN(i)&lt;/sub&gt; &#375;&lt;br&gt;&lt;br&gt;&#945; fit on validation" style="text;html=1;align=left;fontSize=12;whiteSpace=wrap;" vertex="1" parent="1">
-          <mxGeometry x="345" y="568" width="300" height="70" as="geometry" />
-        </mxCell>
-
-        <mxCell id="e1" style="endArrow=block;html=1;strokeColor=#404040;" edge="1" parent="1" source="ohlcv" target="own">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e2" style="endArrow=block;html=1;strokeColor=#404040;" edge="1" parent="1" source="earncal" target="ext">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e3" value="x&lt;sub&gt;i,t&lt;/sub&gt;" style="endArrow=block;html=1;strokeColor=#404040;fontSize=11;" edge="1" parent="1" source="own" target="xgb">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e4" style="endArrow=block;html=1;strokeColor=#404040;" edge="1" parent="1" source="ext" target="xgb">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e5" style="endArrow=block;html=1;strokeColor=#404040;" edge="1" parent="1" source="xgb" target="fcast">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e6" value="&#375;&lt;sub&gt;i&lt;/sub&gt; (all tickers)" style="endArrow=block;html=1;strokeColor=#404040;fontSize=11;" edge="1" parent="1" source="fcast" target="lgpanel">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="e7" style="endArrow=block;html=1;strokeColor=#404040;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="glyph" target="blend">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
+        <mxCell id="a1" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;" edge="1" parent="1" source="market" target="endo"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a2" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;" edge="1" parent="1" source="earn" target="earnfeat"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a3" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;exitX=0.5;exitY=1;entryX=0.4;entryY=0;" edge="1" parent="1" source="endo" target="xgb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a4" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;exitX=0.5;exitY=1;entryX=0.6;entryY=0;" edge="1" parent="1" source="earnfeat" target="xgb"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a5" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;" edge="1" parent="1" source="xgb" target="forecast"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="a6" style="endArrow=classic;html=1;strokeColor=#555555;strokeWidth=1.6;" edge="1" parent="1" source="forecast" target="leaf"><mxGeometry relative="1" as="geometry" /></mxCell>
       </root>
     </mxGraphModel>
   </diagram>
