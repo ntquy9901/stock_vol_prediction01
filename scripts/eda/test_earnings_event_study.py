@@ -26,6 +26,7 @@ def test_event_figure_style_is_wide_and_large_font():
     # Advisor: wide chart + large on-chart fonts. Single-sourced constants keep this testable.
     assert E.EVENT_FONT >= 18
     assert E.EVENT_FIGSIZE[0] > E.EVENT_FIGSIZE[1]           # wider than tall (2-panel layout)
+    assert E.EVENT_FIGSIZE[0] >= 12                          # wide enough for two side-by-side panels
 
 
 def _frames(pk):
